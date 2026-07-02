@@ -99,7 +99,8 @@ export default function OnboardingPage() {
         setSubmitting(false);
         return;
       }
-      router.replace('/');
+      // Fresh users land straight in the style quiz to seed their starter era.
+      router.replace('/quiz');
     } catch {
       setError('Could not save that username. Please try again.');
       setSubmitting(false);
