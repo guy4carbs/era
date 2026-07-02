@@ -1,0 +1,21 @@
+{
+  "name": "@era/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "check-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@era/eslint-config": "workspace:*",
+    "@era/typescript-config": "workspace:*",
+    "eslint": "^9.17.0",
+    "typescript": "^5.7.0"
+  }
+}
