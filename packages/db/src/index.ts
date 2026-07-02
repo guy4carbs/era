@@ -1,34 +1,87 @@
 /**
- * @era/db — database access layer (placeholder).
- *
- * The real Drizzle client, schema, and migrations land in the Phase 1
- * build-out. For now this exports typed stubs so downstream packages can
- * depend on a stable surface without a live connection.
+ * @era/db — Drizzle schema, client, and inferred row types for Era.
  */
+import { account, session, user, verification } from './schema/auth.ts';
+import { aiEventKind, itemCategory, itemSource } from './schema/enums.ts';
+import {
+  aiEvents,
+  eraOutfits,
+  eras,
+  follows,
+  items,
+  outfitItems,
+  outfits,
+  profiles,
+  styleProfiles,
+  waitlist,
+  wearLogs,
+} from './schema/app.ts';
 
-export interface DbConfig {
-  readonly connectionString: string;
-  readonly maxConnections: number;
-  readonly ssl: boolean;
-}
-
-export interface DbClientPlaceholder {
-  readonly config: DbConfig;
-  readonly isReady: boolean;
-}
-
-const defaultConfig: DbConfig = {
-  connectionString: '',
-  maxConnections: 10,
-  ssl: true,
+export {
+  // Better Auth tables
+  user,
+  session,
+  account,
+  verification,
+  // Enums
+  itemCategory,
+  itemSource,
+  aiEventKind,
+  // Domain tables
+  profiles,
+  styleProfiles,
+  items,
+  outfits,
+  outfitItems,
+  eras,
+  eraOutfits,
+  wearLogs,
+  follows,
+  aiEvents,
+  waitlist,
 };
 
-/**
- * Return a typed database stub. Replaced by the real Drizzle client in Phase 1.
- */
-export function createDbPlaceholder(config: Partial<DbConfig> = {}): DbClientPlaceholder {
-  return {
-    config: { ...defaultConfig, ...config },
-    isReady: false,
-  };
-}
+export { createDbClient } from './client.ts';
+export type { DbClient } from './client.ts';
+
+// Inferred row types — `X` for selects, `NewX` for inserts.
+export type AuthUser = typeof user.$inferSelect;
+export type NewAuthUser = typeof user.$inferInsert;
+
+export type Profile = typeof profiles.$inferSelect;
+export type NewProfile = typeof profiles.$inferInsert;
+
+export type StyleProfile = typeof styleProfiles.$inferSelect;
+export type NewStyleProfile = typeof styleProfiles.$inferInsert;
+
+export type Item = typeof items.$inferSelect;
+export type NewItem = typeof items.$inferInsert;
+
+export type Outfit = typeof outfits.$inferSelect;
+export type NewOutfit = typeof outfits.$inferInsert;
+
+export type OutfitItem = typeof outfitItems.$inferSelect;
+export type NewOutfitItem = typeof outfitItems.$inferInsert;
+
+export type Era = typeof eras.$inferSelect;
+export type NewEra = typeof eras.$inferInsert;
+
+export type EraOutfit = typeof eraOutfits.$inferSelect;
+export type NewEraOutfit = typeof eraOutfits.$inferInsert;
+
+export type WearLog = typeof wearLogs.$inferSelect;
+export type NewWearLog = typeof wearLogs.$inferInsert;
+
+export type Follow = typeof follows.$inferSelect;
+export type NewFollow = typeof follows.$inferInsert;
+
+export type AiEvent = typeof aiEvents.$inferSelect;
+export type NewAiEvent = typeof aiEvents.$inferInsert;
+
+export type WaitlistEntry = typeof waitlist.$inferSelect;
+export type NewWaitlistEntry = typeof waitlist.$inferInsert;
+
+// Enum value unions.
+export type ItemCategory = (typeof itemCategory.enumValues)[number];
+export type ItemSource = (typeof itemSource.enumValues)[number];
+export type AiEventKind = (typeof aiEventKind.enumValues)[number];

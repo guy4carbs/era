@@ -1,5 +1,8 @@
 {
   "extends": "@era/typescript-config/base.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true
+  },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

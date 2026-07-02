@@ -12,6 +12,21 @@ export {
 } from './env.ts';
 export type { ServerEnv, WebClientEnv, MobileClientEnv } from './env.ts';
 
+// Authorization — EVERY API route handler must use these guards. See authz.ts.
+export {
+  AuthzError,
+  requireUser,
+  ownerOnly,
+  publicReadable,
+  canInsertFollow,
+  canInsertAiEvent,
+  canInsertWaitlist,
+} from './authz.ts';
+export type { AuthContext, AuthzErrorCode, VisibilityResource } from './authz.ts';
+
+// Persistence type contract, re-exported type-only from @era/db.
+export type * from './db-types.ts';
+
 export type Category = 'top' | 'bottom' | 'outerwear' | 'shoes' | 'accessory';
 
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter';
