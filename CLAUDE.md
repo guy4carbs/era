@@ -47,6 +47,13 @@ era/
 
 Conventional commits: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, with an optional scope — e.g. `feat(closet): add garment tagging`.
 
+## Branch strategy
+
+- Feature branches only — open a PR and **squash merge** into `main`.
+- `main` is always deployable; direct pushes to `main` are blocked by branch protection.
+- CI must be green (lint, typecheck, test) before a PR can merge.
+- Branch names are short kebab-case with a conventional prefix — e.g. `feat/closet-grid`, `fix/token-colors`.
+
 ## Current state
 
 > Update this section as the build progresses.
@@ -55,3 +62,7 @@ Conventional commits: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, with a
 - `apps/web` and `apps/mobile` are empty placeholders.
 - `packages/*` are typed placeholders.
 - Nothing deployed.
+- GitHub remote is live: private repo `guy4carbs/era`.
+- CI runs on every PR and push to `main` via GitHub Actions — three checks: lint, typecheck, test.
+- Branch protection is enabled on `main` (direct pushes blocked; green CI required to merge).
+- The `check-types` task has been renamed to `typecheck`.

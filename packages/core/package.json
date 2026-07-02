@@ -10,7 +10,8 @@
   },
   "scripts": {
     "lint": "eslint .",
-    "check-types": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"@era/core: no tests yet\""
   },
   "devDependencies": {
     "@era/eslint-config": "workspace:*",
