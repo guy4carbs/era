@@ -1,0 +1,32 @@
+import { type CSSProperties } from 'react';
+import { typeRamp } from '@era/tokens';
+import { strings } from '@era/core/strings';
+
+const screenStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-6)',
+  paddingBlock: 'var(--space-8)',
+};
+
+const titleStyle: CSSProperties = {
+  margin: 0,
+  fontSize: typeRamp.title1.rem,
+  lineHeight: `${typeRamp.title1.lineHeight}px`,
+  fontWeight: 700,
+};
+
+const emptyStyle: CSSProperties = {
+  margin: 0,
+  color: 'var(--color-secondary)',
+  fontSize: typeRamp.body.rem,
+};
+
+export default function ShopPage() {
+  return (
+    <main style={screenStyle}>
+      <h1 style={titleStyle}>Shop</h1>
+      <p style={emptyStyle}>{strings.shop.empty}</p>
+    </main>
+  );
+}

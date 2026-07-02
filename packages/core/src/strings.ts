@@ -66,6 +66,18 @@ export const strings = {
     wearLogged: 'Logged. Every wear teaches me your taste.',
   },
 
+  /** The Feed tab — looks from people the user follows. */
+  feed: {
+    /** Empty feed — invitational, not a scold; no fake social pressure. */
+    empty: 'Nothing in your feed yet. Follow a few people and their looks land here.',
+  },
+
+  /** The Shop tab — gap-driven suggestions, honest by default. */
+  shop: {
+    /** Empty shop surface — mirrors the trust rule: buy only for a real gap. */
+    empty: "Nothing to shop yet. When a real gap shows up, I'll bring a few picks here.",
+  },
+
   /** Authentication surfaces. */
   auth: {
     /** After a magic link is sent. */
