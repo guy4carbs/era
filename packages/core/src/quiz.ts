@@ -429,13 +429,35 @@ const ArchetypeSchema = z.enum(ARCHETYPE_ORDER);
 /**
  * A submitted set of quiz answers. Every step must be answered (skip = no
  * submission), single steps take a string, multi steps take an array of strings.
+ *
+ * Values are constrained to each step's own option ids, derived from
+ * {@link QUIZ_STEPS} rather than hand-enumerated. This closes two things at once:
+ * unknown step keys and free-form option strings are both rejected, so nothing a
+ * client invents ever reaches the scorer or the LLM prompt (prompt-injection
+ * surface). Multi steps additionally require at least one, unique, in-range
+ * selections.
  */
 export const QuizAnswersSchema = z
   .object({
     v: z.literal(1),
     steps: z.record(z.string(), z.union([z.string(), z.array(z.string())])),
   })
+  .strict()
   .superRefine((value, ctx) => {
+    const knownStepIds = new Set<string>(QUIZ_STEPS.map((step) => step.id));
+
+    // Reject any step key that isn't part of the quiz — the answer set may only
+    // carry the twelve known steps, nothing extra.
+    for (const key of Object.keys(value.steps)) {
+      if (!knownStepIds.has(key)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Unknown step "${key}".`,
+          path: ['steps', key],
+        });
+      }
+    }
+
     for (const step of QUIZ_STEPS) {
       const answer = value.steps[step.id];
       if (answer === undefined) {
@@ -446,17 +468,64 @@ export const QuizAnswersSchema = z
         });
         continue;
       }
-      if (step.kind === 'multi' && !Array.isArray(answer)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `Step "${step.id}" expects one or more selections.`,
-          path: ['steps', step.id],
-        });
+
+      const optionIds = new Set<string>(step.options.map((option) => option.id));
+
+      if (step.kind === 'multi') {
+        if (!Array.isArray(answer)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Step "${step.id}" expects one or more selections.`,
+            path: ['steps', step.id],
+          });
+          continue;
+        }
+        if (answer.length === 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Step "${step.id}" expects at least one selection.`,
+            path: ['steps', step.id],
+          });
+        }
+        if (answer.length > step.options.length) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Step "${step.id}" has more selections than it has options.`,
+            path: ['steps', step.id],
+          });
+        }
+        if (new Set(answer).size !== answer.length) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Step "${step.id}" has duplicate selections.`,
+            path: ['steps', step.id],
+          });
+        }
+        for (const optionId of answer) {
+          if (!optionIds.has(optionId)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Step "${step.id}" has unknown option "${optionId}".`,
+              path: ['steps', step.id],
+            });
+          }
+        }
+        continue;
       }
-      if (step.kind === 'single' && Array.isArray(answer)) {
+
+      // single
+      if (Array.isArray(answer)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: `Step "${step.id}" expects a single selection.`,
+          path: ['steps', step.id],
+        });
+        continue;
+      }
+      if (!optionIds.has(answer)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Step "${step.id}" has unknown option "${answer}".`,
           path: ['steps', step.id],
         });
       }

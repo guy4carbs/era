@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- Metro requires static require() literals for bundled assets */
 // Static require() map for the 30 style-quiz images.
 // Metro bundler needs string-literal require paths, so every entry is spelled out.
 // Keys match the quiz option keys; identical JPGs live at apps/web/public/quiz/<key>.jpg.

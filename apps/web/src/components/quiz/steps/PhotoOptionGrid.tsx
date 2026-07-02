@@ -80,7 +80,7 @@ export function PhotoOptionGrid({ step, selectedId, onSelect }: PhotoOptionGridP
             whileTap={reduced ? undefined : { scale: 0.97 }}
             transition={transitionFor(motionToken.springs.snappy, reduced)}
           >
-            <QuizImage imageKey={option.imageKey} />
+            <QuizImage imageKey={'imageKey' in option ? option.imageKey : undefined} />
             <span style={captionStyle}>{option.label}</span>
           </motion.button>
         );

@@ -273,6 +273,40 @@ test('QuizAnswersSchema enforces single vs multi shape', () => {
   assert.throws(() => QuizAnswersSchema.parse(answersFor(badSingle)), /vibe/);
 });
 
+test('QuizAnswersSchema rejects an unknown step key', () => {
+  const withExtraStep = { ...WINNING_ANSWERS.classic, not_a_step: 'whatever' };
+  assert.throws(() => QuizAnswersSchema.parse(answersFor(withExtraStep)), /not_a_step/);
+});
+
+test('QuizAnswersSchema rejects an unknown option id on a single step', () => {
+  const badOption = { ...WINNING_ANSWERS.classic, vibe: 'made_up_option' };
+  assert.throws(() => QuizAnswersSchema.parse(answersFor(badOption)), /vibe|made_up_option/);
+});
+
+test('QuizAnswersSchema rejects an unknown option id inside a multi step', () => {
+  const badMulti = { ...WINNING_ANSWERS.classic, occasions: ['s8_work', 'ghost_occasion'] };
+  assert.throws(() => QuizAnswersSchema.parse(answersFor(badMulti)), /occasions|ghost_occasion/);
+});
+
+test('QuizAnswersSchema rejects an empty multi selection', () => {
+  const emptyMulti = { ...WINNING_ANSWERS.classic, occasions: [] as string[] };
+  assert.throws(() => QuizAnswersSchema.parse(answersFor(emptyMulti)), /occasions/);
+});
+
+test('QuizAnswersSchema rejects duplicate multi selections', () => {
+  const dupeMulti = { ...WINNING_ANSWERS.classic, occasions: ['s8_work', 's8_work'] };
+  assert.throws(() => QuizAnswersSchema.parse(answersFor(dupeMulti)), /occasions/);
+});
+
+test('QuizAnswersSchema still accepts a full multi selection with every valid id', () => {
+  const allOccasions = {
+    ...WINNING_ANSWERS.classic,
+    occasions: ['s8_work', 's8_casual', 's8_nights', 's8_active', 's8_events'],
+  };
+  const parsed = QuizAnswersSchema.parse(answersFor(allOccasions));
+  assert.equal(parsed.v, 1);
+});
+
 test('StyleProfileResultSchema rejects empty palette or keywords', () => {
   const valid = deterministicProfile(answersFor(WINNING_ANSWERS.edgy));
   assert.throws(() => StyleProfileResultSchema.parse({ ...valid, palette: [] }));

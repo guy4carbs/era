@@ -1,11 +1,12 @@
 /**
  * QuizReveal — the payoff screen after the twelve steps.
  *
- * Blooms an accent glow, names the archetype in an editorial serif large-title,
- * lists the style keywords, staggers in the palette swatches, and presents the
- * starter era with a single "Step in" call to action into the feed. Under
- * reduced motion the glow holds static and the swatches appear at once — no
- * bloom, no stagger.
+ * Leads with the "your era begins" eyebrow, blooms an accent glow, names the
+ * archetype in a sans large-title, lists the style keywords, staggers in the
+ * palette swatches, and presents the starter era — its title in the editorial
+ * serif — with a grounding line and a single "Step in" call to action into the
+ * feed. Under reduced motion the glow holds static and the swatches appear at
+ * once — no bloom, no stagger.
  */
 import { glow, radii, rnShadow, spacing, typeRamp } from '@era/tokens';
 import { StyleSheet, Text, View } from 'react-native';
@@ -43,6 +44,17 @@ export function QuizReveal({ profile, onStepIn }: QuizRevealProps) {
       <View style={styles.hero}>
         <GlowBloom color={colors.accent} mode={resolved} reduced={reduced} />
         <Text
+          style={{
+            color: colors.secondaryStrong,
+            fontSize: typeRamp.subhead.pt,
+            lineHeight: typeRamp.subhead.lineHeight,
+            fontWeight: '600',
+            textAlign: 'center',
+          }}
+        >
+          {strings.quiz.revealTitle}
+        </Text>
+        <Text
           accessibilityRole="header"
           style={[
             styles.archetype,
@@ -50,9 +62,6 @@ export function QuizReveal({ profile, onStepIn }: QuizRevealProps) {
           ]}
         >
           {profile.archetypeName}
-        </Text>
-        <Text style={{ color: colors.secondaryStrong, fontSize: typeRamp.body.pt, lineHeight: typeRamp.body.lineHeight, textAlign: 'center' }}>
-          {strings.quiz.revealSubtitle}
         </Text>
       </View>
 
@@ -81,13 +90,17 @@ export function QuizReveal({ profile, onStepIn }: QuizRevealProps) {
       ) : null}
 
       <View style={[styles.eraCard, rnShadow('e2'), { backgroundColor: colors.surface, borderColor: colors.hairline }]}>
-        <Text style={{ color: colors.text, fontSize: typeRamp.title3.pt, lineHeight: typeRamp.title3.lineHeight, fontWeight: '600' }}>
+        <Text style={{ color: colors.text, fontFamily: 'Georgia', fontSize: typeRamp.title3.pt, lineHeight: typeRamp.title3.lineHeight, fontWeight: '600' }}>
           {profile.eraTitle}
         </Text>
         <Text style={{ color: colors.secondaryStrong, fontSize: typeRamp.body.pt, lineHeight: typeRamp.body.lineHeight }}>
           {profile.eraDescription}
         </Text>
       </View>
+
+      <Text style={{ color: colors.secondaryStrong, fontSize: typeRamp.footnote.pt, lineHeight: typeRamp.footnote.lineHeight, textAlign: 'center' }}>
+        {strings.quiz.revealSubtitle}
+      </Text>
 
       <Button label={strings.quiz.revealCta} onPress={onStepIn} haptic />
     </View>
@@ -172,8 +185,7 @@ const styles = StyleSheet.create({
     borderRadius: GLOW_SIZE / 2,
   },
   archetype: {
-    // Editorial serif is permitted for the era title (spec allowance).
-    fontFamily: 'Georgia',
+    // Sans, per spec — the editorial serif is reserved for the era title only.
     fontWeight: '700',
     textAlign: 'center',
   },

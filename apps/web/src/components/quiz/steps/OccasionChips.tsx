@@ -78,7 +78,7 @@ export function OccasionChips({ step, selectedIds, onToggle }: OccasionChipsProp
             transition={transitionFor(motionToken.springs.snappy, reduced)}
           >
             <span style={thumbStyle}>
-              <QuizImage imageKey={option.imageKey} />
+              <QuizImage imageKey={'imageKey' in option ? option.imageKey : undefined} />
             </span>
             {option.label}
           </motion.button>

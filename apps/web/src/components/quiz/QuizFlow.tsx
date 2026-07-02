@@ -225,7 +225,9 @@ export function QuizFlow({ onComplete, onSkip }: QuizFlowProps) {
 
           {isMulti ? (
             <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 'var(--space-2)' }}>
-              <Button onClick={handleContinue}>{strings.common.continue}</Button>
+              <Button onClick={handleContinue} disabled={selectedIds.length === 0}>
+                {strings.common.continue}
+              </Button>
             </div>
           ) : null}
         </motion.div>

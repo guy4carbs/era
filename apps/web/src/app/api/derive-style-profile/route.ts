@@ -40,7 +40,7 @@ import {
 } from '@era/core/quiz';
 import { aiEvents, createDbClient, styleProfiles } from '@era/db';
 
-import { auth } from '../../../../lib/auth.ts';
+import { auth } from '../../../lib/auth.ts';
 
 const db = createDbClient(process.env.DATABASE_URL!);
 
@@ -133,12 +133,15 @@ async function polishWithLlm(
       {
         model: 'claude-opus-4-8',
         max_tokens: 2048,
-        output_config: { format: zodOutputFormat(StyleProfileResultSchema), effort: 'low' },
+        // StyleProfileResultSchema is a zod v3 schema (core pins zod ^3); the SDK
+        // helper's types expect zod v4. Cast at this dormant-LLM boundary rather
+        // than touch the frozen schema — the runtime schema is unchanged.
+        output_config: { format: zodOutputFormat(StyleProfileResultSchema as never), effort: 'low' },
         messages: [{ role: 'user', content: buildPrompt(answers, det, scoring) }],
       },
       { timeout: 15_000 },
     );
-    return response.parsed_output ?? null;
+    return (response.parsed_output as StyleProfileResult | null) ?? null;
   } catch (error) {
     console.error('[era-quiz] LLM polish failed; falling back to deterministic profile:', error);
     return null;

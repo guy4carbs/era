@@ -3,15 +3,12 @@
  * instead of photos.
  *
  * Each option (all_neutrals | neutral_pops | full_color) shows a row of colour
- * swatches so the choice reads as a palette, not a word. Swatches are sourced
- * from the theme's own token colours (mode-aware neutrals, accent, and the
- * semantic hues) so nothing here is a literal design value.
- *
- * NOTE (contract): the handoff calls for swatches drawn from ARCHETYPES hex
- * data. That module's per-archetype hex shape isn't finalized yet, so this uses
- * token colours as a faithful stand-in — swap the `boardFor` source once the
- * ARCHETYPES palette shape lands.
+ * swatches so the choice reads as a palette, not a word. Swatches are DATA from
+ * the ARCHETYPES garment-palette hexes in @era/core/quiz — not UI-chrome tokens,
+ * so they intentionally bypass the theme (a garment palette is the same in
+ * light and dark mode).
  */
+import { ARCHETYPES } from '@era/core/quiz';
 import { radii, rnShadow, spacing, typeRamp } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -26,19 +23,32 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 const PRESS_SCALE = 0.98;
 const REST_SCALE = 1;
 
-type ThemeColors = ReturnType<typeof useTheme>['colors'];
+// Garment-world swatch sets composed from ARCHETYPES palette data.
+const NEUTRAL_ANCHORS = [
+  ...ARCHETYPES.minimalist.anchorHexes.slice(0, 3),
+  ...ARCHETYPES.quiet_luxe.anchorHexes.slice(0, 2),
+];
 
-/** Map a palette option to its swatch set, all sourced from token colours. */
-function boardFor(optionId: string, c: ThemeColors): readonly string[] {
+/** Map a palette option to its swatch set, sourced from ARCHETYPES hex data. */
+function boardFor(optionId: string): readonly string[] {
   switch (optionId) {
     case 'all_neutrals':
-      return [c.bg, c.surface, c.hairline, c.secondaryStrong, c.text];
+      return NEUTRAL_ANCHORS;
     case 'neutral_pops':
-      return [c.surface, c.hairline, c.secondaryStrong, c.accent, c.text];
+      return [
+        ...NEUTRAL_ANCHORS.slice(0, 3),
+        ...ARCHETYPES.classic.accentHexes.slice(0, 1),
+        ...ARCHETYPES.streetwear.accentHexes.slice(0, 1),
+      ];
     case 'full_color':
-      return [c.accent, c.success, c.danger, c.secondaryStrong, c.text];
+      return [
+        ...ARCHETYPES.eclectic.accentHexes.slice(0, 2),
+        ...ARCHETYPES.romantic.accentHexes.slice(0, 1),
+        ...ARCHETYPES.streetwear.accentHexes.slice(0, 1),
+        ...ARCHETYPES.classic.accentHexes.slice(0, 1),
+      ];
     default:
-      return [c.surface, c.hairline, c.accent, c.secondaryStrong, c.text];
+      return NEUTRAL_ANCHORS;
   }
 }
 
@@ -75,7 +85,7 @@ function PaletteBoard({ option, selected, onSelect }: PaletteBoardProps) {
   const scale = useSharedValue(REST_SCALE);
   const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
-  const swatches = boardFor(option.id, colors);
+  const swatches = boardFor(option.id);
 
   return (
     <AnimatedPressable

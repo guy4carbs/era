@@ -17,8 +17,8 @@ export interface PaletteBoardsProps {
 const dedupe = (hexes: readonly string[]): string[] => [...new Set(hexes)];
 
 // Palette swatches are DATA sourced from the archetype dictionary, never typed
-// literals: `paletteAnchors` are the neutral bases, `accentHexes` the pops.
-const NEUTRALS = dedupe(Object.values(ARCHETYPES).flatMap((a) => a.paletteAnchors));
+// literals: `anchorHexes` are the neutral bases, `accentHexes` the pops.
+const NEUTRALS = dedupe(Object.values(ARCHETYPES).flatMap((a) => a.anchorHexes));
 const ACCENTS = dedupe(Object.values(ARCHETYPES).flatMap((a) => a.accentHexes));
 
 const BOARD_SIZE = 6;
