@@ -34,8 +34,17 @@ export const serverEnvSchema = z.object({
   R2_ACCOUNT_ID: requiredString,
   R2_ACCESS_KEY_ID: requiredString,
   R2_SECRET_ACCESS_KEY: requiredString,
-  R2_BUCKET_GARMENTS: requiredString,
+  // Four asset buckets. Raw originals and avatars are private (served only via
+  // short-lived presigned GETs); cutouts and covers are served from a public
+  // base URL for public profiles.
+  R2_BUCKET_ITEMS_RAW: requiredString,
+  R2_BUCKET_ITEMS_CUTOUT: requiredString,
+  R2_BUCKET_OUTFIT_COVERS: requiredString,
   R2_BUCKET_AVATARS: requiredString,
+  // Public base URLs for the two publicly-served buckets (r2.dev for now, a
+  // custom domain later). Anonymous reads of public-profile assets hit these.
+  R2_PUBLIC_URL_CUTOUTS: z.string().url(),
+  R2_PUBLIC_URL_COVERS: z.string().url(),
   ANTHROPIC_API_KEY: requiredString,
   VISION_API_KEY: requiredString,
   BG_REMOVAL_API_KEY: requiredString,
