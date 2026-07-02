@@ -111,7 +111,7 @@ export const strings = {
       "You can already build this from your closet. If a real gap shows up, I'll point it out.",
   },
 
-  /** The Closet tab — everything the user owns. */
+  /** The Closet tab — everything the user owns, plus the add-a-piece flow. */
   closet: {
     /** Canonical empty-closet line. Warm, low-effort framing. */
     empty: "Let's get your first pieces in — it takes a minute.",
@@ -119,8 +119,54 @@ export const strings = {
     firstItemAdded: "That's one. Your closet starts here.",
     /** Confirmation that an item was saved. */
     itemSaved: 'Saved to your closet.',
-    /** While a cutout is being generated for a new item. */
-    processing: 'Cleaning up the photo — this takes a moment.',
+
+    // --- add a piece: entry → source → upload → process → confirm → save ---
+
+    /** Entry button that starts the add-a-piece flow. */
+    addCta: 'Add a piece',
+    /** Source-chooser label: pick from the photo library. */
+    pickPhoto: 'Choose a photo',
+    /** Source-chooser label: open the camera. */
+    takePhoto: 'Take a photo',
+    /** Short progress line while the photo uploads. */
+    uploading: 'Uploading…',
+    /**
+     * While background removal and vision tagging run. Ovi voice, patient —
+     * frames it as her taking a proper look, not a machine crunching.
+     */
+    processing: "Getting a read on this one — I'll just be a moment.",
+    /** Confirm-screen heading when the AI tags landed — a genuine stylist beat. */
+    processedTitle: "Here's what I saw.",
+    /**
+     * Confirm-screen heading when processing failed or was dormant. Honest and
+     * warm; owns the miss and never blames the user for the photo.
+     */
+    manualTitle: "I couldn't quite read this one — mind tagging it for me?",
+    /** One-tap confirm on the add-a-piece screen. */
+    confirmCta: 'Looks right',
+    /** Short chip labels for the editable fields on the confirm screen. */
+    fieldLabels: {
+      category: 'Category',
+      name: 'Name',
+      brand: 'Brand',
+      colorPrimary: 'Main color',
+      colors: 'Colors',
+      pattern: 'Pattern',
+    },
+    /**
+     * Placeholder text for an unset field chip — nudges the tap that fills it,
+     * e.g. `fieldUnset('Brand')` → "Add brand". Takes the field's own label.
+     */
+    fieldUnset: (field: string): string => `Add ${field.toLowerCase()}`,
+    /**
+     * Post-confirm toast when a piece is saved. Pairs with the light-impact
+     * haptic — the same small warmth the outfit-save moment gets later.
+     */
+    saved: "That's one more — nicely done.",
+    /** Upload or tagging failed. Honest, no blame, points at a retry. */
+    addFailed: "That didn't go through — let's try once more.",
+    /** Retry affordance on the add-a-piece flow. */
+    retryCta: 'Try again',
   },
 
   /** The Design tab and saved outfits. */
@@ -195,6 +241,8 @@ export const strings = {
    * (short, skippable) and clear about what Ovi does with the answers.
    */
   quiz: {
+    /** Entry button that launches the style quiz (was a hard-coded literal). */
+    entryCta: 'Take the style quiz',
     /** Optional pre-quiz framing card title. */
     introTitle: "Let's find your era",
     /** Sets expectations plainly: short, low-stakes, skippable. */
