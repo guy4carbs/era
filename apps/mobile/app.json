@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "Era",
+    "slug": "era",
+    "scheme": "era",
+    "version": "0.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "bundleIdentifier": "com.era.app",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.era.app"
+    },
+    "plugins": ["expo-router", "expo-secure-store"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

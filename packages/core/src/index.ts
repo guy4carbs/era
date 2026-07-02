@@ -24,6 +24,11 @@ export {
 } from './authz.ts';
 export type { AuthContext, AuthzErrorCode, VisibilityResource } from './authz.ts';
 
+// Platform-free auth API contract — the single surface both web and mobile call
+// into for sign-in / sign-out, plus the shared session shape. See auth-api.ts.
+export { createEraAuthApi } from './auth-api.ts';
+export type { AuthSession, EraAuthApi, AuthClientLike, SessionState, UseSession } from './auth-api.ts';
+
 // Object storage — server-only R2 access. Presigning is always behind an authz
 // guard; clients never hold credentials. See storage.ts.
 export {
