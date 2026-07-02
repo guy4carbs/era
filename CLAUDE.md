@@ -66,3 +66,4 @@ Conventional commits: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, with a
 - CI runs on every PR and push to `main` via GitHub Actions — three checks: lint, typecheck, test.
 - Branch protection is enabled on `main` (direct pushes blocked; green CI required to merge).
 - The `check-types` task has been renamed to `typecheck`.
+- CI verified end to end via this PR (three green checks).
