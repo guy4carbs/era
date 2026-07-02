@@ -11,11 +11,20 @@
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "echo \"@era/db: no tests yet\""
+    "test": "echo \"@era/db: no tests yet\"",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.0",
+    "drizzle-orm": "^0.38.0"
   },
   "devDependencies": {
     "@era/eslint-config": "workspace:*",
     "@era/typescript-config": "workspace:*",
+    "dotenv": "^16.4.0",
+    "drizzle-kit": "^0.30.0",
     "eslint": "^9.17.0",
     "typescript": "^5.7.0"
   }

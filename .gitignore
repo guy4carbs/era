@@ -45,3 +45,4 @@ agentdb.rvf.lock
 ruvector.db
 *.rvf
 *.rvf.lock
+.neon
