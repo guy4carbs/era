@@ -76,6 +76,8 @@ function baseVars(): string {
     `--header-height:${unit(layout.headerHeight)}`,
     `--content-max:${unit(layout.contentMaxWidth)}`,
     `--feed-col:${unit(layout.feedColumnWidth)}`,
+    // Desktop left-rail width — composed from spacing tokens (no literal px).
+    `--rail-width:calc(var(--space-16) + var(--space-8))`,
     `--item-card-padding:${unit(itemCardPadding)}`,
     `--hover-lift:${unit(layout.hover.liftPx)}`,
     `--glass-blur:${unit(glass.blur)}`,
@@ -98,13 +100,21 @@ export const themeVarsCss = [
 
 /**
  * Responsive rules that need real media queries (which cannot read CSS vars in
- * their conditions) — generated from the token breakpoints. Currently: hide the
- * mobile tab bar at/above the md breakpoint, and the content container width.
+ * their conditions) — generated from the token breakpoints. The primary-nav
+ * chrome swaps at `lg`: below it the bottom tab bar shows (phone/tablet); at and
+ * above it the tab bar hides and the left rail takes over, with the shell inset
+ * for the rail's width. Everything else stays token-driven via the vars above.
  */
 export const responsiveCss = [
   `.era-container{width:100%;margin-inline:auto;max-width:var(--content-max);padding-inline:var(--space-4)}`,
   `.era-tabbar{display:flex}`,
-  `@media (min-width:${layout.breakpoints.md}px){.era-tabbar{display:none}}`,
+  `.era-rail{display:none}`,
+  `.era-tabs-shell{padding-bottom:calc(var(--tabbar-height) + var(--space-16))}`,
+  `@media (min-width:${layout.breakpoints.lg}px){` +
+    `.era-tabbar{display:none}` +
+    `.era-rail{display:flex}` +
+    `.era-tabs-shell{padding-bottom:var(--space-8);padding-left:var(--rail-width)}` +
+    `}`,
 ].join('\n');
 
 /**

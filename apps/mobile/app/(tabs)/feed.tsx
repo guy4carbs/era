@@ -1,0 +1,104 @@
+/**
+ * Feed — the landing tab for a signed-in user.
+ *
+ * Carries the greeting + sign-out that used to live on the root screen, plus a
+ * dev-accessible Design lab link. Empty state until the social feed lands.
+ */
+import { strings } from '@era/core/strings';
+import { spacing, typeRamp } from '@era/tokens';
+import { Link } from 'expo-router';
+import { StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { Button } from '@/components/Button';
+import { eraAuth, useSession } from '@/lib/auth-client';
+import { useTheme } from '@/lib/theme';
+
+const FEED_EMPTY = strings.feed.empty;
+
+// Route files require a default export — expo-router discovers screens this way.
+export default function FeedScreen() {
+  const { colors } = useTheme();
+  const { data } = useSession();
+
+  const user = data?.user;
+  const greetingName = user ? (user.name ?? user.email.split('@')[0] ?? user.email) : null;
+
+  return (
+    <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
+      <View style={styles.header}>
+        <Text
+          style={{
+            color: colors.text,
+            fontSize: typeRamp.title1.pt,
+            lineHeight: typeRamp.title1.lineHeight,
+            fontWeight: '600',
+          }}
+        >
+          Feed
+        </Text>
+        {greetingName ? (
+          <Text
+            style={{
+              color: colors.secondary,
+              fontSize: typeRamp.body.pt,
+              lineHeight: typeRamp.body.lineHeight,
+            }}
+          >
+            Hello, {greetingName}
+          </Text>
+        ) : null}
+      </View>
+
+      <View style={styles.body}>
+        <Text
+          style={{
+            color: colors.secondary,
+            fontSize: typeRamp.body.pt,
+            lineHeight: typeRamp.body.lineHeight,
+            textAlign: 'center',
+          }}
+        >
+          {FEED_EMPTY}
+        </Text>
+      </View>
+
+      <View style={styles.footer}>
+        <Button
+          label="Sign out"
+          variant="secondary"
+          onPress={() => {
+            void eraAuth.signOut();
+          }}
+        />
+        <Link
+          href="/design-lab"
+          style={{ color: colors.secondary, fontSize: typeRamp.footnote.pt }}
+        >
+          Design lab
+        </Link>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    paddingHorizontal: spacing.s6,
+    paddingTop: spacing.s8,
+    paddingBottom: spacing.s4,
+  },
+  header: {
+    gap: spacing.s2,
+  },
+  body: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  footer: {
+    gap: spacing.s3,
+    alignItems: 'center',
+  },
+});
