@@ -1,18 +1,13 @@
+import { spacing, typeRamp } from '@era/tokens';
+import { Link } from 'expo-router';
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Button } from '@/components/Button';
+import { Input } from '@/components/Input';
 import { eraAuth } from '@/lib/auth-client';
-
-const cream = '#F7F3EC';
-const ink = '#141210';
+import { useTheme } from '@/lib/theme';
 
 // The deep-link target that brings the user back into the app after auth.
 // Must match app.json's `scheme` and the server's trustedOrigins.
@@ -26,6 +21,7 @@ type Status =
 
 // Route files require a default export — expo-router discovers screens this way.
 export default function SignInScreen() {
+  const { colors } = useTheme();
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
 
@@ -56,17 +52,32 @@ export default function SignInScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Era</Text>
-        <Text style={styles.subtitle}>Your wardrobe, styled.</Text>
+        <Text
+          style={{
+            color: colors.text,
+            fontSize: typeRamp.largeTitle.pt,
+            lineHeight: typeRamp.largeTitle.lineHeight,
+            fontWeight: '700',
+          }}
+        >
+          Era
+        </Text>
+        <Text
+          style={{
+            color: colors.secondary,
+            fontSize: typeRamp.body.pt,
+            lineHeight: typeRamp.body.lineHeight,
+          }}
+        >
+          Your wardrobe, styled.
+        </Text>
       </View>
 
       <View style={styles.form}>
-        <TextInput
-          style={styles.input}
+        <Input
           placeholder="you@example.com"
-          placeholderTextColor="rgba(20,18,16,0.4)"
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
@@ -75,55 +86,59 @@ export default function SignInScreen() {
           keyboardType="email-address"
           inputMode="email"
           editable={!sending}
+          error={status.kind === 'error' ? status.message : undefined}
         />
 
-        <Pressable
-          accessibilityRole="button"
-          style={[styles.primary, sending && styles.disabled]}
+        <Button
+          label={sending ? '…' : 'Send magic link'}
+          variant="primary"
           disabled={sending}
           onPress={() => {
             void sendMagicLink();
           }}
-        >
-          {sending ? (
-            <ActivityIndicator color={cream} />
-          ) : (
-            <Text style={styles.primaryLabel}>Send magic link</Text>
-          )}
-        </Pressable>
+        />
+        {sending ? <ActivityIndicator color={colors.accent} /> : null}
 
         {status.kind === 'sent' && (
-          <Text style={styles.hint}>
-            Check your email for a sign-in link. In development the link is
-            printed to the server console.
+          <Text
+            style={{
+              color: colors.secondary,
+              fontSize: typeRamp.footnote.pt,
+              lineHeight: typeRamp.footnote.lineHeight,
+            }}
+          >
+            Check your email for a sign-in link. In development the link is printed
+            to the server console.
           </Text>
         )}
-        {status.kind === 'error' && <Text style={styles.error}>{status.message}</Text>}
 
         <View style={styles.divider}>
-          <View style={styles.rule} />
-          <Text style={styles.dividerLabel}>or</Text>
-          <View style={styles.rule} />
+          <View style={[styles.rule, { backgroundColor: colors.hairline }]} />
+          <Text style={{ color: colors.secondary, fontSize: typeRamp.footnote.pt }}>or</Text>
+          <View style={[styles.rule, { backgroundColor: colors.hairline }]} />
         </View>
 
-        <Pressable
-          accessibilityRole="button"
-          style={styles.secondary}
+        <Button
+          label="Continue with Apple"
+          variant="secondary"
           onPress={() => {
             void signInWith('apple');
           }}
-        >
-          <Text style={styles.secondaryLabel}>Continue with Apple</Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          style={styles.secondary}
+        />
+        <Button
+          label="Continue with Google"
+          variant="secondary"
           onPress={() => {
             void signInWith('google');
           }}
+        />
+
+        <Link
+          href="/design-lab"
+          style={[styles.labLink, { color: colors.secondary, fontSize: typeRamp.footnote.pt }]}
         >
-          <Text style={styles.secondaryLabel}>Continue with Google</Text>
-        </Pressable>
+          Design lab
+        </Link>
       </View>
     </SafeAreaView>
   );
@@ -136,87 +151,27 @@ function messageFor(error: unknown): string {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: cream,
-    paddingHorizontal: 24,
+    paddingHorizontal: spacing.s6,
     justifyContent: 'center',
-    gap: 40,
+    gap: spacing.s8,
   },
   header: {
-    gap: 8,
-  },
-  title: {
-    color: ink,
-    fontSize: 40,
-    fontWeight: '700',
-  },
-  subtitle: {
-    color: ink,
-    fontSize: 16,
-    opacity: 0.6,
+    gap: spacing.s2,
   },
   form: {
-    gap: 16,
-  },
-  input: {
-    borderColor: ink,
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: ink,
-  },
-  primary: {
-    backgroundColor: ink,
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  primaryLabel: {
-    color: cream,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  disabled: {
-    opacity: 0.6,
-  },
-  hint: {
-    color: ink,
-    fontSize: 14,
-    opacity: 0.7,
-    lineHeight: 20,
-  },
-  error: {
-    color: '#B00020',
-    fontSize: 14,
+    gap: spacing.s4,
   },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginVertical: 8,
+    gap: spacing.s3,
+    marginVertical: spacing.s2,
   },
   rule: {
     flex: 1,
     height: StyleSheet.hairlineWidth,
-    backgroundColor: ink,
-    opacity: 0.3,
   },
-  dividerLabel: {
-    color: ink,
-    fontSize: 14,
-    opacity: 0.5,
-  },
-  secondary: {
-    borderColor: ink,
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  secondaryLabel: {
-    color: ink,
-    fontSize: 16,
-    fontWeight: '500',
+  labLink: {
+    textAlign: 'center',
   },
 });
