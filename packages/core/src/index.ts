@@ -24,6 +24,17 @@ export {
 } from './authz.ts';
 export type { AuthContext, AuthzErrorCode, VisibilityResource } from './authz.ts';
 
+// Object storage — server-only R2 access. Presigning is always behind an authz
+// guard; clients never hold credentials. See storage.ts.
+export {
+  assetKey,
+  storageConfigFromEnv,
+  createStorageClient,
+  requestUploadUrl,
+  getAssetUrl,
+} from './storage.ts';
+export type { AssetBucket, StorageConfig, StorageClient } from './storage.ts';
+
 // Persistence type contract, re-exported type-only from @era/db.
 export type * from './db-types.ts';
 
