@@ -54,13 +54,22 @@ Conventional commits: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, with a
 - CI must be green (lint, typecheck, test) before a PR can merge.
 - Branch names are short kebab-case with a conventional prefix — e.g. `feat/closet-grid`, `fix/token-colors`.
 
+## Security
+
+- Secrets live only on the server. Clients (the browser bundle, the Expo app) never hold keys.
+- Every secret-bearing call goes through the API — the client asks, the server holds the credential.
+- Only `NEXT_PUBLIC_*` / `EXPO_PUBLIC_*` vars may reach a client bundle, and they must contain no secrets (public URLs only).
+- Env is validated at startup by `@era/core`'s zod env module (`loadServerEnv` et al.) — boot fails loudly, naming the missing var, and never printing values.
+- `.env*` files are gitignored (only `.env.example` is committed); real values live in local `.env` files and Railway service settings.
+
 ## Current state
 
 > Update this section as the build progresses.
 
 - Monorepo scaffolded (pnpm workspaces + Turborepo).
 - `apps/web` and `apps/mobile` are empty placeholders.
-- `packages/*` are typed placeholders.
+- Env contract + validation module landed: `apps/web/.env.example` and `apps/mobile/.env.example` define the env contracts, and `@era/core` ships a zod env module (`loadServerEnv`/`loadWebClientEnv`/`loadMobileClientEnv`) with real `node:test` tests.
+- `packages/core` now has real code and tests; `packages/tokens` and `packages/db` remain typed placeholders.
 - Nothing deployed.
 - GitHub remote is live: private repo `guy4carbs/era`.
 - CI runs on every PR and push to `main` via GitHub Actions — three checks: lint, typecheck, test.

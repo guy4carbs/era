@@ -1,0 +1,99 @@
+/**
+ * @era/core — environment variable validation.
+ *
+ * This module is the SINGLE SOURCE OF TRUTH for the shape of the Era
+ * environment. Call `loadServerEnv()` once at server startup so that boot
+ * FAILS FAST and LOUDLY when configuration is missing or malformed, rather
+ * than surfacing an obscure error deep inside a request handler.
+ *
+ * The client schemas (`webClientEnvSchema`, `mobileClientEnvSchema`) contain
+ * ONLY publicly-exposable values by design — anything prefixed `NEXT_PUBLIC_`
+ * or `EXPO_PUBLIC_` is shipped to the browser/device bundle. Never add a
+ * secret to a client schema.
+ *
+ * Validation failures NEVER echo the received value: secrets must not leak
+ * into logs. Error messages name the offending variable and the reason only.
+ */
+
+import { z } from 'zod';
+
+const requiredString = z.string().min(1);
+
+/**
+ * Server-side environment — secrets and privileged configuration. Required
+ * unless explicitly marked optional.
+ */
+export const serverEnvSchema = z.object({
+  DATABASE_URL: requiredString,
+  BETTER_AUTH_SECRET: requiredString,
+  BETTER_AUTH_URL: z.string().url(),
+  APPLE_OAUTH_CLIENT_ID: requiredString,
+  APPLE_OAUTH_CLIENT_SECRET: requiredString,
+  GOOGLE_OAUTH_CLIENT_ID: requiredString,
+  GOOGLE_OAUTH_CLIENT_SECRET: requiredString,
+  R2_ACCOUNT_ID: requiredString,
+  R2_ACCESS_KEY_ID: requiredString,
+  R2_SECRET_ACCESS_KEY: requiredString,
+  R2_BUCKET_GARMENTS: requiredString,
+  R2_BUCKET_AVATARS: requiredString,
+  ANTHROPIC_API_KEY: requiredString,
+  VISION_API_KEY: requiredString,
+  BG_REMOVAL_API_KEY: requiredString,
+  // Phase 2 — affiliate product feed. Optional until that feature ships.
+  AFFILIATE_FEED_KEY: z.string().min(1).optional(),
+});
+
+/** Public configuration exposed to the Next.js web client bundle. */
+export const webClientEnvSchema = z.object({
+  NEXT_PUBLIC_API_URL: z.string().url(),
+  NEXT_PUBLIC_R2_PUBLIC_URL: z.string().url(),
+});
+
+/** Public configuration exposed to the Expo mobile client bundle. */
+export const mobileClientEnvSchema = z.object({
+  EXPO_PUBLIC_API_URL: z.string().url(),
+  EXPO_PUBLIC_R2_PUBLIC_URL: z.string().url(),
+});
+
+export type ServerEnv = z.infer<typeof serverEnvSchema>;
+export type WebClientEnv = z.infer<typeof webClientEnvSchema>;
+export type MobileClientEnv = z.infer<typeof mobileClientEnvSchema>;
+
+/**
+ * Format a ZodError into a multi-line, secret-safe message. Only the variable
+ * name (issue path) and the zod issue message are included — never the value
+ * that was received.
+ */
+function formatEnvError(error: z.ZodError): string {
+  const lines = error.issues.map((issue) => {
+    const name = issue.path.join('.');
+    return `  - ${name}: ${issue.message}`;
+  });
+  return `[@era/core] Invalid or missing environment variables:\n${lines.join('\n')}`;
+}
+
+function parseEnv<T extends z.ZodTypeAny>(schema: T, source: Record<string, string | undefined>): z.infer<T> {
+  const result = schema.safeParse(source);
+  if (!result.success) {
+    throw new Error(formatEnvError(result.error));
+  }
+  return result.data;
+}
+
+/**
+ * Parse and validate the server environment. Throws a loud, secret-safe Error
+ * naming every missing or invalid variable. Call once at server startup.
+ */
+export function loadServerEnv(source: Record<string, string | undefined> = process.env): ServerEnv {
+  return parseEnv(serverEnvSchema, source);
+}
+
+/** Parse and validate the web client's public environment. */
+export function loadWebClientEnv(source: Record<string, string | undefined> = process.env): WebClientEnv {
+  return parseEnv(webClientEnvSchema, source);
+}
+
+/** Parse and validate the mobile client's public environment. */
+export function loadMobileClientEnv(source: Record<string, string | undefined> = process.env): MobileClientEnv {
+  return parseEnv(mobileClientEnvSchema, source);
+}

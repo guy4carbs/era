@@ -11,11 +11,15 @@
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "echo \"@era/core: no tests yet\""
+    "test": "node --experimental-strip-types --test src/*.test.ts"
+  },
+  "dependencies": {
+    "zod": "^3.24.0"
   },
   "devDependencies": {
     "@era/eslint-config": "workspace:*",
     "@era/typescript-config": "workspace:*",
+    "@types/node": "^22.0.0",
     "eslint": "^9.17.0",
     "typescript": "^5.7.0"
   }

@@ -2,6 +2,16 @@
  * @era/core — shared domain model for the Era virtual wardrobe.
  */
 
+export {
+  serverEnvSchema,
+  webClientEnvSchema,
+  mobileClientEnvSchema,
+  loadServerEnv,
+  loadWebClientEnv,
+  loadMobileClientEnv,
+} from './env.ts';
+export type { ServerEnv, WebClientEnv, MobileClientEnv } from './env.ts';
+
 export type Category = 'top' | 'bottom' | 'outerwear' | 'shoes' | 'accessory';
 
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter';
