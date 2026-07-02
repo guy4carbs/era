@@ -1,20 +1,21 @@
-import { Redirect } from 'expo-router';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { spacing, typeRamp } from '@era/tokens';
+import { Link, Redirect } from 'expo-router';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Button } from '@/components/Button';
 import { eraAuth, useSession } from '@/lib/auth-client';
-
-const cream = '#F7F3EC';
-const ink = '#141210';
+import { useTheme } from '@/lib/theme';
 
 // Route files require a default export — expo-router discovers screens this way.
 export default function HomeScreen() {
+  const { colors } = useTheme();
   const { data, isPending } = useSession();
 
   if (isPending) {
     return (
-      <SafeAreaView style={styles.centered}>
-        <ActivityIndicator color={ink} />
+      <SafeAreaView style={[styles.centered, { backgroundColor: colors.bg }]}>
+        <ActivityIndicator color={colors.text} />
       </SafeAreaView>
     );
   }
@@ -27,20 +28,43 @@ export default function HomeScreen() {
   const greetingName = name ?? email.split('@')[0] ?? email;
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]}>
       <View style={styles.body}>
-        <Text style={styles.greeting}>Hello, {greetingName}</Text>
-        <Text style={styles.email}>{email}</Text>
+        <Text
+          style={{
+            color: colors.text,
+            fontSize: typeRamp.title1.pt,
+            lineHeight: typeRamp.title1.lineHeight,
+            fontWeight: '600',
+          }}
+        >
+          Hello, {greetingName}
+        </Text>
+        <Text
+          style={{
+            color: colors.secondary,
+            fontSize: typeRamp.body.pt,
+            lineHeight: typeRamp.body.lineHeight,
+          }}
+        >
+          {email}
+        </Text>
       </View>
-      <Pressable
-        accessibilityRole="button"
-        style={styles.signOut}
-        onPress={() => {
-          void eraAuth.signOut();
-        }}
-      >
-        <Text style={styles.signOutLabel}>Sign out</Text>
-      </Pressable>
+      <View style={styles.footer}>
+        <Button
+          label="Sign out"
+          variant="secondary"
+          onPress={() => {
+            void eraAuth.signOut();
+          }}
+        />
+        <Link
+          href="/design-lab"
+          style={{ color: colors.secondary, fontSize: typeRamp.footnote.pt }}
+        >
+          Design lab
+        </Link>
+      </View>
     </SafeAreaView>
   );
 }
@@ -48,42 +72,22 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: cream,
-    paddingHorizontal: 24,
-    paddingVertical: 32,
+    paddingHorizontal: spacing.s6,
+    paddingVertical: spacing.s8,
     justifyContent: 'space-between',
   },
   centered: {
     flex: 1,
-    backgroundColor: cream,
     alignItems: 'center',
     justifyContent: 'center',
   },
   body: {
     flex: 1,
     justifyContent: 'center',
-    gap: 8,
+    gap: spacing.s2,
   },
-  greeting: {
-    color: ink,
-    fontSize: 28,
-    fontWeight: '600',
-  },
-  email: {
-    color: ink,
-    fontSize: 16,
-    opacity: 0.6,
-  },
-  signOut: {
-    borderColor: ink,
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingVertical: 14,
+  footer: {
+    gap: spacing.s3,
     alignItems: 'center',
-  },
-  signOutLabel: {
-    color: ink,
-    fontSize: 16,
-    fontWeight: '500',
   },
 });
