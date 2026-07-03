@@ -1,11 +1,15 @@
 /**
- * PATCH /api/items/[id]  { updates?: {...}, confirm?: boolean }
+ * PATCH /api/items/[id]  { updates?: {...}, confirm?: boolean, archived?: boolean }
  *
  * Edit an item's tags and/or confirm them. Each field the caller actually
  * changes is (a) written to the row and (b) recorded as an append-only ai_events
  * row of kind tag_correction — one event per changed field — so the correction
  * signal is captured for later model tuning. confirm:true flips tags_confirmed
  * and is not itself a correction event.
+ *
+ * archived is a visibility toggle, not a tag edit: archived:true removes the item
+ * from the closet gallery (archived:false restores it). It writes items.archived
+ * and, like confirm, is never recorded as a tag_correction.
  *
  * This is a WRITE, so it goes through the @era/core authz path: we load the item
  * (404 when it doesn't exist), then ownerOnly (403 when the caller isn't the
@@ -44,6 +48,7 @@ interface ItemUpdates {
 interface ParsedBody {
   updates: ItemUpdates;
   confirm: boolean;
+  archived?: boolean;
 }
 
 const UPDATABLE_FIELDS = ['category', 'name', 'brand', 'colorPrimary', 'colors', 'pattern'] as const;
@@ -73,7 +78,7 @@ function parseBody(body: unknown): ParsedBody | null {
   }
   const root = body as Record<string, unknown>;
   for (const key of Object.keys(root)) {
-    if (key !== 'updates' && key !== 'confirm') {
+    if (key !== 'updates' && key !== 'confirm' && key !== 'archived') {
       return null;
     }
   }
@@ -84,6 +89,14 @@ function parseBody(body: unknown): ParsedBody | null {
       return null;
     }
     confirm = root.confirm;
+  }
+
+  let archived: boolean | undefined;
+  if ('archived' in root && root.archived !== undefined) {
+    if (typeof root.archived !== 'boolean') {
+      return null;
+    }
+    archived = root.archived;
   }
 
   const updates: ItemUpdates = {};
@@ -138,7 +151,7 @@ function parseBody(body: unknown): ParsedBody | null {
     }
   }
 
-  return { updates, confirm };
+  return { updates, confirm, archived };
 }
 
 // True when a candidate value differs from the item's current value.
@@ -168,7 +181,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!parsed) {
     return NextResponse.json({ error: 'invalid' }, { status: 400 });
   }
-  const { updates, confirm } = parsed;
+  const { updates, confirm, archived } = parsed;
 
   const [item] = await db.select().from(items).where(eq(items.id, id)).limit(1);
   if (!item) {
@@ -195,6 +208,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
   if (confirm && item.tagsConfirmed !== true) {
     setClause.tagsConfirmed = true;
+  }
+  // archived is a visibility flag, not a tag edit — no ai_events row.
+  if (archived !== undefined && item.archived !== archived) {
+    setClause.archived = archived;
   }
 
   let updated: Item = item;

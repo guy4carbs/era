@@ -22,6 +22,9 @@ import { authClient } from '@/lib/auth-client';
 
 import type { ItemCategory, ItemPattern } from './constants';
 
+/** How a piece entered the wardrobe (mirrors the `item_source` DB enum). */
+export type ItemSource = 'photo' | 'link' | 'email_import';
+
 /** An item as the server models it (the fields the closet reads and edits). */
 export interface Item {
   readonly id: string;
@@ -32,11 +35,22 @@ export interface Item {
   readonly colors: readonly string[] | null;
   readonly pattern: ItemPattern | null;
   readonly tagsConfirmed: boolean;
+  /** Provenance — drives the detail sheet's "added from…" line. */
+  readonly source: ItemSource;
+  /** Numeric returns over JSON as a string; null when unpriced. */
+  readonly purchasePrice: string | null;
+  readonly currency: string | null;
+  /** Visibility flag — archived items leave the gallery (never deleted). */
+  readonly archived: boolean;
 }
 
-/** An item from `GET /api/items`, carrying its resolved (presigned/public) URL. */
+/**
+ * An item from `GET /api/items`, carrying its resolved (presigned/public) URL and
+ * the owner's wear count for this piece (0 until wear logging ships).
+ */
 export interface ItemWithDisplay extends Item {
   readonly displayUrl: string | null;
+  readonly wearCount: number;
 }
 
 /** The subset of fields the confirm editor can change. */
@@ -129,6 +143,32 @@ export async function fetchItems(): Promise<readonly ItemWithDisplay[]> {
     method: 'GET',
   });
   return items;
+}
+
+/** Read the owner's closet privacy flag (`true` = only the owner sees cutouts). */
+export async function getPrivacy(): Promise<boolean> {
+  const { isPrivate } = await apiFetch<{ isPrivate: boolean }>('/api/profile/privacy', {
+    method: 'GET',
+  });
+  return isPrivate;
+}
+
+/** Set the owner's closet privacy flag; returns the server's stored value. */
+export async function setPrivacy(isPrivate: boolean): Promise<boolean> {
+  const result = await apiFetch<{ isPrivate: boolean }>('/api/profile/privacy', {
+    method: 'PATCH',
+    body: { isPrivate },
+  });
+  return result.isPrivate;
+}
+
+/** Archive an item — it leaves the gallery but is not deleted. */
+export async function archiveItem(id: string): Promise<Item> {
+  const { item } = await apiFetch<{ item: Item }>(`/api/items/${id}`, {
+    method: 'PATCH',
+    body: { archived: true },
+  });
+  return item;
 }
 
 /** Ask the server for a short-lived presigned PUT to R2 for a raw upload. */

@@ -81,6 +81,24 @@ const resolveMoodId = (moodId: string): QuizMoodId =>
   (moodId in QUIZ_MOODS ? moodId : 'reset') as QuizMoodId;
 
 /**
+ * Plural, title-cased group headings for the closet gallery, keyed by the
+ * `item_category` enum. Kept beside the deck so a schema change surfaces here.
+ */
+const CLOSET_CATEGORY_LABELS: Record<string, string> = {
+  top: 'Tops',
+  bottom: 'Bottoms',
+  dress: 'Dresses',
+  outerwear: 'Outerwear',
+  shoes: 'Shoes',
+  bag: 'Bags',
+  hat: 'Hats',
+  scarf: 'Scarves',
+  watch: 'Watches',
+  jewelry: 'Jewelry',
+  accessory: 'Accessories',
+};
+
+/**
  * The full copy deck, grouped by surface. `as const` so every leaf is a literal
  * type — callers get autocomplete on the exact strings and can't typo a key.
  */
@@ -183,6 +201,78 @@ export const strings = {
     linkFailed: "I couldn't pull anything from that link — try a photo instead?",
     /** Brief success beat before the confirm screen when a link imports. */
     linkImported: 'Got it — take a look.',
+
+    // --- the closet gallery: search, filter, privacy, detail, archive ---
+
+    /** Placeholder in the gallery search field. */
+    searchPlaceholder: 'Search your closet…',
+    /** The "All" category chip that clears the filter and shows everything. */
+    filterAll: 'All',
+
+    /** Toggle state: this piece is private (only the owner sees it). */
+    privacyPrivate: 'Private',
+    /** Toggle state: this piece can appear on the owner's public profile. */
+    privacyPublic: 'Public',
+    /**
+     * One-line explanation of what private means. Honest about scope: is_private
+     * controls whether the closet surfaces on the *public profile* — it is a
+     * forward visibility control, not a retroactive guarantee that a cutout
+     * already shared can never be seen (cutouts live in a link-addressable
+     * bucket). So we promise "kept off your public profile", not "nobody can
+     * ever see this". See the storage backlog before public profiles ship.
+     */
+    privacyHintPrivate: 'Kept off your public profile — only you see your closet here.',
+    /** One-line explanation of what public means — honest about visibility. */
+    privacyHintPublic: 'This can show up on your public profile.',
+
+    /**
+     * Wear-count line for the detail sheet. Zero reads as an invitation, not a
+     * scold; otherwise it counts plainly. `detailWearCount(0)` → "Not worn yet".
+     */
+    detailWearCount: (n: number): string => (n <= 0 ? 'Not worn yet' : `Worn ${n}×`),
+    /**
+     * Humanizes where a piece came from for the detail sheet, from its
+     * `item.source`. Unknown sources fall back to a plain, honest line.
+     */
+    detailSource: (source: string): string => {
+      switch (source) {
+        case 'photo':
+          return 'Added from a photo';
+        case 'link':
+          return 'Added from a link';
+        case 'email_import':
+          return 'From an email receipt';
+        default:
+          return 'Added to your closet';
+      }
+    },
+
+    /** Detail-sheet action: edit this piece's tags. */
+    edit: 'Edit',
+    /** Detail-sheet action: archive this piece. */
+    archive: 'Archive',
+    /** Gentle confirm before archiving — frames it as reversible, not deletion. */
+    archiveConfirm: "Tuck this away? It leaves your closet but isn't deleted.",
+    /** Toast after a piece is archived. */
+    archived: 'Tucked away. You can bring it back anytime.',
+
+    /**
+     * Empty-gallery title. Warm and inviting — the state that sells the two ways
+     * in (a photo or a link). Pairs with {@link strings.closet.emptyBody}.
+     */
+    emptyTitle: 'Your closet is a blank canvas',
+    /**
+     * Empty-gallery body. Names both import paths plainly so the two Add
+     * affordances make sense at a glance.
+     */
+    emptyBody: 'Snap a photo of something you own, or paste a link to a piece you love — either way in works.',
+
+    /**
+     * Title-cases an item category into a plural group heading for the gallery,
+     * from its `item.category`. Covers all eleven enum values; unknown values
+     * fall back to a plain "Other" heading so this never renders a raw slug.
+     */
+    categoryLabel: (category: string): string => CLOSET_CATEGORY_LABELS[category] ?? 'Other',
   },
 
   /** The Design tab and saved outfits. */

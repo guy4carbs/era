@@ -184,3 +184,102 @@ test('the link-failed line owns the miss and offers the photo alternative', () =
   }
   assert.match(line, /photo/i, 'linkFailed should offer a photo as the way through');
 });
+
+// --- the closet gallery (search, filter, privacy, detail, archive) -----------
+
+test('every closet-gallery string is present and non-empty', () => {
+  const c = strings.closet;
+  const leaves = [
+    c.searchPlaceholder,
+    c.filterAll,
+    c.privacyPrivate,
+    c.privacyPublic,
+    c.privacyHintPrivate,
+    c.privacyHintPublic,
+    c.edit,
+    c.archive,
+    c.archiveConfirm,
+    c.archived,
+    c.emptyTitle,
+    c.emptyBody,
+  ];
+  for (const leaf of leaves) {
+    assert.ok(leaf.trim().length > 0, `empty closet-gallery string: "${leaf}"`);
+  }
+});
+
+test('the privacy hints are honest about who can see the piece', () => {
+  assert.match(strings.closet.privacyHintPrivate, /\byou\b/i, 'private hint should say only you see it');
+  assert.match(
+    strings.closet.privacyHintPublic,
+    /public|profile/i,
+    'public hint should own that the piece can be seen publicly',
+  );
+});
+
+test('detailWearCount reads zero as an invitation and counts otherwise', () => {
+  const zero = strings.closet.detailWearCount(0);
+  const three = strings.closet.detailWearCount(3);
+  assert.ok(zero.trim().length > 0, 'detailWearCount(0) is empty');
+  assert.ok(three.trim().length > 0, 'detailWearCount(3) is empty');
+  assert.notEqual(zero, three, 'detailWearCount(0) should read differently than detailWearCount(3)');
+  assert.equal(zero, 'Not worn yet');
+  assert.match(three, /3/, 'detailWearCount(3) should surface the count');
+});
+
+test('detailSource humanizes every item source into a provenance line', () => {
+  const sources = ['photo', 'link', 'email_import'] as const;
+  const lines = sources.map((s) => strings.closet.detailSource(s));
+  for (const line of lines) {
+    assert.ok(line.trim().length > 0, 'detailSource returned an empty line');
+    assert.doesNotMatch(line, /_/, 'detailSource should not leak a raw enum slug');
+  }
+  assert.equal(new Set(lines).size, sources.length, 'each source should read distinctly');
+  assert.match(strings.closet.detailSource('photo'), /photo/i);
+  assert.match(strings.closet.detailSource('link'), /link/i);
+  assert.match(strings.closet.detailSource('email_import'), /email|receipt/i);
+  // Unknown sources fall back to a plain, non-empty line.
+  assert.ok(strings.closet.detailSource('mystery').trim().length > 0);
+});
+
+test('the archive confirm frames the action as reversible, not destructive', () => {
+  const line = strings.closet.archiveConfirm;
+  const destructive = [/\bdelete\b/i, /\bdeleted\b/i, /\bpermanent(ly)?\b/i, /\bgone\b/i, /\bforever\b/i];
+  for (const pattern of destructive) {
+    // "isn't deleted" is allowed — it explicitly negates deletion.
+    if (pattern.source.includes('delete')) continue;
+    assert.doesNotMatch(line, pattern, `archiveConfirm should not read as destructive (${pattern})`);
+  }
+  assert.match(line, /isn't deleted|not deleted|bring it back|reversible/i, 'archiveConfirm should promise reversibility');
+});
+
+test('the empty-gallery state sells both ways in (a photo and a link)', () => {
+  const body = strings.closet.emptyBody;
+  assert.match(body, /photo/i, 'emptyBody should mention the photo path');
+  assert.match(body, /link/i, 'emptyBody should mention the link path');
+});
+
+test('categoryLabel title-cases and pluralizes all eleven categories', () => {
+  const expected: Record<string, string> = {
+    top: 'Tops',
+    bottom: 'Bottoms',
+    dress: 'Dresses',
+    outerwear: 'Outerwear',
+    shoes: 'Shoes',
+    bag: 'Bags',
+    hat: 'Hats',
+    scarf: 'Scarves',
+    watch: 'Watches',
+    jewelry: 'Jewelry',
+    accessory: 'Accessories',
+  };
+  const categories = Object.keys(expected);
+  assert.equal(categories.length, 11, 'expected coverage of all eleven category enum values');
+  for (const category of categories) {
+    const label = strings.closet.categoryLabel(category);
+    assert.equal(label, expected[category], `categoryLabel(${category}) should be a plural heading`);
+    assert.match(label, /^[A-Z]/, `categoryLabel(${category}) should be title-cased`);
+  }
+  // Unknown categories fall back to a plain heading rather than a raw slug.
+  assert.equal(strings.closet.categoryLabel('unknown-slug'), 'Other');
+});

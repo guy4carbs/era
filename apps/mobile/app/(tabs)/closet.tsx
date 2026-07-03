@@ -1,22 +1,26 @@
 /**
- * Closet tab — everything the user owns, plus the entry to add a piece.
+ * Closet tab — the premium 2.5D gallery of everything the user owns.
  *
- * Fetches the user's items (re-fetching on focus, so a piece added or confirmed
- * elsewhere shows up on return). Empty shows the warm empty line and a single
- * Add button; a stocked closet shows a 2-column grid of 4:5 cards with a
- * floating Add pill above the tab bar. Cards with unconfirmed tags carry an
- * accent dot and resume the confirm step on tap. Colour and layout come from
- * tokens only.
+ * Fetches the user's items (re-fetching on focus, so a piece added, edited, or
+ * archived elsewhere is reflected on return). An empty closet shows the warm
+ * empty state with both add affordances; a stocked one shows a category-grouped,
+ * 2-column gallery of tilt-on-drag cutout tiles beneath a header (title, privacy
+ * toggle, search, filter chips). Tapping a tile opens the detail sheet, where a
+ * piece can be edited or archived. Colour, layout, motion, and copy come from
+ * tokens and strings only.
  */
 import { strings } from '@era/core/strings';
 import { layout, spacing, typeRamp } from '@era/tokens';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { ActivityIndicator, SectionList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
-import { ItemCard, fetchItems, type ItemWithDisplay } from '@/components/items';
+import { ClosetHeader, CutoutTile, ItemDetailSheet, Toast } from '@/components/closet';
+import { fetchItems, type ItemWithDisplay } from '@/components/items';
+import { CATEGORIES, type ItemCategory } from '@/components/items/constants';
+import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { useTheme } from '@/lib/theme';
 
 type LoadState = 'loading' | 'ready' | 'error';
@@ -26,19 +30,29 @@ export default function ClosetScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
   const [items, setItems] = useState<readonly ItemWithDisplay[]>([]);
   const [state, setState] = useState<LoadState>('loading');
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState<ItemCategory | null>(null);
+  const [selected, setSelected] = useState<ItemWithDisplay | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const query = useDebouncedValue(search.trim().toLowerCase(), 200);
 
   const load = useCallback(async () => {
     try {
-      setItems(await fetchItems());
+      const next = await fetchItems();
+      setItems(next);
+      // Keep the open detail sheet in sync after an edit (fresh tags/name).
+      setSelected((current) => (current ? (next.find((i) => i.id === current.id) ?? current) : current));
       setState('ready');
     } catch {
       setState('error');
     }
   }, []);
 
-  // Re-fetch each time the tab gains focus (e.g. returning from add-item).
   useFocusEffect(
     useCallback(() => {
       void load();
@@ -46,74 +60,183 @@ export default function ClosetScreen() {
   );
 
   const goAdd = useCallback(() => router.push('/add-item'), [router]);
-  const resume = useCallback((id: string) => router.push(`/add-item?item=${id}`), [router]);
 
-  // Float the Add pill above the (non-absolute) tab bar and the home-indicator.
-  const pillBottom = layout.tabBarHeight + insets.bottom + spacing.s3;
+  const openDetail = useCallback((item: ItemWithDisplay) => {
+    setSelected(item);
+    setSheetOpen(true);
+  }, []);
 
-  return (
-    <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
-      {state === 'loading' ? (
+  const onArchived = useCallback((id: string) => {
+    setItems((prev) => prev.filter((item) => item.id !== id));
+    setToast(strings.closet.archived);
+  }, []);
+
+  const onUpdated = useCallback((next: ItemWithDisplay) => {
+    setItems((prev) => prev.map((item) => (item.id === next.id ? next : item)));
+    setSelected(next);
+    setToast(strings.closet.itemSaved);
+  }, []);
+
+  // Categories the closet actually holds, in enum order — drives the filter chips.
+  const categories = useMemo(
+    () => CATEGORIES.filter((cat) => items.some((item) => item.category === cat)),
+    [items],
+  );
+
+  // Visible items after the search + category filter.
+  const visible = useMemo(
+    () =>
+      items.filter(
+        (item) =>
+          (category === null || item.category === category) && matchesQuery(item, query),
+      ),
+    [items, category, query],
+  );
+
+  // Group the visible items by category (enum order), each chunked into rows of 2.
+  const sections = useMemo(() => {
+    const byCategory = new Map<ItemCategory, ItemWithDisplay[]>();
+    for (const item of visible) {
+      const list = byCategory.get(item.category);
+      if (list) list.push(item);
+      else byCategory.set(item.category, [item]);
+    }
+    return CATEGORIES.flatMap((cat) => {
+      const list = byCategory.get(cat);
+      if (!list || list.length === 0) return [];
+      return [{ title: strings.closet.categoryLabel(cat), data: chunk(list, 2) }];
+    });
+  }, [visible]);
+
+  const toastBottom = layout.tabBarHeight + insets.bottom + spacing.s3;
+
+  if (state === 'loading') {
+    return (
+      <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
         <View style={styles.centered}>
           <ActivityIndicator color={colors.text} />
         </View>
-      ) : state === 'error' ? (
+      </SafeAreaView>
+    );
+  }
+
+  if (state === 'error') {
+    return (
+      <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
         <View style={styles.centered}>
-          <Title>Closet</Title>
           <Text style={centerCopy(colors.secondaryStrong)}>{strings.errors.generic}</Text>
           <Button label={strings.errors.retry} variant="secondary" onPress={load} />
         </View>
-      ) : items.length === 0 ? (
+      </SafeAreaView>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
         <View style={styles.empty}>
-          <Title>Closet</Title>
-          <View style={styles.emptyBody}>
-            <Text style={centerCopy(colors.secondaryStrong)}>{strings.closet.empty}</Text>
+          <Text
+            accessibilityRole="header"
+            style={{
+              color: colors.text,
+              fontSize: typeRamp.largeTitle.pt,
+              lineHeight: typeRamp.largeTitle.lineHeight,
+              fontWeight: '700',
+              textAlign: 'center',
+            }}
+          >
+            {strings.closet.emptyTitle}
+          </Text>
+          <Text style={centerCopy(colors.secondaryStrong)}>{strings.closet.emptyBody}</Text>
+          <View style={styles.emptyActions}>
             <Button label={strings.closet.addCta} onPress={goAdd} haptic />
+            <Button label={strings.closet.addFromLink} variant="secondary" onPress={goAdd} />
           </View>
         </View>
-      ) : (
-        <>
-          <FlatList
-            data={items}
-            keyExtractor={(item) => item.id}
-            numColumns={2}
-            renderItem={({ item }) => <ItemCard item={item} onResume={resume} />}
-            ListHeaderComponent={<Title>Closet</Title>}
-            columnWrapperStyle={styles.column}
-            contentContainerStyle={[
-              styles.grid,
-              { paddingBottom: pillBottom + layout.touchTarget.ios + spacing.s4 },
-            ]}
-            showsVerticalScrollIndicator={false}
-          />
-          <View style={[styles.pill, { bottom: pillBottom }]}>
-            <Button label={strings.closet.addCta} onPress={goAdd} haptic />
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
+      <SectionList
+        sections={sections}
+        keyExtractor={(row, index) => `${row[0]?.id ?? 'row'}-${index}`}
+        renderItem={({ item: row }) => (
+          <View style={styles.row}>
+            {row.map((tile) => (
+              <View key={tile.id} style={styles.cell}>
+                <CutoutTile item={tile} onPress={openDetail} />
+              </View>
+            ))}
+            {row.length === 1 ? <View style={styles.cell} /> : null}
           </View>
-        </>
-      )}
+        )}
+        renderSectionHeader={({ section }) => (
+          <Text
+            style={[
+              styles.sectionHeader,
+              {
+                color: colors.text,
+                backgroundColor: colors.bg,
+                fontSize: typeRamp.title3.pt,
+                lineHeight: typeRamp.title3.lineHeight,
+              },
+            ]}
+          >
+            {section.title}
+          </Text>
+        )}
+        ListHeaderComponent={
+          <ClosetHeader
+            search={search}
+            onSearch={setSearch}
+            categories={categories}
+            selected={category}
+            onSelect={setCategory}
+          />
+        }
+        stickySectionHeadersEnabled={false}
+        contentContainerStyle={[
+          styles.list,
+          { paddingBottom: toastBottom + layout.touchTarget.ios },
+        ]}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      />
+
+      <ItemDetailSheet
+        item={selected}
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        onUpdated={onUpdated}
+        onArchived={onArchived}
+      />
+
+      <Toast message={toast} onHide={() => setToast(null)} bottom={toastBottom} />
     </SafeAreaView>
   );
 }
 
-/** The screen title, shared across the empty / error / grid states. */
-function Title({ children }: { readonly children: string }) {
-  const { colors } = useTheme();
-  return (
-    <Text
-      style={{
-        color: colors.text,
-        fontSize: typeRamp.title1.pt,
-        lineHeight: typeRamp.title1.lineHeight,
-        fontWeight: '600',
-        marginBottom: spacing.s4,
-      }}
-    >
-      {children}
-    </Text>
-  );
+/** True when the query is empty or matches the item's name, brand, or category. */
+function matchesQuery(item: ItemWithDisplay, query: string): boolean {
+  if (query.length === 0) return true;
+  const haystack = [item.name, item.brand ?? '', strings.closet.categoryLabel(item.category)]
+    .join(' ')
+    .toLowerCase();
+  return haystack.includes(query);
 }
 
-/** Centered secondary copy — the shared style for empty / error lines. */
+/** Split a list into fixed-size rows (the last row may be short). */
+function chunk<T>(list: readonly T[], size: number): T[][] {
+  const rows: T[][] = [];
+  for (let i = 0; i < list.length; i += size) {
+    rows.push(list.slice(i, i + size));
+  }
+  return rows;
+}
+
+/** Centered secondary copy — shared by the empty / error states. */
 function centerCopy(color: string) {
   return {
     color,
@@ -136,26 +259,30 @@ const styles = StyleSheet.create({
   },
   empty: {
     flex: 1,
-    paddingHorizontal: spacing.s6,
-    paddingTop: spacing.s8,
-  },
-  emptyBody: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.s6,
-    paddingBottom: spacing.s16,
+    paddingHorizontal: spacing.s6,
   },
-  grid: {
+  emptyActions: {
+    alignSelf: 'stretch',
+    gap: spacing.s3,
+  },
+  list: {
     paddingHorizontal: layout.grid.mobileMargin,
     paddingTop: spacing.s8,
-    gap: layout.grid.gutter,
   },
-  column: {
+  row: {
+    flexDirection: 'row',
     gap: layout.grid.gutter,
+    marginBottom: layout.grid.gutter,
   },
-  pill: {
-    position: 'absolute',
-    left: spacing.s4,
+  cell: {
+    flex: 1,
+  },
+  sectionHeader: {
+    fontWeight: '600',
+    paddingTop: spacing.s4,
+    paddingBottom: spacing.s3,
   },
 });
