@@ -167,6 +167,22 @@ export const strings = {
     addFailed: "That didn't go through — let's try once more.",
     /** Retry affordance on the add-a-piece flow. */
     retryCta: 'Try again',
+
+    // --- add from a link: paste a product URL, let the server read the page ---
+
+    /** Entry label for adding a piece by pasting a product link. */
+    addFromLink: 'Add from a link',
+    /** Placeholder in the link field, inviting a product URL. */
+    pasteLink: 'Paste a product link…',
+    /** Progress line while the server fetches and reads the linked page. */
+    importLink: 'Reading that page for you…',
+    /**
+     * The link import found nothing usable. Honest, never blames the link or
+     * the user, and offers the photo path as a way through.
+     */
+    linkFailed: "I couldn't pull anything from that link — try a photo instead?",
+    /** Brief success beat before the confirm screen when a link imports. */
+    linkImported: 'Got it — take a look.',
   },
 
   /** The Design tab and saved outfits. */

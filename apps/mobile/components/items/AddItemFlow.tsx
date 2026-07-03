@@ -15,6 +15,11 @@
  * A resume (`resumeItemId`) jumps straight to confirm for an unconfirmed item.
  * Failures surface the honest `addFailed` line; retry re-runs the same step
  * with the image already in hand — never forcing a re-pick.
+ *
+ * The picker also offers "add from a link": paste a product URL (validated as
+ * https on the client) and the server reads the page and runs the same pipeline,
+ * landing on the same confirm step. A link that yields nothing shows the honest
+ * `linkFailed` line and drops back to the picker, so the photo path stays open.
  */
 import { strings } from '@era/core/strings';
 import { radii, rnShadow, spacing, typeRamp } from '@era/tokens';
@@ -26,17 +31,26 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { Input } from '@/components/Input';
 import { useTheme } from '@/lib/theme';
 
 import { ConfirmItem } from './ConfirmItem';
-import { processItem, requestUpload, uploadToR2 } from './api';
+import { importFromUrl, processItem, requestUpload, uploadToR2 } from './api';
 
 /** Longest-edge cap for uploads (px). Matches the web downscale + CLAUDE.md. */
 const MAX_EDGE = 1600;
 /** How long the saved line lingers before returning to the closet. */
 const SAVED_DWELL_MS = 900;
 
-type Stage = 'picker' | 'uploading' | 'processing' | 'confirm' | 'saved' | 'failed';
+type Stage =
+  | 'picker'
+  | 'uploading'
+  | 'processing'
+  | 'importing'
+  | 'confirm'
+  | 'saved'
+  | 'failed'
+  | 'linkFailed';
 
 interface AddItemFlowProps {
   /** When present, skip the picker and resume confirming this item. */
@@ -72,6 +86,21 @@ export function AddItemFlow({ resumeItemId }: AddItemFlowProps) {
       setStage('confirm');
     } catch {
       setStage('failed');
+    }
+  }, []);
+
+  // Import from a product link: the server reads the page and runs the same
+  // pipeline, so a success lands on the very same confirm step a photo does. A
+  // failure drops back to the picker, keeping the photo path one tap away.
+  const runImport = useCallback(async (url: string) => {
+    setStage('importing');
+    try {
+      const { item, processed } = await importFromUrl(url);
+      setItemId(item.id);
+      setVision(processed.vision);
+      setStage('confirm');
+    } catch {
+      setStage('linkFailed');
     }
   }, []);
 
@@ -120,11 +149,13 @@ export function AddItemFlow({ resumeItemId }: AddItemFlowProps) {
 
   switch (stage) {
     case 'picker':
-      return <Picker onPick={pick} />;
+      return <Picker onPick={pick} onImport={runImport} />;
     case 'uploading':
       return <Progress line={strings.closet.uploading} />;
     case 'processing':
       return <Progress line={strings.closet.processing} />;
+    case 'importing':
+      return <Progress line={strings.closet.importLink} />;
     case 'confirm':
       return itemId ? (
         <ConfirmItem itemId={itemId} vision={vision} onSaved={() => setStage('saved')} />
@@ -135,17 +166,76 @@ export function AddItemFlow({ resumeItemId }: AddItemFlowProps) {
       return <Saved />;
     case 'failed':
       return <Failure onRetry={retry} />;
+    // A link that read nothing: honest line, and a retry back to the picker so
+    // the photo path (and another paste) is right there.
+    case 'linkFailed':
+      return <Failure onRetry={() => setStage('picker')} line={strings.closet.linkFailed} />;
   }
 }
 
-/** The source chooser — two tappable cards. */
-function Picker({ onPick }: { readonly onPick: (source: 'camera' | 'library') => void }) {
+interface PickerProps {
+  readonly onPick: (source: 'camera' | 'library') => void;
+  readonly onImport: (url: string) => void;
+}
+
+/**
+ * The source chooser — take / choose a photo, plus an "add from a link" card
+ * that reveals a URL field. The link is validated as https before it can submit,
+ * so the submit button stays disabled until the paste is a usable link.
+ */
+function Picker({ onPick, onImport }: PickerProps) {
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [url, setUrl] = useState('');
+  const trimmed = url.trim();
+
+  const submit = () => {
+    if (!isImportableUrl(trimmed)) return;
+    void Haptics.selectionAsync();
+    onImport(trimmed);
+  };
+
   return (
     <View style={styles.picker}>
       <SourceCard label={strings.closet.takePhoto} onPress={() => onPick('camera')} />
       <SourceCard label={strings.closet.pickPhoto} onPress={() => onPick('library')} />
+      {linkOpen ? (
+        <View style={styles.linkPanel}>
+          <Input
+            value={url}
+            onChangeText={setUrl}
+            placeholder={strings.closet.pasteLink}
+            accessibilityLabel={strings.closet.pasteLink}
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoFocus
+            inputMode="url"
+            keyboardType="url"
+            returnKeyType="go"
+            onSubmitEditing={submit}
+            containerStyle={styles.linkInput}
+          />
+          <Button
+            label={strings.closet.addFromLink}
+            onPress={submit}
+            disabled={!isImportableUrl(trimmed)}
+          />
+        </View>
+      ) : (
+        <SourceCard label={strings.closet.addFromLink} onPress={() => setLinkOpen(true)} />
+      )}
     </View>
   );
+}
+
+/** True when `value` parses as an https URL with a host — the import gate. */
+function isImportableUrl(value: string): boolean {
+  if (!/^https:\/\//i.test(value)) return false;
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === 'https:' && parsed.hostname.length > 0;
+  } catch {
+    return false;
+  }
 }
 
 /** A single large source card with a selection tick on tap. */
@@ -220,8 +310,11 @@ function Saved() {
   );
 }
 
-/** The honest failure line with a retry that resumes the failed step. */
-function Failure({ onRetry }: { readonly onRetry: () => void }) {
+/**
+ * The honest failure line with a retry. Defaults to the upload/process `addFailed`
+ * line; a caller can pass a more specific line (e.g. the link miss).
+ */
+function Failure({ onRetry, line }: { readonly onRetry: () => void; readonly line?: string }) {
   const { colors } = useTheme();
   return (
     <View style={styles.centered}>
@@ -233,7 +326,7 @@ function Failure({ onRetry }: { readonly onRetry: () => void }) {
           textAlign: 'center',
         }}
       >
-        {strings.closet.addFailed}
+        {line ?? strings.closet.addFailed}
       </Text>
       <Button label={strings.closet.retryCta} variant="secondary" onPress={onRetry} />
     </View>
@@ -260,5 +353,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.s4,
     padding: spacing.s6,
+  },
+  // The revealed link entry sits to content height, so the two photo cards keep
+  // the room while the URL field + submit tuck in below.
+  linkPanel: {
+    gap: spacing.s3,
+  },
+  linkInput: {
+    alignSelf: 'stretch',
   },
 });

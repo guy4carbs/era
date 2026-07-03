@@ -67,6 +67,16 @@ export interface ProcessResult {
   };
 }
 
+/**
+ * The result of importing a piece from a product URL. Mirrors {@link ProcessResult}
+ * (the item ran the same processing pipeline) and adds `meta`, the provenance the
+ * server read off the page. The shape of `meta` is owned by the import route; the
+ * client only consumes `item` and `processed`, so it stays an opaque record here.
+ */
+export interface ImportResult extends ProcessResult {
+  readonly meta: Record<string, unknown>;
+}
+
 /** The structural slice of the auth client we call, named to stay strict. */
 interface AuthFetchClient {
   readonly $fetch?: <T>(
@@ -158,6 +168,19 @@ export async function processItem(rawKey: string): Promise<ProcessResult> {
   return apiFetch<ProcessResult>('/api/process-item', {
     method: 'POST',
     body: { rawKey },
+  });
+}
+
+/**
+ * Import a piece from a product URL. The server fetches the linked page, reads
+ * the product off it, and runs the same processing pipeline a photo upload does —
+ * so the result hands straight to the confirm step. Throws on any non-success
+ * (the 4xx `{ error }` case included), letting the caller surface the link retry.
+ */
+export async function importFromUrl(url: string): Promise<ImportResult> {
+  return apiFetch<ImportResult>('/api/import-from-url', {
+    method: 'POST',
+    body: { url },
   });
 }
 

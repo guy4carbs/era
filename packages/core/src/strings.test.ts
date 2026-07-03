@@ -165,3 +165,22 @@ test('the manual-fallback title owns the miss without blaming the user', () => {
     assert.doesNotMatch(strings.closet.manualTitle, pattern);
   }
 });
+
+// --- add from a link (closet flow) -------------------------------------------
+
+test('every add-from-a-link string is present and non-empty', () => {
+  const c = strings.closet;
+  const leaves = [c.addFromLink, c.pasteLink, c.importLink, c.linkFailed, c.linkImported];
+  for (const leaf of leaves) {
+    assert.ok(leaf.trim().length > 0, `empty add-from-a-link string: "${leaf}"`);
+  }
+});
+
+test('the link-failed line owns the miss and offers the photo alternative', () => {
+  const line = strings.closet.linkFailed;
+  const blamey = [/\byou (failed|didn't|forgot|messed)\b/i, /\byour fault\b/i, /\berror\b/i];
+  for (const pattern of blamey) {
+    assert.doesNotMatch(line, pattern);
+  }
+  assert.match(line, /photo/i, 'linkFailed should offer a photo as the way through');
+});

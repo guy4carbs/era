@@ -16,7 +16,15 @@ export interface AddItemFlowProps {
   resumeItemId?: string | null;
 }
 
-type Stage = 'picker' | 'loading' | 'uploading' | 'processing' | 'confirm' | 'saved' | 'error';
+type Stage =
+  | 'picker'
+  | 'loading'
+  | 'uploading'
+  | 'processing'
+  | 'importing'
+  | 'confirm'
+  | 'saved'
+  | 'error';
 
 /** Which stage failed — drives what the retry action re-runs. */
 type FailedStage = 'load' | 'upload' | 'process' | 'confirm';
@@ -80,6 +88,14 @@ const errorTextStyle: CSSProperties = {
   color: 'var(--color-text)',
 };
 
+/** Inline failure line shown above the picker when a link import comes back empty. */
+const linkErrorStyle: CSSProperties = {
+  margin: 0,
+  fontSize: typeRamp.footnote.rem,
+  lineHeight: `${typeRamp.footnote.lineHeight}px`,
+  color: 'var(--color-rust)',
+};
+
 /** A gentle breathing status line for the in-flight stages (reduced-motion safe). */
 function StatusPulse({ label }: { label: string }) {
   const reduced = useReducedMotion();
@@ -120,6 +136,10 @@ export function AddItemFlow({ resumeItemId = null }: AddItemFlowProps) {
   );
   const [saving, setSaving] = useState(false);
   const [failedStage, setFailedStage] = useState<FailedStage | null>(null);
+  // The pasted product URL (lifted so a failed import can be retried) and the
+  // one-line failure notice shown above the picker after an empty import.
+  const [linkUrl, setLinkUrl] = useState('');
+  const [linkError, setLinkError] = useState<string | null>(null);
 
   // Retained across retries so a failed step can resume without redoing prior work.
   const fileRef = useRef<File | null>(null);
@@ -197,6 +217,33 @@ export function AddItemFlow({ resumeItemId = null }: AddItemFlowProps) {
     }
   }
 
+  /**
+   * Import a piece from a pasted product URL. The server fetches the page,
+   * pulls an image + fields, and returns the same {item, processed} shape the
+   * photo path produces, so we resolve the display URL and land on the exact
+   * same confirm screen. A failure keeps the photo path reachable: we return to
+   * the picker with a one-line notice above it, the URL retained for a retry.
+   */
+  async function runImport(url: string) {
+    setLinkError(null);
+    setStage('importing');
+    try {
+      const res = await fetch('/api/import-from-url', {
+        method: 'POST',
+        headers: JSON_HEADERS,
+        body: JSON.stringify({ url }),
+      });
+      if (!res.ok) throw new Error('import failed');
+      const { item, processed } = (await res.json()) as { item: Item; processed: Processed };
+      const withDisplay = (await fetchItemWithDisplay(item.id)) ?? { ...item, displayUrl: null };
+      setConfirmData({ item: withDisplay, processed });
+      setStage('confirm');
+    } catch {
+      setLinkError(strings.closet.linkFailed);
+      setStage('picker');
+    }
+  }
+
   async function runConfirm(edits: ItemEdits) {
     if (!confirmData) return;
     lastEditsRef.current = edits;
@@ -222,6 +269,11 @@ export function AddItemFlow({ resumeItemId = null }: AddItemFlowProps) {
   function handlePick(file: File) {
     fileRef.current = file;
     void runUpload();
+  }
+
+  function handleLink(url: string) {
+    setLinkUrl(url);
+    void runImport(url);
   }
 
   function handleRetry() {
@@ -259,11 +311,27 @@ export function AddItemFlow({ resumeItemId = null }: AddItemFlowProps) {
           ) : null}
         </div>
 
-        {stage === 'picker' ? <PhotoPicker onPick={handlePick} /> : null}
+        {stage === 'picker' ? (
+          <>
+            {linkError ? (
+              <p style={linkErrorStyle} role="alert">
+                {linkError}
+              </p>
+            ) : null}
+            <PhotoPicker
+              onPick={handlePick}
+              onLink={handleLink}
+              linkValue={linkUrl}
+              onLinkChange={setLinkUrl}
+              linkFailed={Boolean(linkError)}
+            />
+          </>
+        ) : null}
 
         {stage === 'loading' ? <StatusPulse label={strings.closet.processing} /> : null}
         {stage === 'uploading' ? <StatusPulse label={strings.closet.uploading} /> : null}
         {stage === 'processing' ? <StatusPulse label={strings.closet.processing} /> : null}
+        {stage === 'importing' ? <StatusPulse label={strings.closet.importLink} /> : null}
 
         {stage === 'confirm' && confirmData ? (
           <ConfirmItem

@@ -96,6 +96,14 @@ Raw upload → processing → cutout stored → raw retained for future re-proce
 
 Live in `@era/core`: `requestUploadUrl()` and `getAssetUrl()`. Presigning is server-only; clients never hold R2 credentials.
 
+### Item import (Phase 2 completion)
+
+An item can enter the wardrobe three ways, all converging on the shared `processItemPipeline` (`apps/web/src/lib/item-pipeline.ts` — bg removal + vision, then persist), which sets `items.source` accordingly:
+
+- **Photo** (`source: 'photo'`) — `POST /api/process-item` on a raw upload. Live.
+- **Link** (`source: 'link'`) — `POST /api/import-from-url { url }`. **Live.** Server-side fetches the product page, scrapes JSON-LD/OpenGraph metadata (regex parsing — a real HTML parser is a Phase-2 nicety), downloads the product image, stores it to `items-raw`, and runs the pipeline with the scraped name/brand/price/currency as prefill. Every user-URL fetch goes through the SSRF gate in `apps/web/src/lib/url-import.ts` (https-only, no credentials/non-443 ports, all resolved addresses must be public, redirects re-validated per hop, wall timeout, capped body). Known Phase-2 hardening: pin the resolved IP at connect time to close the DNS-rebinding TOCTOU.
+- **Email receipt** (`source: 'email_import'`) — `POST /api/import-email`. **Scaffolded only** (route returns `501`, session-gated). The `ReceiptParser` interface + `ReceiptItem`/`ParsedEmail`/`ReceiptImportRequest` types are defined; the flow (email → parser registry by sender domain → per-item import via the same url/image pipeline) is documented in the route. Building the parser registry and ingest transport is the remaining Phase 2 completion work.
+
 ## Current state
 
 > Update this section as the build progresses.
