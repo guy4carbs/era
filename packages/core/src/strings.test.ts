@@ -110,3 +110,77 @@ test('eraFor falls back to the reset era for an unknown mood id', () => {
 test('progressLabel reads as a plain step-of-total a11y label', () => {
   assert.equal(strings.quiz.progressLabel(3, 12), 'Step 3 of 12');
 });
+
+test('the style-quiz entry CTA is present as copy, not a hard-coded literal', () => {
+  assert.equal(strings.quiz.entryCta, 'Take the style quiz');
+});
+
+// --- add a piece (closet flow) -----------------------------------------------
+
+test('every add-a-piece string is present and non-empty', () => {
+  const c = strings.closet;
+  const leaves = [
+    c.addCta,
+    c.pickPhoto,
+    c.takePhoto,
+    c.uploading,
+    c.processing,
+    c.processedTitle,
+    c.manualTitle,
+    c.confirmCta,
+    c.saved,
+    c.addFailed,
+    c.retryCta,
+  ];
+  for (const leaf of leaves) {
+    assert.ok(leaf.trim().length > 0, `empty add-a-piece string: "${leaf}"`);
+  }
+});
+
+test('every confirm-screen field label is a present, non-empty chip label', () => {
+  const labels = strings.closet.fieldLabels;
+  const keys = ['category', 'name', 'brand', 'colorPrimary', 'colors', 'pattern'] as const;
+  assert.equal(Object.keys(labels).length, keys.length);
+  for (const key of keys) {
+    assert.ok(labels[key].trim().length > 0, `empty field label: ${key}`);
+  }
+});
+
+test('fieldUnset returns a non-empty prompt that names the field or nudges an action', () => {
+  for (const label of Object.values(strings.closet.fieldLabels)) {
+    const prompt = strings.closet.fieldUnset(label);
+    assert.ok(prompt.trim().length > 0, `fieldUnset(${label}) is empty`);
+    const namesField = prompt.toLowerCase().includes(label.toLowerCase());
+    const nudgesAction = /\b(add|set|choose|pick|tag)\b/i.test(prompt);
+    assert.ok(
+      namesField || nudgesAction,
+      `fieldUnset(${label}) should name the field or nudge an action, got "${prompt}"`,
+    );
+  }
+});
+
+test('the manual-fallback title owns the miss without blaming the user', () => {
+  const blamey = [/\byou (failed|didn't|forgot|messed)\b/i, /\byour fault\b/i, /\berror\b/i];
+  for (const pattern of blamey) {
+    assert.doesNotMatch(strings.closet.manualTitle, pattern);
+  }
+});
+
+// --- add from a link (closet flow) -------------------------------------------
+
+test('every add-from-a-link string is present and non-empty', () => {
+  const c = strings.closet;
+  const leaves = [c.addFromLink, c.pasteLink, c.importLink, c.linkFailed, c.linkImported];
+  for (const leaf of leaves) {
+    assert.ok(leaf.trim().length > 0, `empty add-from-a-link string: "${leaf}"`);
+  }
+});
+
+test('the link-failed line owns the miss and offers the photo alternative', () => {
+  const line = strings.closet.linkFailed;
+  const blamey = [/\byou (failed|didn't|forgot|messed)\b/i, /\byour fault\b/i, /\berror\b/i];
+  for (const pattern of blamey) {
+    assert.doesNotMatch(line, pattern);
+  }
+  assert.match(line, /photo/i, 'linkFailed should offer a photo as the way through');
+});
