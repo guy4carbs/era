@@ -11,6 +11,7 @@
     "test": "echo \"web: no tests yet\""
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.110.0",
     "@better-auth/expo": "^1.1.0",
     "@era/core": "workspace:*",
     "@era/db": "workspace:*",

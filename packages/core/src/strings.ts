@@ -14,6 +14,73 @@
  */
 
 /**
+ * The six era-moods offered on the last step of the style quiz — "The era I'm
+ * entering". Evocative but wearable; a name you'd actually say out loud.
+ */
+export type QuizMoodId = 'reset' | 'refined' | 'bold' | 'soft' | 'experimental' | 'effortless';
+
+/** The six mood cards. Kept as a typed map so `eraFor` and the cards agree. */
+const QUIZ_MOODS: Record<QuizMoodId, { title: string; tagline: string }> = {
+  reset: {
+    title: 'The Clean Slate Era',
+    tagline: 'Strip it back and start with what actually feels like you.',
+  },
+  refined: {
+    title: 'The Quiet Luxe Era',
+    tagline: 'Fewer pieces, better ones, worn with intent.',
+  },
+  bold: {
+    title: 'The Statement Era',
+    tagline: 'Dress like you mean it and let the room notice.',
+  },
+  soft: {
+    title: 'The Soft Focus Era',
+    tagline: 'Easy layers, gentle color, nothing that fights you.',
+  },
+  experimental: {
+    title: 'The Wild Card Era',
+    tagline: 'Break your own rules and see what sticks.',
+  },
+  effortless: {
+    title: 'The Effortless Era',
+    tagline: 'Looking considered without thinking about it.',
+  },
+};
+
+/**
+ * The short noun each mood contributes to a starter era's name, fused with the
+ * user's archetype: `A ${archetype} ${core}` — e.g. "A Quiet Luxe Clean Slate".
+ */
+const QUIZ_ERA_CORES: Record<QuizMoodId, string> = {
+  reset: 'Clean Slate',
+  refined: 'Refinement',
+  bold: 'Statement',
+  soft: 'Soft Focus',
+  experimental: 'Wild Card',
+  effortless: 'Uniform',
+};
+
+/** One warm, honest line per mood, grounding the era in the user's archetype. */
+const QUIZ_ERA_BLURBS: Record<QuizMoodId, (archetype: string) => string> = {
+  reset: (a) =>
+    `A fresh start with ${a} at the center. I'll clear out the noise and rebuild around the pieces that actually feel like you.`,
+  refined: (a) =>
+    `${a}, dialed in. Fewer choices, better ones — everything earns its place and nothing has to shout.`,
+  bold: (a) =>
+    `${a} with the volume up. I'll lean into the pieces that get noticed and help you wear them like you mean it.`,
+  soft: (a) =>
+    `${a}, made gentler. Easy layers and quiet color for the days you'd rather not fight your clothes.`,
+  experimental: (a) =>
+    `${a}, off the usual path. I'll bend a few of your rules and keep whatever surprises you in a good way.`,
+  effortless: (a) =>
+    `${a} on autopilot — a go-to that reads as considered without asking much of you.`,
+};
+
+/** Fall back to 'reset' for any mood id we don't recognize. */
+const resolveMoodId = (moodId: string): QuizMoodId =>
+  (moodId in QUIZ_MOODS ? moodId : 'reset') as QuizMoodId;
+
+/**
  * The full copy deck, grouped by surface. `as const` so every leaf is a literal
  * type — callers get autocomplete on the exact strings and can't typo a key.
  */
@@ -121,6 +188,42 @@ export const strings = {
     continue: 'Continue',
     /** The anti-pushy escape hatch. Every promo surface must offer it. */
     notNow: 'Not now',
+  },
+
+  /**
+   * The style quiz — twelve taps that seed a starter era. Honest about the ask
+   * (short, skippable) and clear about what Ovi does with the answers.
+   */
+  quiz: {
+    /** Optional pre-quiz framing card title. */
+    introTitle: "Let's find your era",
+    /** Sets expectations plainly: short, low-stakes, skippable. */
+    introBody:
+      'Twelve quick taps, under two minutes. No wrong answers, and you can skip whenever you like.',
+    /** Quiz-specific escape hatch — "Not now" energy, in context. */
+    skip: 'Skip for now',
+    /** Accessible label for the progress indicator. */
+    progressLabel: (step: number, total: number): string => `Step ${step} of ${total}`,
+    /** The six era-mood cards for the final step ("The era I'm entering"). */
+    moods: QUIZ_MOODS,
+    /**
+     * Composes the starter era shown on the reveal and stored in the profile:
+     * fuses the chosen mood with the user's archetype. Unknown mood ids fall
+     * back to 'reset' so this never throws on bad input.
+     */
+    eraFor: (moodId: string, archetypeName: string): { title: string; description: string } => {
+      const id = resolveMoodId(moodId);
+      return {
+        title: `A ${archetypeName} ${QUIZ_ERA_CORES[id]}`,
+        description: QUIZ_ERA_BLURBS[id](archetypeName),
+      };
+    },
+    /** Reveal headline. */
+    revealTitle: 'Your era begins',
+    /** Grounds the reveal: what Ovi does with this, and that it's not a lock-in. */
+    revealSubtitle: 'This shapes what I suggest first. You can always change direction later.',
+    /** Reveal call to action. */
+    revealCta: 'Step in',
   },
 } as const;
 

@@ -1,6 +1,8 @@
+import Link from 'next/link';
 import { type CSSProperties } from 'react';
 import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
+import { Button } from '../../../components';
 
 const screenStyle: CSSProperties = {
   display: 'flex',
@@ -27,6 +29,9 @@ export default function DesignPage() {
     <main style={screenStyle}>
       <h1 style={titleStyle}>Design</h1>
       <p style={emptyStyle}>{strings.outfits.emptyDesign}</p>
+      <Link href="/quiz" style={{ alignSelf: 'start', textDecoration: 'none' }}>
+        <Button variant="secondary">Take the style quiz</Button>
+      </Link>
     </main>
   );
 }
