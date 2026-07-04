@@ -14,6 +14,7 @@ import {
   numeric,
   pgTable,
   primaryKey,
+  real,
   text,
   timestamp,
   uuid,
@@ -105,6 +106,14 @@ export const outfitItems = pgTable(
       .notNull()
       .references(() => items.id, { onDelete: 'cascade' }),
     layerOrder: integer('layer_order').notNull().default(0),
+    // Canvas transform, persisted so an outfit reopens with its exact
+    // arrangement. Position is normalized 0..1 (center-relative) rather than
+    // pixels so web and mobile render the same layout on different canvas
+    // sizes — each renderer multiplies by its own canvas dimensions.
+    posX: real('pos_x').notNull().default(0.5), // 0.5 = horizontal center
+    posY: real('pos_y').notNull().default(0.5), // 0.5 = vertical center
+    scale: real('scale').notNull().default(1), // size multiplier
+    rotation: real('rotation').notNull().default(0), // degrees
   },
   (table) => [primaryKey({ columns: [table.outfitId, table.itemId] })],
 );
