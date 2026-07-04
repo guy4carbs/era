@@ -278,10 +278,10 @@ export function OviChat({ itemContext, itemsById, onClose }: OviChatProps) {
         transition={transitionFor(motionToken.springs.gentle, reduced)}
         onClick={onClose}
       />
-      <GlassSheet>
+      <GlassSheet labelledBy="ovi-chat-title">
         <div style={rootStyle}>
           <header style={headerStyle}>
-            <h2 style={headerTitleStyle}>{strings.ovi.fabLabel}</h2>
+            <h2 id="ovi-chat-title" style={headerTitleStyle}>{strings.ovi.fabLabel}</h2>
             <button type="button" style={closeStyle} aria-label={strings.common.cancel} onClick={onClose}>
               <span aria-hidden="true">×</span>
             </button>

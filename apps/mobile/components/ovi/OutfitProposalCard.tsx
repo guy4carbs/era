@@ -11,7 +11,7 @@
 import { motion as motionTokens, radii, spacing, typeRamp } from '@era/tokens';
 import type { ProposedOutfit } from '@era/core/ovi';
 import { strings } from '@era/core/strings';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { Button } from '@/components/Button';
@@ -29,6 +29,8 @@ interface OutfitProposalCardProps {
   readonly status: ProposalStatus;
   readonly onSave: () => void;
   readonly onReject: () => void;
+  /** Once saved, opens the look on the canvas — the whole card becomes tappable. */
+  readonly onOpen?: () => void;
 }
 
 export function OutfitProposalCard({
@@ -37,25 +39,16 @@ export function OutfitProposalCard({
   status,
   onSave,
   onReject,
+  onOpen,
 }: OutfitProposalCardProps) {
   const { colors } = useTheme();
   const reduced = useReducedMotionSafe();
   const saved = status === 'saved';
   const busy = status === 'saving';
+  const tappable = saved && onOpen !== undefined;
 
-  return (
-    <Animated.View
-      entering={reduced ? undefined : FadeIn.duration(motionTokens.durations.minMs)}
-      accessibilityLabel={outfit.name}
-      style={[
-        styles.card,
-        {
-          borderRadius: radii.card,
-          backgroundColor: colors.surface,
-          borderColor: colors.hairline,
-        },
-      ]}
-    >
+  const body = (
+    <>
       <View style={styles.collage}>
         <Collage cover={null} images={images} />
       </View>
@@ -98,16 +91,32 @@ export function OutfitProposalCard({
       </View>
 
       {saved ? (
-        <Text
-          accessibilityRole="text"
-          style={{
-            color: colors.secondary,
-            fontSize: typeRamp.footnote.pt,
-            lineHeight: typeRamp.footnote.lineHeight,
-          }}
-        >
-          {strings.ovi.accepted}
-        </Text>
+        <View style={styles.savedRow}>
+          <Text
+            accessibilityRole="text"
+            style={{
+              color: tappable ? colors.accent : colors.secondary,
+              fontSize: typeRamp.footnote.pt,
+              lineHeight: typeRamp.footnote.lineHeight,
+              fontWeight: '600',
+            }}
+          >
+            {strings.ovi.accepted}
+          </Text>
+          {tappable ? (
+            <Text
+              importantForAccessibility="no"
+              style={{
+                color: colors.accent,
+                fontSize: typeRamp.footnote.pt,
+                lineHeight: typeRamp.footnote.lineHeight,
+                fontWeight: '600',
+              }}
+            >
+              →
+            </Text>
+          ) : null}
+        </View>
       ) : (
         <View style={styles.actions}>
           <Button
@@ -127,6 +136,34 @@ export function OutfitProposalCard({
           />
         </View>
       )}
+    </>
+  );
+
+  return (
+    <Animated.View
+      entering={reduced ? undefined : FadeIn.duration(motionTokens.durations.minMs)}
+      accessibilityLabel={outfit.name}
+      style={[
+        styles.card,
+        {
+          borderRadius: radii.card,
+          backgroundColor: colors.surface,
+          borderColor: colors.hairline,
+        },
+      ]}
+    >
+      {tappable ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={outfit.name}
+          onPress={onOpen}
+          style={styles.tapArea}
+        >
+          {body}
+        </Pressable>
+      ) : (
+        body
+      )}
     </Animated.View>
   );
 }
@@ -137,6 +174,16 @@ const styles = StyleSheet.create({
     padding: spacing.s3,
     borderWidth: StyleSheet.hairlineWidth,
     borderCurve: 'continuous',
+  },
+  // When the saved card is tappable, the Pressable carries the inter-row gap
+  // the card would otherwise provide to its direct children.
+  tapArea: {
+    gap: spacing.s3,
+  },
+  savedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   collage: {
     width: '100%',

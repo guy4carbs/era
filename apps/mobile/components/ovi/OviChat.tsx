@@ -17,6 +17,7 @@ import { layout, motion as motionTokens, radii, spacing, typeRamp } from '@era/t
 import type { OviIntent, ProposedOutfit } from '@era/core/ovi';
 import { strings } from '@era/core/strings';
 import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -54,6 +55,8 @@ interface ChatEntry {
   /** The proposal card's lifecycle; `dismissed` hides a passed look. */
   status?: ProposalStatus;
   dismissed?: boolean;
+  /** The saved outfit's id, set once accepted — makes the card tappable. */
+  savedId?: string;
 }
 
 interface OviChatProps {
@@ -75,10 +78,12 @@ const CHAT_ERROR = "I lost my thread for a second — try me again.";
 export function OviChat({ open, onClose, itemContext }: OviChatProps) {
   const { colors } = useTheme();
   const reduced = useReducedMotionSafe();
+  const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
 
   const [entries, setEntries] = useState<readonly ChatEntry[]>([]);
   const [draft, setDraft] = useState('');
+  const [pendingIntent, setPendingIntent] = useState<OviIntent | null>(null);
   const [thinking, setThinking] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   // id -> resolved cutout URL, for turning a proposal's item ids into images.
@@ -89,6 +94,7 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
     if (!open) return;
     setEntries([{ id: nextId(), role: 'assistant', content: strings.ovi.chatOpener }]);
     setDraft('');
+    setPendingIntent(null);
     setThinking(false);
     let active = true;
     void fetchItems()
@@ -136,6 +142,7 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
         return next;
       });
       setDraft('');
+      setPendingIntent(null);
       setThinking(true);
 
       void chatWithOvi({
@@ -169,9 +176,24 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
     [thinking, itemContext, resolveImages],
   );
 
+  /** "Style me for…" arms the intent and prefills the sentence for the user to finish. */
+  const armStyleFor = useCallback(() => {
+    setPendingIntent('style_for');
+    setDraft(strings.ovi.intentChips.styleFor.replace('…', ' '));
+  }, []);
+
   const setStatus = useCallback((id: string, patch: Partial<ChatEntry>) => {
     setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, ...patch } : e)));
   }, []);
+
+  /** Open a saved look on the canvas — the payoff after an accept. */
+  const openSaved = useCallback(
+    (outfitId: string) => {
+      router.push(`/outfit-canvas?outfit=${outfitId}`);
+      onClose();
+    },
+    [router, onClose],
+  );
 
   const onSave = useCallback(
     (entry: ChatEntry) => {
@@ -185,8 +207,8 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
         intent: entry.intent,
         rationale: outfit.rationale,
       })
-        .then(() => {
-          setStatus(entry.id, { status: 'saved' });
+        .then((saved) => {
+          setStatus(entry.id, { status: 'saved', savedId: saved.id });
           setToast(strings.ovi.accepted);
         })
         .catch(() => {
@@ -231,7 +253,7 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
           onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: !reduced })}
         >
           {entries.map((entry) => (
-            <Bubble key={entry.id} entry={entry} onSave={onSave} onReject={onReject} />
+            <Bubble key={entry.id} entry={entry} onSave={onSave} onReject={onReject} onOpen={openSaved} />
           ))}
           {thinking ? (
             <Animated.Text
@@ -252,7 +274,7 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
 
         <View style={styles.chips}>
           <Chip label={strings.ovi.intentChips.today} onToggle={() => send(strings.ovi.intentChips.today, 'today')} />
-          <Chip label={strings.ovi.intentChips.styleFor} onToggle={() => send(strings.ovi.intentChips.styleFor, 'style_for')} />
+          <Chip label={strings.ovi.intentChips.styleFor} selected={pendingIntent === 'style_for'} onToggle={armStyleFor} />
           {itemContext ? (
             <Chip label={strings.ovi.intentChips.styleItem} onToggle={() => send(strings.ovi.intentChips.styleItem, 'style_item')} />
           ) : null}
@@ -268,13 +290,13 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
             returnKeyType="send"
             maxLength={2000}
             editable={!thinking}
-            onSubmitEditing={() => send(draft, 'chat')}
+            onSubmitEditing={() => send(draft, pendingIntent ?? 'chat')}
           />
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Send"
             disabled={thinking || draft.trim().length === 0}
-            onPress={() => send(draft, 'chat')}
+            onPress={() => send(draft, pendingIntent ?? 'chat')}
             style={[
               styles.send,
               {
@@ -299,10 +321,12 @@ function Bubble({
   entry,
   onSave,
   onReject,
+  onOpen,
 }: {
   readonly entry: ChatEntry;
   readonly onSave: (entry: ChatEntry) => void;
   readonly onReject: (entry: ChatEntry) => void;
+  readonly onOpen: (outfitId: string) => void;
 }) {
   const { colors } = useTheme();
   const reduced = useReducedMotionSafe();
@@ -343,6 +367,7 @@ function Bubble({
           status={entry.status ?? 'idle'}
           onSave={() => onSave(entry)}
           onReject={() => onReject(entry)}
+          onOpen={entry.savedId ? () => onOpen(entry.savedId!) : undefined}
         />
       ) : null}
     </Animated.View>

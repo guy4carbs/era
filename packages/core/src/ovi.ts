@@ -368,8 +368,7 @@ function composeStyling(input: ComposeOutfitInput): OviResponse {
   const buildable = base !== undefined && (baseIsDress || bottom !== undefined);
   if (!buildable) {
     return {
-      reply:
-        "Your closet's a little thin to build a full look right now — add a few more pieces and I'll have plenty to work with.",
+      reply: strings.ovi.sparseCloset,
       outfit: null,
     };
   }
@@ -392,14 +391,22 @@ function composeStyling(input: ComposeOutfitInput): OviResponse {
   }
 
   const pieces = selected.map(describePiece);
-  const rationale =
+  const rationaleLead =
     pieces.length > 1
       ? `I anchored it on ${pieces[0]} and pulled the rest to match.${weatherClause(weather)}`
       : `Built around ${pieces[0]}.${weatherClause(weather)}`;
+  // Close on the trust rule, verbatim from Quill's deck: every deterministic
+  // look is built entirely from the closet, so Ovi says so and keeps buying honest.
+  const rationale = `${rationaleLead} ${strings.ovi.shopHonesty}`;
 
+  // Trim the greeting to its opening beat (drop the "— …" tail), but guard the
+  // surgery: if the strip leaves too little, fall back to the full greeting so
+  // the reply can't degrade to an empty or odd fragment.
+  const trimmedGreeting = strings.ovi.greeting.replace(/—.*/, '').trim();
+  const greeting = trimmedGreeting.length >= 3 ? trimmedGreeting : strings.ovi.greeting;
   const reply = focal
     ? "Here's a look I built around that piece — all from your closet."
-    : `${strings.ovi.greeting.replace(/—.*/, '').trim()} — here's a look from your closet.`;
+    : `${greeting} — here's a look from your closet.`;
 
   return {
     reply,
@@ -443,11 +450,10 @@ function composeWhatsMissing(items: readonly OviItem[], profile: StyleProfileLit
     }
   }
 
+  // Route the gap line through Quill's curated trust-rule string rather than
+  // inline prose: it names the thin category and keeps buying optional.
   const label = strings.closet.categoryLabel(gap).toLowerCase();
-  const reply =
-    gapCount === 0
-      ? `Honest read: you've got no ${label} in here yet. That's the one spot where a piece would open up the most looks.`
-      : `You're well stocked overall — the thinnest spot is ${label}. If a real gap turns up there, that's where I'd look first.`;
+  const reply = strings.ovi.gapHonest(label);
 
   // profile is accepted for symmetry with the styling path and future tuning.
   void profile;

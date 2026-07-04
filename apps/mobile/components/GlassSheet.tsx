@@ -80,6 +80,7 @@ export function GlassSheet({ open, onClose, children }: PropsWithChildren<GlassS
       </Animated.View>
 
       <Animated.View
+        accessibilityViewIsModal={open}
         style={[
           styles.sheet,
           {
