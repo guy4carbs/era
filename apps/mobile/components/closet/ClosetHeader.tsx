@@ -16,6 +16,7 @@ import type { ItemCategory } from '@/components/items/constants';
 import { useTheme } from '@/lib/theme';
 
 import { PrivacyToggle } from './PrivacyToggle';
+import { SettingsGear } from './SettingsGear';
 
 interface ClosetHeaderProps {
   readonly search: string;
@@ -25,24 +26,36 @@ interface ClosetHeaderProps {
   /** The active category filter, or null for "All". */
   readonly selected: ItemCategory | null;
   readonly onSelect: (category: ItemCategory | null) => void;
+  /** Open the settings screen (the gear beside the title). */
+  readonly onOpenSettings: () => void;
 }
 
-export function ClosetHeader({ search, onSearch, categories, selected, onSelect }: ClosetHeaderProps) {
+export function ClosetHeader({
+  search,
+  onSearch,
+  categories,
+  selected,
+  onSelect,
+  onOpenSettings,
+}: ClosetHeaderProps) {
   const { colors } = useTheme();
 
   return (
     <View style={styles.container}>
-      <Text
-        accessibilityRole="header"
-        style={{
-          color: colors.text,
-          fontSize: typeRamp.largeTitle.pt,
-          lineHeight: typeRamp.largeTitle.lineHeight,
-          fontWeight: '700',
-        }}
-      >
-        Closet
-      </Text>
+      <View style={styles.titleRow}>
+        <Text
+          accessibilityRole="header"
+          style={{
+            color: colors.text,
+            fontSize: typeRamp.largeTitle.pt,
+            lineHeight: typeRamp.largeTitle.lineHeight,
+            fontWeight: '700',
+          }}
+        >
+          Closet
+        </Text>
+        <SettingsGear onPress={onOpenSettings} />
+      </View>
 
       <PrivacyToggle />
 
@@ -79,6 +92,11 @@ const styles = StyleSheet.create({
   container: {
     gap: spacing.s4,
     paddingBottom: spacing.s4,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   chips: {
     flexDirection: 'row',

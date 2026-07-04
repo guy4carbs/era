@@ -1,6 +1,8 @@
+import type { CSSProperties, ReactNode } from 'react';
 import type { Metadata } from 'next';
-import type { ReactNode } from 'react';
+import Link from 'next/link';
 import { Fraunces } from 'next/font/google';
+import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { Pageview } from '../../components/site';
 
@@ -58,11 +60,64 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * Quiet legal footer for the public surface — a hairline rule over a muted row of
+ * links. Light touch by design: it lets the marketing landing (and the legal
+ * pages themselves) link out to Privacy + Terms without pulling focus from the
+ * hero. Tokens throughout; no motion.
+ */
+function SiteFooter() {
+  return (
+    <footer style={footerStyle}>
+      <span style={footerBrandStyle}>© Era</span>
+      <nav style={footerNavStyle} aria-label="Legal">
+        <Link href="/privacy" style={footerLinkStyle}>
+          Privacy
+        </Link>
+        <Link href="/terms" style={footerLinkStyle}>
+          Terms
+        </Link>
+      </nav>
+    </footer>
+  );
+}
+
+const footerStyle: CSSProperties = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 'var(--space-4)',
+  paddingBlock: 'var(--space-8)',
+  paddingInline: 'var(--space-4)',
+  marginTop: 'var(--space-16)',
+  borderTop: '1px solid var(--color-hairline)',
+};
+
+const footerBrandStyle: CSSProperties = {
+  fontSize: typeRamp.footnote.rem,
+  lineHeight: `${typeRamp.footnote.lineHeight}px`,
+  color: 'var(--color-secondary-strong)',
+};
+
+const footerNavStyle: CSSProperties = {
+  display: 'inline-flex',
+  gap: 'var(--space-4)',
+};
+
+const footerLinkStyle: CSSProperties = {
+  fontSize: typeRamp.footnote.rem,
+  lineHeight: `${typeRamp.footnote.lineHeight}px`,
+  color: 'var(--color-secondary-strong)',
+  textDecoration: 'none',
+};
+
 export default function SiteLayout({ children }: { children: ReactNode }) {
   return (
     <div className={serif.variable}>
       <Pageview />
       {children}
+      <SiteFooter />
     </div>
   );
 }

@@ -25,7 +25,13 @@
 
 import { randomUUID } from 'node:crypto';
 
-import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  DeleteObjectsCommand,
+  GetObjectCommand,
+  ListObjectsV2Command,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 import { AuthzError, ownerOnly, publicReadable, type AuthContext } from './authz.ts';
@@ -188,4 +194,93 @@ export async function getAssetUrl(
     Key: opts.key,
   });
   return getSignedUrl(client.s3, command, { expiresIn: PRESIGN_EXPIRES_IN });
+}
+
+/** DeleteObjects accepts at most this many keys per request (S3/R2 hard cap). */
+const DELETE_BATCH_MAX = 1000;
+
+/**
+ * Irreversibly delete EVERY object a user owns across ALL asset buckets — the
+ * storage half of full-account deletion (GDPR right-to-erasure + the App Store
+ * account-deletion requirement). The done-criterion is "zero storage objects".
+ *
+ * For each bucket in the config it paginates {@link ListObjectsV2Command} under
+ * the prefix `${userId}/`, following `ContinuationToken` to the very end — it
+ * never stops at the 1000-key page cap — then removes the collected keys with
+ * {@link DeleteObjectsCommand} in batches of ≤1000 ({@link DELETE_BATCH_MAX}).
+ *
+ * PREFIX SAFETY: the prefix is EXACTLY `${userId}/` with a trailing slash, so a
+ * user `"abc"` can never match objects under `"abcd/…"`. `userId` must be a
+ * non-empty, non-whitespace string; a blank id is refused outright rather than
+ * risking a bucket-wide (empty-prefix) delete.
+ *
+ * There is NO silent partial delete: any AWS error propagates to the caller,
+ * which decides how to react (the delete-account route runs this BEFORE it
+ * touches the database, so a failure here leaves the account fully intact and
+ * safely retryable).
+ *
+ * @returns the total number of objects deleted plus a per-bucket breakdown
+ *   (keyed by the resolved bucket name).
+ * @throws {Error} when `userId` is empty/whitespace, or on any AWS failure.
+ */
+export async function deleteUserObjects(
+  client: StorageClient,
+  userId: string,
+): Promise<{ deleted: number; byBucket: Record<string, number> }> {
+  if (userId.trim().length === 0) {
+    throw new Error('Refusing to delete objects for an empty userId.');
+  }
+  const prefix = `${userId}/`;
+
+  const byBucket: Record<string, number> = {};
+  let deleted = 0;
+
+  for (const bucket of Object.values(client.config.buckets)) {
+    let bucketDeleted = 0;
+    let continuationToken: string | undefined;
+
+    do {
+      const listed = await client.s3.send(
+        new ListObjectsV2Command({
+          Bucket: bucket,
+          Prefix: prefix,
+          ContinuationToken: continuationToken,
+        }),
+      );
+
+      const keys = (listed.Contents ?? [])
+        .map((object) => object.Key)
+        .filter((key): key is string => typeof key === 'string');
+
+      // Delete in batches of ≤1000 (a page can hold up to 1000 keys, and
+      // DeleteObjects refuses more than that per request).
+      for (let i = 0; i < keys.length; i += DELETE_BATCH_MAX) {
+        const batch = keys.slice(i, i + DELETE_BATCH_MAX);
+        const result = await client.s3.send(
+          new DeleteObjectsCommand({
+            Bucket: bucket,
+            Delete: { Objects: batch.map((Key) => ({ Key })), Quiet: true },
+          }),
+        );
+        // DeleteObjects returns HTTP 200 even when individual keys fail to
+        // delete — those failures come back in `Errors` and do NOT throw. For an
+        // erasure whose done-criterion is "zero objects", a silently-swallowed
+        // partial failure is a correctness bug, so surface it: the delete-account
+        // route catches this, returns 500, and the caller safely retries rather
+        // than being told (falsely) that deletion completed.
+        if (result.Errors && result.Errors.length > 0) {
+          throw new Error(`DeleteObjects left ${result.Errors.length} object(s) undeleted.`);
+        }
+        bucketDeleted += batch.length;
+      }
+
+      // Only follow the cursor while the listing is truncated.
+      continuationToken = listed.IsTruncated ? listed.NextContinuationToken : undefined;
+    } while (continuationToken);
+
+    byBucket[bucket] = bucketDeleted;
+    deleted += bucketDeleted;
+  }
+
+  return { deleted, byBucket };
 }

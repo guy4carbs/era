@@ -489,6 +489,59 @@ export const strings = {
   },
 
   /**
+   * Settings — the account + preferences screen reached from the closet header.
+   * Groups appearance, closet visibility, support/legal links, and the two
+   * account-exit actions. The delete-account copy is deliberately plain about
+   * irreversibility (an App Store requirement and the right-to-erasure) — no
+   * euphemism, no blame, and never a hidden default.
+   */
+  settings: {
+    /** Screen title, shown in the stack header. */
+    title: 'Settings',
+
+    /** Appearance section heading + the three theme choices. */
+    appearance: 'Appearance',
+    themeSystem: 'System',
+    themeLight: 'Light',
+    themeDark: 'Dark',
+
+    /** Closet-visibility section heading (the toggle mirrors profiles.is_private). */
+    privacyTitle: 'Closet privacy',
+
+    /** Support + legal section heading and its outbound rows. */
+    support: 'Support',
+    contactSupport: 'Contact support',
+    privacyPolicy: 'Privacy Policy',
+    terms: 'Terms of Service',
+
+    /** Account section heading + the sign-out row. */
+    account: 'Account',
+    signOut: 'Sign out',
+
+    /** Delete-account row label — destructive, never euphemised. */
+    deleteAccount: 'Delete account',
+    /** Confirmation-sheet title. */
+    deleteTitle: 'Delete your account?',
+    /** The plain truth about what deletion does — irreversible and total. */
+    deleteBody:
+      "This permanently deletes your account, closet, and all images. This can't be undone.",
+    /** Instruction above the typed-confirmation field, naming the account email. */
+    deleteConfirmPrompt: (email: string): string => `Type ${email} to confirm.`,
+    /** Placeholder in the typed-confirmation field. */
+    deleteConfirmPlaceholder: 'your email',
+    /** The destructive confirm button (enabled only when the typed email matches). */
+    deleteConfirmCta: 'Delete my account',
+    /** Inline error when the typed value doesn't match the account email. */
+    deleteMismatch: "That doesn't match your account email.",
+    /** While the deletion request is in flight. */
+    deleting: 'Deleting your account…',
+    /** Brief success state before the app returns to sign-in. */
+    deleted: 'Your account was deleted.',
+    /** Deletion failed server-side — do NOT sign out; invite a retry. */
+    deleteFailed: 'Something went wrong — please try again.',
+  },
+
+  /**
    * The style quiz — twelve taps that seed a starter era. Honest about the ask
    * (short, skippable) and clear about what Ovi does with the answers.
    */
