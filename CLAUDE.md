@@ -104,6 +104,90 @@ An item can enter the wardrobe three ways, all converging on the shared `process
 - **Link** (`source: 'link'`) — `POST /api/import-from-url { url }`. **Live.** Server-side fetches the product page, scrapes JSON-LD/OpenGraph metadata (regex parsing — a real HTML parser is a Phase-2 nicety), downloads the product image, stores it to `items-raw`, and runs the pipeline with the scraped name/brand/price/currency as prefill. Every user-URL fetch goes through the SSRF gate in `apps/web/src/lib/url-import.ts` (https-only, no credentials/non-443 ports, all resolved addresses must be public, redirects re-validated per hop, wall timeout, capped body). Known Phase-2 hardening: pin the resolved IP at connect time to close the DNS-rebinding TOCTOU.
 - **Email receipt** (`source: 'email_import'`) — `POST /api/import-email`. **Scaffolded only** (route returns `501`, session-gated). The `ReceiptParser` interface + `ReceiptItem`/`ParsedEmail`/`ReceiptImportRequest` types are defined; the flow (email → parser registry by sender domain → per-item import via the same url/image pipeline) is documented in the route. Building the parser registry and ingest transport is the remaining Phase 2 completion work.
 
+## Deployment (Railway)
+
+`apps/web` deploys to [Railway](https://railway.app) as a **single service** — the
+Next.js app serves the marketing site, the web app, and the `/api/*` routes from
+one process. There is no separate API service. Production runs on Railway project
+`era` (production environment); the mobile app is built/shipped separately via Expo
+and is not part of this service.
+
+### Build & run
+
+Railway builds from the **repo root** with Nixpacks. Config lives in two committed
+files:
+
+- **`railway.json`** — selects the Nixpacks builder and the deploy settings
+  (start command, health check on `/`, restart policy).
+- **`nixpacks.toml`** — pins the toolchain (Node 22 + pnpm 10.4.1 via corepack)
+  and defines the build phases. It builds **only** `apps/web` and the workspace
+  packages it depends on — `apps/mobile` never enters the build.
+
+| Phase | Command |
+|-------|---------|
+| Install | `corepack enable && corepack prepare pnpm@10.4.1 --activate && pnpm install --frozen-lockfile` |
+| Build | `pnpm exec turbo run build --filter=web...` |
+| Start | `pnpm --filter web start` → `next start -p ${PORT:-3000}` |
+
+`next start` binds `0.0.0.0:$PORT` (Railway injects `$PORT`). The workspace
+packages (`@era/core`, `@era/db`, `@era/tokens`) ship as TypeScript source and are
+transpiled by Next (`transpilePackages` in `next.config.ts`), so they have no
+build step of their own — the only build that runs is `next build`.
+
+### PR preview environments
+
+Railway's **PR Environments** feature gives every open PR an ephemeral deploy.
+Enable it once in the dashboard (not file-config):
+
+1. Connect the GitHub repo `guy4carbs/era` to the `Era` service (Railway GitHub App).
+2. Project → **Settings → Environments → Enable "Enable PR Environments"**.
+
+Each PR then spins up a temporary environment cloned from the base (production)
+environment — it inherits that environment's variables, so every required var
+below must be present on the base environment for previews to boot. Railway
+comments the preview URL on the PR and tears the environment down on merge/close.
+
+### Environment variables
+
+All are set as **service variables** in Railway (never committed). The server env
+is validated at boot by `@era/core`'s `loadServerEnv` — a missing/invalid var
+fails the deploy loudly, naming the offender. `.env.example` is the canonical list.
+
+**Server-only (required to boot):** `DATABASE_URL`, `BETTER_AUTH_SECRET`
+(32+ chars), `BETTER_AUTH_URL` (the live URL), `APPLE_OAUTH_CLIENT_ID`,
+`APPLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`,
+`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_ITEMS_RAW`,
+`R2_BUCKET_ITEMS_CUTOUT`, `R2_BUCKET_OUTFIT_COVERS`, `R2_BUCKET_AVATARS`,
+`R2_PUBLIC_URL_CUTOUTS`, `R2_PUBLIC_URL_COVERS`, `ANTHROPIC_API_KEY`,
+`VISION_API_KEY`, `BG_REMOVAL_API_KEY`.
+
+**Server-only (optional):** `AFFILIATE_FEED_KEY` (Phase 2 — Shop).
+
+**Client-safe (`NEXT_PUBLIC_*`, inlined into the browser bundle at build time —
+must be present at BUILD, not just runtime):** `NEXT_PUBLIC_API_URL`,
+`NEXT_PUBLIC_R2_PUBLIC_URL` (+ the `NEXT_PUBLIC_ANALYTICS_*` vars once the
+waitlist/analytics work lands). Public URLs only — never a secret.
+
+> `ANTHROPIC_API_KEY` is schema-required, so a value must exist for the deploy to
+> boot, but Ovi (the Claude-backed stylist) must stay gated until the API
+> rate-limit precondition lands — keep the key present but the feature off.
+
+### Going live (account-gated — coordinate with the user)
+
+The live deploy is gated on the Railway account; only the account owner triggers
+it. Sequence from the repo root:
+
+```bash
+railway login            # once, interactive — run as `! railway login` in-session
+railway link             # select project `era`, environment `production`, service `Era`
+railway up               # build + deploy the current checkout
+```
+
+Or, preferred: connect the GitHub repo to the service so **pushes to `main`
+auto-deploy** (and PRs get preview environments). Confirm the service's custom
+domain / generated URL in the dashboard and set `BETTER_AUTH_URL` +
+`NEXT_PUBLIC_API_URL` to match it before first boot.
+
 ## Current state
 
 > Update this section as the build progresses.

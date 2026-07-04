@@ -411,3 +411,55 @@ test('categoryLabel title-cases and pluralizes all eleven categories', () => {
   // Unknown categories fall back to a plain heading rather than a raw slug.
   assert.equal(strings.closet.categoryLabel('unknown-slug'), 'Other');
 });
+
+// --- the marketing site (locked brand copy, verbatim) ------------------------
+
+test('the marketing hero is the locked copy, verbatim', () => {
+  const hero = strings.site.hero;
+  assert.equal(hero.title, 'Getting dressed should be easy.');
+  assert.equal(
+    hero.sub,
+    "Era turns the closet you already own into outfits you'll actually wear — with Ovi, your AI stylist, by your side.",
+  );
+  assert.equal(hero.cta, 'Join the waitlist');
+});
+
+test('the four value sections are the locked copy, in order, verbatim', () => {
+  const expected = [
+    { title: 'Your closet, reborn', body: 'Every piece you own, rendered as a beautiful virtual wardrobe.' },
+    {
+      title: 'Meet Ovi',
+      body: 'The stylist who knows your closet, your style, and your weather — and tells you when NOT to buy.',
+    },
+    { title: 'Enter your era', body: "Name the style chapter you're in and dress for it." },
+    {
+      title: 'Shop everything, buy less',
+      body: 'Every brand in one place, recommended only when nothing you own fills the gap.',
+    },
+  ];
+  assert.equal(strings.site.sections.length, expected.length, 'expected exactly four sections');
+  assert.deepEqual(
+    strings.site.sections.map((s) => ({ title: s.title, body: s.body })),
+    expected,
+    'the value sections must match the locked copy, in order',
+  );
+});
+
+test('the closer and referral lines are the locked copy, verbatim', () => {
+  assert.equal(strings.site.closer.title, "The easiest thing you'll wear all day.");
+  assert.equal(strings.site.referral.line, 'Skip the line — invite a friend.');
+  assert.ok(strings.site.referral.cta.trim().length > 0, 'referral cta is empty');
+});
+
+test('the waitlist form copy is present and the CTA matches the hero', () => {
+  const form = strings.site.form;
+  assert.equal(form.cta, strings.site.hero.cta, 'the form and hero waitlist CTAs should match');
+  assert.ok(form.emailPlaceholder.includes('@'), 'the email placeholder should read as an email');
+  assert.ok(form.success.trim().length > 0, 'the success line is empty');
+});
+
+test('the SEO / social tags are present and non-empty', () => {
+  assert.ok(strings.site.og.title.trim().length > 0, 'og.title is empty');
+  assert.ok(strings.site.og.description.trim().length > 0, 'og.description is empty');
+  assert.ok(strings.site.meta.description.trim().length > 0, 'meta.description is empty');
+});

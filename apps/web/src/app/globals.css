@@ -29,6 +29,16 @@ body {
   outline-offset: 2px;
 }
 
+/*
+ * Anchor smooth-scroll (the landing hero CTA jumps to #waitlist). Gated on
+ * no-preference so reduced-motion users get an instant, non-animated jump.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 .era-input:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
