@@ -9,18 +9,21 @@
  * gets the unsigned public cutout URL). Items with no stored image get a null
  * `displayUrl`.
  *
+ * Each item also carries a `wearCount`: how many of the owner's wear logs
+ * reference it (a placeholder-friendly real count — 0 until wear logging ships).
+ *
  * Capped at 100 items. Presigning is local crypto (no network), so signing the
  * whole page is cheap.
  *
  * Responses:
  *   - 401 { error: 'unauthenticated' }  no session
- *   - 200 { items: [{ ...item, displayUrl }] }
+ *   - 200 { items: [{ ...item, displayUrl, wearCount }] }
  */
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, getTableColumns, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 import { type AssetBucket, type AuthContext, AuthzError, getAssetUrl, requireUser } from '@era/core';
-import { createDbClient, items, profiles } from '@era/db';
+import { createDbClient, items, profiles, wearLogs } from '@era/db';
 
 import { auth } from '../../../lib/auth.ts';
 import { serverStorageClient } from '../../../lib/storage-server.ts';
@@ -49,8 +52,16 @@ export async function GET(request: Request): Promise<NextResponse> {
   const [profile] = await db.select({ isPrivate: profiles.isPrivate }).from(profiles).where(eq(profiles.userId, userId)).limit(1);
   const isPrivate = profile?.isPrivate ?? true;
 
+  // wearCount: how many of the owner's wear logs reference this item. Correlated
+  // count subquery (item id ∈ the uuid[] item_ids), owner-scoped. Real but
+  // currently a placeholder — no wear logs exist yet, so this is 0 for everyone.
+  const wearCount = sql<number>`(
+    select count(*)::int from ${wearLogs}
+    where ${items.id} = any(${wearLogs.itemIds}) and ${wearLogs.userId} = ${userId}
+  )`;
+
   const rows = await db
-    .select()
+    .select({ ...getTableColumns(items), wearCount })
     .from(items)
     .where(and(eq(items.userId, userId), eq(items.archived, false)))
     .orderBy(desc(items.createdAt))

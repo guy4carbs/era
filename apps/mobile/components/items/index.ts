@@ -2,4 +2,14 @@
 export { AddItemFlow } from './AddItemFlow';
 export { ConfirmItem } from './ConfirmItem';
 export { ItemCard } from './ItemCard';
-export { fetchItems, type Item, type ItemWithDisplay } from './api';
+export {
+  archiveItem,
+  fetchItems,
+  getPrivacy,
+  patchItem,
+  setPrivacy,
+  type Item,
+  type ItemSource,
+  type ItemUpdates,
+  type ItemWithDisplay,
+} from './api';

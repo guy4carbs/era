@@ -6,8 +6,7 @@ import { useRouter } from 'next/navigation';
 import { motion, useReducedMotion } from 'framer-motion';
 import { typeRamp, layout, boxShadows } from '@era/tokens';
 import { strings } from '@era/core/strings';
-import { Button } from '../../../components';
-import { ItemCard, type ItemWithDisplay } from '../../../components/items';
+import { ClosetEmpty, ClosetGallery, type GalleryItem } from '../../../components/closet';
 import { useSession } from '../../../lib/auth-client';
 
 const screenStyle: CSSProperties = {
@@ -19,22 +18,15 @@ const screenStyle: CSSProperties = {
 
 const titleStyle: CSSProperties = {
   margin: 0,
-  fontSize: typeRamp.title1.rem,
-  lineHeight: `${typeRamp.title1.lineHeight}px`,
+  fontSize: typeRamp.largeTitle.rem,
+  lineHeight: `${typeRamp.largeTitle.lineHeight}px`,
   fontWeight: 700,
 };
 
 const secondaryTextStyle: CSSProperties = {
   margin: 0,
-  color: 'var(--color-secondary)',
+  color: 'var(--color-secondary-strong)',
   fontSize: typeRamp.body.rem,
-};
-
-const emptyColumnStyle: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'flex-start',
-  gap: 'var(--space-6)',
 };
 
 const signInRowStyle: CSSProperties = {
@@ -45,17 +37,16 @@ const signInRowStyle: CSSProperties = {
   minHeight: 'var(--touch-target-min)',
 };
 
-// Add is a labeled pill, NOT a second circle above Ovi — Ovi owns the sole
-// circular FAB bottom-right. The pill floats bottom-LEFT (matching mobile);
-// positioning + the rail offset live in `.era-add-pill` (below) so the media
-// query can read the token breakpoint. This constant is visual only.
+// Add is a labeled pill floating bottom-LEFT at Ovi's height (Ovi owns the sole
+// circular FAB bottom-right). Positioning + the rail offset live in
+// `.era-add-pill` so the media query can read the token breakpoint.
 const addPillStyle: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   gap: 'var(--space-2)',
   minHeight: 'var(--touch-target-min)',
   paddingInline: 'var(--space-4)',
-  borderRadius: '999px',
+  borderRadius: 'var(--radius-hero)',
   border: 'none',
   cursor: 'pointer',
   background: 'var(--color-accent)',
@@ -65,21 +56,9 @@ const addPillStyle: CSSProperties = {
   boxShadow: boxShadows.e2,
 };
 
-// Bottom-left, at Ovi's vertical height. Below lg the left edge is free; at ≥lg
-// the left rail owns that edge, so shift the pill past `--rail-width`.
 const addPillCss = [
   `.era-add-pill{position:fixed;left:var(--space-4);bottom:calc(var(--tabbar-height) + var(--space-4) + env(safe-area-inset-bottom));z-index:60}`,
   `@media(min-width:${layout.breakpoints.lg}px){.era-add-pill{left:calc(var(--rail-width) + var(--space-4))}}`,
-].join('\n');
-
-// Responsive column count — media queries can't read CSS vars, so build the
-// rule from the token breakpoints and gutter. 2 up on phones, widening to 5 on
-// the largest screens inside the 1200 container.
-const gridCss = [
-  `.era-closet-grid{display:grid;gap:${layout.grid.gutter}px;grid-template-columns:repeat(2,minmax(0,1fr))}`,
-  `@media(min-width:${layout.breakpoints.md}px){.era-closet-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}`,
-  `@media(min-width:${layout.breakpoints.lg}px){.era-closet-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}`,
-  `@media(min-width:${layout.breakpoints.xl}px){.era-closet-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}`,
 ].join('\n');
 
 /** Labeled accent pill (bottom-left) that opens the add-item flow. */
@@ -104,14 +83,13 @@ function AddPill({ onClick }: { onClick: () => void }) {
 /**
  * The Closet tab. Signed-out visitors get a sign-in nudge (the closet is a
  * per-user surface). Signed-in, it fetches the user's items: an empty closet
- * shows the warm empty line plus an add button, while a stocked one renders the
- * gallery grid with a floating add button. Unconfirmed items carry the "tap to
- * confirm" dot and resume straight into the add flow.
+ * sells both import paths, a stocked one renders the premium 2.5D gallery with a
+ * floating add pill. Archive/edit mutations update the list in place.
  */
 export default function ClosetPage() {
   const router = useRouter();
   const { data: session, isPending } = useSession();
-  const [items, setItems] = useState<ItemWithDisplay[] | null>(null);
+  const [items, setItems] = useState<GalleryItem[] | null>(null);
 
   useEffect(() => {
     if (isPending || !session) return;
@@ -120,7 +98,7 @@ export default function ClosetPage() {
       try {
         const res = await fetch('/api/items');
         if (!res.ok) throw new Error('items fetch failed');
-        const body = (await res.json()) as { items: ItemWithDisplay[] };
+        const body = (await res.json()) as { items: GalleryItem[] };
         if (active) setItems(body.items);
       } catch {
         if (active) setItems([]);
@@ -135,9 +113,14 @@ export default function ClosetPage() {
     router.push('/closet/add');
   }
 
-  function handleItemTap(item: ItemWithDisplay) {
-    // Unconfirmed items resume into the confirm screen; confirmed are inert here.
-    if (!item.tagsConfirmed) router.push(`/closet/add?item=${item.id}`);
+  function handleArchived(id: string) {
+    setItems((prev) => (prev ? prev.filter((item) => item.id !== id) : prev));
+  }
+
+  function handleUpdated(updated: GalleryItem) {
+    setItems((prev) =>
+      prev ? prev.map((item) => (item.id === updated.id ? updated : item)) : prev,
+    );
   }
 
   // Signed out: mirror the feed's sign-in affordance.
@@ -146,7 +129,7 @@ export default function ClosetPage() {
       <main style={screenStyle}>
         <h1 style={titleStyle}>Closet</h1>
         <div style={signInRowStyle}>
-          <span style={{ color: 'var(--color-secondary)', fontSize: typeRamp.footnote.rem }}>
+          <span style={{ color: 'var(--color-secondary-strong)', fontSize: typeRamp.footnote.rem }}>
             {strings.closet.empty}
           </span>
           <Link className="link" href="/sign-in">
@@ -171,25 +154,15 @@ export default function ClosetPage() {
     return (
       <main style={screenStyle}>
         <h1 style={titleStyle}>Closet</h1>
-        <div style={emptyColumnStyle}>
-          <p style={secondaryTextStyle}>{strings.closet.empty}</p>
-          <Button variant="primary" onClick={openAdd}>
-            {strings.closet.addCta}
-          </Button>
-        </div>
+        <ClosetEmpty onAddPhoto={openAdd} onAddLink={openAdd} />
       </main>
     );
   }
 
   return (
-    <main style={screenStyle}>
-      <style>{`${gridCss}\n${addPillCss}`}</style>
-      <h1 style={titleStyle}>Closet</h1>
-      <div className="era-closet-grid">
-        {items.map((item) => (
-          <ItemCard key={item.id} item={item} onClick={() => handleItemTap(item)} />
-        ))}
-      </div>
+    <main>
+      <style>{addPillCss}</style>
+      <ClosetGallery items={items} onArchived={handleArchived} onUpdated={handleUpdated} />
       <AddPill onClick={openAdd} />
     </main>
   );
