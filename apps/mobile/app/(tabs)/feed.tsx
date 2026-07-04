@@ -7,10 +7,11 @@
 import { strings } from '@era/core/strings';
 import { spacing, typeRamp } from '@era/tokens';
 import { Link } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
+import { TodayCard } from '@/components/ovi';
 import { eraAuth, useSession } from '@/lib/auth-client';
 import { useTheme } from '@/lib/theme';
 
@@ -26,31 +27,34 @@ export default function FeedScreen() {
 
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View style={styles.header}>
-        <Text
-          style={{
-            color: colors.text,
-            fontSize: typeRamp.title1.pt,
-            lineHeight: typeRamp.title1.lineHeight,
-            fontWeight: '600',
-          }}
-        >
-          Feed
-        </Text>
-        {greetingName ? (
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
           <Text
             style={{
-              color: colors.secondary,
-              fontSize: typeRamp.body.pt,
-              lineHeight: typeRamp.body.lineHeight,
+              color: colors.text,
+              fontSize: typeRamp.title1.pt,
+              lineHeight: typeRamp.title1.lineHeight,
+              fontWeight: '600',
             }}
           >
-            Hello, {greetingName}
+            Feed
           </Text>
-        ) : null}
-      </View>
+          {greetingName ? (
+            <Text
+              style={{
+                color: colors.secondary,
+                fontSize: typeRamp.body.pt,
+                lineHeight: typeRamp.body.lineHeight,
+              }}
+            >
+              Hello, {greetingName}
+            </Text>
+          ) : null}
+        </View>
 
-      <View style={styles.body}>
+        {/* Ovi's daily suggestion. Renders nothing until it has a look to show. */}
+        <TodayCard />
+
         <Text
           style={{
             color: colors.secondary,
@@ -61,23 +65,23 @@ export default function FeedScreen() {
         >
           {FEED_EMPTY}
         </Text>
-      </View>
 
-      <View style={styles.footer}>
-        <Button
-          label="Sign out"
-          variant="secondary"
-          onPress={() => {
-            void eraAuth.signOut();
-          }}
-        />
-        <Link
-          href="/design-lab"
-          style={{ color: colors.secondary, fontSize: typeRamp.footnote.pt }}
-        >
-          Design lab
-        </Link>
-      </View>
+        <View style={styles.footer}>
+          <Button
+            label="Sign out"
+            variant="secondary"
+            onPress={() => {
+              void eraAuth.signOut();
+            }}
+          />
+          <Link
+            href="/design-lab"
+            style={{ color: colors.secondary, fontSize: typeRamp.footnote.pt }}
+          >
+            Design lab
+          </Link>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -89,13 +93,12 @@ const styles = StyleSheet.create({
     paddingTop: spacing.s8,
     paddingBottom: spacing.s4,
   },
+  content: {
+    gap: spacing.s6,
+    paddingBottom: spacing.s8,
+  },
   header: {
     gap: spacing.s2,
-  },
-  body: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   footer: {
     gap: spacing.s3,

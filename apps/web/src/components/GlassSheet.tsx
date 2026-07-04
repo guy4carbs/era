@@ -9,6 +9,8 @@ export interface GlassSheetProps {
   children: ReactNode;
   /** Start at a partial peek height (fraction from tokens), expandable to full. */
   peek?: boolean;
+  /** Id of the element naming this dialog, wired to aria-labelledby. */
+  labelledBy?: string;
   style?: CSSProperties;
 }
 
@@ -58,7 +60,7 @@ const grabberStyle: CSSProperties = {
  * reduced motion). With `peek`, it opens partway and expands to full height when
  * the grabber is tapped.
  */
-export function GlassSheet({ children, peek, style }: GlassSheetProps) {
+export function GlassSheet({ children, peek, labelledBy, style }: GlassSheetProps) {
   const reduced = useReducedMotion();
   const [expanded, setExpanded] = useState(false);
 
@@ -72,6 +74,7 @@ export function GlassSheet({ children, peek, style }: GlassSheetProps) {
     <motion.section
       role="dialog"
       aria-modal="true"
+      aria-labelledby={labelledBy}
       style={{ ...sheetStyle, height, ...style }}
       initial={enter.initial}
       animate={{ ...enter.animate, height }}

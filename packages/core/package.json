@@ -10,7 +10,8 @@
     ".": "./src/index.ts",
     "./auth-api": "./src/auth-api.ts",
     "./strings": "./src/strings.ts",
-    "./quiz": "./src/quiz.ts"
+    "./quiz": "./src/quiz.ts",
+    "./ovi": "./src/ovi.ts"
   },
   "scripts": {
     "lint": "eslint .",
