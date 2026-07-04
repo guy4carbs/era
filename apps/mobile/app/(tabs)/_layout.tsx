@@ -9,10 +9,12 @@
 import { layout, spacing } from '@era/tokens';
 import { Tabs, type BottomTabBarProps } from 'expo-router/js-tabs';
 import * as Haptics from 'expo-haptics';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { OviFab } from '@/components/OviFab';
+import { OviChat } from '@/components/ovi';
 import { TabBar, type TabKey } from '@/components/TabBar';
 
 // Route files require a default export — expo-router discovers layouts this way.
@@ -20,6 +22,8 @@ export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   // Float the FAB above the (non-absolute) tab bar and the home-indicator inset.
   const fabBottom = layout.tabBarHeight + insets.bottom + spacing.s3;
+  // Ovi's chat sheet overlays every tab, so it lives here alongside the FAB.
+  const [oviOpen, setOviOpen] = useState(false);
 
   return (
     <View style={styles.root}>
@@ -32,7 +36,11 @@ export default function TabsLayout() {
         <Tabs.Screen name="design" />
         <Tabs.Screen name="shop" />
       </Tabs>
-      <OviFab style={[styles.fab, { bottom: fabBottom, right: spacing.s4 }]} />
+      <OviFab
+        style={[styles.fab, { bottom: fabBottom, right: spacing.s4 }]}
+        onPress={() => setOviOpen(true)}
+      />
+      <OviChat open={oviOpen} onClose={() => setOviOpen(false)} />
     </View>
   );
 }

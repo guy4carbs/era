@@ -127,6 +127,67 @@ export const strings = {
      */
     shopHonesty:
       "You can already build this from your closet. If a real gap shows up, I'll point it out.",
+
+    // --- the chat sheet: the surface where Ovi actually speaks ---
+
+    /** Placeholder in the chat input — invites an open question about the closet. */
+    chatPlaceholder: 'Ask me anything about your closet…',
+    /**
+     * Ovi's opening line when the chat sheet appears. Warmer and more forward
+     * than {@link strings.ovi.greeting} — it opens a conversation rather than
+     * just saying hello.
+     */
+    chatOpener: 'What are we putting together?',
+    /**
+     * The four quick-intent chips above the input. `styleItem` is shown only
+     * when a piece is already in context; the other three are always offered.
+     */
+    intentChips: {
+      today: 'What do I wear today?',
+      styleFor: 'Style me for…',
+      styleItem: 'Style this piece',
+      whatsMissing: 'What am I missing?',
+    },
+    /**
+     * Ovi's lead-in when she presents a look. Names the occasion when there is
+     * one; falls back to a warm, generic beat when there isn't. Brief either way.
+     */
+    proposalIntro: (occasion?: string): string =>
+      occasion ? `Here's a look for ${occasion}.` : "Here's a look I pulled together.",
+    /** Card action that saves the proposed look. */
+    outfitAcceptCta: 'Save this look',
+    /** Card action that passes on the proposed look — never guilt on reject. */
+    outfitRejectCta: 'Not today',
+    /** Toast after the user saves a proposed look — pairs with the save. */
+    accepted: "Saved to your looks — nice call.",
+    /** Toast after the user passes on a look — graceful, no pressure to reconsider. */
+    rejected: "All good — I'll come back with another.",
+    /**
+     * The honest answer to "what am I missing?". Names the thin category and
+     * embodies the trust rule: it flags a real gap without ever pushing a
+     * purchase — buying stays optional, and building without it is expected.
+     */
+    gapHonest: (category: string): string =>
+      `Your closet's thin on ${category} — worth a look when you're ready, but you can build plenty without it.`,
+    /**
+     * Shown when there aren't enough pieces to assemble a full look. Honest and
+     * encouraging; points back at the closet without blaming a sparse start.
+     */
+    sparseCloset:
+      "There's not quite enough here yet to build a full look — add a few more pieces and I'll have more to work with.",
+    /**
+     * A short weather-aware lead Ovi can open with, grounding the look in the
+     * conditions she styled around. Rounds the temperature to a whole degree.
+     */
+    weatherLine: (tempC: number, condition: string): string =>
+      `It's ${Math.round(tempC)}° and ${condition} — I styled around that.`,
+    /** Heading for the Feed's "Today" card. */
+    todayTitle: "Today's look",
+    /**
+     * The Feed "Today" card when the closet can't yet produce a suggestion.
+     * Invites the pieces that will unlock a daily look — no scold for an empty start.
+     */
+    todayEmpty: "Add a few pieces and I'll have a look ready for you here each morning.",
   },
 
   /** The Closet tab — everything the user owns, plus the add-a-piece flow. */

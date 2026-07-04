@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { typeRamp } from '@era/tokens';
 import { Container, OviFab, TabBar, TAB_ITEMS, type TabId } from '../../components';
+import { OviChatProvider, useOviChat } from '../../components/ovi';
 
 /** Resolve the active tab from the first path segment; default to feed. */
 function activeTabFrom(pathname: string): TabId {
@@ -44,10 +45,16 @@ const railItemStyle: CSSProperties = {
   textDecoration: 'none',
 };
 
-export default function TabsLayout({ children }: { children: ReactNode }) {
+/**
+ * The tab shell body. Split out from the layout so it sits inside
+ * {@link OviChatProvider} and the FAB can summon the chat sheet via
+ * {@link useOviChat}.
+ */
+function TabsShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const active = activeTabFrom(pathname);
+  const { openChat, isOpen } = useOviChat();
 
   return (
     <div className="era-tabs-shell">
@@ -73,11 +80,15 @@ export default function TabsLayout({ children }: { children: ReactNode }) {
       <Container>{children}</Container>
 
       <TabBar active={active} onChange={(id) => router.push(`/${id}`)} />
-      <OviFab
-        onClick={() => {
-          // TODO(Phase 1): open the Ovi chat sheet. No-op until that lands.
-        }}
-      />
+      {isOpen ? null : <OviFab onClick={() => openChat()} />}
     </div>
+  );
+}
+
+export default function TabsLayout({ children }: { children: ReactNode }) {
+  return (
+    <OviChatProvider>
+      <TabsShell>{children}</TabsShell>
+    </OviChatProvider>
   );
 }

@@ -144,6 +144,35 @@ export function isOwnedCoverKey(key: string, userId: string): boolean {
 }
 
 /**
+ * Parse a bare itemId array — the shape an Ovi proposal carries (ids only, no
+ * canvas placements) — without zod. Every entry must be a UUID string; the
+ * result is de-duplicated (first-seen order preserved) so it can't violate the
+ * outfit_items PK. Returns null when the value is not an array, is longer than
+ * `max`, holds a non-UUID entry, or de-dupes to fewer than `min` ids. The raw
+ * length is capped before iterating so an oversized array is rejected cheaply.
+ */
+export function parseItemIds(value: unknown, min: number, max: number): string[] | null {
+  if (!Array.isArray(value) || value.length > max) {
+    return null;
+  }
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const raw of value) {
+    if (typeof raw !== 'string' || !UUID_RE.test(raw)) {
+      return null;
+    }
+    if (!seen.has(raw)) {
+      seen.add(raw);
+      out.push(raw);
+    }
+  }
+  if (out.length < min) {
+    return null;
+  }
+  return out;
+}
+
+/**
  * True when every id in `itemIds` names an item owned by `userId`. The caller
  * must pass a de-duplicated list (parseOutfitItems guarantees this): a foreign
  * or missing id makes the owned count fall short, so no cross-user item can

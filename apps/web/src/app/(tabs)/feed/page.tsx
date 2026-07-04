@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { eraAuth, useSession } from '../../../lib/auth-client';
+import { TodayCard } from '../../../components/ovi';
 
 const screenStyle: CSSProperties = {
   display: 'flex',
@@ -80,6 +81,7 @@ export default function FeedPage() {
   return (
     <main style={screenStyle}>
       <SessionHeader />
+      <TodayCard />
       <h1 style={titleStyle}>Feed</h1>
       <p style={emptyStyle}>{strings.feed.empty}</p>
     </main>

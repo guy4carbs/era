@@ -70,6 +70,80 @@ test('the whole deck spends at most one exclamation mark', () => {
   assert.ok(total <= 1, `Voice lint: the deck uses ${total} exclamation marks (budget is 1)`);
 });
 
+// --- the chat sheet (Ovi speaks) ---------------------------------------------
+
+test('every chat-sheet string is present and non-empty', () => {
+  const o = strings.ovi;
+  const leaves = [
+    o.chatPlaceholder,
+    o.chatOpener,
+    o.outfitAcceptCta,
+    o.outfitRejectCta,
+    o.accepted,
+    o.rejected,
+    o.sparseCloset,
+    o.todayTitle,
+    o.todayEmpty,
+  ];
+  for (const leaf of leaves) {
+    assert.ok(leaf.trim().length > 0, `empty chat-sheet string: "${leaf}"`);
+  }
+});
+
+test('the chat opener invites a conversation, distinct from the plain greeting', () => {
+  assert.ok(strings.ovi.chatOpener.trim().length > 0);
+  assert.notEqual(
+    strings.ovi.chatOpener,
+    strings.ovi.greeting,
+    'the chat opener should read differently than the hello greeting',
+  );
+});
+
+test('all four intent chips are present and non-empty', () => {
+  const chips = strings.ovi.intentChips;
+  const keys = ['today', 'styleFor', 'styleItem', 'whatsMissing'] as const;
+  assert.equal(Object.keys(chips).length, keys.length);
+  for (const key of keys) {
+    assert.ok(chips[key].trim().length > 0, `empty intent chip: ${key}`);
+  }
+});
+
+test('proposalIntro names the occasion when given one and stays warm without', () => {
+  const withOccasion = strings.ovi.proposalIntro('a wedding');
+  const generic = strings.ovi.proposalIntro();
+  assert.ok(withOccasion.trim().length > 0, 'proposalIntro(occasion) is empty');
+  assert.ok(generic.trim().length > 0, 'proposalIntro() is empty');
+  assert.match(withOccasion, /wedding/i, 'proposalIntro should weave in the occasion');
+  assert.notEqual(withOccasion, generic, 'the occasion line should differ from the generic one');
+});
+
+test('the reject action and toast never guilt the user', () => {
+  const guilt = [/\bsure\?/i, /\breally\?/i, /\bmiss(ing)? out\b/i, /\bwaste\b/i, /\bmistake\b/i];
+  for (const line of [strings.ovi.outfitRejectCta, strings.ovi.rejected]) {
+    for (const pattern of guilt) {
+      assert.doesNotMatch(line, pattern, `reject copy should not guilt the user (${pattern})`);
+    }
+  }
+});
+
+test('gapHonest names the gap and embodies the trust rule without pushing a purchase', () => {
+  const line = strings.ovi.gapHonest('outerwear');
+  assert.ok(line.trim().length > 0, 'gapHonest is empty');
+  assert.match(line, /outerwear/i, 'gapHonest should name the thin category');
+  const pushy = [/\bbuy now\b/i, /\bshould buy\b/i, /\bneed to buy\b/i, /\bmust buy\b/i, /\bbuy one\b/i];
+  for (const pattern of pushy) {
+    assert.doesNotMatch(line, pattern, `gapHonest should not push buying (${pattern})`);
+  }
+});
+
+test('weatherLine leads with the rounded temperature and the condition', () => {
+  const line = strings.ovi.weatherLine(13.6, 'overcast');
+  assert.ok(line.trim().length > 0, 'weatherLine is empty');
+  assert.match(line, /\b14\b/, 'weatherLine should round the temperature to a whole degree');
+  assert.match(line, /°/, 'weatherLine should show a degree symbol');
+  assert.match(line, /overcast/i, 'weatherLine should name the condition');
+});
+
 // --- style quiz --------------------------------------------------------------
 
 const MOOD_IDS = ['reset', 'refined', 'bold', 'soft', 'experimental', 'effortless'] as const;
