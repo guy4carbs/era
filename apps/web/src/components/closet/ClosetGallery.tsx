@@ -11,6 +11,7 @@ import { CATEGORY_OPTIONS } from '../items';
 import { GalleryTile } from './GalleryTile';
 import { ItemDetailSheet } from './ItemDetailSheet';
 import { PrivacyToggle } from './PrivacyToggle';
+import { SettingsLink } from './SettingsLink';
 import type { GalleryItem } from './types';
 
 export interface ClosetGalleryProps {
@@ -114,7 +115,10 @@ export function ClosetGallery({ items, onArchived, onUpdated }: ClosetGalleryPro
       <header style={headerStyle}>
         <div style={titleRowStyle}>
           <h1 style={titleStyle}>Closet</h1>
-          <PrivacyToggle />
+          <div style={headerActionsStyle}>
+            <SettingsLink />
+            <PrivacyToggle />
+          </div>
         </div>
 
         <Input
@@ -224,6 +228,14 @@ const titleRowStyle: CSSProperties = {
   alignItems: 'flex-start',
   justifyContent: 'space-between',
   gap: 'var(--space-4)',
+};
+
+// Right-hand cluster in the closet header: the Settings gear beside the privacy
+// toggle, both top-aligned so the gear lines up with the toggle's label row.
+const headerActionsStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'flex-start',
+  gap: 'var(--space-3)',
 };
 
 const titleStyle: CSSProperties = {

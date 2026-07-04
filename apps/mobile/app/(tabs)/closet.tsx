@@ -17,7 +17,7 @@ import { ActivityIndicator, SectionList, StyleSheet, Text, View } from 'react-na
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
-import { ClosetHeader, CutoutTile, ItemDetailSheet, Toast } from '@/components/closet';
+import { ClosetHeader, CutoutTile, ItemDetailSheet, SettingsGear, Toast } from '@/components/closet';
 import { fetchItems, type ItemWithDisplay } from '@/components/items';
 import { CATEGORIES, type ItemCategory } from '@/components/items/constants';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
@@ -134,6 +134,11 @@ export default function ClosetScreen() {
   if (items.length === 0) {
     return (
       <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
+        {/* Settings stays reachable at zero items — a new user needs theme,
+            privacy, legal, sign-out, and delete before their first piece. */}
+        <View style={styles.emptyHeader}>
+          <SettingsGear onPress={() => router.push('/settings')} />
+        </View>
         <View style={styles.empty}>
           <Text
             accessibilityRole="header"
@@ -194,6 +199,7 @@ export default function ClosetScreen() {
             categories={categories}
             selected={category}
             onSelect={setCategory}
+            onOpenSettings={() => router.push('/settings')}
           />
         }
         stickySectionHeadersEnabled={false}
@@ -257,12 +263,20 @@ const styles = StyleSheet.create({
     gap: spacing.s4,
     paddingHorizontal: spacing.s6,
   },
+  emptyHeader: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: spacing.s6,
+  },
   empty: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.s6,
     paddingHorizontal: spacing.s6,
+    // The gear row above already claims the top inset; pull the centred content
+    // up by that row's height so it stays optically centred in the screen.
+    marginTop: -layout.touchTarget.ios,
   },
   emptyActions: {
     alignSelf: 'stretch',

@@ -37,6 +37,7 @@ export {
   createStorageClient,
   requestUploadUrl,
   getAssetUrl,
+  deleteUserObjects,
 } from './storage.ts';
 export type { AssetBucket, StorageConfig, StorageClient } from './storage.ts';
 

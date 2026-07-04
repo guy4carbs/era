@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { motion, useReducedMotion } from 'framer-motion';
 import { typeRamp, layout, boxShadows } from '@era/tokens';
 import { strings } from '@era/core/strings';
-import { ClosetEmpty, ClosetGallery, type GalleryItem } from '../../../components/closet';
+import { ClosetEmpty, ClosetGallery, SettingsLink, type GalleryItem } from '../../../components/closet';
 import { useSession } from '../../../lib/auth-client';
 
 const screenStyle: CSSProperties = {
@@ -21,6 +21,15 @@ const titleStyle: CSSProperties = {
   fontSize: typeRamp.largeTitle.rem,
   lineHeight: `${typeRamp.largeTitle.lineHeight}px`,
   fontWeight: 700,
+};
+
+// Empty-closet header: title left, Settings gear right (new users still need a
+// way into account controls before they've added a piece).
+const emptyHeaderStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 'var(--space-4)',
 };
 
 const secondaryTextStyle: CSSProperties = {
@@ -153,7 +162,10 @@ export default function ClosetPage() {
   if (items.length === 0) {
     return (
       <main style={screenStyle}>
-        <h1 style={titleStyle}>Closet</h1>
+        <div style={emptyHeaderStyle}>
+          <h1 style={titleStyle}>Closet</h1>
+          <SettingsLink />
+        </div>
         <ClosetEmpty onAddPhoto={openAdd} onAddLink={openAdd} />
       </main>
     );

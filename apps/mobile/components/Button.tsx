@@ -24,7 +24,7 @@ const REST_SCALE = 1;
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-type Variant = 'primary' | 'secondary' | 'ghost';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
 interface ButtonProps {
   readonly label: string;
@@ -139,6 +139,16 @@ function variantSkin(variant: Variant, colors: ReturnType<typeof useTheme>['colo
         foreground: colors.accent,
         border: 'transparent',
         borderWidth: 0,
+      };
+    case 'danger':
+      // Rust-outline for destructive confirms — the danger token carries the
+      // signal (it already meets contrast on bg/surface as the Input error hue),
+      // in both light and dark. Mirrors web's rust-outline delete button.
+      return {
+        background: 'transparent',
+        foreground: colors.danger,
+        border: colors.danger,
+        borderWidth: StyleSheet.hairlineWidth,
       };
   }
 }

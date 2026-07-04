@@ -1,0 +1,42 @@
+/**
+ * SettingsGear — the closet's entry point into Settings.
+ *
+ * A top-right gear affordance shared by BOTH the stocked closet header and the
+ * empty-closet state, so a brand-new user (zero items) can still reach theme,
+ * privacy, legal, sign-out, and delete before adding a first piece. Label-only
+ * glyph — the app bundles no icon font (see OviFab) — sized to the iOS touch
+ * target.
+ */
+import { strings } from '@era/core/strings';
+import { layout, spacing, typeRamp } from '@era/tokens';
+import { Pressable, StyleSheet, Text } from 'react-native';
+
+import { useTheme } from '@/lib/theme';
+
+interface SettingsGearProps {
+  readonly onPress: () => void;
+}
+
+export function SettingsGear({ onPress }: SettingsGearProps) {
+  const { colors } = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={strings.settings.title}
+      hitSlop={spacing.s3}
+      onPress={onPress}
+      style={styles.gear}
+    >
+      <Text style={{ color: colors.text, fontSize: typeRamp.title2.pt }}>⚙</Text>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  gear: {
+    minWidth: layout.touchTarget.ios,
+    minHeight: layout.touchTarget.ios,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+});

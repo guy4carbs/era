@@ -1,12 +1,16 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
+import { DeleteObjectsCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
+
 import { AuthzError, type AuthContext } from './authz.ts';
 import {
   assetKey,
   createStorageClient,
+  deleteUserObjects,
   getAssetUrl,
   requestUploadUrl,
+  type StorageClient,
   type StorageConfig,
 } from './storage.ts';
 
@@ -166,4 +170,92 @@ test('getAssetUrl presigns a GET for the owner of a private cutout', async () =>
   });
   assert.match(url, /X-Amz-Signature=/);
   assert.ok(url.includes('era-items-cutout'), 'URL should target the cutout bucket');
+});
+
+// --- deleteUserObjects ------------------------------------------------------
+//
+// Full-account erasure. These tests never touch live R2: the S3 client's
+// `send` is replaced with a scripted double that serves list pages and records
+// deletes, so we can assert prefix-safety, pagination, batching, and counts.
+
+interface ListPage {
+  Contents: { Key: string }[];
+  IsTruncated: boolean;
+  NextContinuationToken?: string;
+}
+
+/**
+ * Build a StorageClient whose S3 `send` answers ListObjectsV2 from `pages`
+ * (per bucket, one page per call) and records every deleted key into `deletes`.
+ */
+function fakeClient(
+  pages: Record<string, ListPage[]>,
+  listCalls: { Bucket: string; Prefix: string; ContinuationToken?: string }[],
+  deletes: Record<string, string[]>,
+): StorageClient {
+  const cursor: Record<string, number> = {};
+  const send = async (command: unknown): Promise<unknown> => {
+    if (command instanceof ListObjectsV2Command) {
+      const { Bucket, Prefix, ContinuationToken } = command.input;
+      listCalls.push({ Bucket: Bucket!, Prefix: Prefix!, ContinuationToken });
+      const idx = cursor[Bucket!] ?? 0;
+      cursor[Bucket!] = idx + 1;
+      return pages[Bucket!]?.[idx] ?? { Contents: [], IsTruncated: false };
+    }
+    if (command instanceof DeleteObjectsCommand) {
+      const { Bucket, Delete } = command.input;
+      const keys = (Delete?.Objects ?? []).map((o) => o.Key!);
+      (deletes[Bucket!] ??= []).push(...keys);
+      return {};
+    }
+    throw new Error('unexpected S3 command in test');
+  };
+  return { config, s3: { send } as unknown as StorageClient['s3'] };
+}
+
+test('deleteUserObjects refuses an empty or whitespace userId', async () => {
+  await assert.rejects(() => deleteUserObjects(client, ''), /empty userId/i);
+  await assert.rejects(() => deleteUserObjects(client, '   '), /empty userId/i);
+});
+
+test('deleteUserObjects paginates every bucket under the exact userId/ prefix and deletes all keys', async () => {
+  const listCalls: { Bucket: string; Prefix: string; ContinuationToken?: string }[] = [];
+  const deletes: Record<string, string[]> = {};
+  const pages: Record<string, ListPage[]> = {
+    'era-items-raw': [
+      { Contents: [{ Key: `${A}/1.jpg` }, { Key: `${A}/2.jpg` }], IsTruncated: true, NextContinuationToken: 'tok1' },
+      { Contents: [{ Key: `${A}/3.jpg` }], IsTruncated: false },
+    ],
+    'era-items-cutout': [{ Contents: [{ Key: `${A}/c.png` }], IsTruncated: false }],
+    'era-outfit-covers': [{ Contents: [], IsTruncated: false }],
+    'era-avatars': [{ Contents: [{ Key: `${A}/a.webp` }], IsTruncated: false }],
+  };
+
+  const result = await deleteUserObjects(fakeClient(pages, listCalls, deletes), A);
+
+  // Every list used the exact trailing-slash prefix — never a bare userId.
+  assert.ok(listCalls.every((c) => c.Prefix === `${A}/`));
+  // The truncated raw bucket was followed to its second page via the token.
+  assert.ok(listCalls.some((c) => c.Bucket === 'era-items-raw' && c.ContinuationToken === 'tok1'));
+  // 3 raw + 1 cutout + 0 covers + 1 avatar = 5 objects.
+  assert.equal(result.deleted, 5);
+  assert.equal(result.byBucket['era-items-raw'], 3);
+  assert.equal(result.byBucket['era-items-cutout'], 1);
+  assert.equal(result.byBucket['era-outfit-covers'], 0);
+  assert.equal(result.byBucket['era-avatars'], 1);
+  assert.deepEqual(
+    [...(deletes['era-items-raw'] ?? [])].sort(),
+    [`${A}/1.jpg`, `${A}/2.jpg`, `${A}/3.jpg`],
+  );
+});
+
+test('deleteUserObjects issues no delete for a user with no objects', async () => {
+  const listCalls: { Bucket: string; Prefix: string; ContinuationToken?: string }[] = [];
+  const deletes: Record<string, string[]> = {};
+  const result = await deleteUserObjects(fakeClient({}, listCalls, deletes), A);
+  assert.equal(result.deleted, 0);
+  assert.deepEqual(deletes, {});
+  // One list call per bucket (all four), each with the safe prefix.
+  assert.equal(listCalls.length, 4);
+  assert.ok(listCalls.every((c) => c.Prefix === `${A}/`));
 });

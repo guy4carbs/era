@@ -7,7 +7,7 @@
  */
 import { radii, spacing, typeRamp } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text, type AccessibilityRole } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -28,9 +28,20 @@ interface ChipProps {
   readonly selected?: boolean;
   readonly onToggle?: (next: boolean) => void;
   readonly haptic?: boolean;
+  /**
+   * A11y role override — defaults to 'button'. A one-of-many group (e.g. the
+   * theme picker) passes 'radio' so it announces "selected, 1 of 3".
+   */
+  readonly accessibilityRole?: AccessibilityRole;
 }
 
-export function Chip({ label, selected = false, onToggle, haptic = true }: ChipProps) {
+export function Chip({
+  label,
+  selected = false,
+  onToggle,
+  haptic = true,
+  accessibilityRole = 'button',
+}: ChipProps) {
   const { colors } = useTheme();
   const reduced = useReducedMotionSafe();
   const scale = useSharedValue(REST_SCALE);
@@ -41,7 +52,7 @@ export function Chip({ label, selected = false, onToggle, haptic = true }: ChipP
 
   return (
     <AnimatedPressable
-      accessibilityRole="button"
+      accessibilityRole={accessibilityRole}
       accessibilityState={{ selected }}
       accessibilityLabel={label}
       hitSlop={HIT_SLOP}
