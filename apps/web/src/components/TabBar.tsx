@@ -5,12 +5,16 @@ import { typeRamp } from '@era/tokens';
 
 export type TabId = 'feed' | 'closet' | 'design' | 'shop';
 
-interface TabDef {
+export interface TabDef {
   id: TabId;
   label: string;
 }
 
-const TABS: readonly TabDef[] = [
+/**
+ * The four primary destinations, in order. Exported so the desktop left rail
+ * (see the (tabs) group layout) renders the same set from one source.
+ */
+export const TAB_ITEMS: readonly TabDef[] = [
   { id: 'feed', label: 'Feed' },
   { id: 'closet', label: 'Closet' },
   { id: 'design', label: 'Design' },
@@ -55,14 +59,14 @@ const tabStyle: CSSProperties = {
 };
 
 /**
- * Bottom glass tab bar for the mobile viewport. Generated CSS (`.era-tabbar`)
- * hides it at/above the md breakpoint, mirroring the native iOS chrome above
- * that width.
+ * Bottom glass tab bar for the phone/tablet viewport. Generated CSS
+ * (`.era-tabbar`) hides it at/above the lg breakpoint, where the desktop left
+ * rail takes over as primary navigation.
  */
 export function TabBar({ active, onChange }: TabBarProps) {
   return (
     <nav className="era-tabbar" style={barStyle} aria-label="Primary">
-      {TABS.map((tab) => {
+      {TAB_ITEMS.map((tab) => {
         const isActive = tab.id === active;
         return (
           <button

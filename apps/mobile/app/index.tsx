@@ -1,14 +1,13 @@
-import { spacing, typeRamp } from '@era/tokens';
-import { Link, Redirect } from 'expo-router';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { Redirect } from 'expo-router';
+import { ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Button } from '@/components/Button';
-import { eraAuth, useSession } from '@/lib/auth-client';
+import { useSession } from '@/lib/auth-client';
 import { useTheme } from '@/lib/theme';
 
 // Route files require a default export — expo-router discovers screens this way.
-export default function HomeScreen() {
+// Entry router: signed-in users land on the tab shell, everyone else on sign-in.
+export default function Index() {
   const { colors } = useTheme();
   const { data, isPending } = useSession();
 
@@ -20,74 +19,13 @@ export default function HomeScreen() {
     );
   }
 
-  if (!data) {
-    return <Redirect href="/sign-in" />;
-  }
-
-  const { email, name } = data.user;
-  const greetingName = name ?? email.split('@')[0] ?? email;
-
-  return (
-    <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]}>
-      <View style={styles.body}>
-        <Text
-          style={{
-            color: colors.text,
-            fontSize: typeRamp.title1.pt,
-            lineHeight: typeRamp.title1.lineHeight,
-            fontWeight: '600',
-          }}
-        >
-          Hello, {greetingName}
-        </Text>
-        <Text
-          style={{
-            color: colors.secondary,
-            fontSize: typeRamp.body.pt,
-            lineHeight: typeRamp.body.lineHeight,
-          }}
-        >
-          {email}
-        </Text>
-      </View>
-      <View style={styles.footer}>
-        <Button
-          label="Sign out"
-          variant="secondary"
-          onPress={() => {
-            void eraAuth.signOut();
-          }}
-        />
-        <Link
-          href="/design-lab"
-          style={{ color: colors.secondary, fontSize: typeRamp.footnote.pt }}
-        >
-          Design lab
-        </Link>
-      </View>
-    </SafeAreaView>
-  );
+  return <Redirect href={data ? '/feed' : '/sign-in'} />;
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    paddingHorizontal: spacing.s6,
-    paddingVertical: spacing.s8,
-    justifyContent: 'space-between',
-  },
   centered: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  body: {
-    flex: 1,
-    justifyContent: 'center',
-    gap: spacing.s2,
-  },
-  footer: {
-    gap: spacing.s3,
-    alignItems: 'center',
   },
 });

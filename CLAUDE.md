@@ -100,14 +100,13 @@ Live in `@era/core`: `requestUploadUrl()` and `getAssetUrl()`. Presigning is ser
 
 > Update this section as the build progresses.
 
-- Monorepo scaffolded (pnpm workspaces + Turborepo).
-- `apps/web` and `apps/mobile` are empty placeholders.
-- Env contract + validation module landed: `apps/web/.env.example` and `apps/mobile/.env.example` define the env contracts, and `@era/core` ships a zod env module (`loadServerEnv`/`loadWebClientEnv`/`loadMobileClientEnv`) with real `node:test` tests.
-- `packages/core` now has real code and tests; `packages/tokens` and `packages/db` remain typed placeholders.
-- Storage layer landed in `@era/core` with four R2 buckets provisioned: `item-images-raw`, `item-images-cutout`, `outfit-covers`, `avatars` (see Image pipeline). Env contract now includes 4 bucket-name vars plus 2 public base URL vars (for the public cutout and cover buckets).
-- Nothing deployed.
-- GitHub remote is live: private repo `guy4carbs/era`.
-- CI runs on every PR and push to `main` via GitHub Actions — three checks: lint, typecheck, test.
-- Branch protection is enabled on `main` (direct pushes blocked; green CI required to merge).
-- The `check-types` task has been renamed to `typecheck`.
-- CI verified end to end via this PR (three green checks).
+**Phase 0 — COMPLETE (exit certified 2026-07-02).** All six exit criteria verified with fresh evidence: repo + CI green on main; Neon schema (15 tables, 3 enums) with API-layer authz proven live; R2 upload/read policies proven live; auth end-to-end (magic link, auto profile provisioning, sign-out/re-sign-in, single user, no duplicates); both apps run the tab shell (Feed/Closet/Design/Shop + Ovi FAB) from the shared design system; design system renders both modes with a 15/15 WCAG contrast audit enforced in CI.
+
+- Monorepo: pnpm workspaces + Turborepo; GitHub `guy4carbs/era` (public), branch protection on main, CI = lint/typecheck/test.
+- `apps/web`: Next 15 — Better Auth server (magic link; Apple/Google dormant until real creds), tab shell (bottom bar <1024, left rail ≥1024), /design-lab.
+- `apps/mobile`: Expo SDK 57 — expo-router Tabs shell, SecureStore sessions, design-lab screen.
+- `packages/tokens`: the design spec as law (see Design system rules); contrast audit runs as a test.
+- `packages/core`: env validation, authz guards, R2 storage helpers, auth API shape, Ovi strings.
+- `packages/db`: Drizzle schema on Neon (project era: main + dev branches), migration 0000 applied.
+- Infra: R2 (4 buckets, 2 public), Railway project `era` (vars mirrored; deploy not wired yet). Nothing deployed to production.
+- Known backlog: prod email provider for magic links; real Apple/Google OAuth creds; `exp://` origin gating + BETTER_AUTH_SECRET min-length before launch; upload size cap; user_id in public asset URLs; custom domain for R2; auth guard on the mobile (tabs) route group; motion.press token.
