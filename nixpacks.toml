@@ -1,0 +1,29 @@
+# Railway / Nixpacks build config for the Era monorepo.
+#
+# apps/web (Next.js 15) is deployed as ONE service that serves the marketing
+# site + web app + API routes. This file builds ONLY apps/web and the workspace
+# packages it depends on (via `turbo --filter=web...`), so unrelated packages
+# (e.g. apps/mobile) never enter the build.
+#
+# Toolchain is pinned to match the repo: Node 22 + pnpm 10.4.1. pnpm is
+# provisioned through corepack (bundled with Node 22) and pinned to the exact
+# version in the root package.json `packageManager` field, so CI, local, and
+# Railway all resolve the same pnpm.
+
+providers = ['node']
+
+[phases.setup]
+nixPkgs = ['nodejs_22']
+
+[phases.install]
+cmds = [
+  'corepack enable',
+  'corepack prepare pnpm@10.4.1 --activate',
+  'pnpm install --frozen-lockfile',
+]
+
+[phases.build]
+cmds = ['pnpm exec turbo run build --filter=web...']
+
+[start]
+cmd = 'pnpm --filter web start'

@@ -525,7 +525,84 @@ export const strings = {
     /** Reveal call to action. */
     revealCta: 'Step in',
   },
+
+  /**
+   * The marketing site — the pre-launch landing page and waitlist. This is the
+   * one surface written in Era's *brand* register, not Ovi's stylist voice:
+   * the copy below is LOCKED, approved brand copy and must ship verbatim, so
+   * the product voice-lint (which polices Ovi's chat tone) does not apply here.
+   * It happens to pass those lints anyway — no hype words, no exclamation marks
+   * — so the deck-wide lint stays exhaustive and needs no exclusion. If a
+   * future edit to this deck ever trips a product-voice rule, scope the lint to
+   * exclude `strings.site` rather than reword this approved copy.
+   *
+   * `sections` is an ordered array of {@link MarketingSection} so the page can
+   * `.map` it straight onto the scroll; everything else is a flat leaf string.
+   */
+  site: {
+    /** Above-the-fold hero: the promise, the elaboration, the single CTA. */
+    hero: {
+      title: 'Getting dressed should be easy.',
+      sub: "Era turns the closet you already own into outfits you'll actually wear — with Ovi, your AI stylist, by your side.",
+      cta: 'Join the waitlist',
+    },
+    /**
+     * The four value sections, in scroll order. Kept as a tuple so the page
+     * renders them with a single `.map` and the order is the source of truth.
+     */
+    sections: [
+      {
+        title: 'Your closet, reborn',
+        body: 'Every piece you own, rendered as a beautiful virtual wardrobe.',
+      },
+      {
+        title: 'Meet Ovi',
+        body: 'The stylist who knows your closet, your style, and your weather — and tells you when NOT to buy.',
+      },
+      {
+        title: 'Enter your era',
+        body: "Name the style chapter you're in and dress for it.",
+      },
+      {
+        title: 'Shop everything, buy less',
+        body: 'Every brand in one place, recommended only when nothing you own fills the gap.',
+      },
+    ],
+    /** Closing beat before the final waitlist form — the promise, restated. */
+    closer: {
+      title: "The easiest thing you'll wear all day.",
+    },
+    /** The waitlist capture form: input placeholder, submit, success beat. */
+    form: {
+      emailPlaceholder: 'you@email.com',
+      cta: 'Join the waitlist',
+      /** Warm, quiet confirmation once the email lands — no exclamation. */
+      success: "You're on the list.",
+    },
+    /** Post-signup referral nudge — skip the line by inviting a friend. */
+    referral: {
+      line: 'Skip the line — invite a friend.',
+      cta: 'Copy invite link',
+    },
+    /** Open Graph tags for shared links — concise, on-brand, mirrors the hero. */
+    og: {
+      title: 'Era — Getting dressed should be easy.',
+      description:
+        "The closet you already own, turned into outfits you'll actually wear — with Ovi, your AI stylist by your side.",
+    },
+    /** The SEO meta description — one honest sentence, kept under ~155 chars. */
+    meta: {
+      description:
+        "Era is a virtual wardrobe and AI stylist. Turn the closet you own into outfits you'll actually wear, and buy only what fills a real gap.",
+    },
+  },
 } as const;
 
 /** The shape of the full copy deck — for typing consumers and adapters. */
 export type OviStrings = typeof strings;
+
+/** The marketing/site copy deck — the landing page's single source of truth. */
+export type SiteStrings = OviStrings['site'];
+
+/** One titled marketing section on the landing page (an entry in `site.sections`). */
+export type MarketingSection = SiteStrings['sections'][number];
