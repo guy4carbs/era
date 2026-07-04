@@ -259,6 +259,60 @@ test('the empty-gallery state sells both ways in (a photo and a link)', () => {
   assert.match(body, /link/i, 'emptyBody should mention the link path');
 });
 
+// --- the Design tab (canvas, outfits, eras) ----------------------------------
+
+test('every design-tab string is present and non-empty', () => {
+  const d = strings.design;
+  const leaves = [
+    d.tabEmptyTitle,
+    d.tabEmptyBody,
+    d.newOutfit,
+    d.canvasEmptyHint,
+    d.addFromCloset,
+    d.drawerSearchPlaceholder,
+    d.outfitNamePlaceholder,
+    d.occasionPlaceholder,
+    d.saveOutfit,
+    d.outfitSaved,
+    d.saving,
+    d.reopenHint,
+    d.done,
+    d.eraSectionTitle,
+    d.newEra,
+    d.eraTitlePlaceholder,
+    d.eraDescriptionPlaceholder,
+    d.assignToEra,
+    d.eraCreated,
+    d.addedToEra,
+    d.deleteOutfit,
+    d.deleteConfirm,
+  ];
+  for (const leaf of leaves) {
+    assert.ok(leaf.trim().length > 0, `empty design-tab string: "${leaf}"`);
+  }
+});
+
+test('outfitItemCount is singular at one and plural otherwise', () => {
+  const one = strings.design.outfitItemCount(1);
+  const three = strings.design.outfitItemCount(3);
+  assert.equal(one, '1 piece');
+  assert.equal(three, '3 pieces');
+  assert.notEqual(one, three, 'outfitItemCount(1) should read differently than outfitItemCount(3)');
+  assert.doesNotMatch(one, /pieces/, 'outfitItemCount(1) should not pluralize');
+});
+
+test('the delete confirm is honest that deleting an outfit is permanent', () => {
+  const line = strings.design.deleteConfirm;
+  // Unlike archive (reversible), an outfit delete is permanent — this is the
+  // one confirm allowed to say so, and it must, so the user isn't misled.
+  assert.match(
+    line,
+    /can't be undone|cannot be undone|can not be undone|permanent(ly)?|forever/i,
+    'deleteConfirm should honestly signal that the delete is permanent',
+  );
+  assert.match(line, /delete/i, 'deleteConfirm should name the destructive action');
+});
+
 test('categoryLabel title-cases and pluralizes all eleven categories', () => {
   const expected: Record<string, string> = {
     top: 'Tops',

@@ -285,6 +285,91 @@ export const strings = {
     wearLogged: 'Logged. Every wear teaches me your taste.',
   },
 
+  /**
+   * The Design tab — the outfit canvas, saved outfits, and eras. This surface
+   * owns building a look from closet pieces, saving it, and grouping outfits
+   * into eras. Warm and invitational throughout; the one honest exception is
+   * {@link strings.design.deleteConfirm}, which tells the plain truth about a
+   * permanent delete (outfits have no archive to fall back on, unlike closet
+   * pieces — so here we don't soft-pedal).
+   */
+  design: {
+    /**
+     * Design-tab empty title — shown when the user has no outfits yet. Invites
+     * the first build; pairs with {@link strings.design.tabEmptyBody}.
+     */
+    tabEmptyTitle: 'Your first outfit starts here',
+    /**
+     * Design-tab empty body. Frames building as low-effort play with pieces the
+     * user already owns, and points at {@link strings.design.newOutfit}.
+     */
+    tabEmptyBody: 'Pull a few pieces from your closet and see how they come together.',
+    /** CTA that opens the canvas to start a new outfit. */
+    newOutfit: 'Build an outfit',
+
+    // --- the canvas: an empty stage, then pieces added from the closet drawer ---
+
+    /** Hint on the empty canvas, before any piece is placed. */
+    canvasEmptyHint: 'Add pieces from your closet to start building.',
+    /** Opens the bottom drawer of closet pieces to drop onto the canvas. */
+    addFromCloset: 'Add pieces',
+    /** Placeholder in the closet drawer's search field. */
+    drawerSearchPlaceholder: 'Find a piece…',
+
+    // --- saving the look: name it, tag an occasion, save ---
+
+    /** Placeholder for the outfit's name on the save form. */
+    outfitNamePlaceholder: 'Name this outfit…',
+    /** Placeholder for the occasion field — plain examples, no pressure. */
+    occasionPlaceholder: 'Work, weekend, night out…',
+    /** Save CTA on the outfit form. */
+    saveOutfit: 'Save outfit',
+    /** Toast after an outfit saves — a small, warm beat. */
+    outfitSaved: "That's a look — saved to your outfits.",
+    /** Progress line while the cover is composed and the outfit is saved. */
+    saving: 'Putting your look together…',
+    /** Optional hint that a saved outfit can be reopened and edited. */
+    reopenHint: 'Tap any outfit to open it back up.',
+    /**
+     * Completion label for the canvas once an outfit is saved. Replaces the
+     * pre-save "Cancel" on the top-left button — you've saved, so leaving is
+     * "Done", not backing out.
+     */
+    done: 'Done',
+
+    // --- eras: named chapters that group outfits ---
+
+    /** Heading for the eras list on the Design tab. */
+    eraSectionTitle: 'Your eras',
+    /** Inline CTA to create a new era. */
+    newEra: 'Start an era',
+    /** Placeholder for the era's name on the create form. */
+    eraTitlePlaceholder: 'Name this era…',
+    /** Placeholder for the era's description on the create form. */
+    eraDescriptionPlaceholder: "What's this era about?",
+    /** Label for adding an outfit to an era. */
+    assignToEra: 'Add to an era',
+    /** Toast after an era is created. */
+    eraCreated: 'Era started.',
+    /** Toast after an outfit is added to an era. */
+    addedToEra: 'Added to your era.',
+
+    /**
+     * Piece-count line for an outfit card, from its item count. Singular at one
+     * so a small outfit reads right: `outfitItemCount(1)` → "1 piece".
+     */
+    outfitItemCount: (n: number): string => `${n} ${n === 1 ? 'piece' : 'pieces'}`,
+
+    /** Detail action: delete this outfit. Unlike archive, this is permanent. */
+    deleteOutfit: 'Delete outfit',
+    /**
+     * Confirm before deleting an outfit. Outfit delete is permanent — there's
+     * no archive to bring it back, unlike a closet piece — so this is the one
+     * line allowed to, and required to, say so plainly. Honesty over comfort.
+     */
+    deleteConfirm: "Delete this outfit? This can't be undone.",
+  },
+
   /** The Feed tab — looks from people the user follows. */
   feed: {
     /** Empty feed — invitational, not a scold; no fake social pressure. */
