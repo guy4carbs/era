@@ -6,7 +6,14 @@ import { motion as motionToken, layout, typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import type { RankedProduct } from '@era/core/shop';
 import { transitionFor } from '../../lib/motion';
-import { rankProducts, searchProducts } from '../../lib/shop-client';
+import {
+  listSaved,
+  rankProducts,
+  saveProduct,
+  searchProducts,
+  unsaveProduct,
+  type SavedShopProduct,
+} from '../../lib/shop-client';
 import { ShopCard } from './ShopCard';
 import {
   EMPTY_FILTERS,
@@ -46,6 +53,11 @@ export function ShopBrowser() {
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [dismissed, setDismissed] = useState<ReadonlySet<string>>(() => new Set());
+  // Wishlist: the id set drives each card's filled-heart state; the product list
+  // backs the Saved view. Hydrated once on mount, parallel to the browse load.
+  const [saved, setSaved] = useState<ReadonlySet<string>>(() => new Set());
+  const [savedProducts, setSavedProducts] = useState<SavedShopProduct[]>([]);
+  const [view, setView] = useState<'browse' | 'saved'>('browse');
 
   // Guards against out-of-order responses when filters change quickly: only the
   // latest request is allowed to write state.
@@ -84,8 +96,62 @@ export function ShopBrowser() {
     void load(1, 'replace');
   }, [load]);
 
+  // Hydrate the wishlist once. Additive and non-blocking: a failure just leaves
+  // the Saved view empty rather than surfacing an error over the browse grid.
+  useEffect(() => {
+    let active = true;
+    listSaved()
+      .then((products) => {
+        if (!active) return;
+        setSavedProducts(products);
+        setSaved(new Set(products.map((p) => p.id)));
+      })
+      .catch(() => {
+        /* wishlist stays empty; the browse grid is unaffected */
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   function handleDismiss(productId: string) {
     setDismissed((prev) => new Set(prev).add(productId));
+  }
+
+  // Optimistic wishlist writes: flip local state immediately, then reconcile with
+  // the server and revert on failure so the heart never lies about a failed call.
+  function handleSave(product: RankedProduct) {
+    setSaved((prev) => new Set(prev).add(product.id));
+    setSavedProducts((prev) => (prev.some((p) => p.id === product.id) ? prev : [product, ...prev]));
+    void saveProduct(product).catch(() => {
+      setSaved((prev) => {
+        const next = new Set(prev);
+        next.delete(product.id);
+        return next;
+      });
+      setSavedProducts((prev) => prev.filter((p) => p.id !== product.id));
+    });
+  }
+
+  function handleUnsave(product: SavedShopProduct) {
+    setSaved((prev) => {
+      const next = new Set(prev);
+      next.delete(product.id);
+      return next;
+    });
+    setSavedProducts((prev) => prev.filter((p) => p.id !== product.id));
+    void unsaveProduct(product.id).catch(() => {
+      setSaved((prev) => new Set(prev).add(product.id));
+      setSavedProducts((prev) => (prev.some((p) => p.id === product.id) ? prev : [product, ...prev]));
+    });
+  }
+
+  function handleToggleSave(product: RankedProduct) {
+    if (saved.has(product.id)) {
+      handleUnsave(product);
+    } else {
+      handleSave(product);
+    }
   }
 
   const visible = useMemo(
@@ -105,33 +171,113 @@ export function ShopBrowser() {
         <p style={disclosureStyle}>{strings.shop.affiliateDisclosure}</p>
       </header>
 
-      <ShopFilters filters={filters} onChange={setFilters} />
+      <ViewToggle view={view} onChange={setView} />
 
-      {status !== 'error' ? (
-        <p style={sortStyle}>{strings.shop.sortRelevance}</p>
-      ) : null}
+      {view === 'browse' ? (
+        <>
+          <ShopFilters filters={filters} onChange={setFilters} />
 
-      <Body
-        status={status}
-        visible={visible}
-        hasMore={hasMore}
-        loadingMore={loadingMore}
-        reduced={reduced}
-        onDismiss={handleDismiss}
-        onLoadMore={() => void load(page + 1, 'append')}
-        onRetry={() => void load(1, 'replace')}
-      />
+          {status !== 'error' ? (
+            <p style={sortStyle}>{strings.shop.sortRelevance}</p>
+          ) : null}
+
+          <Body
+            status={status}
+            visible={visible}
+            saved={saved}
+            hasMore={hasMore}
+            loadingMore={loadingMore}
+            reduced={reduced}
+            onDismiss={handleDismiss}
+            onToggleSave={handleToggleSave}
+            onLoadMore={() => void load(page + 1, 'append')}
+            onRetry={() => void load(1, 'replace')}
+          />
+        </>
+      ) : (
+        <SavedView products={savedProducts} reduced={reduced} onUnsave={handleUnsave} />
+      )}
     </main>
+  );
+}
+
+interface ViewToggleProps {
+  view: 'browse' | 'saved';
+  onChange: (view: 'browse' | 'saved') => void;
+}
+
+/**
+ * Two-segment control switching the grid between ranked picks and the wishlist.
+ * Real buttons with `aria-pressed` (not a tab widget) — each is a toggle whose
+ * pressed state is the current view, which is the honest semantic here.
+ */
+function ViewToggle({ view, onChange }: ViewToggleProps) {
+  return (
+    <div style={toggleWrapStyle}>
+      <button
+        type="button"
+        style={view === 'browse' ? toggleActiveStyle : toggleStyle}
+        aria-pressed={view === 'browse'}
+        onClick={() => onChange('browse')}
+      >
+        {strings.shop.title}
+      </button>
+      <button
+        type="button"
+        style={view === 'saved' ? toggleActiveStyle : toggleStyle}
+        aria-pressed={view === 'saved'}
+        onClick={() => onChange('saved')}
+      >
+        {strings.shop.saved.tab}
+      </button>
+    </div>
+  );
+}
+
+interface SavedViewProps {
+  products: SavedShopProduct[];
+  reduced: boolean | null;
+  onUnsave: (product: SavedShopProduct) => void;
+}
+
+/** The wishlist grid: same {@link ShopCard} with a filled heart, no dismiss, no why. */
+function SavedView({ products, reduced, onUnsave }: SavedViewProps) {
+  if (products.length === 0) {
+    return <p style={noticeStyle}>{strings.shop.saved.empty}</p>;
+  }
+
+  return (
+    <>
+      <p style={savedIntroStyle}>{strings.shop.saved.intro}</p>
+      <div className="era-shop-grid">
+        <AnimatePresence mode="popLayout">
+          {products.map((product) => (
+            <motion.div
+              key={product.id}
+              layout
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={transitionFor(motionToken.springs.gentle, reduced)}
+            >
+              <ShopCard product={product} isSaved onToggleSave={() => onUnsave(product)} />
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+    </>
   );
 }
 
 interface BodyProps {
   status: Status;
   visible: RankedProduct[];
+  saved: ReadonlySet<string>;
   hasMore: boolean;
   loadingMore: boolean;
   reduced: boolean | null;
   onDismiss: (productId: string) => void;
+  onToggleSave: (product: RankedProduct) => void;
   onLoadMore: () => void;
   onRetry: () => void;
 }
@@ -140,10 +286,12 @@ interface BodyProps {
 function Body({
   status,
   visible,
+  saved,
   hasMore,
   loadingMore,
   reduced,
   onDismiss,
+  onToggleSave,
   onLoadMore,
   onRetry,
 }: BodyProps) {
@@ -179,7 +327,12 @@ function Body({
               exit={{ opacity: 0 }}
               transition={transitionFor(motionToken.springs.gentle, reduced)}
             >
-              <ShopCard product={product} onDismiss={onDismiss} />
+              <ShopCard
+                product={product}
+                isSaved={saved.has(product.id)}
+                onToggleSave={() => onToggleSave(product)}
+                onDismiss={onDismiss}
+              />
             </motion.div>
           ))}
         </AnimatePresence>
@@ -235,6 +388,47 @@ const sortStyle: CSSProperties = {
   fontSize: typeRamp.footnote.rem,
   fontWeight: 600,
   color: 'var(--color-secondary-strong)',
+};
+
+const toggleWrapStyle: CSSProperties = {
+  display: 'inline-flex',
+  alignSelf: 'flex-start',
+  gap: 'var(--space-1)',
+  padding: 'var(--space-1)',
+  borderRadius: 'var(--radius-hero)',
+  background: 'var(--color-surface)',
+  border: '1px solid var(--color-hairline)',
+};
+
+const toggleBase: CSSProperties = {
+  minHeight: 'var(--touch-target-min)',
+  paddingInline: 'var(--space-4)',
+  borderRadius: 'var(--radius-hero)',
+  border: 'none',
+  cursor: 'pointer',
+  fontSize: typeRamp.footnote.rem,
+  fontWeight: 600,
+};
+
+const toggleStyle: CSSProperties = {
+  ...toggleBase,
+  background: 'transparent',
+  color: 'var(--color-secondary-strong)',
+};
+
+const toggleActiveStyle: CSSProperties = {
+  ...toggleBase,
+  // Ink label on the accent fill — the highest-contrast pairing, matching the
+  // primary Button (part of the audited 15/15 contrast set).
+  background: 'var(--color-accent)',
+  color: 'var(--color-ink)',
+};
+
+const savedIntroStyle: CSSProperties = {
+  margin: 0,
+  fontSize: typeRamp.body.rem,
+  lineHeight: `${typeRamp.body.lineHeight}px`,
+  color: 'var(--color-secondary)',
 };
 
 const noticeStyle: CSSProperties = {

@@ -318,6 +318,172 @@ test('rankProducts returns results sorted by score descending', () => {
   assert.ok(ranked.every((p) => typeof p.title === 'string' && typeof p.affiliateUrl === 'string'));
 });
 
+// --- ranker: whyDetail (rich identities behind each signal) ------------------
+
+test('whyDetail.completesWith names the owned bottoms a top builds with', () => {
+  const closet = [
+    owned({ id: 'b1', category: 'bottom', colors: ['indigo'] }),
+    owned({ id: 'b2', category: 'bottom', colors: ['black'] }),
+  ];
+  const top = product({ id: 'top', category: 'top' });
+  const ranked = first(rankProducts([top], closet, NO_PROFILE));
+
+  assert.ok(ranked.whyDetail, 'expected a whyDetail');
+  assert.deepEqual(
+    ranked.whyDetail?.completesWith.map((r) => r.id),
+    ['b1', 'b2'],
+    'completesWith should name the owned bottoms in closet order',
+  );
+  assert.deepEqual(
+    ranked.whyDetail?.completesWith.map((r) => r.label),
+    ['indigo bottom', 'black bottom'],
+    'label is primary-color + category',
+  );
+  // imageUrl is left for the server to resolve from the DB.
+  assert.ok(ranked.whyDetail?.completesWith.every((r) => r.imageUrl === undefined));
+});
+
+test('whyDetail label falls back to brand, then bare category', () => {
+  const closet = [
+    owned({ id: 'b1', category: 'bottom', brand: 'A.P.C.' }), // no colors → brand
+    owned({ id: 'b2', category: 'bottom' }), // no colors, no brand → category only
+  ];
+  const top = product({ id: 'top', category: 'top' });
+  const ranked = first(rankProducts([top], closet, NO_PROFILE));
+  assert.deepEqual(
+    ranked.whyDetail?.completesWith.map((r) => r.label),
+    ['A.P.C. bottom', 'bottom'],
+  );
+});
+
+test('whyDetail.fillsGap reports the gap category and how many are owned in it', () => {
+  // Essentials counts: shoes=1, bottom=2, top=2, outerwear=1. Min is 1; the
+  // shoes/outerwear tie breaks to shoes (ESSENTIAL_CATEGORIES order) → gap=shoes.
+  const closet = [
+    owned({ id: 'sh1', category: 'shoes' }),
+    owned({ id: 'b1', category: 'bottom' }),
+    owned({ id: 'b2', category: 'bottom' }),
+    owned({ id: 't1', category: 'top' }),
+    owned({ id: 't2', category: 'top' }),
+    owned({ id: 'o1', category: 'outerwear' }),
+  ];
+  const shoe = product({ id: 'shoe', category: 'shoes' });
+  const ranked = first(rankProducts([shoe], closet, NO_PROFILE));
+
+  assert.equal(ranked.why?.kind, 'fills_gap');
+  assert.deepEqual(ranked.whyDetail?.fillsGap, { category: 'shoes', ownedCount: 1 });
+});
+
+test('whyDetail.fillsGap is null for a product that does not fill the gap', () => {
+  const closet = [
+    owned({ id: 't1', category: 'top' }),
+    owned({ id: 'b1', category: 'bottom' }),
+    owned({ id: 'o1', category: 'outerwear' }),
+  ];
+  // gap is shoes; a bag does not fill it.
+  const bag = product({ id: 'bag', category: 'bag' });
+  const ranked = first(rankProducts([bag], closet, NO_PROFILE));
+  assert.equal(ranked.whyDetail?.fillsGap ?? null, null);
+});
+
+test('whyDetail.similarTo names the owned near-duplicates', () => {
+  const closet = [
+    owned({ id: 't1', category: 'top', colors: ['black'] }),
+    owned({ id: 't2', category: 'top', colors: ['black'] }),
+    owned({ id: 'other', category: 'top', colors: ['white'] }), // different color → not similar
+  ];
+  const dupe = product({ id: 'dupe', category: 'top', colors: ['black'] });
+  const ranked = first(rankProducts([dupe], closet, NO_PROFILE));
+
+  assert.equal(ranked.why?.kind, 'similar_owned');
+  assert.deepEqual(
+    ranked.whyDetail?.similarTo.map((r) => r.id),
+    ['t1', 't2'],
+    'similarTo names only the same-category, shared-color owned pieces',
+  );
+  assert.deepEqual(ranked.whyDetail?.similarTo.map((r) => r.label), ['black top', 'black top']);
+});
+
+test('whyDetail.paletteMatch surfaces the product colors that hit the palette', () => {
+  const profile: StyleProfileLite = { archetype: 'Minimalist', palette: ['black', 'navy'], keywords: [] };
+  const item = product({ id: 'dress', category: 'dress', colors: ['black', 'white', 'navy'] });
+  const ranked = first(rankProducts([item], [], profile));
+  assert.deepEqual(ranked.whyDetail?.paletteMatch, ['black', 'navy']);
+});
+
+test('whyDetail arrays are each capped at 3 items in stable order', () => {
+  const closet = [
+    owned({ id: 'b1', category: 'bottom' }),
+    owned({ id: 'b2', category: 'bottom' }),
+    owned({ id: 'b3', category: 'bottom' }),
+    owned({ id: 'b4', category: 'bottom' }),
+    owned({ id: 'b5', category: 'bottom' }),
+  ];
+  const top = product({ id: 'top', category: 'top' });
+  const ranked = first(rankProducts([top], closet, NO_PROFILE));
+  assert.equal(ranked.whyDetail?.completesWith.length, 3, 'completesWith caps at 3');
+  assert.deepEqual(
+    ranked.whyDetail?.completesWith.map((r) => r.id),
+    ['b1', 'b2', 'b3'],
+    'the cap keeps the first three in closet order',
+  );
+
+  // similarTo cap.
+  const dupeCloset = [
+    owned({ id: 's1', category: 'top', colors: ['black'] }),
+    owned({ id: 's2', category: 'top', colors: ['black'] }),
+    owned({ id: 's3', category: 'top', colors: ['black'] }),
+    owned({ id: 's4', category: 'top', colors: ['black'] }),
+  ];
+  const dupe = product({ id: 'dupe', category: 'top', colors: ['black'] });
+  const rankedDupe = first(rankProducts([dupe], dupeCloset, NO_PROFILE));
+  assert.equal(rankedDupe.whyDetail?.similarTo.length, 3, 'similarTo caps at 3');
+
+  // paletteMatch cap.
+  const profile: StyleProfileLite = {
+    archetype: 'X',
+    palette: ['black', 'navy', 'grey', 'ecru'],
+    keywords: [],
+  };
+  const many = product({ id: 'many', category: 'dress', colors: ['black', 'navy', 'grey', 'ecru'] });
+  const rankedPalette = first(rankProducts([many], [], profile));
+  assert.equal(rankedPalette.whyDetail?.paletteMatch.length, 3, 'paletteMatch caps at 3');
+});
+
+test('whyDetail is null when no signal names an owned item', () => {
+  // Empty closet, no profile: no gap, no completes-with owned pieces, no similar.
+  const top = product({ id: 'top', category: 'top' });
+  const ranked = first(rankProducts([top], [], NO_PROFILE));
+  assert.equal(ranked.whyDetail, null);
+});
+
+test('whyDetail is additive: the compact why label is unchanged by the collapse', () => {
+  // Regression-guard the count-only labels the rec-event route + WhyLabel depend
+  // on: the same inputs must still yield exactly these `why` values, with the
+  // rich detail layered ALONGSIDE (never replacing) the compact label.
+  const closet = [
+    owned({ id: 't1', category: 'top', colors: ['black'] }),
+    owned({ id: 'b1', category: 'bottom', colors: ['navy'] }),
+    owned({ id: 'o1', category: 'outerwear' }),
+  ];
+  const shoe = product({ id: 'shoe', category: 'shoes' }); // fills the shoes gap
+  const dupeTop = product({ id: 'dupe', category: 'top', colors: ['black'] }); // similar_owned
+  const bagCloset = [owned({ id: 'bb', category: 'bottom' })];
+  const topOverBottom = product({ id: 'top2', category: 'top' }); // completes_outfits
+
+  const shoeRanked = first(rankProducts([shoe], closet, NO_PROFILE));
+  assert.deepEqual(shoeRanked.why, { kind: 'fills_gap', category: 'shoes' });
+  assert.ok(shoeRanked.whyDetail, 'detail layered alongside the label');
+
+  const dupeRanked = first(rankProducts([dupeTop], closet, NO_PROFILE));
+  assert.deepEqual(dupeRanked.why, { kind: 'similar_owned', ownedCount: 1 });
+  assert.ok(dupeRanked.whyDetail);
+
+  const completesRanked = first(rankProducts([topOverBottom], bagCloset, NO_PROFILE));
+  assert.deepEqual(completesRanked.why, { kind: 'completes_outfits', count: 1 });
+  assert.ok(completesRanked.whyDetail);
+});
+
 // --- canonical filter facets (web/mobile parity) -----------------------------
 
 test('BUDGET_BANDS is a non-empty, ascending, non-overlapping tiling', () => {

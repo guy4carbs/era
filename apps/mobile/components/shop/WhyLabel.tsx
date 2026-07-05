@@ -7,10 +7,16 @@
  * something like this. It is a warning, never a pitch. The label text always uses
  * the high-contrast `text` colour so the caution reads through its tint safely;
  * the rust framing carries the signal.
+ *
+ * When the ranker also handed back a rich `whyDetail`, the card passes `onPress` so
+ * the pill becomes a button that opens the why-detail sheet (Ovi's reasoning
+ * grounded in the user's own closet). Without `onPress` it stays a static label —
+ * a pick whose `why` names no owned piece has nothing to expand into.
  */
 import type { ProductWhy } from '@era/core/shop';
+import { strings } from '@era/core/strings';
 import { radii, spacing, typeRamp } from '@era/tokens';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useTheme } from '@/lib/theme';
 
@@ -21,38 +27,52 @@ const TINT_ALPHA = '1F';
 
 interface WhyLabelProps {
   readonly why: ProductWhy;
+  /** When set, the pill becomes a button opening the why-detail sheet. */
+  readonly onPress?: () => void;
 }
 
-export function WhyLabel({ why }: WhyLabelProps) {
+export function WhyLabel({ why, onPress }: WhyLabelProps) {
   const { colors } = useTheme();
   const { text, caution } = resolveWhy(why);
 
   const tint = caution ? colors.danger : colors.accent;
   const border = caution ? colors.danger : colors.hairline;
 
+  const pillStyle = [
+    styles.pill,
+    {
+      backgroundColor: `${tint}${TINT_ALPHA}`,
+      borderColor: border,
+      borderRadius: radii.chip,
+    },
+  ];
+  const labelStyle = {
+    color: colors.text,
+    fontSize: typeRamp.footnote.pt,
+    lineHeight: typeRamp.footnote.lineHeight,
+    fontWeight: caution ? ('600' as const) : ('400' as const),
+  };
+
+  // Static label when there's no detail to expand into.
+  if (!onPress) {
+    return (
+      <View accessibilityRole="text" style={pillStyle}>
+        <Text style={labelStyle}>{text}</Text>
+      </View>
+    );
+  }
+
   return (
-    <View
-      accessibilityRole="text"
-      style={[
-        styles.pill,
-        {
-          backgroundColor: `${tint}${TINT_ALPHA}`,
-          borderColor: border,
-          borderRadius: radii.chip,
-        },
-      ]}
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={text}
+      accessibilityHint={strings.shop.whyDetail.title}
+      hitSlop={spacing.s2}
+      onPress={onPress}
+      style={pillStyle}
     >
-      <Text
-        style={{
-          color: colors.text,
-          fontSize: typeRamp.footnote.pt,
-          lineHeight: typeRamp.footnote.lineHeight,
-          fontWeight: caution ? '600' : '400',
-        }}
-      >
-        {text}
-      </Text>
-    </View>
+      <Text style={labelStyle}>{text}</Text>
+    </Pressable>
   );
 }
 

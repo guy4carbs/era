@@ -1,18 +1,33 @@
 'use client';
 
-import { type CSSProperties } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { useState, type CSSProperties } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { motion as motionToken, boxShadows, layout, typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
-import type { RankedProduct } from '@era/core/shop';
+import type { ProductWhy, RankedProduct, WhyDetail } from '@era/core/shop';
 import { transitionFor } from '../../lib/motion';
-import { logRecEvent } from '../../lib/shop-client';
+import { logRecEvent, type SavedShopProduct } from '../../lib/shop-client';
 import { WhyLabel } from './WhyLabel';
+import { WhyDetailSheet } from './WhyDetailSheet';
 
 export interface ShopCardProps {
-  product: RankedProduct;
-  /** Remove this card after the user says it's not for them. */
-  onDismiss: (productId: string) => void;
+  /**
+   * A ranked pick (grid) or a wishlisted pick (Saved view). A {@link SavedShopProduct}
+   * carries no ranking, so its `why`/`whyDetail` are simply absent — the card reads
+   * both off the product with an `in` check and renders the why affordances only
+   * when they exist.
+   */
+  product: RankedProduct | SavedShopProduct;
+  /** Whether this pick is currently on the wishlist — drives the heart's filled state. */
+  isSaved: boolean;
+  /** Toggle the wishlist state for this pick (the parent owns the optimistic update). */
+  onToggleSave: () => void;
+  /**
+   * Remove this card after the user says it's not for them. Absent on Saved-view
+   * cards (a saved pick is removed via the heart, not dismissed), which also hides
+   * the "Not for me" action.
+   */
+  onDismiss?: (productId: string) => void;
 }
 
 /** rel for every monetised click-out: no window handle, no ranking pass, disclosed. */
@@ -54,19 +69,26 @@ function formatPrice(price: number, currency: string): string {
  * "Not for me" fires `rec_dismiss` and removes the card. Neither log blocks the
  * user: the anchor navigates immediately and {@link logRecEvent} never awaits.
  */
-export function ShopCard({ product, onDismiss }: ShopCardProps) {
+export function ShopCard({ product, isSaved, onToggleSave, onDismiss }: ShopCardProps) {
   const reduced = useReducedMotion();
+  const [whyOpen, setWhyOpen] = useState(false);
   const alt = `${product.brand} ${product.title}`;
   // Only a validated https link is ever rendered as a click-out. A tampered or
   // non-https URL leaves the card non-clickable rather than exposing a bad href.
   const href = safeHttpsUrl(product.affiliateUrl);
+
+  // A saved pick carries no ranking, so `why`/`whyDetail` are absent — read them
+  // off the product only when present. The compact label is tappable exactly when
+  // there is rich detail to reveal.
+  const why: ProductWhy | null = 'why' in product ? product.why : null;
+  const whyDetail: WhyDetail | null = 'whyDetail' in product ? product.whyDetail : null;
 
   function fireClick() {
     logRecEvent({
       kind: 'rec_click',
       productId: product.id,
       retailer: product.retailer,
-      why: product.why?.kind,
+      why: why?.kind,
     });
   }
 
@@ -75,9 +97,9 @@ export function ShopCard({ product, onDismiss }: ShopCardProps) {
       kind: 'rec_dismiss',
       productId: product.id,
       retailer: product.retailer,
-      why: product.why?.kind,
+      why: why?.kind,
     });
-    onDismiss(product.id);
+    onDismiss?.(product.id);
   }
 
   const image = (
@@ -115,7 +137,24 @@ export function ShopCard({ product, onDismiss }: ShopCardProps) {
           <span style={retailerStyle}>{product.retailer}</span>
         </p>
 
-        <WhyLabel why={product.why} />
+        {/* The compact why is tappable ONLY when there's rich detail to reveal;
+            otherwise it stays the plain one-liner. The label itself is unchanged
+            — the button is a transparent, full-width wrapper so a keyboard user
+            gets the reveal for free. */}
+        {why && whyDetail ? (
+          <button
+            type="button"
+            style={whyTriggerStyle}
+            aria-haspopup="dialog"
+            aria-expanded={whyOpen}
+            aria-label={strings.shop.whyDetail.title}
+            onClick={() => setWhyOpen(true)}
+          >
+            <WhyLabel why={why} />
+          </button>
+        ) : (
+          <WhyLabel why={why} />
+        )}
 
         <div style={actionsStyle}>
           {href ? (
@@ -125,11 +164,35 @@ export function ShopCard({ product, onDismiss }: ShopCardProps) {
           ) : (
             <span />
           )}
-          <button type="button" onClick={handleDismiss} style={dismissStyle}>
-            {strings.shop.dismiss}
-          </button>
+          <div style={actionsRightStyle}>
+            <motion.button
+              type="button"
+              onClick={onToggleSave}
+              style={{ ...saveStyle, color: isSaved ? 'var(--color-accent)' : 'var(--color-secondary-strong)' }}
+              aria-pressed={isSaved}
+              aria-label={isSaved ? strings.shop.saved.removeA11y : strings.shop.saved.saveA11y}
+              whileTap={reduced ? undefined : { scale: 0.9 }}
+              transition={transitionFor(motionToken.springs.gentle, reduced)}
+            >
+              <span aria-hidden="true" style={heartStyle}>
+                {isSaved ? '♥' : '♡'}
+              </span>
+              {isSaved ? strings.shop.saved.savedState : strings.shop.saved.save}
+            </motion.button>
+            {onDismiss ? (
+              <button type="button" onClick={handleDismiss} style={dismissStyle}>
+                {strings.shop.dismiss}
+              </button>
+            ) : null}
+          </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {whyOpen && whyDetail ? (
+          <WhyDetailSheet whyDetail={whyDetail} onClose={() => setWhyOpen(false)} />
+        ) : null}
+      </AnimatePresence>
     </motion.article>
   );
 }
@@ -212,6 +275,19 @@ const retailerStyle: CSSProperties = {
   whiteSpace: 'nowrap',
 };
 
+// Full-width transparent wrapper so the compact why label keeps its own layout
+// while gaining button semantics (focus, Enter/Space) for the detail reveal.
+const whyTriggerStyle: CSSProperties = {
+  display: 'block',
+  width: '100%',
+  border: 'none',
+  background: 'transparent',
+  padding: 0,
+  margin: 0,
+  textAlign: 'left',
+  cursor: 'pointer',
+};
+
 const actionsStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
@@ -219,6 +295,29 @@ const actionsStyle: CSSProperties = {
   gap: 'var(--space-2)',
   marginTop: 'var(--space-2)',
   minHeight: 'var(--touch-target-min)',
+};
+
+const actionsRightStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 'var(--space-3)',
+};
+
+const saveStyle: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 'var(--space-1)',
+  border: 'none',
+  background: 'transparent',
+  padding: 0,
+  cursor: 'pointer',
+  fontSize: typeRamp.footnote.rem,
+  fontWeight: 600,
+};
+
+const heartStyle: CSSProperties = {
+  fontSize: typeRamp.subhead.rem,
+  lineHeight: 1,
 };
 
 const viewAtStyle: CSSProperties = {

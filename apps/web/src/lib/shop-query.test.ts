@@ -9,7 +9,24 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { isHttpsUrl, parseShopQuery } from './shop-query.ts';
+import { isHttpsUrl, parseShopProduct, parseShopQuery } from './shop-query.ts';
+
+/** A well-formed product card, spread + overridden per case. */
+const VALID_PRODUCT = {
+  id: 'cos-boxy-tee',
+  title: 'Boxy Cotton T-Shirt',
+  brand: 'COS',
+  brandTier: 'contemporary',
+  category: 'top',
+  price: 45,
+  currency: 'USD',
+  imageUrl: 'https://images.cos.example/cos-boxy-tee.jpg',
+  retailer: 'COS',
+  productUrl: 'https://cos.example/p/cos-boxy-tee',
+  affiliateUrl: 'https://cos.example/p/cos-boxy-tee?aff=era-cos',
+  sizes: ['S', 'M', 'L'],
+  colors: ['white'],
+} as const;
 
 test('isHttpsUrl accepts only absolute https URLs', () => {
   assert.equal(isHttpsUrl('https://era.style/p/1'), true);
@@ -53,4 +70,32 @@ test('parseShopQuery treats an empty body as an all-absent (unfiltered) query', 
   assert.ok(q);
   assert.equal(q!.q, undefined);
   assert.equal(q!.category, undefined);
+});
+
+test('parseShopProduct accepts a well-formed product card', () => {
+  const product = parseShopProduct(VALID_PRODUCT);
+  assert.ok(product);
+  assert.equal(product!.id, 'cos-boxy-tee');
+  assert.equal(product!.category, 'top');
+  assert.equal(product!.brandTier, 'contemporary');
+  assert.equal(product!.price, 45);
+  assert.deepEqual(product!.colors, ['white']);
+});
+
+test('parseShopProduct rejects a non-https image/link field (scheme-injection guard)', () => {
+  for (const field of ['imageUrl', 'productUrl', 'affiliateUrl'] as const) {
+    assert.equal(parseShopProduct({ ...VALID_PRODUCT, [field]: 'javascript:alert(1)' }), null, field);
+    assert.equal(parseShopProduct({ ...VALID_PRODUCT, [field]: 'http://insecure.example/x' }), null, field);
+  }
+});
+
+test('parseShopProduct rejects a missing field, bad enum, or bad price', () => {
+  assert.equal(parseShopProduct({ ...VALID_PRODUCT, id: '' }), null);
+  assert.equal(parseShopProduct({ ...VALID_PRODUCT, title: undefined }), null);
+  assert.equal(parseShopProduct({ ...VALID_PRODUCT, category: 'gizmos' }), null);
+  assert.equal(parseShopProduct({ ...VALID_PRODUCT, brandTier: 'ultra-lux' }), null);
+  assert.equal(parseShopProduct({ ...VALID_PRODUCT, price: -5 }), null);
+  assert.equal(parseShopProduct({ ...VALID_PRODUCT, price: 'free' }), null);
+  assert.equal(parseShopProduct(null), null);
+  assert.equal(parseShopProduct('nope'), null);
 });

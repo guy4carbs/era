@@ -17,9 +17,12 @@
  *
  * Never import from a client bundle — reads secrets and the DB client.
  */
-import { rankProducts, type RankedProduct, type ShopProduct } from '@era/core/shop';
+import { and, eq, inArray } from 'drizzle-orm';
+
+import { type AuthContext, getAssetUrl, type StorageClient } from '@era/core';
+import { rankProducts, type RankedProduct, type ShopProduct, type WhyItemRef } from '@era/core/shop';
 import type { OviItem, StyleProfileLite } from '@era/core/ovi';
-import type { DbClient } from '@era/db';
+import { type DbClient, items } from '@era/db';
 
 import { checkDailyLimit, checkGlobalAiGate, recordUsage } from './ai-usage.ts';
 import { isRealCredential } from './ovi-server.ts';
@@ -109,4 +112,112 @@ export async function rankProductsForUser(
 
   // Dormant / failed refinement: no model ran, so nothing is metered. Deterministic.
   return { products: deterministic, source: 'deterministic' };
+}
+
+// -----------------------------------------------------------------------------
+// whyDetail thumbnail resolution — the ranker leaves each WhyItemRef.imageUrl
+// UNDEFINED (the pure `@era/core/shop` path is client-safe and never touches the
+// DB or R2). The server resolves the referenced owned closet items' cutout URLs
+// here before returning, so a "why" detail sheet can show the actual pieces.
+// -----------------------------------------------------------------------------
+
+/**
+ * Resolve a set of owned closet item ids to their thumbnail URLs. The lookup is
+ * owner-scoped and returns only the ids it could resolve — an id with no cutout
+ * (or not owned by the caller) is simply absent from the map, so its ref keeps
+ * `imageUrl` undefined and the client shows a fallback.
+ */
+export type WhyThumbnailLookup = (ids: readonly string[]) => Promise<ReadonlyMap<string, string>>;
+
+/** Every WhyItemRef id referenced across a page's whyDetail arrays, deduped. */
+function collectWhyItemIds(products: readonly RankedProduct[]): string[] {
+  const ids = new Set<string>();
+  for (const product of products) {
+    const detail = product.whyDetail;
+    if (detail === null) {
+      continue;
+    }
+    for (const ref of detail.completesWith) {
+      ids.add(ref.id);
+    }
+    for (const ref of detail.similarTo) {
+      ids.add(ref.id);
+    }
+  }
+  return [...ids];
+}
+
+/** Copy a ref, attaching its resolved thumbnail when the lookup found one. */
+function withRefImage(ref: WhyItemRef, urls: ReadonlyMap<string, string>): WhyItemRef {
+  const imageUrl = urls.get(ref.id);
+  return imageUrl !== undefined ? { ...ref, imageUrl } : ref;
+}
+
+/**
+ * Populate each product's whyDetail refs (`completesWith`, `similarTo`) with the
+ * owned closet items' thumbnail URLs from `lookup`. Pure over the products — the
+ * only side effect is the injected lookup — so it is unit-testable with a stubbed
+ * map. Returns the products unchanged (no lookup call) when no ref names an item.
+ */
+export async function attachWhyThumbnails(
+  products: readonly RankedProduct[],
+  lookup: WhyThumbnailLookup,
+): Promise<RankedProduct[]> {
+  const ids = collectWhyItemIds(products);
+  if (ids.length === 0) {
+    return [...products];
+  }
+  const urls = await lookup(ids);
+  return products.map((product) => {
+    const detail = product.whyDetail;
+    if (detail === null) {
+      return product;
+    }
+    return {
+      ...product,
+      whyDetail: {
+        ...detail,
+        completesWith: detail.completesWith.map((ref) => withRefImage(ref, urls)),
+        similarTo: detail.similarTo.map((ref) => withRefImage(ref, urls)),
+      },
+    };
+  });
+}
+
+/**
+ * The live {@link WhyThumbnailLookup}: reads the caller's OWN closet items
+ * (owner-scoped by `owner.userId`) and resolves each one's cutout to a display
+ * URL. Cutout-only — an item with no `imageCutoutPath` is omitted (its ref keeps
+ * a fallback). `getAssetUrl` yields the unsigned public cutout URL for a public
+ * owner and a short-lived presigned GET for a private one, exactly as the closet
+ * list does; it also guards that every key is under the owner's prefix.
+ */
+export function createItemThumbnailLookup(
+  db: DbClient,
+  storage: StorageClient,
+  ctx: AuthContext,
+  owner: { userId: string; isPrivate: boolean },
+): WhyThumbnailLookup {
+  return async (ids: readonly string[]): Promise<ReadonlyMap<string, string>> => {
+    const urls = new Map<string, string>();
+    if (ids.length === 0) {
+      return urls;
+    }
+    const rows = await db
+      .select({ id: items.id, imageCutoutPath: items.imageCutoutPath })
+      .from(items)
+      .where(and(inArray(items.id, [...ids]), eq(items.userId, owner.userId)));
+
+    await Promise.all(
+      rows.map(async (row) => {
+        const key = row.imageCutoutPath;
+        if (!key) {
+          return;
+        }
+        const url = await getAssetUrl(storage, ctx, { bucket: 'items-cutout', key, owner });
+        urls.set(row.id, url);
+      }),
+    );
+    return urls;
+  };
 }

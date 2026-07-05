@@ -142,6 +142,35 @@ export function canInsertAiEvent(ctx: AuthContext, event: { readonly userId: str
 }
 
 /**
+ * saved_products (wishlist / save-for-later): a user's saved shop products are
+ * private and owner-scoped. Insert, delete, and read all go through the owner —
+ * only the authenticated user may add to, remove from, or read their own saves.
+ * `saved.userId` is the id that will be written as (or is stored on) the row.
+ * @throws {AuthzError} `UNAUTHENTICATED` when anonymous, `FORBIDDEN` when the
+ *   caller is not the owner.
+ */
+export function canInsertSavedProduct(
+  ctx: AuthContext,
+  saved: { readonly userId: string },
+): void {
+  ownerOnly(ctx, saved.userId);
+}
+
+export function canDeleteSavedProduct(
+  ctx: AuthContext,
+  saved: { readonly userId: string },
+): void {
+  ownerOnly(ctx, saved.userId);
+}
+
+export function canReadSavedProduct(
+  ctx: AuthContext,
+  saved: { readonly userId: string },
+): void {
+  ownerOnly(ctx, saved.userId);
+}
+
+/**
  * Waitlist: a public, insert-only signup. Always allowed — no authentication
  * required. This guard exists so that every write handler calls an authz check,
  * keeping the "no route without a guard" invariant uniform and greppable.

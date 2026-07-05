@@ -1,13 +1,18 @@
 /** Shop tab components + API. */
-export { ShopCard } from './ShopCard';
+export { ShopCard, type ShopCardProduct } from './ShopCard';
 export { ShopFilters } from './ShopFilters';
 export { WhyLabel } from './WhyLabel';
+export { WhyDetailSheet } from './WhyDetailSheet';
 export {
+  listSaved,
   logRecEvent,
   rankProducts,
+  saveProduct,
   searchProducts,
+  unsaveProduct,
   type RecEvent,
   type RecEventKind,
+  type SavedShopProduct,
 } from './api';
 export {
   EMPTY_FILTERS,

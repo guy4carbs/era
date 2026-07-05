@@ -41,7 +41,7 @@ export function WhyLabel({ why }: WhyLabelProps) {
 
   const text =
     why.kind === 'fills_gap'
-      ? strings.shop.whyFillsGap(strings.closet.categoryLabel(why.category))
+      ? strings.shop.whyFillsGap(strings.closet.categoryLabel(why.category).toLowerCase())
       : strings.shop.whyCompletesOutfits(why.count);
 
   return (

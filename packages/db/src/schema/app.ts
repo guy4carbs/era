@@ -17,6 +17,7 @@ import {
   real,
   text,
   timestamp,
+  unique,
   uuid,
 } from 'drizzle-orm/pg-core';
 
@@ -221,6 +222,35 @@ export const aiUsage = pgTable(
     // Rate-limit counter: COUNT(*) WHERE user_id = ? AND route = ? AND
     // created_at >= start-of-UTC-day.
     index('ai_usage_user_id_route_created_at_idx').on(table.userId, table.route, table.createdAt),
+  ],
+);
+
+export const savedProducts = pgTable(
+  'saved_products',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    // Shop products come from an external affiliate feed with no table to FK to,
+    // so a saved row is a denormalized snapshot of the ShopProduct at save time.
+    productId: text('product_id').notNull(), // external ShopProduct.id (stable feed key)
+    retailer: text('retailer').notNull(),
+    title: text('title').notNull(),
+    brand: text('brand'),
+    category: itemCategory('category'), // ShopProduct.category IS an ItemCategory
+    imageUrl: text('image_url'),
+    productUrl: text('product_url').notNull(),
+    affiliateUrl: text('affiliate_url').notNull(),
+    currency: text('currency').notNull(),
+    // Price captured at save time — the baseline for future price-drop signals.
+    priceSnapshot: numeric('price_snapshot').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    // Idempotent add/remove: one saved row per (user, external product).
+    unique('saved_products_user_id_product_id_key').on(table.userId, table.productId),
+    index('saved_products_user_id_idx').on(table.userId),
   ],
 );
 
