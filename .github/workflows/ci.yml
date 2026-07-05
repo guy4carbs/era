@@ -49,3 +49,53 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec turbo run test
+
+  lighthouse:
+    name: lighthouse
+    runs-on: ubuntu-latest
+    # Dummy env so the web app BOOTS: the landing `/` calls auth.api.getSession,
+    # which is try/catch-guarded to render the marketing page for anon traffic,
+    # but the process must still start with a valid env (validated by @era/core).
+    # These are placeholders, NOT secrets — DATABASE_URL is never actually
+    # connected (the session lookup is guarded and swallows failures), and the
+    # NEXT_PUBLIC_* vars must be present at BUILD time (inlined into the bundle).
+    env:
+      # Server-only (schema-required to boot).
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/era?sslmode=disable
+      BETTER_AUTH_SECRET: ci-dummy-better-auth-secret-32chars
+      BETTER_AUTH_URL: http://localhost:3000
+      APPLE_OAUTH_CLIENT_ID: com.example.era.ci
+      APPLE_OAUTH_CLIENT_SECRET: ci-dummy-apple-secret
+      GOOGLE_OAUTH_CLIENT_ID: ci-dummy-google-id
+      GOOGLE_OAUTH_CLIENT_SECRET: ci-dummy-google-secret
+      R2_ACCOUNT_ID: ci-dummy-account
+      R2_ACCESS_KEY_ID: ci-dummy-access-key
+      R2_SECRET_ACCESS_KEY: ci-dummy-secret-key
+      R2_BUCKET_ITEMS_RAW: era-items-raw
+      R2_BUCKET_ITEMS_CUTOUT: era-items-cutout
+      R2_BUCKET_OUTFIT_COVERS: era-outfit-covers
+      R2_BUCKET_AVATARS: era-avatars
+      R2_PUBLIC_URL_CUTOUTS: https://pub-ci.r2.dev
+      R2_PUBLIC_URL_COVERS: https://pub-ci.r2.dev
+      ANTHROPIC_API_KEY: ci-dummy-anthropic-key
+      VISION_API_KEY: ci-dummy-vision-key
+      BG_REMOVAL_API_KEY: ci-dummy-bg-key
+      # Client-safe (must be present at BUILD — inlined into the browser bundle).
+      NEXT_PUBLIC_API_URL: http://localhost:3000
+      NEXT_PUBLIC_R2_PUBLIC_URL: https://pub-ci.r2.dev
+      # Canonicals/sitemap/robots resolve to localhost so LHCI's audited URLs match.
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Build web (+ its workspace deps) once; LHCI's collect step `next start`s it.
+      - run: pnpm exec turbo run build --filter=web...
+      # Pin Chrome so LHCI finds it regardless of the runner image (reliability).
+      - uses: browser-actions/setup-chrome@v1
+      # Median-of-3 runs; hard-fails on SEO < 0.95, tolerant WARN on perf metrics.
+      - run: pnpm --filter web exec lhci autorun

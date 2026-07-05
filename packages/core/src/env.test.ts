@@ -85,14 +85,36 @@ test('loadWebClientEnv parses a valid public env and rejects a missing one', () 
   const env = loadWebClientEnv({
     NEXT_PUBLIC_API_URL: 'https://api.era.test',
     NEXT_PUBLIC_R2_PUBLIC_URL: 'https://cdn.era.test',
+    NEXT_PUBLIC_SITE_URL: 'https://era.test',
   });
   assert.equal(env.NEXT_PUBLIC_API_URL, 'https://api.era.test');
+  assert.equal(env.NEXT_PUBLIC_SITE_URL, 'https://era.test');
+  // GSC verification is optional — omitted above, so it parses as undefined.
+  assert.equal(env.NEXT_PUBLIC_GSC_VERIFICATION, undefined);
 
   assert.throws(
-    () => loadWebClientEnv({ NEXT_PUBLIC_R2_PUBLIC_URL: 'https://cdn.era.test' }),
+    () =>
+      loadWebClientEnv({
+        NEXT_PUBLIC_R2_PUBLIC_URL: 'https://cdn.era.test',
+        NEXT_PUBLIC_SITE_URL: 'https://era.test',
+      }),
     (error: unknown) => {
       assert.ok(error instanceof Error);
       assert.match(error.message, /NEXT_PUBLIC_API_URL/);
+      return true;
+    },
+  );
+
+  // NEXT_PUBLIC_SITE_URL is required — a missing one is named in the error.
+  assert.throws(
+    () =>
+      loadWebClientEnv({
+        NEXT_PUBLIC_API_URL: 'https://api.era.test',
+        NEXT_PUBLIC_R2_PUBLIC_URL: 'https://cdn.era.test',
+      }),
+    (error: unknown) => {
+      assert.ok(error instanceof Error);
+      assert.match(error.message, /NEXT_PUBLIC_SITE_URL/);
       return true;
     },
   );
