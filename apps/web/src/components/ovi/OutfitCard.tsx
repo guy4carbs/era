@@ -6,9 +6,11 @@ import { motion as motionToken, typeRamp, boxShadows } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import type { OviIntent, ProposedOutfit } from '@era/core/ovi';
 import { transitionFor } from '../../lib/motion';
+import { analytics, trackFirstOnce } from '../../lib/analytics';
+import { useSession } from '../../lib/auth-client';
 import { Card } from '../Card';
 import { Button } from '../Button';
-import { acceptOutfit, rejectOutfit } from './ovi-actions';
+import { acceptOutfit, logWear, rejectOutfit } from './ovi-actions';
 import type { ItemsById } from './types';
 
 export interface OutfitCardProps {
@@ -26,9 +28,16 @@ export interface OutfitCardProps {
   onDismissed: () => void;
   /** Opens the saved outfit in the canvas (parent owns navigation). */
   onOpen?: (outfitId: string) => void;
+  /**
+   * When set, the saved state offers a "Wore it today" affordance that logs the
+   * outfit as worn and fires `wear_logged` with this surface as `via`. Omitted on
+   * surfaces that shouldn't close the daily-wear loop (e.g. the chat sheet).
+   */
+  wearSurface?: string;
 }
 
 type Status = 'idle' | 'saving' | 'saved';
+type WearStatus = 'idle' | 'logging' | 'logged';
 
 const wrapStyle: CSSProperties = {
   display: 'flex',
@@ -106,6 +115,14 @@ const savedRowStyle: CSSProperties = {
   color: 'var(--color-accent)',
 };
 
+const wearConfirmedStyle: CSSProperties = {
+  margin: 0,
+  fontSize: typeRamp.footnote.rem,
+  lineHeight: `${typeRamp.footnote.lineHeight}px`,
+  fontWeight: 600,
+  color: 'var(--color-secondary-strong)',
+};
+
 /** A single cutout tile on cream/charcoal, mirroring the closet item frame. */
 function CutoutTile({ url, name }: { url: string | null; name: string }) {
   return (
@@ -130,10 +147,13 @@ export function OutfitCard({
   onSaved,
   onDismissed,
   onOpen,
+  wearSurface,
 }: OutfitCardProps) {
   const reduced = useReducedMotion();
+  const { data: session } = useSession();
   const [status, setStatus] = useState<Status>('idle');
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [wearStatus, setWearStatus] = useState<WearStatus>('idle');
 
   const tiles = outfit.itemIds.map((id) => {
     const info = itemsById.get(id);
@@ -147,6 +167,8 @@ export function OutfitCard({
     if (saved) {
       setSavedId(saved.id);
       setStatus('saved');
+      // First saved look (from Ovi's proposal) — activation moment, once per user.
+      trackFirstOnce('first_outfit_saved', session?.user?.id, { via: 'ovi' });
       onSaved(strings.ovi.accepted);
     } else {
       setStatus('idle');
@@ -160,7 +182,23 @@ export function OutfitCard({
     onDismissed();
   }
 
+  async function handleWoreIt() {
+    // Local guard: never double-log the same card in one session.
+    if (!savedId || wearSurface === undefined || wearStatus !== 'idle') return;
+    setWearStatus('logging');
+    const logged = await logWear(savedId);
+    if (logged) {
+      setWearStatus('logged');
+      // Fire the funnel event only on a real 201 — the wear actually landed.
+      analytics.track('wear_logged', { via: wearSurface });
+    } else {
+      // Failed quietly: let the wearer try again without breaking the card.
+      setWearStatus('idle');
+    }
+  }
+
   const canOpen = status === 'saved' && savedId !== null && onOpen !== undefined;
+  const canWear = status === 'saved' && savedId !== null && wearSurface !== undefined;
 
   return (
     <motion.div
@@ -192,10 +230,30 @@ export function OutfitCard({
           {outfit.rationale ? <p style={rationaleStyle}>{outfit.rationale}</p> : null}
 
           {status === 'saved' ? (
-            <div style={savedRowStyle}>
-              <span>{strings.ovi.accepted}</span>
-              {canOpen ? <span aria-hidden="true">Open →</span> : null}
-            </div>
+            <>
+              <div style={savedRowStyle}>
+                <span>{strings.ovi.accepted}</span>
+                {canOpen ? <span aria-hidden="true">Open →</span> : null}
+              </div>
+              {canWear ? (
+                wearStatus === 'logged' ? (
+                  <p style={wearConfirmedStyle}>{strings.ovi.woreItConfirmed}</p>
+                ) : (
+                  <div style={actionsStyle}>
+                    <Button
+                      variant="secondary"
+                      disabled={wearStatus === 'logging'}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        void handleWoreIt();
+                      }}
+                    >
+                      {strings.ovi.woreItCta}
+                    </Button>
+                  </div>
+                )
+              ) : null}
+            </>
           ) : (
             <div style={actionsStyle}>
               <Button

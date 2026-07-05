@@ -71,6 +71,25 @@ export async function rejectOutfit(
 }
 
 /**
+ * Log a saved outfit as worn today. Sends the outfit id to the session-gated,
+ * same-origin `POST /api/wear-logs` (cookies flow by default). Returns true only
+ * on a real 201 so the caller fires `wear_logged` exactly once the wear landed;
+ * any failure resolves false and is handled quietly.
+ */
+export async function logWear(outfitId: string): Promise<boolean> {
+  try {
+    const res = await fetch('/api/wear-logs', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ outfitId }),
+    });
+    return res.status === 201;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Ask Ovi to style a turn. Sends the running transcript plus the intent (and an
  * optional focal item / coarse location). Returns null on any transport error so
  * the caller can show a graceful fallback line.
@@ -92,6 +111,12 @@ export async function sendOviChat(input: {
         ...(input.location ? { location: input.location } : {}),
       }),
     });
+    // A 429 daily-limit response carries the same `{ reply, outfit, source }`
+    // shape with Ovi's limit line as `reply`, so we surface it as a normal turn
+    // rather than an error — Ovi speaks the limit, she doesn't error out.
+    if (res.status === 429) {
+      return (await res.json()) as OviChatApiResponse;
+    }
     if (!res.ok) return null;
     return (await res.json()) as OviChatApiResponse;
   } catch {

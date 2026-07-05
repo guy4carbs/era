@@ -196,6 +196,34 @@ export const aiEvents = pgTable(
   (table) => [index('ai_events_user_id_idx').on(table.userId)],
 );
 
+export const aiUsage = pgTable(
+  'ai_usage',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    // The AI surface this call hit — 'ovi-chat' | 'process-item' |
+    // 'derive-style-profile'. Stored as text; the app validates the value.
+    route: text('route').notNull(),
+    // The model, input/output tokens, and cost are only populated when an LLM
+    // actually ran. Deterministic/dormant paths log a row with a null model and
+    // costUsd 0 so they still count against the per-user daily rate limit.
+    model: text('model'),
+    inputTokens: integer('input_tokens'),
+    outputTokens: integer('output_tokens'),
+    costUsd: numeric('cost_usd').notNull().default('0'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    // Daily spend rollup: SUM(cost_usd) WHERE user_id = ? AND created_at >= day.
+    index('ai_usage_user_id_created_at_idx').on(table.userId, table.createdAt),
+    // Rate-limit counter: COUNT(*) WHERE user_id = ? AND route = ? AND
+    // created_at >= start-of-UTC-day.
+    index('ai_usage_user_id_route_created_at_idx').on(table.userId, table.route, table.createdAt),
+  ],
+);
+
 export const waitlist = pgTable('waitlist', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: text('email').notNull().unique(),

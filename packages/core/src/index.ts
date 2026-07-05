@@ -41,6 +41,12 @@ export {
 } from './storage.ts';
 export type { AssetBucket, StorageConfig, StorageClient } from './storage.ts';
 
+// AI usage limits + spend estimation — server-side config the metered routes
+// (ovi-chat, process-item, derive-style-profile) gate and price against. Reads
+// optional env overrides, so it lives on the server-tainted barrel. See ai-limits.ts.
+export { aiDailyLimit, estimateCostUsd } from './ai-limits.ts';
+export type { AiRoute, UsageCheck } from './ai-limits.ts';
+
 // Persistence type contract, re-exported type-only from @era/db.
 export type * from './db-types.ts';
 

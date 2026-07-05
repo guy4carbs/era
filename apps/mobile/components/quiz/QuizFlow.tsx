@@ -13,6 +13,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { strings } from '@era/core/strings';
 
+import { analytics } from '@/lib/analytics';
 import { useTheme } from '@/lib/theme';
 
 import { QuizIntro } from './QuizIntro';
@@ -47,6 +48,8 @@ export function QuizFlow({ onExit }: QuizFlowProps) {
 
   const submit = useCallback(
     async (finalAnswers: QuizAnswerMap) => {
+      // Funnel: the user answered every step and is submitting the quiz.
+      analytics.track('quiz_completed');
       setPhase('submitting');
       try {
         const { profile } = await deriveStyleProfile(finalAnswers);
@@ -119,7 +122,15 @@ export function QuizFlow({ onExit }: QuizFlowProps) {
   const currentValue = useMemo(() => (step ? answers[step.id] : undefined), [step, answers]);
 
   if (phase === 'intro') {
-    return <QuizIntro onBegin={() => setPhase('step')} />;
+    return (
+      <QuizIntro
+        onBegin={() => {
+          // Funnel: the user started the style quiz.
+          analytics.track('quiz_started');
+          setPhase('step');
+        }}
+      />
+    );
   }
 
   if (phase === 'submitting') {

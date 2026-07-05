@@ -9,6 +9,8 @@
  *                             -> 201 { outfit }
  *   POST /api/ovi/reject     { name?, occasion?, itemIds, intent?, rationale? }
  *                             -> { success }
+ *   POST /api/wear-logs      { outfitId?, itemIds?, wornOn?, note? }
+ *                             -> 201 { wearLog }
  *
  * Every endpoint is owner-scoped, so each request carries the signed-in session.
  * Better Auth's Expo plugin patches the client's own fetch (`authClient.$fetch`)
@@ -19,7 +21,10 @@
  * id to its cutout via the closet's `fetchItems` (displayUrls). Ovi never invents
  * an item, so an id that no longer resolves is simply dropped from the collage.
  */
+import { strings } from '@era/core/strings';
+
 import { authClient } from '@/lib/auth-client';
+import { LimitReachedError, limitFromFetchError, limitFromResponse } from '@/lib/rate-limit';
 
 import type { OviIntent, ProposedOutfit } from '@era/core/ovi';
 
@@ -89,8 +94,13 @@ async function apiFetch<T>(
 
   if (typeof client.$fetch === 'function') {
     const { data, error } = await client.$fetch<T>(path, options);
-    if (error || data === null) {
-      throw new Error(error?.message ?? `${path} failed`);
+    if (error) {
+      const limit = limitFromFetchError(error);
+      if (limit) throw limit;
+      throw new Error(error.message ?? `${path} failed`);
+    }
+    if (data === null) {
+      throw new Error(`${path} failed`);
     }
     return data;
   }
@@ -106,6 +116,9 @@ async function apiFetch<T>(
     body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
   });
   if (!response.ok) {
+    if (response.status === 429) {
+      throw await limitFromResponse(response);
+    }
     throw new Error(`${path} failed: ${response.status}`);
   }
   return (await response.json()) as T;
@@ -119,13 +132,32 @@ export interface OviChatInput {
   readonly location?: OviLocation;
 }
 
-/** Send a chat turn to Ovi and get her reply (and a look when the ask was styling). */
+/**
+ * Send a chat turn to Ovi and get her reply (and a look when the ask was styling).
+ *
+ * A daily-limit 429 is NOT surfaced as an error: Ovi has a warm line for hitting
+ * her cap, so the limit reply is returned as an ordinary (lookless) chat result
+ * and rendered as a normal Ovi message. Everything else propagates to the caller's
+ * catch, which shows the honest "lost my thread" line.
+ */
 export async function chatWithOvi(input: OviChatInput): Promise<OviChatResult> {
   const body: Record<string, unknown> = { messages: input.messages };
   if (input.intent) body.intent = input.intent;
   if (input.itemContext) body.itemContext = input.itemContext;
   if (input.location) body.location = input.location;
-  return apiFetch<OviChatResult>('/api/ovi-chat', { method: 'POST', body });
+  try {
+    return await apiFetch<OviChatResult>('/api/ovi-chat', { method: 'POST', body });
+  } catch (error) {
+    if (error instanceof LimitReachedError) {
+      return {
+        reply: error.serverMessage ?? strings.ovi.limitReached,
+        outfit: null,
+        source: 'limit',
+        weather: null,
+      };
+    }
+    throw error;
+  }
 }
 
 /**
@@ -160,6 +192,41 @@ export async function rejectOutfit(context: OviProposalContext): Promise<boolean
     body: proposalBody(context),
   });
   return success;
+}
+
+/** Inputs to a wear log — an outfit or bare item ids, optionally dated/noted. */
+export interface WearLogInput {
+  readonly outfitId?: string;
+  readonly itemIds?: readonly string[];
+  readonly wornOn?: string;
+  readonly note?: string;
+}
+
+/** The persisted wear-log row the endpoint returns on a 201. */
+export interface WearLog {
+  readonly id: string;
+  readonly outfitId: string | null;
+  readonly itemIds: readonly string[];
+  readonly wornOn: string;
+}
+
+/**
+ * Log a look as worn today. Accepts a saved outfit id or bare item ids (a
+ * proposal has no id yet, so the Feed "Today" card logs by itemIds). `wornOn`
+ * is omitted so the server dates it today. Throws on any non-201 so the caller
+ * can revert its optimistic state.
+ */
+export async function logWear(input: WearLogInput): Promise<WearLog> {
+  const body: Record<string, unknown> = {};
+  if (input.outfitId) body.outfitId = input.outfitId;
+  if (input.itemIds && input.itemIds.length > 0) body.itemIds = input.itemIds;
+  if (input.wornOn) body.wornOn = input.wornOn;
+  if (input.note) body.note = input.note;
+  const { wearLog } = await apiFetch<{ wearLog: WearLog }>('/api/wear-logs', {
+    method: 'POST',
+    body,
+  });
+  return wearLog;
 }
 
 /** Shape a proposal into the accept/reject request body, dropping absent fields. */

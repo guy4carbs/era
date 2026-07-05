@@ -23,6 +23,7 @@ import { useTheme } from '@/lib/theme';
 
 import { acceptOutfit, fetchToday, rejectOutfit, type OviWeather } from './api';
 import { OutfitProposalCard, type ProposalStatus } from './OutfitProposalCard';
+import { WoreItButton } from './WoreItButton';
 
 export function TodayCard() {
   const { colors } = useTheme();
@@ -133,13 +134,16 @@ export function TodayCard() {
       ) : null}
 
       {outfit ? (
-        <OutfitProposalCard
-          outfit={outfit}
-          images={images}
-          status={status}
-          onSave={onSave}
-          onReject={onReject}
-        />
+        <>
+          <OutfitProposalCard
+            outfit={outfit}
+            images={images}
+            status={status}
+            onSave={onSave}
+            onReject={onReject}
+          />
+          <WoreItButton itemIds={outfit.itemIds} via="today_card" onToast={setToast} />
+        </>
       ) : (
         <Text
           style={{

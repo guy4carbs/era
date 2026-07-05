@@ -162,6 +162,10 @@ export const strings = {
     accepted: "Saved to your looks — nice call.",
     /** Toast after the user passes on a look — graceful, no pressure to reconsider. */
     rejected: "All good — I'll come back with another.",
+    /** Card action that logs a saved look as worn today — closes the daily loop. */
+    woreItCta: 'Wore it today',
+    /** Confirmed state once a wear is logged — warm, brief, asks nothing further. */
+    woreItConfirmed: 'Logged — nice pick.',
     /**
      * The honest answer to "what am I missing?". Names the thin category and
      * embodies the trust rule: it flags a real gap without ever pushing a
@@ -188,6 +192,29 @@ export const strings = {
      * Invites the pieces that will unlock a daily look — no scold for an empty start.
      */
     todayEmpty: "Add a few pieces and I'll have a look ready for you here each morning.",
+
+    // --- daily limit reached: the AI cost guardrail, in Ovi's voice ---
+
+    /**
+     * Returned by ovi-chat as the `reply` when the user hits their per-day Ovi
+     * limit. Ovi speaking, not a cold "429": warms the wall into a natural stop
+     * for the day. Acknowledges the work done, reassures nothing is lost, and
+     * invites tomorrow without pushing or hinting at a paywall — this is a cost
+     * guardrail, so there's nothing to upgrade to, just a good place to pause.
+     */
+    limitReached:
+      "We've styled a lot together today — I'm going to catch my breath and pick this right back up with you tomorrow. Everything's saved, and your closet isn't going anywhere.",
+    /**
+     * Same beat for the add-a-piece pipeline when a user has processed a lot of
+     * pieces in one day. Short; owns the pause, keeps their work safe.
+     */
+    limitReachedProcessing:
+      "You've added a lot of pieces today — let's pick up where we left off tomorrow. Everything so far is saved.",
+    /**
+     * Same beat for deriving the style profile — rarely hit, so kept brief. Warm,
+     * never punitive.
+     */
+    limitReachedProfile: "I've learned plenty about your style today — let's let it settle and refine tomorrow.",
   },
 
   /** The Closet tab — everything the user owns, plus the add-a-piece flow. */

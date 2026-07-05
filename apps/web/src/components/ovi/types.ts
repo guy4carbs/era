@@ -14,11 +14,19 @@ export interface OviWeather {
   condition: string;
 }
 
+/**
+ * How the reply was produced: `'llm'` (Claude styled it), `'deterministic'` (the
+ * closet-only fallback stylist), or `'limit'` (the daily-limit wall — a 429 whose
+ * `reply` is Ovi's limit line). `'limit'` lets the client tell a limit turn apart
+ * from a normal deterministic styling turn.
+ */
+export type OviChatSource = 'llm' | 'deterministic' | 'limit';
+
 /** Response of `POST /api/ovi-chat`. */
 export interface OviChatApiResponse {
   reply: string;
   outfit: ProposedOutfit | null;
-  source: string;
+  source: OviChatSource;
   weather: OviWeather | null;
 }
 

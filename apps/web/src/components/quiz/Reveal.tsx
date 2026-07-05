@@ -111,6 +111,9 @@ export function Reveal({ answers }: RevealProps) {
           const body = (await res.json()) as { profile: StyleProfileResult };
           result = body.profile;
         } else {
+          // Any non-OK (including a 429 daily AI limit) degrades gracefully to the
+          // client-safe deterministic era, so the user always lands on a reveal
+          // rather than an error — the limit is felt as "less magic", not a wall.
           result = deterministicProfile(answers);
         }
       } catch {

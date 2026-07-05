@@ -29,6 +29,7 @@ import { captureRef } from 'react-native-view-shot';
 import { Button } from '@/components/Button';
 import { Toast } from '@/components/closet';
 import { fetchItems, type ItemWithDisplay } from '@/components/items';
+import { trackOnce } from '@/lib/analytics';
 import { useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
 
@@ -268,6 +269,8 @@ export function OutfitCanvas({ outfitId: initialOutfitId }: OutfitCanvasProps) {
           const created = await createOutfit(payload);
           // Hold the new id so a re-save PATCHes and "add to an era" unlocks.
           setOutfitId(created.id);
+          // Funnel: the user's first-ever saved outfit (best-effort once).
+          void trackOnce('first_outfit_saved');
         }
         void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         setSaveOpen(false);

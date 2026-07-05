@@ -30,6 +30,7 @@ import {
 } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
+import { analytics, trackOnce } from '@/lib/analytics';
 import { Chip } from '@/components/Chip';
 import { GlassSheet } from '@/components/GlassSheet';
 import { Input } from '@/components/Input';
@@ -128,6 +129,8 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
     (text: string, intent: OviIntent) => {
       const content = text.trim();
       if (content.length === 0 || thinking) return;
+      // Funnel: the user sent a message to Ovi.
+      analytics.track('ovi_message', { intent });
       void Haptics.selectionAsync();
 
       const userEntry: ChatEntry = { id: nextId(), role: 'user', content };
@@ -210,6 +213,9 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
         .then((saved) => {
           setStatus(entry.id, { status: 'saved', savedId: saved.id });
           setToast(strings.ovi.accepted);
+          // Funnel: accepting a look persists an outfit too — count the first one
+          // (best-effort once; dedupes with the canvas save).
+          void trackOnce('first_outfit_saved');
         })
         .catch(() => {
           setStatus(entry.id, { status: 'idle' });

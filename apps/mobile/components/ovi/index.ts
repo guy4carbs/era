@@ -2,11 +2,15 @@
 export { OviChat } from './OviChat';
 export { TodayCard } from './TodayCard';
 export { OutfitProposalCard, type ProposalStatus } from './OutfitProposalCard';
+export { WoreItButton } from './WoreItButton';
 export {
   acceptOutfit,
   chatWithOvi,
   fetchToday,
+  logWear,
   rejectOutfit,
+  type WearLog,
+  type WearLogInput,
   type OviChatInput,
   type OviChatMessage,
   type OviChatResult,

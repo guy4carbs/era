@@ -32,7 +32,7 @@ const formStyle: CSSProperties = {
  * it with the join so referral credit is attributed. On success it swaps to the
  * {@link PostSignupReferral} view. Error responses are surfaced inline in the
  * field without leaving the aesthetic: 400 → "enter a valid email", 429 → a
- * gentle "try again". Fires `waitlist_join` on a successful join.
+ * gentle "try again". Fires the `waitlist_signup` funnel event on a successful join.
  */
 export function WaitlistForm() {
   const [email, setEmail] = useState('');
@@ -78,7 +78,7 @@ export function WaitlistForm() {
       }
 
       const data = (await response.json()) as JoinResult;
-      track('waitlist_join', { alreadyJoined: data.alreadyJoined });
+      track('waitlist_signup', { alreadyJoined: data.alreadyJoined });
       setResult(data);
     } catch {
       setError(ERROR_GENERIC);

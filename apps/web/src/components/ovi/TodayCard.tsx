@@ -137,6 +137,7 @@ export function TodayCard() {
                   setDismissed(true);
                 }}
                 onOpen={(outfitId) => router.push(`/design/canvas?outfit=${outfitId}`)}
+                wearSurface="today_card"
               />
             ) : null}
           </AnimatePresence>
