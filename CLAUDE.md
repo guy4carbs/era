@@ -372,13 +372,30 @@ Production serves from **era.style**. To wire the domain and get indexed:
 
 > Update this section as the build progresses.
 
-**Phase 0 — COMPLETE (exit certified 2026-07-02).** All six exit criteria verified with fresh evidence: repo + CI green on main; Neon schema (15 tables, 3 enums) with API-layer authz proven live; R2 upload/read policies proven live; auth end-to-end (magic link, auto profile provisioning, sign-out/re-sign-in, single user, no duplicates); both apps run the tab shell (Feed/Closet/Design/Shop + Ovi FAB) from the shared design system; design system renders both modes with a 15/15 WCAG contrast audit enforced in CI.
+**Phase 1 — COMPLETE (MVP exit certified 2026-07-05).** The core loop is real, tested, and live. Certified by Gauge (Release Authority — MVP loop verified end-to-end; `turbo lint/typecheck/test` 15/15; `@era/core` 150/150; era.style live) and Compass (Product — complete, lovable, MVP-exit-shippable). PRs #8–#18 squash-merged to `main`. *(Phase 0 exit-certified 2026-07-02: monorepo + CI + branch protection, Neon schema + API authz, R2, Better Auth, design system with the enforced 15/15 WCAG contrast audit, tab shell both platforms.)*
 
-- Monorepo: pnpm workspaces + Turborepo; GitHub `guy4carbs/era` (public), branch protection on main, CI = lint/typecheck/test.
-- `apps/web`: Next 15 — Better Auth server (magic link; Apple/Google dormant until real creds), tab shell (bottom bar <1024, left rail ≥1024), /design-lab.
-- `apps/mobile`: Expo SDK 57 — expo-router Tabs shell, SecureStore sessions, design-lab screen.
-- `packages/tokens`: the design spec as law (see Design system rules); contrast audit runs as a test.
-- `packages/core`: env validation, authz guards, R2 storage helpers, auth API shape, Ovi strings.
-- `packages/db`: Drizzle schema on Neon (project era: main + dev branches), migration 0000 applied.
-- Infra: R2 (4 buckets, 2 public), Railway project `era` (vars mirrored; deploy not wired yet). Nothing deployed to production.
-- Known backlog: prod email provider for magic links; real Apple/Google OAuth creds; `exp://` origin gating + BETTER_AUTH_SECRET min-length before launch; upload size cap; user_id in public asset URLs; custom domain for R2; auth guard on the mobile (tabs) route group; motion.press token.
+**What ships (all on `main`, gate-verified per phase):**
+- **Quiz** (P1.1) — 12-step deterministic style-profile scorer (LLM polish dormant); both platforms.
+- **Add item** (P1.2) — photo + link import (bg-removal + Claude-vision pipeline; SSRF-gated URL fetch); email-receipt scaffolded (501).
+- **Closet** (P1.3) — premium 2.5D gallery: detail, edit, archive, privacy toggle.
+- **Outfit canvas + eras** (P1.5) — compose/save/reopen looks; style-chapter "eras".
+- **Ovi** (P1.6) — deterministic stylist proposing ONLY from owned items (never fabricates); weather-aware Today card (web; mobile weatherless — expo-location deferred); accept/reject → `ai_events`. LLM path coded + dormant behind `isRealCredential`.
+- **Marketing site + waitlist** (P1.7) — quiet-luxury landing; waitlist capture + referral attribution.
+- **Settings + account deletion + legal** (P1.8) — theme/privacy/support; GDPR/App-Store deletion (R2 + full DB cascade); DRAFT privacy/terms.
+- **Analytics + AI cost guardrails** (P1.9) — PostHog/Sentry funnel (dormant); `ai_usage` table; **durable per-user daily rate limits** on the AI routes; spend log.
+- **SEO Layer 1** (P1.11) — metadata/canonicals, JSON-LD, sitemap/robots/llms.txt, Lighthouse CI gate (SEO ≥ 95).
+- **EAS + TestFlight** (P2.0) — installed on a physical iPhone from an EAS cloud build (bundle `style.era`, v1.0.0).
+
+**LIVE in production: https://era.style** — Cloudflare DNS (grey-cloud/DNS-only) → Railway single service (site + app + API), SSL valid. Marketing site + waitlist capturing; SEO surfaces live (canonical = era.style). The full app is deployed; the `.up.railway.app` host still serves too. Neon migrations 0000–0002 applied.
+
+**Honest boundary — "MVP-exit shippable" ≠ public-launch-ready.** Today Phase 1 lets you: collect waitlist signups on a live, SEO'd domain **and** demo the full app to testers via TestFlight. Before a real PUBLIC launch (users actually signing in), gate on:
+- **B1 (app usability):** wire a prod **magic-link email provider** (+ real Apple/Google OAuth) — testers can install but cannot yet sign in in prod.
+- **B2 (security):** add a session guard to the mobile `(tabs)` route group (still unguarded; Phase-0 carry-over).
+- **B3 (before a real `ANTHROPIC_API_KEY`):** enforce a **global daily AI-spend cap / kill-switch** + alert on `recordUsage` write failures. (Per-user rate limits already live.)
+- Before live PostHog/Sentry keys: EU cookie-consent + PII scrub. Before public legal: fill the `[BRACKETS]` + counsel-review the privacy/terms DRAFTs. User: verify era.style in Google Search Console + submit the sitemap.
+
+**Phase 2 doorway (Shop + stickiness):** shortest first move — wire the affiliate feed into the (stubbed, trust-rule-aligned) Shop tab, driven by Ovi's existing `whats_missing` gap computation ("buy only for a real gap").
+
+- CI = lint/typecheck/test + a Lighthouse job (SEO ≥ 95 hard-gate, perf tolerant).
+- Infra: R2 (4 buckets), Neon (main+dev), Railway `era` production on era.style. Cloudflare = registrar + DNS for era.style (orange-cloud WAF + www redirect + email DNS are later hardening).
+- Carried backlog: retroactive-privacy storage fix; durable/shared (cross-instance) rate limit; better-auth web/mobile version drift; upload size cap; `user_id` in public asset URLs; SEO Layer 2/3 (P2.7).
