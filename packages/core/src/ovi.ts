@@ -116,7 +116,36 @@ const OUTERWEAR_CATEGORY = 'outerwear';
 const ACCESSORY_CATEGORIES = ['bag', 'hat', 'scarf', 'watch', 'jewelry', 'accessory'] as const;
 
 /** Essentials, in the order we surface a gap (a missing pair of shoes reads first). */
-const ESSENTIAL_CATEGORIES = [SHOES_CATEGORY, BOTTOM_CATEGORY, 'top', OUTERWEAR_CATEGORY] as const;
+export const ESSENTIAL_CATEGORIES = [SHOES_CATEGORY, BOTTOM_CATEGORY, 'top', OUTERWEAR_CATEGORY] as const;
+
+/** The role a category plays when assembling a look. The Shop ranker
+ * (`@era/core/shop`) reuses this to know which slot a product would fill. */
+export type OutfitSlot = 'base' | 'bottom' | 'shoes' | 'outerwear' | 'accessory';
+
+/**
+ * Map an item category to its outfit slot, or null for a category that can't
+ * enter a look. Mirrors the slot order composeOutfit fills (base → bottom →
+ * shoes → outerwear → accessory). A top or a dress can anchor a look, so both
+ * map to `base`.
+ */
+export function slotForCategory(category: string): OutfitSlot | null {
+  if ((BASE_CATEGORIES as readonly string[]).includes(category)) {
+    return 'base';
+  }
+  if (category === BOTTOM_CATEGORY) {
+    return 'bottom';
+  }
+  if (category === SHOES_CATEGORY) {
+    return 'shoes';
+  }
+  if (category === OUTERWEAR_CATEGORY) {
+    return 'outerwear';
+  }
+  if ((ACCESSORY_CATEGORIES as readonly string[]).includes(category)) {
+    return 'accessory';
+  }
+  return null;
+}
 
 // -----------------------------------------------------------------------------
 // Prompt builders — the Claude path (persona + per-turn context)
@@ -220,16 +249,33 @@ export interface ComposeOutfitInput {
 }
 
 /** Normalize a color token so a hex/name compares case- and hash-insensitively. */
-function normalizeColor(color: string): string {
+export function normalizeColor(color: string): string {
   return color.trim().toLowerCase().replace(/^#/, '');
+}
+
+/**
+ * A normalized lookup set for a style palette. Shared by the deterministic
+ * stylist and the Shop ranker (`@era/core/shop`) so both judge color the same
+ * way.
+ */
+export function buildPaletteSet(palette: readonly string[]): Set<string> {
+  return new Set(palette.map(normalizeColor));
+}
+
+/** True when any of the given colors sits in the (normalized) palette set. */
+export function colorsMatchPalette(
+  colors: readonly string[],
+  palette: ReadonlySet<string>,
+): boolean {
+  if (palette.size === 0) {
+    return false;
+  }
+  return colors.some((color) => palette.has(normalizeColor(color)));
 }
 
 /** True when any of the item's colors sits in the profile palette. */
 function matchesPalette(item: OviItem, palette: ReadonlySet<string>): boolean {
-  if (palette.size === 0) {
-    return false;
-  }
-  return item.colors.some((color) => palette.has(normalizeColor(color)));
+  return colorsMatchPalette(item.colors, palette);
 }
 
 /** The set of item ids the wearer has worn recently — used to keep looks fresh. */
@@ -324,7 +370,7 @@ function outfitOccasion(intent: OviIntent): string {
 function composeStyling(input: ComposeOutfitInput): OviResponse {
   const { items, itemContext } = input;
   const profile = input.profile;
-  const palette = new Set((profile?.palette ?? []).map(normalizeColor));
+  const palette = buildPaletteSet(profile?.palette ?? []);
   const weather = input.weather ?? null;
   const wornIds = recentlyWornIds(input.wearLogs ?? []);
 
@@ -420,15 +466,13 @@ function composeStyling(input: ComposeOutfitInput): OviResponse {
 }
 
 /**
- * Honest gap-finder for a "what am I missing" ask. Names the single biggest hole
- * in the essentials (a category with nothing, else the thinnest), in Ovi's voice
- * — an observation, not a nudge to buy. Returns no outfit.
+ * The single biggest hole in the essentials for a closet: the essential
+ * category with the fewest pieces (ties broken by {@link ESSENTIAL_CATEGORIES}
+ * order, so a missing pair of shoes reads first). Pure and total — an empty
+ * closet returns the first essential. Shared by Ovi's "what's missing" answer
+ * and the Shop ranker's `fills_gap` signal (`@era/core/shop`).
  */
-function composeWhatsMissing(items: readonly OviItem[], profile: StyleProfileLite | null): OviResponse {
-  if (items.length === 0) {
-    return { reply: strings.closet.empty, outfit: null };
-  }
-
+export function biggestEssentialGap(items: readonly OviItem[]): string {
   const counts = new Map<string, number>();
   for (const category of ESSENTIAL_CATEGORIES) {
     counts.set(category, 0);
@@ -449,6 +493,20 @@ function composeWhatsMissing(items: readonly OviItem[], profile: StyleProfileLit
       gapCount = count;
     }
   }
+  return gap;
+}
+
+/**
+ * Honest gap-finder for a "what am I missing" ask. Names the single biggest hole
+ * in the essentials (a category with nothing, else the thinnest), in Ovi's voice
+ * — an observation, not a nudge to buy. Returns no outfit.
+ */
+function composeWhatsMissing(items: readonly OviItem[], profile: StyleProfileLite | null): OviResponse {
+  if (items.length === 0) {
+    return { reply: strings.closet.empty, outfit: null };
+  }
+
+  const gap = biggestEssentialGap(items);
 
   // Route the gap line through Quill's curated trust-rule string rather than
   // inline prose: it names the thin category and keeps buying optional.

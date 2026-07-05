@@ -50,6 +50,13 @@ export const serverEnvSchema = z.object({
   BG_REMOVAL_API_KEY: requiredString,
   // Phase 2 — affiliate product feed. Optional until that feature ships.
   AFFILIATE_FEED_KEY: z.string().min(1).optional(),
+  // Which Shop product provider to use. Defaults to the offline fixture catalog;
+  // set to 'sovrn' (with a real AFFILIATE_FEED_KEY) to enable the live network
+  // adapter. Any other value falls back to the fixture. Optional.
+  AFFILIATE_PROVIDER: z.enum(['fixture', 'sovrn']).optional(),
+  // Optional base URL override for the affiliate feed, for STAGING only. Never
+  // user-derived; the adapter pins a documented default when this is unset. Optional.
+  AFFILIATE_FEED_BASE_URL: z.string().url().optional(),
 });
 
 /** Public configuration exposed to the Next.js web client bundle. */

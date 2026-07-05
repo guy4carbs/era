@@ -463,3 +463,57 @@ test('the SEO / social tags are present and non-empty', () => {
   assert.ok(strings.site.og.description.trim().length > 0, 'og.description is empty');
   assert.ok(strings.site.meta.description.trim().length > 0, 'meta.description is empty');
 });
+
+// --- the Shop tab (gap-driven picks, why-labels, affiliate honesty) ----------
+
+test('every shop chrome string is present and non-empty', () => {
+  const shop = strings.shop;
+  for (const key of [
+    'title',
+    'intro',
+    'empty',
+    'loading',
+    'error',
+    'filterBudget',
+    'filterBrandTier',
+    'filterCategory',
+    'filterSize',
+    'clearFilters',
+    'sortRelevance',
+    'affiliateDisclosure',
+    'dismiss',
+    'loadMore',
+  ] as const) {
+    assert.ok(shop[key].trim().length > 0, `shop.${key} is empty`);
+  }
+  for (const [tier, label] of Object.entries(shop.brandTiers)) {
+    assert.ok(label.trim().length > 0, `brandTiers.${tier} is empty`);
+  }
+});
+
+test('whyCompletesOutfits is singular at one and plural otherwise', () => {
+  assert.equal(strings.shop.whyCompletesOutfits(1), 'Completes an outfit with what you own');
+  assert.match(strings.shop.whyCompletesOutfits(3), /Completes 3 outfits with what you own/);
+});
+
+test('whyFillsGap names the thin category as a real gap, not a nudge', () => {
+  const line = strings.shop.whyFillsGap('knitwear');
+  assert.match(line, /knitwear/);
+  assert.match(line, /real gap/i);
+});
+
+test('whySimilarOwned is an honest warning, never a push to buy', () => {
+  assert.match(strings.shop.whySimilarOwned(1), /already own something similar/i);
+  assert.match(strings.shop.whySimilarOwned(2), /already own 2 similar pieces/i);
+});
+
+test('viewAt names the retailer on the click-out', () => {
+  assert.equal(strings.shop.viewAt('Ssense'), 'View at Ssense');
+});
+
+test('the affiliate disclosure is FTC-honest: names the commission AND the closet-not-payouts rule', () => {
+  const disclosure = strings.shop.affiliateDisclosure.toLowerCase();
+  assert.match(disclosure, /commission/, 'disclosure must name the commission');
+  assert.match(disclosure, /closet/, 'disclosure must state ranking is on the closet');
+  assert.match(disclosure, /payout/, 'disclosure must state ranking is not on payouts');
+});

@@ -1,7 +1,7 @@
 /**
  * @era/core — AI usage limits and spend estimation (SERVER-side).
  *
- * The single source of truth for per-user daily rate limits on the three AI
+ * The single source of truth for per-user daily rate limits on the metered AI
  * routes, and for turning a Claude model + token counts into a USD cost for the
  * spend log. This module reads `process.env` for optional limit overrides, so it
  * is server-ish — it is exported from the SERVER-tainted barrel (`@era/core`),
@@ -17,10 +17,16 @@
  *   - OVI_CHAT_DAILY_LIMIT        (default 50)
  *   - PROCESS_ITEM_DAILY_LIMIT    (default 100)
  *   - DERIVE_PROFILE_DAILY_LIMIT  (default 20)
+ *   - RANK_PRODUCTS_DAILY_LIMIT   (default 30)
  */
 
-/** The three metered AI routes. */
-export type AiRoute = 'ovi-chat' | 'process-item' | 'derive-style-profile';
+/**
+ * The metered AI routes. `rank-products` powers the Shop tab's LLM-scored
+ * ranking; the deterministic ranker in `@era/core/shop` runs the same feed
+ * unmetered when that path is dormant (no key), so this limit only bites when
+ * the model is live.
+ */
+export type AiRoute = 'ovi-chat' | 'process-item' | 'derive-style-profile' | 'rank-products';
 
 interface RouteLimit {
   readonly envVar: string;
@@ -32,6 +38,7 @@ const ROUTE_LIMITS: Readonly<Record<AiRoute, RouteLimit>> = {
   'ovi-chat': { envVar: 'OVI_CHAT_DAILY_LIMIT', fallback: 50 },
   'process-item': { envVar: 'PROCESS_ITEM_DAILY_LIMIT', fallback: 100 },
   'derive-style-profile': { envVar: 'DERIVE_PROFILE_DAILY_LIMIT', fallback: 20 },
+  'rank-products': { envVar: 'RANK_PRODUCTS_DAILY_LIMIT', fallback: 30 },
 };
 
 /**

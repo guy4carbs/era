@@ -464,10 +464,97 @@ export const strings = {
     empty: 'Nothing in your feed yet. Follow a few people and their looks land here.',
   },
 
-  /** The Shop tab — gap-driven suggestions, honest by default. */
+  /**
+   * The Shop tab — gap-driven affiliate suggestions, honest by default. This is
+   * the trust rule made visible: Shop is not a feed to scroll but a short list
+   * of pieces that fill a real gap Ovi found in the closet. The `why` lines
+   * below render Ovi's reasoning on each product (from Oracle's ProductWhy), and
+   * {@link strings.shop.affiliateDisclosure} tells the plain truth about the
+   * commission so ranking-on-payouts is ruled out where the user can read it.
+   */
   shop: {
-    /** Empty shop surface — mirrors the trust rule: buy only for a real gap. */
+    /** Tab title. */
+    title: 'Shop',
+    /**
+     * Sets the trust frame the moment the tab opens: this is gap-driven, not a
+     * scroll. Read together with {@link strings.shop.empty}.
+     */
+    intro: 'Era shows you pieces that fill a real gap — not a feed to scroll.',
+    /**
+     * Empty shop surface — mirrors the trust rule: buy only for a real gap.
+     * Kept verbatim from the original stub so the promise never drifts.
+     */
     empty: "Nothing to shop yet. When a real gap shows up, I'll bring a few picks here.",
+    /** Progress line while picks are ranked — frames it as gap-finding, not a feed load. */
+    loading: 'Finding pieces that actually fill a gap…',
+    /** Load failure. Owns the miss, no blame, points at a retry. */
+    error: "Couldn't pull picks just now — try again in a moment.",
+
+    // --- filters: narrow the picks without turning Shop into a catalog ---
+
+    /** Price/budget filter label. */
+    filterBudget: 'Budget',
+    /** Brand-tier filter label. */
+    filterBrandTier: 'Brand tier',
+    /** Category filter label. */
+    filterCategory: 'Category',
+    /** Size filter label. */
+    filterSize: 'Size',
+    /** Friendly labels for the four brand tiers, keyed by the feed's tier enum. */
+    brandTiers: {
+      luxury: 'Luxury',
+      premium: 'Premium',
+      contemporary: 'Contemporary',
+      'high-street': 'High street',
+    },
+    /** Clears every active filter and shows all picks again. */
+    clearFilters: 'Clear filters',
+    /**
+     * Sort/relevance label. Default order is how well a piece fits the closet —
+     * named plainly so the ranking stays legible (and honest: closet, not payout).
+     */
+    sortRelevance: 'Best fit for your closet',
+
+    // --- the 'why' lines: Ovi's honest reason each pick is shown ---
+
+    /**
+     * Renders Oracle's `completes_outfits{count}` — the pick's strongest honest
+     * pull: it unlocks looks from pieces the user already owns. Singular at one.
+     */
+    whyCompletesOutfits: (count: number): string =>
+      count === 1
+        ? 'Completes an outfit with what you own'
+        : `Completes ${count} outfits with what you own`,
+    /**
+     * Renders Oracle's `fills_gap{category}` — names the thin category so the
+     * reason is concrete. The trust rule in one line: a real gap, not a nudge.
+     */
+    whyFillsGap: (category: string): string => `Fills a real gap — you're thin on ${category}`,
+    /**
+     * Renders Oracle's `similar_owned{ownedCount}` — the honest WARNING, not a
+     * push. When the closet already holds something close, Shop says so rather
+     * than selling over it. Singular at one; this is the trust rule at work.
+     */
+    whySimilarOwned: (count: number): string =>
+      count === 1
+        ? "Heads up — you already own something similar"
+        : `Heads up — you already own ${count} similar pieces`,
+
+    // --- affiliate transparency + click-out ---
+
+    /**
+     * FTC-honest, trust-preserving affiliate disclosure. Renders visibly in the
+     * Shop UI (Shield/Ledger check for it): states the commission plainly AND
+     * that it never changes what Ovi shows — ranking is on the closet, not payouts.
+     */
+    affiliateDisclosure:
+      'Era may earn a commission if you buy through these links. It never changes what we show you — Ovi ranks on your closet, not on payouts.',
+    /** Click-out affordance to the retailer, e.g. `viewAt('Ssense')` → "View at Ssense". */
+    viewAt: (retailer: string): string => `View at ${retailer}`,
+    /** Dismiss a pick — the anti-pushy way out, never guilt on decline. */
+    dismiss: 'Not for me',
+    /** Pull the next page of picks — quiet, not an urgent "keep scrolling". */
+    loadMore: 'Show more',
   },
 
   /** Authentication surfaces. */

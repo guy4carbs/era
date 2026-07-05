@@ -7,11 +7,13 @@ test('aiDailyLimit returns sane defaults when no override is set', () => {
   assert.equal(aiDailyLimit('ovi-chat', {}), 50);
   assert.equal(aiDailyLimit('process-item', {}), 100);
   assert.equal(aiDailyLimit('derive-style-profile', {}), 20);
+  assert.equal(aiDailyLimit('rank-products', {}), 30);
 });
 
 test('aiDailyLimit honours a valid numeric env override', () => {
   assert.equal(aiDailyLimit('ovi-chat', { OVI_CHAT_DAILY_LIMIT: '25' }), 25);
   assert.equal(aiDailyLimit('process-item', { PROCESS_ITEM_DAILY_LIMIT: '200' }), 200);
+  assert.equal(aiDailyLimit('rank-products', { RANK_PRODUCTS_DAILY_LIMIT: '15' }), 15);
 });
 
 test('aiDailyLimit ignores non-numeric / non-positive overrides and falls back', () => {

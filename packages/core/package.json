@@ -12,6 +12,7 @@
     "./strings": "./src/strings.ts",
     "./quiz": "./src/quiz.ts",
     "./ovi": "./src/ovi.ts",
+    "./shop": "./src/shop.ts",
     "./analytics": "./src/analytics.ts",
     "./reporting": "./src/reporting.ts"
   },
