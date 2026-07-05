@@ -188,6 +188,112 @@ auto-deploy** (and PRs get preview environments). Confirm the service's custom
 domain / generated URL in the dashboard and set `BETTER_AUTH_URL` +
 `NEXT_PUBLIC_API_URL` to match it before first boot.
 
+## Mobile release (EAS + TestFlight)
+
+`apps/mobile` is built and shipped separately from the Railway web service, via
+**EAS** (Expo Application Services). Builds and submits are **account-gated** —
+the user runs them after `eas login` with the Era Expo account and their active
+Apple Developer membership. Config lives in **`apps/mobile/eas.json`** (committed);
+`eas-cli` is pinned as a devDependency so no global install is required.
+
+### How to run eas
+
+```bash
+pnpm --filter mobile exec eas <command>    # uses the pinned devDependency
+# or install globally: npm i -g eas-cli && eas <command>
+```
+
+### eas.json profiles
+
+`cli.appVersionSource` is **`remote`** — EAS owns the iOS `buildNumber` and
+auto-increments it server-side on each build, so build numbers never collide and
+nothing needs hand-editing in `app.json`. `expo.version` (the human-facing
+marketing version) stays under our control in `app.json`.
+
+| Profile | distribution | Purpose |
+|---------|--------------|---------|
+| `development` | `internal` | Dev-client build for local testing (`ios.simulator: true`). Not TestFlight. |
+| `preview` | **`store`** | The build that goes to **TestFlight internal testing**. `autoIncrement: true`, Release config. |
+| `production` | `store` | The App Store release build. `autoIncrement: true`, Release config. |
+
+> **Why `preview` is `store`, not `internal`:** TestFlight requires a
+> store-signed build uploaded to App Store Connect. EAS's `internal` distribution
+> is ad-hoc (direct device install by UDID) and does **not** route through
+> TestFlight. So the profile the task wants "on TestFlight" must be
+> store-distribution — hence `preview: { distribution: "store" }`.
+
+### One-time setup
+
+Prerequisites: an **Expo account** (create at expo.dev), an **active Apple
+Developer Program** membership, and eas-cli (pinned devDependency, above).
+
+```bash
+pnpm --filter mobile exec eas login          # authenticate the Expo account
+pnpm --filter mobile exec eas init           # links the project; writes
+                                             #   expo.extra.eas.projectId +
+                                             #   expo.owner into app.json (commit these)
+```
+
+**Submit credentials (recommended: App Store Connect API key).** In App Store
+Connect → **Users and Access → Integrations → App Store Connect API**, create a
+key with **App Manager** role and download the `.p8` (downloadable **once**).
+That gives you three values, which fill the placeholders in `eas.json`'s `submit`
+profiles:
+
+| eas.json placeholder | Where it comes from |
+|----------------------|---------------------|
+| `ascApiKeyId` | The Key ID shown next to the key |
+| `ascApiKeyIssuerId` | The Issuer ID at the top of the API Keys page |
+| `ascApiKeyPath` | Local path to the downloaded `.p8` — keep it **outside the repo or gitignored**; never commit it |
+
+The API-key path is preferred over interactive Apple login (`appleId` / password /
+2FA on every submit) because it is non-interactive and CI-safe. Alternatively,
+run `eas submit` once with no key configured and let **EAS store the ASC API key
+on Expo's servers** — then the `submit.ios` block can be emptied entirely and EAS
+supplies the credential. `ascAppId` (the App Store Connect app's numeric ID) is
+optional once the app record exists and EAS can resolve it by bundle id.
+
+### Recurring release flow (to get a build onto TestFlight)
+
+1. **Bump the marketing version** in `apps/mobile/app.json` (`expo.version`) when
+   the release warrants it. Leave `buildNumber` alone — EAS autoIncrements it
+   (`appVersionSource: remote`).
+2. **Build:**
+   ```bash
+   pnpm --filter mobile exec eas build --profile preview --platform ios
+   ```
+3. **Submit to App Store Connect:**
+   ```bash
+   pnpm --filter mobile exec eas submit --profile preview --platform ios --latest
+   ```
+   (`--latest` grabs the build from step 2; omit it to pick interactively.)
+4. The build lands in **App Store Connect → your app → TestFlight**. It goes
+   through Apple's processing (a few minutes) and may need export-compliance
+   answered once.
+5. Add the build to an **internal testing group** (up to 100 App Store Connect
+   users, no Apple review needed for internal testers).
+6. Testers install the **TestFlight** app on their device and get the build.
+
+For the App Store proper, repeat with `--profile production` and promote the
+build in App Store Connect.
+
+### Caveats
+
+- **Bundle id is permanent at first build.** Currently `com.era.app` (in
+  `app.json`, iOS + Android). It cannot be changed after the first App Store
+  Connect record is created. **Decide before the first build** whether to keep
+  `com.era.app` or switch to `style.era` (reverse-DNS of the `era.style` domain).
+  Flag this to the user — it is a one-way door.
+- **First TestFlight build should not be `1.0.0`-versioned by accident.**
+  `expo.version` is currently `0.0.0`; recommend bumping to **`1.0.0`** before the
+  first build (Harbor owns that edit in `app.json`).
+- **Sentry source maps** upload automatically during the EAS build via the
+  `@sentry/react-native/expo` plugin (already in `app.json`). That upload needs a
+  `SENTRY_AUTH_TOKEN` — add it as an **EAS secret**
+  (`pnpm --filter mobile exec eas secret:create --scope project --name SENTRY_AUTH_TOKEN --value <token>`)
+  **only once a real Sentry DSN/project is wired**; until then the plugin no-ops
+  and no token is required.
+
 ## Current state
 
 > Update this section as the build progresses.

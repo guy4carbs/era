@@ -48,6 +48,7 @@
     "@era/typescript-config": "workspace:*",
     "@types/react": "~19.2.0",
     "babel-preset-expo": "~57.0.1",
+    "eas-cli": "^20.5.1",
     "eslint": "^9.17.0",
     "typescript": "^5.7.0"
   }
