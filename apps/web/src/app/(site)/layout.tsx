@@ -5,6 +5,7 @@ import { Fraunces } from 'next/font/google';
 import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { Pageview } from '../../components/site';
+import { siteUrl } from '../../lib/site-url';
 
 /**
  * Public marketing chrome for the `(site)` route group — the pre-launch landing
@@ -23,17 +24,23 @@ const serif = Fraunces({
   variable: '--font-era-serif',
 });
 
-/**
- * Absolute base for Open Graph / Twitter asset URLs. Reads the deploy-provided
- * `NEXT_PUBLIC_SITE_URL` (set by Anchor), falling back to localhost for dev so
- * `metadataBase` is always a valid absolute URL.
- */
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
-
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
-  title: strings.site.og.title,
+  // Absolute base for Open Graph / Twitter asset URLs and per-page canonicals.
+  // The canonical host comes from `siteUrl()` (single source of truth) — reads
+  // `NEXT_PUBLIC_SITE_URL`, falls back to localhost in dev.
+  metadataBase: new URL(siteUrl()),
+  // Brand default + per-page template. A page that sets its own `title` renders
+  // as "<title> · Era" (keyword-leading, ≤60 chars); pages that don't fall back
+  // to the locked brand default. The default is NOT run through the template, so
+  // the homepage title stays exactly the approved og.title.
+  title: { default: strings.site.og.title, template: '%s · Era' },
   description: strings.site.meta.description,
+  // Default canonical — the homepage. Per-page metadata overrides this.
+  alternates: { canonical: '/' },
+  // Google Search Console ownership tag. No-ops until `NEXT_PUBLIC_GSC_VERIFICATION`
+  // is set (Next omits the meta tag when undefined); the user pastes their token
+  // on Railway when verifying era.style.
+  verification: { google: process.env.NEXT_PUBLIC_GSC_VERIFICATION },
   openGraph: {
     type: 'website',
     url: '/',

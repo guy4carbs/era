@@ -104,6 +104,59 @@ An item can enter the wardrobe three ways, all converging on the shared `process
 - **Link** (`source: 'link'`) — `POST /api/import-from-url { url }`. **Live.** Server-side fetches the product page, scrapes JSON-LD/OpenGraph metadata (regex parsing — a real HTML parser is a Phase-2 nicety), downloads the product image, stores it to `items-raw`, and runs the pipeline with the scraped name/brand/price/currency as prefill. Every user-URL fetch goes through the SSRF gate in `apps/web/src/lib/url-import.ts` (https-only, no credentials/non-443 ports, all resolved addresses must be public, redirects re-validated per hop, wall timeout, capped body). Known Phase-2 hardening: pin the resolved IP at connect time to close the DNS-rebinding TOCTOU.
 - **Email receipt** (`source: 'email_import'`) — `POST /api/import-email`. **Scaffolded only** (route returns `501`, session-gated). The `ReceiptParser` interface + `ReceiptItem`/`ParsedEmail`/`ReceiptImportRequest` types are defined; the flow (email → parser registry by sender domain → per-item import via the same url/image pipeline) is documented in the route. Building the parser registry and ingest transport is the remaining Phase 2 completion work.
 
+## SEO conventions
+
+Every indexable page inherits these. Public surfaces are the landing `/` and the
+legal pages `/privacy` + `/terms`; everything else (the `(tabs)` app, onboarding,
+quiz, settings, design-lab, `/api/*`) is behind auth and `Disallow`ed.
+
+**Canonical host.** `NEXT_PUBLIC_SITE_URL` is the single canonical origin (e.g.
+`https://era.style` in prod; localhost fallback in dev). Read it ONLY through
+`siteUrl()` in `apps/web/src/lib/site-url.ts` (strips any trailing slash,
+client-safe) — never `process.env` directly. It feeds `metadataBase`, canonicals,
+OpenGraph URLs, `sitemap.ts`, `robots.ts`, and the JSON-LD builders.
+
+**Metadata.** Unique title ≤ 60 chars, keyword-leading, via a `title.template`
+(default) + per-page `title` override; description ≤ 155 chars; a canonical +
+per-page OpenGraph on every indexable page. The `(site)` layout sets the brand
+defaults + `metadataBase`; per-page `metadata` overrides title/description/
+canonical.
+
+**Structured data.** JSON-LD lives in Nova's `JsonLd` component(s) (Organization
++ WebSite/WebApplication site-wide; FAQPage on the landing's FAQ). All `@id`/`url`
+values resolve through `siteUrl()`.
+
+**Sitemap / robots / llms.** `apps/web/src/app/sitemap.ts` → `/sitemap.xml`
+(static routes now; a documented slot for Layer-2/3 dynamic entries — journal,
+`/styles/{archetype}`, public profiles). `apps/web/src/app/robots.ts` →
+`/robots.txt` (enumerated disallow list — keep in lockstep with the sitemap).
+`apps/web/public/llms.txt` → `/llms.txt` (static, authored by editorial).
+
+**Images / alt text.** Public-site imagery uses `next/image`; hosts are allow-
+listed in `next.config.ts` `images.remotePatterns` (`**.r2.dev` + any custom R2
+domain from `NEXT_PUBLIC_R2_PUBLIC_URL`). Alt text is mandatory and descriptive —
+for item imagery, compose it from the item's tags (category / color / brand).
+
+**Redirects (301).** The ONE place is `next.config.ts` `async redirects()`. In-app
+*path* 301s only (retired/renamed routes). Host-level normalization (www ↔ apex,
+http → https) is handled at the Railway/DNS edge, NOT here.
+
+**Removed content.** 404 → the global `apps/web/src/app/not-found.tsx` (on-brand,
+`noindex`). For permanently removed *public* content (Layer-3 deleted profiles),
+return HTTP 410 via `gone()` in `apps/web/src/lib/http.ts` from a route handler —
+`notFound()` only yields a 404.
+
+**Search Console.** Set `NEXT_PUBLIC_GSC_VERIFICATION` to the GSC token when
+verifying the domain; the `(site)` layout emits the verification meta tag (no-ops
+when unset).
+
+**Lighthouse budget (CI `lighthouse` job).** `apps/web/lighthouserc.json`, median
+of 3 runs over `/`, `/privacy`, `/terms`. `categories:seo` ≥ 0.95 is a hard
+ERROR; `largest-contentful-paint` < 2500ms, `total-blocking-time` < 300ms,
+`cumulative-layout-shift` < 0.1 are tolerant WARNs (CI-runner noise must not
+hard-fail perf). The job boots the app with placeholder env (the landing's
+`getSession` is guarded for anon).
+
 ## Deployment (Railway)
 
 `apps/web` deploys to [Railway](https://railway.app) as a **single service** — the
@@ -165,8 +218,12 @@ fails the deploy loudly, naming the offender. `.env.example` is the canonical li
 
 **Client-safe (`NEXT_PUBLIC_*`, inlined into the browser bundle at build time —
 must be present at BUILD, not just runtime):** `NEXT_PUBLIC_API_URL`,
-`NEXT_PUBLIC_R2_PUBLIC_URL` (+ the `NEXT_PUBLIC_ANALYTICS_*` vars once the
-waitlist/analytics work lands). Public URLs only — never a secret.
+`NEXT_PUBLIC_R2_PUBLIC_URL`, `NEXT_PUBLIC_SITE_URL` (the canonical origin —
+`https://era.style` in prod; feeds canonicals/`sitemap.xml`/`robots.txt`, so a
+wrong or missing value ships wrong canonicals) (+ the `NEXT_PUBLIC_ANALYTICS_*`
+vars once the waitlist/analytics work lands). Public URLs only — never a secret.
+Optional: `NEXT_PUBLIC_GSC_VERIFICATION` (Google Search Console token; unset →
+no verification tag).
 
 > `ANTHROPIC_API_KEY` is schema-required, so a value must exist for the deploy to
 > boot, but Ovi (the Claude-backed stylist) must stay gated until the API
@@ -293,6 +350,23 @@ build in App Store Connect.
   (`pnpm --filter mobile exec eas secret:create --scope project --name SENTRY_AUTH_TOKEN --value <token>`)
   **only once a real Sentry DSN/project is wired**; until then the plugin no-ops
   and no token is required.
+
+### Custom domain & Search Console (era.style — account-gated)
+
+Production serves from **era.style**. To wire the domain and get indexed:
+
+1. Railway → the `Era` service → **Settings → Networking → Custom Domain** → add
+   `era.style` (and `www.era.style` if wanted). Railway shows a DNS target.
+2. At the registrar, add the record Railway specifies — a CNAME/ALIAS to that
+   target (the apex may need ALIAS/ANAME or the registrar's CNAME-flattening).
+   Pick ONE canonical host and redirect the other (`www` ↔ apex) at the edge.
+3. Set the origin on the production env — these inline at BUILD, so **redeploy**
+   after changing: `NEXT_PUBLIC_SITE_URL=https://era.style`,
+   `BETTER_AUTH_URL=https://era.style`, `NEXT_PUBLIC_API_URL=https://era.style`.
+4. Verify in **Google Search Console**: either paste the token into
+   `NEXT_PUBLIC_GSC_VERIFICATION` and redeploy (the `(site)` layout emits the
+   `google-site-verification` meta tag), or add the GSC DNS TXT record. Then
+   submit `https://era.style/sitemap.xml`.
 
 ## Current state
 

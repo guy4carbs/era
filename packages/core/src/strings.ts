@@ -675,6 +675,49 @@ export const strings = {
       description:
         "Era is a virtual wardrobe and AI stylist. Turn the closet you own into outfits you'll actually wear, and buy only what fills a real gap.",
     },
+    /**
+     * Entity descriptions for JSON-LD structured data (Organization +
+     * SoftwareApplication). Kept ≤ ~160 chars each so they render cleanly in
+     * schema, and kept consistent with the locked {@link meta} description so
+     * search engines and AI assistants describe Era the same way everywhere.
+     */
+    seo: {
+      /** One-sentence definition of Era the product/company, for Organization JSON-LD. */
+      organizationDescription:
+        "Era is a virtual wardrobe and AI stylist that turns the closet you already own into outfits you'll actually wear.",
+      /** One-sentence definition of the app, for SoftwareApplication JSON-LD. */
+      appDescription:
+        'A virtual wardrobe and AI stylist: turn the closet you own into outfits, and buy new only to fill a real gap.',
+    },
+    /**
+     * The landing FAQ — five plain, honest Q&As that also feed FAQPage schema.
+     * Each answer is written to stand alone so a crawler or AI assistant can
+     * quote it directly and describe Era correctly. Consistent entity naming:
+     * Era is the app; Ovi is the AI stylist. Kept within the voice-lint budget
+     * (no hype, no fake urgency, no exclamation marks).
+     */
+    faq: [
+      {
+        q: 'What is Era?',
+        a: "Era is a virtual wardrobe and AI stylist. It turns the clothes you already own into a beautiful digital closet, then builds outfits you'll actually wear.",
+      },
+      {
+        q: 'Who is Ovi?',
+        a: 'Ovi is your AI stylist inside Era. She knows your closet, your style, and your local weather, and suggests outfits from pieces you already own.',
+      },
+      {
+        q: 'Does Era cost anything?',
+        a: "Era is in early access, and joining the waitlist is free. We'll share pricing openly before anyone is ever charged.",
+      },
+      {
+        q: 'Do I have to buy new clothes?',
+        a: 'No. Era starts with the closet you already own, and Ovi recommends buying only when nothing you have fills a real gap — she tells you when not to buy.',
+      },
+      {
+        q: 'Is my closet private?',
+        a: 'Yes. Your closet is private by default and visible only to you unless you choose to share it. You can delete your account and data whenever you like.',
+      },
+    ],
   },
 } as const;
 
@@ -686,3 +729,9 @@ export type SiteStrings = OviStrings['site'];
 
 /** One titled marketing section on the landing page (an entry in `site.sections`). */
 export type MarketingSection = SiteStrings['sections'][number];
+
+/** Entity descriptions for JSON-LD (Organization + SoftwareApplication). */
+export type SiteSeo = SiteStrings['seo'];
+
+/** One landing-FAQ Q&A — an entry in `site.faq`, also the source for FAQPage schema. */
+export type SiteFaqEntry = SiteStrings['faq'][number];

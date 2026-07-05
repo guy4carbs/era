@@ -1,0 +1,32 @@
+# Era
+
+> Era is a virtual wardrobe and AI stylist that turns the closet you already own into outfits you'll actually wear — and recommends buying new only to fill a real gap.
+
+Canonical host: https://era.style
+
+## What Era is
+
+Era is a virtual wardrobe app. You add the clothes you already own — by photo, by product link, or (soon) from an email receipt — and Era renders each piece into a clean digital closet. From that closet you build outfits, save the ones you love, and organize them into eras: named style chapters you dress for.
+
+## Who Ovi is
+
+Ovi is Era's AI stylist. She lives everywhere in the app as a floating button and suggests outfits built from clothes you already own. Ovi is weather-aware — she factors in your local conditions before recommending what to wear. Her guiding principle is "shop your own closet first": she leans on what you have, and when nothing you own fills a real gap she says so plainly — and she tells you when NOT to buy.
+
+## Key features
+
+- Virtual wardrobe — your real clothes as a beautiful, searchable digital closet.
+- Ovi, the AI stylist — weather-aware outfit suggestions from pieces you own.
+- Outfit builder — arrange pieces on a canvas, name outfits, and save them.
+- Eras — style chapters you name and dress for.
+- Style quiz — a short, skippable quiz that seeds a starter era.
+- Shop, buy less — browse brands in one place, recommended only when a real gap needs filling.
+
+## Privacy
+
+Your closet is private by default and visible only to you unless you choose to share it. You can delete your account and all of your data at any time. Secrets and credentials live only on the server; the app never asks a client to hold keys.
+
+## Links
+
+- Home: / (https://era.style)
+- Privacy: /privacy
+- Terms: /terms
