@@ -9,7 +9,7 @@
  * Pure validation + header checks only — no DB, no provider, no secrets — but it
  * is server-side (imported by route handlers, never a client bundle).
  */
-import { type BrandTier, type ItemCategory, type ShopSearchQuery } from '@era/core/shop';
+import { type BrandTier, type ItemCategory, type ShopProduct, type ShopSearchQuery } from '@era/core/shop';
 
 /** A search body is small; cap it well below anything a real query needs. */
 export const MAX_SHOP_BODY_BYTES = 2048;
@@ -36,6 +36,81 @@ const ITEM_CATEGORIES: readonly ItemCategory[] = [
 
 /** The 4-value brand tier enum, mirrored for validation. */
 const BRAND_TIERS: readonly BrandTier[] = ['luxury', 'premium', 'contemporary', 'high_street'];
+
+/** A non-empty string, else null. */
+function nonEmptyString(value: unknown): string | null {
+  return typeof value === 'string' && value.length > 0 ? value : null;
+}
+
+/** An optional readonly string array (all entries strings), else undefined. */
+function optionalStringArray(value: unknown): readonly string[] | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (!Array.isArray(value) || !value.every((entry) => typeof entry === 'string')) {
+    return undefined;
+  }
+  return value as string[];
+}
+
+/**
+ * Validate one untrusted value into a `ShopProduct`, or null when malformed. The
+ * ONE audited product validator, shared by `/api/rank-products` (a page of
+ * client-forwarded products) and `/api/shop/save` (the product to persist).
+ * Requires every card field: ids/strings non-empty, the two enums in range, and a
+ * finite non-negative price. `sizes`/`colors` are optional.
+ *
+ * The link/image fields (`imageUrl`, `productUrl`, `affiliateUrl`) MUST be
+ * absolute `https:` URLs (see {@link isHttpsUrl}) — these products are
+ * CLIENT-SUPPLIED, so a tampered `javascript:`/`data:` URL must never pass
+ * validation and reach a rendered `href`/`<img src>` (or get persisted).
+ */
+export function parseShopProduct(value: unknown): ShopProduct | null {
+  if (typeof value !== 'object' || value === null) {
+    return null;
+  }
+  const p = value as Record<string, unknown>;
+
+  const id = nonEmptyString(p.id);
+  const title = nonEmptyString(p.title);
+  const brand = nonEmptyString(p.brand);
+  const currency = nonEmptyString(p.currency);
+  const imageUrl = nonEmptyString(p.imageUrl);
+  const retailer = nonEmptyString(p.retailer);
+  const productUrl = nonEmptyString(p.productUrl);
+  const affiliateUrl = nonEmptyString(p.affiliateUrl);
+  if (!id || !title || !brand || !currency || !imageUrl || !retailer || !productUrl || !affiliateUrl) {
+    return null;
+  }
+  if (!ITEM_CATEGORIES.includes(p.category as ItemCategory)) {
+    return null;
+  }
+  if (!BRAND_TIERS.includes(p.brandTier as BrandTier)) {
+    return null;
+  }
+  if (typeof p.price !== 'number' || !Number.isFinite(p.price) || p.price < 0) {
+    return null;
+  }
+  if (!isHttpsUrl(imageUrl) || !isHttpsUrl(productUrl) || !isHttpsUrl(affiliateUrl)) {
+    return null;
+  }
+
+  return {
+    id,
+    title,
+    brand,
+    brandTier: p.brandTier as BrandTier,
+    category: p.category as ItemCategory,
+    price: p.price,
+    currency,
+    imageUrl,
+    retailer,
+    productUrl,
+    affiliateUrl,
+    sizes: optionalStringArray(p.sizes),
+    colors: optionalStringArray(p.colors),
+  };
+}
 
 /**
  * Same-origin guard for a mutating POST (same idiom as api/shop-search and

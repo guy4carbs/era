@@ -13,6 +13,7 @@ import {
   outfitItems,
   outfits,
   profiles,
+  savedProducts,
   styleProfiles,
   waitlist,
   wearLogs,
@@ -40,6 +41,7 @@ export {
   follows,
   aiEvents,
   aiUsage,
+  savedProducts,
   waitlist,
 };
 
@@ -82,6 +84,9 @@ export type NewAiEvent = typeof aiEvents.$inferInsert;
 
 export type AiUsage = typeof aiUsage.$inferSelect;
 export type NewAiUsage = typeof aiUsage.$inferInsert;
+
+export type SavedProduct = typeof savedProducts.$inferSelect;
+export type NewSavedProduct = typeof savedProducts.$inferInsert;
 
 export type WaitlistEntry = typeof waitlist.$inferSelect;
 export type NewWaitlistEntry = typeof waitlist.$inferInsert;

@@ -1,23 +1,30 @@
 /**
  * Shop API — the mobile calls into the Shop endpoints.
  *
- *   POST /api/shop-search     body ShopSearchQuery      -> { products, page, hasMore }
- *   POST /api/rank-products    body { products }          -> { products: RankedProduct[] }
- *   POST /api/shop/rec-event   body { kind, productId, retailer?, why? } -> ok
+ *   POST   /api/shop-search    body ShopSearchQuery      -> { products, page, hasMore }
+ *   POST   /api/rank-products   body { products }          -> { products: RankedProduct[] }
+ *   POST   /api/shop/rec-event  body { kind, productId, retailer?, why? } -> ok
+ *   POST   /api/shop/save       body { product }           -> { saved: true }
+ *   DELETE /api/shop/save       body { productId }          -> { saved: false }
+ *   GET    /api/shop/saved                                  -> { products: SavedShopProduct[] }
  *
  * Every endpoint is owner-scoped, so each request carries the signed-in session.
  * Better Auth's Expo plugin patches the client's own fetch (`authClient.$fetch`)
  * to inject the persisted session cookie and baseURL — calling through `$fetch`
  * is what attaches credentials. This mirrors `components/ovi/api.ts`.
  *
- * Two Shop-specific contracts shape this module:
+ * Three Shop-specific contracts shape this module:
  *   - `rankProducts` NEVER hard-fails. Ranking is a nicety over an already-usable
  *     browse; if the route errors, callers still get every product back, unranked
  *     (`score: 0`, `why: null`), so the grid renders. Honesty over a blank screen.
  *   - `logRecEvent` is fire-and-forget. A click-out or dismiss must open the link
  *     / remove the card whether or not the log lands, so it swallows every error.
+ *   - `listSaved` degrades to `[]` on any error (like `rankProducts`) so the Saved
+ *     view opens empty instead of erroring; `saveProduct`/`unsaveProduct` THROW so
+ *     the screen can revert its optimistic heart on a failed write.
  */
 import type {
+  ItemCategory,
   ProductWhy,
   RankedProduct,
   ShopProduct,
@@ -103,7 +110,7 @@ export async function rankProducts(
     );
     return ranked;
   } catch {
-    return products.map((product) => ({ ...product, score: 0, why: null }));
+    return products.map((product) => ({ ...product, score: 0, why: null, whyDetail: null }));
   }
 }
 
@@ -135,4 +142,55 @@ export function logRecEvent(event: RecEvent): void {
   void apiFetch('/api/shop/rec-event', { method: 'POST', body }).catch(() => {
     // A missed rec log is invisible to the user and never blocks the interaction.
   });
+}
+
+/**
+ * A saved (wishlisted) pick as the Saved view renders it. A ShopProduct-shaped
+ * slice: enough to render a card and click out to the retailer, minus the ranking
+ * scaffolding (`brandTier`, `sizes`, `colors`, `why`, `whyDetail`) the Saved list
+ * doesn't need. Kept local to mobile — the save endpoints are the only producers.
+ */
+export interface SavedShopProduct {
+  readonly id: string;
+  readonly title: string;
+  readonly brand: string;
+  readonly category: ItemCategory;
+  readonly price: number;
+  readonly currency: string;
+  readonly imageUrl: string;
+  readonly retailer: string;
+  readonly productUrl: string;
+  readonly affiliateUrl: string;
+}
+
+/**
+ * Save a pick to the wishlist. THROWS on failure so the caller can revert its
+ * optimistic heart — a save that silently no-ops would leave a filled heart with
+ * nothing behind it. The body carries the full product so the server can persist a
+ * card it can render later without a second lookup.
+ */
+export async function saveProduct(product: ShopProduct): Promise<void> {
+  await apiFetch('/api/shop/save', { method: 'POST', body: { product } });
+}
+
+/** Remove a pick from the wishlist by id. THROWS on failure (see `saveProduct`). */
+export async function unsaveProduct(productId: string): Promise<void> {
+  await apiFetch('/api/shop/save', { method: 'DELETE', body: { productId } });
+}
+
+/**
+ * The current wishlist. NEVER hard-fails: on any error it degrades to `[]` so the
+ * Saved view opens to its empty state rather than an error screen — a missing
+ * wishlist is a "nothing saved yet", not a fault the user must retry.
+ */
+export async function listSaved(): Promise<readonly SavedShopProduct[]> {
+  try {
+    const { products } = await apiFetch<{ products: readonly SavedShopProduct[] }>(
+      '/api/shop/saved',
+      { method: 'GET' },
+    );
+    return products;
+  } catch {
+    return [];
+  }
 }

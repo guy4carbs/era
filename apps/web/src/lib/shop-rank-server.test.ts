@@ -14,7 +14,7 @@ import { rankProducts, type ShopProduct } from '@era/core/shop';
 import type { OviItem, StyleProfileLite } from '@era/core/ovi';
 import type { DbClient } from '@era/db';
 
-import { rankProductsForUser } from './shop-rank-server.ts';
+import { attachWhyThumbnails, rankProductsForUser, type WhyThumbnailLookup } from './shop-rank-server.ts';
 
 /** Chainable Drizzle stand-in: select-chains resolve to `selectRows`; inserts are captured. */
 function fakeDb(selectRows: unknown[] = []): { db: DbClient; inserts: unknown[] } {
@@ -146,4 +146,44 @@ test('real key + global kill-switch engaged: DEGRADES to deterministic, never to
       assert.equal(inserts.length, 0, 'a paused browse must not record usage');
     });
   });
+});
+
+test('attachWhyThumbnails resolves whyDetail ref images via the lookup; unresolved ids stay undefined', async () => {
+  // The top completes a look with each owned bottom → completesWith names c1 + c2.
+  const ranked = rankProducts(PRODUCTS, CLOSET, PROFILE);
+  const top = ranked.find((p) => p.id === 'p-top');
+  assert.ok(top?.whyDetail);
+  assert.deepEqual(
+    top!.whyDetail!.completesWith.map((r) => r.id),
+    ['c1', 'c2'],
+  );
+
+  const seen: string[][] = [];
+  const lookup: WhyThumbnailLookup = async (ids) => {
+    seen.push([...ids]);
+    // Resolve only c1; c2 has no cutout → absent from the map.
+    return new Map([['c1', 'https://pub-cutouts.r2.dev/user-1/c1.png']]);
+  };
+
+  const withThumbs = await attachWhyThumbnails(ranked, lookup);
+  const topOut = withThumbs.find((p) => p.id === 'p-top')!;
+  const [c1, c2] = topOut.whyDetail!.completesWith;
+  assert.equal(c1!.imageUrl, 'https://pub-cutouts.r2.dev/user-1/c1.png', 'resolved ref gets its cutout URL');
+  assert.equal(c2!.imageUrl, undefined, 'unresolved ref keeps imageUrl undefined');
+  // The lookup is asked for the deduped owned ids exactly once.
+  assert.equal(seen.length, 1);
+  assert.deepEqual(seen[0]!.sort(), ['c1', 'c2']);
+});
+
+test('attachWhyThumbnails is a no-op (no lookup call) when no whyDetail names an item', async () => {
+  // Empty closet → no owned pieces are named, so whyDetail refs are empty/null.
+  const ranked = rankProducts(PRODUCTS, [], PROFILE);
+  let called = false;
+  const lookup: WhyThumbnailLookup = async () => {
+    called = true;
+    return new Map();
+  };
+  const out = await attachWhyThumbnails(ranked, lookup);
+  assert.equal(called, false, 'no ids → the DB lookup is never invoked');
+  assert.equal(out.length, ranked.length);
 });

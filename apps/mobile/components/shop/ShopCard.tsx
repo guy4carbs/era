@@ -15,6 +15,7 @@
  */
 import type { RankedProduct } from '@era/core/shop';
 import { layout, radii, rnShadow, sheen, spacing, typeRamp } from '@era/tokens';
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -22,20 +23,50 @@ import { Button } from '@/components/Button';
 import { strings } from '@era/core/strings';
 import { useTheme } from '@/lib/theme';
 
+import type { SavedShopProduct } from './api';
 import { formatPrice } from './labels';
 import { WhyLabel } from './WhyLabel';
 
+/**
+ * A card renders either a ranked pick (with its `why`/`whyDetail`) or a saved
+ * pick (a leaner ShopProduct slice). The `'whyDetail' in product` narrowing keeps
+ * the why affordances ranked-only without a discriminant field.
+ */
+export type ShopCardProduct = RankedProduct | SavedShopProduct;
+
 interface ShopCardProps {
-  readonly product: RankedProduct;
+  readonly product: ShopCardProduct;
   /** Open the affiliate link + fire the rec_click (screen owns the side effects). */
-  readonly onView: (product: RankedProduct) => void;
-  /** Dismiss the pick + fire the rec_dismiss. */
-  readonly onDismiss: (product: RankedProduct) => void;
+  readonly onView: (product: ShopCardProduct) => void;
+  /** Whether this pick is on the wishlist — drives the heart's filled state. */
+  readonly isSaved: boolean;
+  /** Toggle the wishlist (screen owns the optimistic write + revert). */
+  readonly onToggleSave: () => void;
+  /**
+   * Dismiss the pick + fire the rec_dismiss. Omitted on saved cards — "Not for me"
+   * is a ranked-feed gesture, not something you do to your own wishlist.
+   */
+  readonly onDismiss?: (product: RankedProduct) => void;
+  /** Open the why-detail sheet — passed only when the pick carries a `whyDetail`. */
+  readonly onOpenWhy?: (product: RankedProduct) => void;
 }
 
-export function ShopCard({ product, onView, onDismiss }: ShopCardProps) {
+export function ShopCard({
+  product,
+  onView,
+  isSaved,
+  onToggleSave,
+  onDismiss,
+  onOpenWhy,
+}: ShopCardProps) {
   const { colors } = useTheme();
   const viewLabel = strings.shop.viewAt(product.retailer);
+
+  // Ranked picks carry a `why`/`whyDetail`; saved picks don't. Narrow structurally
+  // so the why label + detail sheet stay ranked-only, no discriminant needed.
+  const ranked = 'whyDetail' in product ? product : null;
+  const why = ranked?.why ?? null;
+  const canOpenWhy = ranked !== null && ranked.whyDetail !== null && onOpenWhy !== undefined;
 
   return (
     <View
@@ -117,18 +148,80 @@ export function ShopCard({ product, onView, onDismiss }: ShopCardProps) {
           </Text>
         </Text>
 
-        {product.why ? <WhyLabel why={product.why} /> : null}
+        {why ? (
+          <WhyLabel
+            why={why}
+            onPress={canOpenWhy && ranked ? () => onOpenWhy?.(ranked) : undefined}
+          />
+        ) : null}
 
         <View style={styles.actions}>
           <Button label={viewLabel} onPress={() => onView(product)} />
-          <Button
-            label={strings.shop.dismiss}
-            variant="ghost"
-            onPress={() => onDismiss(product)}
-          />
+          <SaveToggle isSaved={isSaved} onToggle={onToggleSave} />
+          {ranked && onDismiss ? (
+            <Button
+              label={strings.shop.dismiss}
+              variant="ghost"
+              onPress={() => onDismiss(ranked)}
+            />
+          ) : null}
         </View>
       </View>
     </View>
+  );
+}
+
+/**
+ * The wishlist heart. A quiet full-width toggle in the actions stack (not a
+ * floating icon) so it matches the card's button rhythm and stays a clear 44pt
+ * target. A filled glyph + "Saved" when on the list, an outline + "Save" when not;
+ * the accessible label names the ACTION (save / remove), since a heart alone
+ * doesn't say what a tap does. A selection tick fires on every toggle. No motion
+ * of its own, so it's reduced-motion-safe by construction.
+ */
+function SaveToggle({ isSaved, onToggle }: { isSaved: boolean; onToggle: () => void }) {
+  const { colors } = useTheme();
+  const copy = strings.shop.saved;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected: isSaved }}
+      accessibilityLabel={isSaved ? copy.removeA11y : copy.saveA11y}
+      hitSlop={spacing.s2}
+      onPress={() => {
+        void Haptics.selectionAsync();
+        onToggle();
+      }}
+      style={[
+        styles.saveToggle,
+        {
+          minHeight: layout.touchTarget.ios,
+          borderRadius: radii.input,
+          backgroundColor: isSaved ? `${colors.accent}29` : 'transparent',
+          borderColor: isSaved ? colors.accent : colors.hairline,
+        },
+      ]}
+    >
+      <Text
+        style={{
+          color: isSaved ? colors.accent : colors.secondaryStrong,
+          fontSize: typeRamp.body.pt,
+          lineHeight: typeRamp.body.lineHeight,
+        }}
+      >
+        {isSaved ? '♥' : '♡'}
+      </Text>
+      <Text
+        style={{
+          color: colors.text,
+          fontSize: typeRamp.body.pt,
+          lineHeight: typeRamp.body.lineHeight,
+          fontWeight: '600',
+        }}
+      >
+        {isSaved ? copy.savedState : copy.save}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -151,5 +244,14 @@ const styles = StyleSheet.create({
   actions: {
     marginTop: spacing.s1,
     gap: spacing.s2,
+  },
+  saveToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.s2,
+    paddingHorizontal: spacing.s4,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderCurve: 'continuous',
   },
 });
