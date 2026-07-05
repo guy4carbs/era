@@ -1,7 +1,7 @@
 /**
  * Forced-error trigger for verifying the error-reporting pipeline end to end.
  *
- * GET (or POST) /api/_debug/error throws a synthetic error, routes it into the
+ * GET (or POST) /api/debug/error throws a synthetic error, routes it into the
  * shared {@link reporter} (the debug reporter captures + console.errors it today;
  * Sentry when a DSN is wired), and returns 500. It exists so Gauge can prove "a
  * forced error reaches the tracker" without waiting on a real crash.
@@ -22,7 +22,7 @@ function trigger(): NextResponse {
   }
 
   const error = new Error('Forced debug error — error-reporting smoke test');
-  reporter.captureError(error, { source: '/api/_debug/error' });
+  reporter.captureError(error, { source: '/api/debug/error' });
 
   // `capturedReports` is populated only on the debug adapter (0 with Sentry);
   // a non-zero count is direct proof the reporter received the error.
