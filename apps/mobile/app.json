@@ -15,7 +15,10 @@
     },
     "ios": {
       "bundleIdentifier": "com.era.app",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.era.app",
