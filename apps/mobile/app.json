@@ -14,14 +14,14 @@
       "backgroundColor": "#FAF7F0"
     },
     "ios": {
-      "bundleIdentifier": "com.era.app",
+      "bundleIdentifier": "style.era",
       "supportsTablet": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "com.era.app",
+      "package": "style.era",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1C1B19"
