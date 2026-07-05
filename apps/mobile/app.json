@@ -3,24 +3,52 @@
     "name": "Era",
     "slug": "era",
     "scheme": "era",
-    "version": "0.0.0",
+    "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FAF7F0"
+    },
     "ios": {
-      "bundleIdentifier": "com.era.app",
-      "supportsTablet": true
+      "bundleIdentifier": "style.era",
+      "supportsTablet": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
-      "package": "com.era.app"
+      "package": "style.era",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1C1B19"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      ["@sentry/react-native/expo", { "url": "https://sentry.io/" }]
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "1a286870-918e-4213-b9ca-04f939315ba1"
+      }
+    },
+    "owner": "guy4carbss-team"
   }
 }

@@ -1,0 +1,55 @@
+{
+  "cli": {
+    "version": ">= 20.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "simulator": true,
+        "buildConfiguration": "Debug"
+      },
+      "env": {
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
+      }
+    },
+    "preview": {
+      "distribution": "store",
+      "autoIncrement": true,
+      "ios": {
+        "buildConfiguration": "Release"
+      },
+      "env": {
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
+      }
+    },
+    "production": {
+      "distribution": "store",
+      "autoIncrement": true,
+      "ios": {
+        "buildConfiguration": "Release"
+      },
+      "env": {
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
+      }
+    }
+  },
+  "submit": {
+    "preview": {
+      "ios": {
+        "ascApiKeyPath": "REPLACE_WITH_PATH_TO_ASC_API_KEY.p8",
+        "ascApiKeyId": "REPLACE_WITH_ASC_API_KEY_ID",
+        "ascApiKeyIssuerId": "REPLACE_WITH_ASC_API_KEY_ISSUER_ID"
+      }
+    },
+    "production": {
+      "ios": {
+        "ascApiKeyPath": "REPLACE_WITH_PATH_TO_ASC_API_KEY.p8",
+        "ascApiKeyId": "REPLACE_WITH_ASC_API_KEY_ID",
+        "ascApiKeyIssuerId": "REPLACE_WITH_ASC_API_KEY_ISSUER_ID"
+      }
+    }
+  }
+}
