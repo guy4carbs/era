@@ -10,6 +10,9 @@
       "ios": {
         "simulator": true,
         "buildConfiguration": "Debug"
+      },
+      "env": {
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     },
     "preview": {
@@ -17,6 +20,9 @@
       "autoIncrement": true,
       "ios": {
         "buildConfiguration": "Release"
+      },
+      "env": {
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     },
     "production": {
@@ -24,6 +30,9 @@
       "autoIncrement": true,
       "ios": {
         "buildConfiguration": "Release"
+      },
+      "env": {
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     }
   },
