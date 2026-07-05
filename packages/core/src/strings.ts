@@ -568,6 +568,75 @@ export const strings = {
     dismiss: 'Not for me',
     /** Pull the next page of picks — quiet, not an urgent "keep scrolling". */
     loadMore: 'Show more',
+
+    // --- wishlist: save a pick to come back to, and the Saved view ---
+
+    /**
+     * Save/wishlist affordances on a pick. `save`/`saved` are the visible states
+     * of the heart toggle; the `*A11y` labels name the action for screen readers
+     * (a heart alone doesn't say what a tap does). No urgency — saving is just a
+     * quiet "keep this in view", never a step toward buying.
+     */
+    saved: {
+      /** Toggle label, unsaved state. */
+      save: 'Save',
+      /** Accessible label for the unsaved heart — names the action, not the icon. */
+      saveA11y: 'Save to wishlist',
+      /** Toggle label, saved state. */
+      savedState: 'Saved',
+      /** Accessible label for the saved heart — a tap here removes it. */
+      removeA11y: 'Remove from wishlist',
+      /** Segment/tab label in the Shop header that opens the saved view. */
+      tab: 'Saved',
+      /** One-line intro atop the Saved view — no pressure, they'll keep. */
+      intro: "Pieces you've kept an eye on. No rush — they'll wait here.",
+      /**
+       * Empty Saved view. Warm and concrete: names the gesture that fills it so
+       * the empty state teaches the feature instead of scolding a blank list.
+       */
+      empty: 'Nothing saved yet — tap the heart on a piece to keep it here.',
+    },
+
+    // --- why detail: Ovi's reasoning, grounded in the user's OWN closet ---
+
+    /**
+     * The "why" detail sheet templates. Where the short {@link strings.shop.why*}
+     * lines fit on a card, these expand the reason against specific pieces the
+     * user already owns — so the reasoning is checkable, not a black box. Ovi
+     * voice; each returns a finished line the ranker fills with a real item.
+     */
+    whyDetail: {
+      /** Sheet title — frames what follows as Ovi's reasoning, plainly. */
+      title: 'Why Ovi picked this',
+      /**
+       * The pick unlocks a look with a piece already in the closet — named, so
+       * the pull is concrete. `completesWith('navy blazer')`.
+       */
+      completesWith: (itemLabel: string): string => `Completes a look with your ${itemLabel}.`,
+      /**
+       * The honest "maybe don't buy" signal, surfaced not hidden: the closet
+       * already holds something close, and Ovi says which. `similarTo('white
+       * sneakers')`. Gentle, never a scold — this is a feature.
+       */
+      similarTo: (itemLabel: string): string =>
+        `You already own something similar — your ${itemLabel}.`,
+      /**
+       * Names a real gap by category and how little of it the closet holds.
+       * Handles an empty category (ownedCount 0) without an awkward "0 ...".
+       * `fillsGap('shoes', 0)` / `fillsGap('bags', 2)`.
+       */
+      fillsGap: (category: string, ownedCount: number): string =>
+        ownedCount <= 0
+          ? `Fills a real gap — you don't own any ${category} yet.`
+          : `Fills a real gap — you own just ${ownedCount} ${category} right now.`,
+      /**
+       * The pick sits inside colors the user already wears. Optionally names the
+       * palette when the ranker has it. `paletteMatch()` / `paletteMatch('warm
+       * neutrals')`.
+       */
+      paletteMatch: (colors?: string): string =>
+        colors ? `Matches your palette — the ${colors} you reach for.` : 'Matches your palette.',
+    },
   },
 
   /** Authentication surfaces. */

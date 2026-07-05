@@ -12,12 +12,35 @@
  */
 
 import type {
+  ItemCategory,
   ProductWhy,
   RankedProduct,
   ShopProduct,
   ShopSearchQuery,
   ShopSearchResult,
 } from '@era/core/shop';
+
+/**
+ * A wishlisted pick as returned by `GET /api/shop/saved`. Shape-compatible with
+ * {@link ShopProduct} on every field the Saved grid renders (a saved card is the
+ * same {@link ShopCard} with a filled heart), but a saved pick carries no ranking
+ * — no `score`, `why`, or `whyDetail` — so it is deliberately narrower than
+ * {@link RankedProduct}. Any {@link ShopProduct}/{@link RankedProduct} is
+ * assignable to it, which is what lets an optimistic save reuse the card's own
+ * product object without a round-trip.
+ */
+export interface SavedShopProduct {
+  readonly id: string;
+  readonly title: string;
+  readonly brand: string;
+  readonly category: ItemCategory;
+  readonly price: number;
+  readonly currency: string;
+  readonly imageUrl: string;
+  readonly retailer: string;
+  readonly productUrl: string;
+  readonly affiliateUrl: string;
+}
 
 /** POST a search query → one page of raw (un-ranked) products. */
 export async function searchProducts(query: ShopSearchQuery): Promise<ShopSearchResult> {
@@ -84,4 +107,47 @@ export function logRecEvent(body: RecEventBody): void {
   } catch {
     /* swallow — same reason */
   }
+}
+
+/**
+ * Wishlist a pick: `POST /api/shop/save`. Unlike {@link logRecEvent}, this is an
+ * awaited state change the UI reflects — the caller toggles the heart optimistically
+ * and reverts on a throw, so a non-200 must surface as an error, not be swallowed.
+ */
+export async function saveProduct(product: ShopProduct): Promise<void> {
+  const res = await fetch('/api/shop/save', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    credentials: 'same-origin',
+    body: JSON.stringify({ product }),
+  });
+  if (!res.ok) {
+    throw new Error(`shop-save failed: ${res.status}`);
+  }
+}
+
+/** Remove a wishlisted pick by id: `DELETE /api/shop/save`. Throws on non-200. */
+export async function unsaveProduct(productId: string): Promise<void> {
+  const res = await fetch('/api/shop/save', {
+    method: 'DELETE',
+    headers: { 'content-type': 'application/json' },
+    credentials: 'same-origin',
+    body: JSON.stringify({ productId }),
+  });
+  if (!res.ok) {
+    throw new Error(`shop-unsave failed: ${res.status}`);
+  }
+}
+
+/** Hydrate the wishlist: `GET /api/shop/saved` → the user's saved picks. Throws on non-200. */
+export async function listSaved(): Promise<SavedShopProduct[]> {
+  const res = await fetch('/api/shop/saved', {
+    method: 'GET',
+    credentials: 'same-origin',
+  });
+  if (!res.ok) {
+    throw new Error(`shop-saved failed: ${res.status}`);
+  }
+  const body = (await res.json()) as { products: SavedShopProduct[] };
+  return body.products;
 }

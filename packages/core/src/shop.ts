@@ -26,7 +26,6 @@ import type { ItemCategory } from '@era/db';
 import {
   biggestEssentialGap,
   buildPaletteSet,
-  colorsMatchPalette,
   normalizeColor,
   slotForCategory,
   type OviItem,
@@ -93,10 +92,74 @@ export type ProductWhy =
   | { readonly kind: 'fills_gap'; readonly category: ItemCategory }
   | { readonly kind: 'similar_owned'; readonly ownedCount: number };
 
-/** A product plus its deterministic score and its single most salient `why`. */
+/**
+ * A pointer to ONE owned closet item behind a `why` signal. `id` is the owned
+ * {@link OviItem.id}; `label` is a short human tag built from the owned piece
+ * (e.g. `"indigo bottom"` or `"A.P.C. top"`) so a detail sheet can name it
+ * without a second lookup. `imageUrl` is deliberately left UNDEFINED here — this
+ * subpath is client-safe and never touches the DB or R2, so the SERVER resolves
+ * each item's cutout URL from the DB before returning the payload to the client.
+ */
+export interface WhyItemRef {
+  readonly id: string;
+  readonly label: string;
+  readonly imageUrl?: string;
+}
+
+/**
+ * The identities behind a product's `why` — the ACTUAL owned pieces each signal
+ * rests on, for a rich "why" detail view. Where {@link ProductWhy} collapses to a
+ * single count-only label (kept as-is for backward-compat), this surfaces the
+ * closet items themselves. Each array is capped at {@link WHY_DETAIL_CAP} items in
+ * stable closet order to keep the payload small.
+ *   - `completesWith` — owned pieces that form buildable looks with the product
+ *     (empty for a self-anchoring dress, which needs no owned piece).
+ *   - `fillsGap` — the gap category this product fills plus how many the user
+ *     already owns in it; `null` when the product doesn't fill the biggest gap.
+ *   - `similarTo` — owned near-duplicates (same category, shared color): the
+ *     honest "you may already own this" warning, made concrete.
+ *   - `paletteMatch` — the product colors that land in the profile palette.
+ */
+export interface WhyDetail {
+  readonly completesWith: readonly WhyItemRef[];
+  readonly fillsGap: { readonly category: ItemCategory; readonly ownedCount: number } | null;
+  readonly similarTo: readonly WhyItemRef[];
+  readonly paletteMatch: readonly string[];
+}
+
+/**
+ * A product plus its deterministic score, its single most salient `why` label,
+ * and the rich `whyDetail` naming the owned items behind each signal (`null` when
+ * no signal names any closet item). `why` stays the compact count-only label the
+ * rec-event route and `WhyLabel` depend on; `whyDetail` is the additive parallel.
+ */
 export interface RankedProduct extends ShopProduct {
   readonly score: number;
   readonly why: ProductWhy | null;
+  readonly whyDetail: WhyDetail | null;
+}
+
+/**
+ * A saved (wishlist / save-for-later) product, in a render-friendly shape close
+ * to {@link ShopProduct} so Nova (web) and Harbor (mobile) render a saved card
+ * with the same components they use for a browse card. It is the mapped view of a
+ * `saved_products` row — a denormalized snapshot captured at save time (Shop feeds
+ * have no table to FK to), so `brand`, `category`, and `imageUrl` are nullable
+ * exactly as the row stores them. `id` is the external `ShopProduct.id` (the row's
+ * `productId`, the stable feed key an unsave targets); `price` is the numeric
+ * `priceSnapshot` coerced back to a number. Returned newest-first by `/api/shop/saved`.
+ */
+export interface SavedShopProduct {
+  readonly id: string;
+  readonly title: string;
+  readonly brand: string | null;
+  readonly category: ItemCategory | null;
+  readonly price: number;
+  readonly currency: string;
+  readonly imageUrl: string | null;
+  readonly retailer: string;
+  readonly productUrl: string;
+  readonly affiliateUrl: string;
 }
 
 /**
@@ -383,28 +446,46 @@ const PENALTY_SIMILAR_OWNED = 5;
  *     (owned dresses + owned top×bottom pairs)       → #anchors
  * A category that can't enter a look scores 0.
  */
-function countCompletableLooks(product: ShopProduct, closet: readonly OviItem[]): number {
+/** A completable-looks tally plus the owned pieces that make those looks buildable. */
+interface CompletableLooks {
+  readonly count: number;
+  /** The owned items that contribute a buildable look (stable closet order). */
+  readonly contributors: readonly OviItem[];
+}
+
+function completableLooks(product: ShopProduct, closet: readonly OviItem[]): CompletableLooks {
   const slot = slotForCategory(product.category);
   if (slot === null) {
-    return 0;
+    return { count: 0, contributors: [] };
   }
-  const tops = closet.filter((i) => i.category === 'top').length;
-  const bottoms = closet.filter((i) => i.category === 'bottom').length;
-  const dresses = closet.filter((i) => i.category === 'dress').length;
+  const tops = closet.filter((i) => i.category === 'top');
+  const bottoms = closet.filter((i) => i.category === 'bottom');
+  const dresses = closet.filter((i) => i.category === 'dress');
 
   if (product.category === 'dress') {
-    return 1;
+    // A dress is a complete look on its own — no owned piece is required, so
+    // there are no contributors to name.
+    return { count: 1, contributors: [] };
   }
   if (slot === 'base') {
     // A top: buildable with each owned bottom.
-    return bottoms;
+    return { count: bottoms.length, contributors: bottoms };
   }
   if (slot === 'bottom') {
-    return tops;
+    return { count: tops.length, contributors: tops };
   }
   // Optional slots (shoes, outerwear, accessory): finish looks the closet can
-  // already anchor — each owned dress, and each owned top×bottom pairing.
-  return dresses + tops * bottoms;
+  // already anchor — each owned dress, and each owned top×bottom pairing. The
+  // contributing pieces are the anchors: every dress, plus tops and bottoms —
+  // but tops only complete a look when a bottom exists to pair with, and vice
+  // versa, so each is a contributor only when the other side is non-empty.
+  const count = dresses.length + tops.length * bottoms.length;
+  const contributors: OviItem[] = [
+    ...dresses,
+    ...(bottoms.length > 0 ? tops : []),
+    ...(tops.length > 0 ? bottoms : []),
+  ];
+  return { count, contributors };
 }
 
 /**
@@ -412,14 +493,53 @@ function countCompletableLooks(product: ShopProduct, closet: readonly OviItem[])
  * at least one shared (normalized) color. The honest signal behind the trust
  * rule — the ranker won't quietly push something you already own.
  */
-function countSimilarOwned(product: ShopProduct, closet: readonly OviItem[]): number {
+function similarOwned(product: ShopProduct, closet: readonly OviItem[]): readonly OviItem[] {
   const productColors = new Set((product.colors ?? []).map(normalizeColor));
   if (productColors.size === 0) {
-    return 0;
+    return [];
   }
   return closet.filter(
     (i) => i.category === product.category && i.colors.some((c) => productColors.has(normalizeColor(c))),
-  ).length;
+  );
+}
+
+/**
+ * The product colors (original spelling) that land in the profile palette, deduped
+ * by normalized value in first-seen order. Surfaces {@link colorsMatchPalette}'s
+ * hits, which the boolean form otherwise throws away.
+ */
+function paletteMatchColors(product: ShopProduct, palette: ReadonlySet<string>): readonly string[] {
+  const seen = new Set<string>();
+  const hits: string[] = [];
+  for (const color of product.colors ?? []) {
+    const norm = normalizeColor(color);
+    if (palette.has(norm) && !seen.has(norm)) {
+      seen.add(norm);
+      hits.push(color);
+    }
+  }
+  return hits;
+}
+
+/** Max owned items surfaced per `whyDetail` array — keeps the payload small. */
+const WHY_DETAIL_CAP = 3;
+
+/**
+ * A short human label for an owned closet piece — primary color + category
+ * (`"indigo bottom"`), falling back to brand + category, then bare category. Kept
+ * simple and color-forward so a "completes with your ___" line reads naturally.
+ */
+function whyItemLabel(item: OviItem): string {
+  const descriptor = item.colors[0] ?? item.brand ?? undefined;
+  return descriptor !== undefined && descriptor.length > 0 ? `${descriptor} ${item.category}` : item.category;
+}
+
+/**
+ * Project an owned item to a {@link WhyItemRef}. `imageUrl` is intentionally
+ * omitted — the server resolves the cutout URL from the DB (see WhyItemRef).
+ */
+function toWhyItemRef(item: OviItem): WhyItemRef {
+  return { id: item.id, label: whyItemLabel(item) };
 }
 
 /**
@@ -431,7 +551,7 @@ function countSimilarOwned(product: ShopProduct, closet: readonly OviItem[]): nu
  *   - `fills_gap` (+{@link WEIGHT_FILLS_GAP}) when its category is the closet's
  *     biggest missing essential (Ovi's {@link biggestEssentialGap}).
  *   - `completes_outfits` (+{@link WEIGHT_PER_COMPLETED_LOOK} per look) from
- *     {@link countCompletableLooks}.
+ *     {@link completableLooks}.
  *   - palette match (+{@link WEIGHT_PALETTE}) when a product color is in the
  *     profile palette.
  *   - `similar_owned` (−{@link PENALTY_SIMILAR_OWNED}) when the user already owns
@@ -454,10 +574,15 @@ export function rankProducts(
   const gap = closet.length > 0 ? biggestEssentialGap(closet) : null;
 
   const ranked = products.map((product): RankedProduct => {
-    const paletteMatch = colorsMatchPalette(product.colors ?? [], palette);
+    // Compute each signal ONCE, keeping the owned-item identities alongside the
+    // counts so the compact `why` label and the rich `whyDetail` stay in lockstep.
+    const paletteHits = paletteMatchColors(product, palette);
+    const paletteMatch = paletteHits.length > 0;
     const fillsGap = gap !== null && product.category === gap;
-    const completes = countCompletableLooks(product, closet);
-    const similar = countSimilarOwned(product, closet);
+    const looks = completableLooks(product, closet);
+    const completes = looks.count;
+    const similarItems = similarOwned(product, closet);
+    const similar = similarItems.length;
 
     let score = 0;
     if (fillsGap) score += WEIGHT_FILLS_GAP;
@@ -476,7 +601,27 @@ export function rankProducts(
       why = { kind: 'completes_outfits', count: completes };
     }
 
-    return { ...product, score, why };
+    // The parallel rich detail — the ACTUAL owned pieces behind each signal, each
+    // array capped and in stable closet order. `fillsGap` reports the gap category
+    // and how many the user already owns in it. `null` when no signal names any
+    // owned item (the compact `why` may still carry a count-only label, e.g. a
+    // self-anchoring dress that completes a look with no owned contributor).
+    const completesWith = looks.contributors.slice(0, WHY_DETAIL_CAP).map(toWhyItemRef);
+    const similarTo = similarItems.slice(0, WHY_DETAIL_CAP).map(toWhyItemRef);
+    const paletteMatched = paletteHits.slice(0, WHY_DETAIL_CAP);
+    const gapDetail = fillsGap
+      ? {
+          category: product.category,
+          ownedCount: closet.filter((i) => i.category === product.category).length,
+        }
+      : null;
+    const hasDetail =
+      completesWith.length > 0 || gapDetail !== null || similarTo.length > 0 || paletteMatched.length > 0;
+    const whyDetail: WhyDetail | null = hasDetail
+      ? { completesWith, fillsGap: gapDetail, similarTo, paletteMatch: paletteMatched }
+      : null;
+
+    return { ...product, score, why, whyDetail };
   });
 
   return ranked.sort((a, b) => b.score - a.score);

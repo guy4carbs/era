@@ -15,7 +15,8 @@
  *      untouched → 500 and the user can safely retry (nothing half-deleted).
  *   2. Delete the Better Auth `user` row. Its FK graph is ON DELETE CASCADE, so
  *      this tears down session, account, profiles, style_profiles, items,
- *      outfits→outfit_items, eras→era_outfits, wear_logs, follows, ai_events.
+ *      outfits→outfit_items, eras→era_outfits, wear_logs, follows, ai_events,
+ *      ai_usage, saved_products.
  *      Deleting the session rows server-side invalidates the caller's session;
  *      the client also calls signOut() and clears its cookie.
  *   3. Delete the non-cascading, EMAIL-keyed traces (waitlist, verification),

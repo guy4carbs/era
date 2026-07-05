@@ -21,6 +21,9 @@ export {
   canInsertFollow,
   canInsertAiEvent,
   canInsertWaitlist,
+  canInsertSavedProduct,
+  canDeleteSavedProduct,
+  canReadSavedProduct,
 } from './authz.ts';
 export type { AuthContext, AuthzErrorCode, VisibilityResource } from './authz.ts';
 
