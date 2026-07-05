@@ -14,6 +14,7 @@ import { motion as motionToken, typeRamp, boxShadows } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import type { OviIntent } from '@era/core/ovi';
 import { transitionFor } from '../../lib/motion';
+import { track } from '../../lib/analytics';
 import { GlassSheet } from '../GlassSheet';
 import { Chip } from '../Chip';
 import { Input } from '../Input';
@@ -196,6 +197,10 @@ export function OviChat({ itemContext, itemsById, onClose }: OviChatProps) {
     async (text: string, intent: OviIntent) => {
       const trimmed = text.trim();
       if (trimmed.length === 0 || busy) return;
+
+      // The user is sending Ovi a message — a funnel activation moment. Only the
+      // coarse intent rides along; the message text is never attached.
+      track('ovi_message', { intent });
 
       const outgoing = [
         ...messages

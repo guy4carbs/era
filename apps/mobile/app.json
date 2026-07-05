@@ -14,7 +14,11 @@
     "android": {
       "package": "com.era.app"
     },
-    "plugins": ["expo-router", "expo-secure-store"],
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      ["@sentry/react-native/expo", { "url": "https://sentry.io/" }]
+    ],
     "experiments": {
       "typedRoutes": true
     }

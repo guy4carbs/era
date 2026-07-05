@@ -22,9 +22,11 @@ import { NextResponse } from 'next/server';
 
 import { type AuthContext, AuthzError, requireUser } from '@era/core';
 import type { OviIntent } from '@era/core/ovi';
+import { strings } from '@era/core/strings';
 import { createDbClient } from '@era/db';
 
 import { auth } from '../../../lib/auth.ts';
+import { checkDailyLimit, recordUsage } from '../../../lib/ai-usage.ts';
 import { fetchWeather } from '../../../lib/weather.ts';
 import {
   type OviChatMessage,
@@ -130,6 +132,21 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: 'invalid' }, { status: 400 });
   }
 
+  // Per-user daily rate limit. On the wall we return HTTP 429 whose body is a
+  // full OviChatApiResponse — Ovi's limit-reached line as `reply`, a null
+  // outfit, `source: 'limit'`, and `weather: null` — so the client renders
+  // `reply` through its existing success path (Ovi speaking, not a cold error).
+  // The extra `error: 'daily_limit'` is a discriminator for analytics/Sentinel
+  // and is ignored by the render path. Contract locked with Nova (web) + Harbor
+  // (mobile): status 429, body.reply present, source 'limit'.
+  const check = await checkDailyLimit(db, userId, 'ovi-chat');
+  if (!check.allowed) {
+    return NextResponse.json(
+      { error: 'daily_limit', reply: strings.ovi.limitReached, outfit: null, source: 'limit', weather: null },
+      { status: 429 },
+    );
+  }
+
   const [profile, closet, recentWears] = await Promise.all([
     loadStyleProfile(db, userId),
     loadOviItems(db, userId),
@@ -139,7 +156,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   // Coarse, never persisted — used only for this styling turn.
   const weather = location ? await fetchWeather(location.lat, location.lon) : null;
 
-  const { response, source } = await styleWithOvi({
+  const { response, source, usage } = await styleWithOvi({
     intent,
     messages,
     profile,
@@ -147,6 +164,15 @@ export async function POST(request: Request): Promise<NextResponse> {
     wearLogs: recentWears,
     weather,
     itemContext,
+  });
+
+  // Log the call for the rate-limit counter and spend rollup. Best-effort: the
+  // deterministic/dormant path logs a null-model $0 row (still counts against the
+  // daily limit); the LLM path logs its model + tokens so the spend is priced.
+  await recordUsage(db, userId, 'ovi-chat', {
+    model: usage?.model ?? null,
+    inputTokens: usage?.inputTokens,
+    outputTokens: usage?.outputTokens,
   });
 
   return NextResponse.json({

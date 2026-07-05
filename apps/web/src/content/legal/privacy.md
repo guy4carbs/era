@@ -83,7 +83,8 @@ We don't sell your personal information. We share it only with service providers
 - **Railway** — our application hosting/infrastructure provider.
 - **Open-Meteo** — a third-party weather API we query with your coarse location to fetch local weather. We send only the rounded location needed for the lookup.
 - **Email provider** — [EMAIL PROVIDER] — to send magic-link sign-in and account emails.
-- **Analytics provider** — [ANALYTICS PROVIDER] — for privacy-friendly product analytics *(currently dormant)*.
+- **Analytics provider (PostHog)** — for privacy-friendly product analytics. We use an EU-hosted, privacy-forward configuration: no broad autocapture, and events are tied only to identified accounts. *(Currently dormant and limited.)*
+- **Error diagnostics (Sentry)** — to capture error and crash reports so we can find and fix problems. It's configured not to capture personal data by default, so error reports don't include your closet content or other personal information.
 
 We may also disclose information if required by law, to enforce our terms, or to protect the rights, safety, and security of Era, our users, or the public. If Era is ever involved in a merger, acquisition, or sale of assets, information may be transferred as part of that transaction; we'll let you know if your data becomes subject to a different privacy policy.
 
@@ -107,6 +108,7 @@ We keep your information for as long as your account is active, so Era can do it
 - **Coarse location** — not stored; used only for the live weather lookup.
 - **Waitlist email and referral data** — kept until you ask us to remove it or, if you become a user, folded into your account.
 - **Analytics events** — kept in a privacy-friendly form for a limited period to understand product trends.
+- **AI usage and cost metadata** — we log opaque usage counts (for example, how many styling requests an account has made and their cost) to run and budget the service. This never includes your messages or closet content, and it is deleted when you delete your account.
 
 When you delete your account, we immediately and permanently remove your live data — every record and every stored image. For a short period, residual copies may remain in our encrypted database backups (our database host keeps point-in-time backup history so we can recover from failures); these residual copies are purged automatically within [BACKUP WINDOW — confirm against Neon retention; default 30 days] and are not used for any other purpose.
 

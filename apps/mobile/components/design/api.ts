@@ -20,6 +20,7 @@
  * That PUT reuses {@link uploadToR2} from the closet API (same contract).
  */
 import { authClient } from '@/lib/auth-client';
+import { limitFromFetchError, limitFromResponse } from '@/lib/rate-limit';
 
 /** A single item placement within an outfit — the pinned transform contract. */
 export interface OutfitItemTransform {
@@ -115,8 +116,13 @@ async function apiFetch<T>(
 
   if (typeof client.$fetch === 'function') {
     const { data, error } = await client.$fetch<T>(path, options);
-    if (error || data === null) {
-      throw new Error(error?.message ?? `${path} failed`);
+    if (error) {
+      const limit = limitFromFetchError(error);
+      if (limit) throw limit;
+      throw new Error(error.message ?? `${path} failed`);
+    }
+    if (data === null) {
+      throw new Error(`${path} failed`);
     }
     return data;
   }
@@ -132,6 +138,9 @@ async function apiFetch<T>(
     body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
   });
   if (!response.ok) {
+    if (response.status === 429) {
+      throw await limitFromResponse(response);
+    }
     throw new Error(`${path} failed: ${response.status}`);
   }
   return (await response.json()) as T;

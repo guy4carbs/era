@@ -32,6 +32,8 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
+import { trackOnce } from '@/lib/analytics';
+import { LimitReachedError } from '@/lib/rate-limit';
 import { useTheme } from '@/lib/theme';
 
 import { ConfirmItem } from './ConfirmItem';
@@ -41,6 +43,8 @@ import { importFromUrl, processItem, requestUpload, uploadToR2 } from './api';
 const MAX_EDGE = 1600;
 /** How long the saved line lingers before returning to the closet. */
 const SAVED_DWELL_MS = 900;
+/** The limit line is longer and worth reading — hold it a beat more than a save. */
+const LIMIT_DWELL_MS = 3200;
 
 type Stage =
   | 'picker'
@@ -50,7 +54,9 @@ type Stage =
   | 'confirm'
   | 'saved'
   | 'failed'
-  | 'linkFailed';
+  | 'linkFailed'
+  // The AI daily cap was hit while processing — Ovi's warm line, not a failure.
+  | 'limitReached';
 
 interface AddItemFlowProps {
   /** When present, skip the picker and resume confirming this item. */
@@ -62,6 +68,9 @@ export function AddItemFlow({ resumeItemId }: AddItemFlowProps) {
   const [stage, setStage] = useState<Stage>(resumeItemId ? 'confirm' : 'picker');
   const [itemId, setItemId] = useState<string | null>(resumeItemId ?? null);
   const [vision, setVision] = useState<boolean | undefined>(undefined);
+  // The warm line to show when the daily processing cap is hit (server-provided,
+  // falling back to Ovi's canonical processing-limit line).
+  const [limitLine, setLimitLine] = useState<string>(strings.ovi.limitReachedProcessing);
   // The last picked asset, kept so a failed upload can be retried without a
   // re-pick.
   const lastAsset = useRef<ImagePicker.ImagePickerAsset | null>(null);
@@ -84,7 +93,12 @@ export function AddItemFlow({ resumeItemId }: AddItemFlowProps) {
       setItemId(item.id);
       setVision(processed.vision);
       setStage('confirm');
-    } catch {
+    } catch (error) {
+      if (error instanceof LimitReachedError) {
+        setLimitLine(error.serverMessage ?? strings.ovi.limitReachedProcessing);
+        setStage('limitReached');
+        return;
+      }
       setStage('failed');
     }
   }, []);
@@ -147,6 +161,14 @@ export function AddItemFlow({ resumeItemId }: AddItemFlowProps) {
     return () => clearTimeout(timer);
   }, [stage, router]);
 
+  // Limit reached: linger on Ovi's warm line long enough to read, then step back
+  // to the closet. Nothing to retry — the cap resets tomorrow.
+  useEffect(() => {
+    if (stage !== 'limitReached') return;
+    const timer = setTimeout(() => router.replace('/(tabs)/closet'), LIMIT_DWELL_MS);
+    return () => clearTimeout(timer);
+  }, [stage, router]);
+
   switch (stage) {
     case 'picker':
       return <Picker onPick={pick} onImport={runImport} />;
@@ -158,7 +180,15 @@ export function AddItemFlow({ resumeItemId }: AddItemFlowProps) {
       return <Progress line={strings.closet.importLink} />;
     case 'confirm':
       return itemId ? (
-        <ConfirmItem itemId={itemId} vision={vision} onSaved={() => setStage('saved')} />
+        <ConfirmItem
+          itemId={itemId}
+          vision={vision}
+          onSaved={() => {
+            // Funnel: the user's first-ever confirmed piece (best-effort once).
+            void trackOnce('first_item_added');
+            setStage('saved');
+          }}
+        />
       ) : (
         <Failure onRetry={retry} />
       );
@@ -170,6 +200,10 @@ export function AddItemFlow({ resumeItemId }: AddItemFlowProps) {
     // the photo path (and another paste) is right there.
     case 'linkFailed':
       return <Failure onRetry={() => setStage('picker')} line={strings.closet.linkFailed} />;
+    // Daily processing cap: Ovi's warm line, then back to the closet — no retry,
+    // there's nothing to fix and their work is already safe.
+    case 'limitReached':
+      return <LimitReached line={limitLine} />;
   }
 }
 
@@ -305,6 +339,29 @@ function Saved() {
         }}
       >
         {strings.closet.saved}
+      </Text>
+    </View>
+  );
+}
+
+/**
+ * The daily-cap beat: Ovi's warm line, centered, with no retry. The flow returns
+ * to the closet on its own after a dwell — the work so far is already saved.
+ */
+function LimitReached({ line }: { readonly line: string }) {
+  const { colors } = useTheme();
+  return (
+    <View style={styles.centered}>
+      <Text
+        accessibilityRole="header"
+        style={{
+          color: colors.text,
+          fontSize: typeRamp.body.pt,
+          lineHeight: typeRamp.body.lineHeight,
+          textAlign: 'center',
+        }}
+      >
+        {line}
       </Text>
     </View>
   );

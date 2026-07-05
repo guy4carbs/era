@@ -6,6 +6,8 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { layout, motion as motionToken, typeRamp, boxShadows } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { transitionFor } from '../../lib/motion';
+import { trackFirstOnce } from '../../lib/analytics';
+import { useSession } from '../../lib/auth-client';
 import type { ItemWithDisplay } from '../items';
 import { CanvasStage } from './CanvasStage';
 import { ClosetDrawer } from './ClosetDrawer';
@@ -110,6 +112,7 @@ const TOAST_MS = motionToken.durations.maxMs * 8;
 export function OutfitCanvas({ outfitId }: OutfitCanvasProps) {
   const router = useRouter();
   const reduced = useReducedMotion();
+  const { data: session } = useSession();
 
   const [items, setItems] = useState<ItemWithDisplay[] | null>(null);
   const [placed, setPlaced] = useState<PlacedItem[]>([]);
@@ -276,6 +279,11 @@ export function OutfitCanvas({ outfitId }: OutfitCanvasProps) {
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error('save failed');
+      // First saved look (built by hand in the canvas). Only a brand-new save
+      // (POST, not an edit PATCH) is an activation moment; deduped per user.
+      if (!outfitId) {
+        trackFirstOnce('first_outfit_saved', session?.user?.id, { via: 'canvas' });
+      }
       setSaving(false);
       setSaveOpen(false);
       setToast(strings.design.outfitSaved);

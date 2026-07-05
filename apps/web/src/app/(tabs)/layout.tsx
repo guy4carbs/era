@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { typeRamp } from '@era/tokens';
 import { Container, OviFab, TabBar, TAB_ITEMS, type TabId } from '../../components';
 import { OviChatProvider, useOviChat } from '../../components/ovi';
+import { AnalyticsIdentity } from '../../components/system/AnalyticsIdentity';
 
 /** Resolve the active tab from the first path segment; default to feed. */
 function activeTabFrom(pathname: string): TabId {
@@ -58,6 +59,8 @@ function TabsShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="era-tabs-shell">
+      {/* Binds analytics identity to the session so funnel events attribute to the user. */}
+      <AnalyticsIdentity />
       <nav className="era-rail" style={railStyle} aria-label="Primary">
         {TAB_ITEMS.map((tab) => {
           const isActive = tab.id === active;

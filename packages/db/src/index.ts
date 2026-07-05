@@ -5,6 +5,7 @@ import { account, session, user, verification } from './schema/auth.ts';
 import { aiEventKind, itemCategory, itemSource } from './schema/enums.ts';
 import {
   aiEvents,
+  aiUsage,
   eraOutfits,
   eras,
   follows,
@@ -38,6 +39,7 @@ export {
   wearLogs,
   follows,
   aiEvents,
+  aiUsage,
   waitlist,
 };
 
@@ -77,6 +79,9 @@ export type NewFollow = typeof follows.$inferInsert;
 
 export type AiEvent = typeof aiEvents.$inferSelect;
 export type NewAiEvent = typeof aiEvents.$inferInsert;
+
+export type AiUsage = typeof aiUsage.$inferSelect;
+export type NewAiUsage = typeof aiUsage.$inferInsert;
 
 export type WaitlistEntry = typeof waitlist.$inferSelect;
 export type NewWaitlistEntry = typeof waitlist.$inferInsert;

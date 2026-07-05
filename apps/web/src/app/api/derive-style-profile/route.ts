@@ -38,9 +38,11 @@ import {
   type QuizAnswers,
   type StyleProfileResult,
 } from '@era/core/quiz';
+import { strings } from '@era/core/strings';
 import { aiEvents, createDbClient, styleProfiles } from '@era/db';
 
 import { auth } from '../../../lib/auth.ts';
+import { checkDailyLimit, recordUsage } from '../../../lib/ai-usage.ts';
 
 const db = createDbClient(process.env.DATABASE_URL!);
 
@@ -49,6 +51,15 @@ type ProfileSource = 'llm' | 'deterministic';
 
 /** The scoring detail we hand to the model — archetype totals + winner. */
 type QuizScoring = ReturnType<typeof scoreQuiz>;
+
+/** The Claude model that polishes the profile — single-sourced for the spend log. */
+const DERIVE_MODEL = 'claude-opus-4-8';
+
+/** A successful LLM polish: the refined profile plus the call's token usage. */
+interface LlmPolish {
+  readonly profile: StyleProfileResult;
+  readonly usage: { readonly model: string; readonly inputTokens: number; readonly outputTokens: number };
+}
 
 /**
  * True only for a real, operator-supplied Anthropic key. The committed
@@ -116,22 +127,23 @@ function buildPrompt(answers: QuizAnswers, det: StyleProfileResult, scoring: Qui
 }
 
 /**
- * Ask Claude to polish the deterministic profile. Returns the refined profile,
- * or null on any failure (bad parse, timeout, API error) so the caller can fall
- * back to the deterministic result. Errors are logged server-side only — never
- * the key, never leaked to the client.
+ * Ask Claude to polish the deterministic profile. Returns the refined profile
+ * plus the call's token usage (for the spend log), or null on any failure (bad
+ * parse, timeout, API error) so the caller can fall back to the deterministic
+ * result. Errors are logged server-side only — never the key, never leaked to
+ * the client.
  */
 async function polishWithLlm(
   apiKey: string,
   answers: QuizAnswers,
   det: StyleProfileResult,
   scoring: QuizScoring,
-): Promise<StyleProfileResult | null> {
+): Promise<LlmPolish | null> {
   try {
     const client = new Anthropic({ apiKey, maxRetries: 1 });
     const response = await client.messages.parse(
       {
-        model: 'claude-opus-4-8',
+        model: DERIVE_MODEL,
         max_tokens: 2048,
         // StyleProfileResultSchema is a zod v3 schema (core pins zod ^3); the SDK
         // helper's types expect zod v4. Cast at this dormant-LLM boundary rather
@@ -141,7 +153,14 @@ async function polishWithLlm(
       },
       { timeout: 15_000 },
     );
-    return (response.parsed_output as StyleProfileResult | null) ?? null;
+    const profile = (response.parsed_output as StyleProfileResult | null) ?? null;
+    if (!profile) {
+      return null;
+    }
+    return {
+      profile,
+      usage: { model: DERIVE_MODEL, inputTokens: response.usage.input_tokens, outputTokens: response.usage.output_tokens },
+    };
   } catch (error) {
     console.error('[era-quiz] LLM polish failed; falling back to deterministic profile:', error);
     return null;
@@ -162,18 +181,27 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
   const answers = parsed.data;
 
+  // Per-user daily rate limit on profile derivation (rarely hit).
+  const check = await checkDailyLimit(db, userId, 'derive-style-profile');
+  if (!check.allowed) {
+    return NextResponse.json({ error: 'daily_limit', message: strings.ovi.limitReachedProfile }, { status: 429 });
+  }
+
   const det = deterministicProfile(answers);
   const scoring = scoreQuiz(answers);
 
   let result: StyleProfileResult = det;
   let source: ProfileSource = 'deterministic';
 
+  let usage: LlmPolish['usage'] | null = null;
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (isRealCredential(apiKey)) {
     const polished = await polishWithLlm(apiKey, answers, det, scoring);
     if (polished) {
-      result = polished;
+      result = polished.profile;
       source = 'llm';
+      usage = polished.usage;
     }
   }
 
@@ -195,6 +223,16 @@ export async function POST(request: Request): Promise<NextResponse> {
     console.error('[era-quiz] failed to persist style profile:', error);
     return NextResponse.json({ error: 'save_failed' }, { status: 500 });
   }
+
+  // Log the call for the rate-limit counter and spend rollup. The LLM polish is
+  // dormant without a real key, so the deterministic path logs a null-model $0
+  // row; when Claude ran, its model + real token counts are recorded so the
+  // spend is priced. Best-effort — never 500s here.
+  await recordUsage(db, userId, 'derive-style-profile', {
+    model: usage?.model ?? null,
+    inputTokens: usage?.inputTokens,
+    outputTokens: usage?.outputTokens,
+  });
 
   return NextResponse.json({ profile: result, source });
 }

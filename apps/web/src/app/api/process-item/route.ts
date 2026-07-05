@@ -24,9 +24,14 @@
 import { NextResponse } from 'next/server';
 
 import { type AuthContext, AuthzError, requireUser } from '@era/core';
+import { strings } from '@era/core/strings';
+import { createDbClient } from '@era/db';
 
 import { auth } from '../../../lib/auth.ts';
+import { checkDailyLimit, recordUsage } from '../../../lib/ai-usage.ts';
 import { PipelineError, processItemPipeline } from '../../../lib/item-pipeline.ts';
+
+const db = createDbClient(process.env.DATABASE_URL!);
 
 export async function POST(request: Request): Promise<NextResponse> {
   const sessionResult = await auth.api.getSession({ headers: request.headers });
@@ -53,8 +58,17 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   }
 
+  // Per-user daily rate limit on the add-a-piece pipeline (vision + bg removal).
+  const check = await checkDailyLimit(db, userId, 'process-item');
+  if (!check.allowed) {
+    return NextResponse.json({ error: 'daily_limit', message: strings.ovi.limitReachedProcessing }, { status: 429 });
+  }
+
   try {
     const result = await processItemPipeline({ ctx }, { userId, rawKey, source: 'photo' });
+    // Log the call: vision/bg are dormant, so model is null → $0, but the call
+    // still counts against the daily limit. Best-effort; never fails the request.
+    await recordUsage(db, userId, 'process-item', { model: null });
     return NextResponse.json(result);
   } catch (error) {
     if (error instanceof PipelineError) {

@@ -12,12 +12,13 @@ import { strings } from '@era/core/strings';
 import { spacing, typeRamp } from '@era/tokens';
 import { Redirect, Stack, useRouter } from 'expo-router';
 import { useCallback, useState, type PropsWithChildren } from 'react';
-import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PrivacyToggle } from '@/components/closet';
 import { DeleteAccountSheet, SettingRow, ThemeControl } from '@/components/settings';
 import { eraAuth, useSession } from '@/lib/auth-client';
+import { forceError, reportingActive } from '@/lib/reporting';
 import { useTheme } from '@/lib/theme';
 
 // Placeholder support address — Atlas to confirm the real inbox before launch.
@@ -43,6 +44,20 @@ export default function SettingsScreen() {
   const openLink = useCallback((url: string) => {
     // No in-app browser dep is bundled — hand the URL to the system handler.
     void Linking.openURL(url);
+  }, []);
+
+  // Dev-only done-criterion: force an error through the whole reporting pipeline
+  // so a build can be verified reaching the tracker. Reaches Sentry when a DSN is
+  // set; otherwise the debug reporter (console + in-memory), which is what makes
+  // this verifiable today.
+  const triggerTestError = useCallback(() => {
+    forceError();
+    Alert.alert(
+      'Test error captured',
+      reportingActive
+        ? 'Sent to Sentry (a DSN is configured).'
+        : 'Sent to the debug reporter — check the console for the "[error-reporter]" line.',
+    );
   }, []);
 
   if (isPending) {
@@ -105,6 +120,13 @@ export default function SettingsScreen() {
             onPress={() => setDeleteOpen(true)}
           />
         </Section>
+
+        {/* Dev-only diagnostics — never shipped in a release build. */}
+        {__DEV__ ? (
+          <Section title="Debug">
+            <SettingRow label="Trigger test error" onPress={triggerTestError} />
+          </Section>
+        ) : null}
       </ScrollView>
 
       <DeleteAccountSheet

@@ -9,6 +9,8 @@ import { Button } from '../Button';
 import { ConfirmItem } from './ConfirmItem';
 import { PhotoPicker } from './PhotoPicker';
 import { downscaleToJpeg } from './downscale';
+import { trackFirstOnce } from '../../lib/analytics';
+import { useSession } from '../../lib/auth-client';
 import type { Item, ItemEdits, ItemWithDisplay, Processed } from './types';
 
 export interface AddItemFlowProps {
@@ -130,12 +132,16 @@ function inferVision(item: ItemWithDisplay): boolean {
  */
 export function AddItemFlow({ resumeItemId = null }: AddItemFlowProps) {
   const router = useRouter();
+  const { data: session } = useSession();
   const [stage, setStage] = useState<Stage>(resumeItemId ? 'loading' : 'picker');
   const [confirmData, setConfirmData] = useState<{ item: ItemWithDisplay; processed: Processed } | null>(
     null,
   );
   const [saving, setSaving] = useState(false);
   const [failedStage, setFailedStage] = useState<FailedStage | null>(null);
+  // Set from a 429 daily-limit response so the error state speaks the limit line
+  // instead of the generic "couldn't add" copy (a retry wouldn't help).
+  const [limitMessage, setLimitMessage] = useState<string | null>(null);
   // The pasted product URL (lifted so a failed import can be retried) and the
   // one-line failure notice shown above the picker after an empty import.
   const [linkUrl, setLinkUrl] = useState('');
@@ -154,14 +160,42 @@ export function AddItemFlow({ resumeItemId = null }: AddItemFlowProps) {
     return body.items.find((it) => it.id === id) ?? null;
   }
 
+  /**
+   * Best-effort first-item funnel signal. GETs the closet and fires
+   * `first_item_added` only when the confirmed item is the sole (non-archived)
+   * piece — i.e. the count transitioned to 1 — deduped once per user. Any
+   * transport failure is swallowed; a missed signal must never affect the add.
+   */
+  async function maybeTrackFirstItem(category: string): Promise<void> {
+    try {
+      const res = await fetch('/api/items');
+      if (!res.ok) return;
+      const body = (await res.json()) as { items: ItemWithDisplay[] };
+      if (body.items.length === 1) {
+        trackFirstOnce('first_item_added', session?.user?.id, { category });
+      }
+    } catch {
+      // Analytics is best-effort — never surface to the add flow.
+    }
+  }
+
   async function runProcess() {
     setStage('processing');
+    setLimitMessage(null);
     try {
       const res = await fetch('/api/process-item', {
         method: 'POST',
         headers: JSON_HEADERS,
         body: JSON.stringify({ rawKey: rawKeyRef.current }),
       });
+      // Daily AI limit — surface Ovi's warm message, no retry (it would re-hit it).
+      if (res.status === 429) {
+        const body = (await res.json().catch(() => ({}))) as { message?: string };
+        setLimitMessage(body.message ?? strings.closet.addFailed);
+        setFailedStage(null);
+        setStage('error');
+        return;
+      }
       if (!res.ok) throw new Error('process failed');
       const { item, processed } = (await res.json()) as { item: Item; processed: Processed };
       const withDisplay = (await fetchItemWithDisplay(item.id)) ?? { ...item, displayUrl: null };
@@ -257,6 +291,9 @@ export function AddItemFlow({ resumeItemId = null }: AddItemFlowProps) {
         body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error('confirm failed');
+      // First-item activation: fire only when this confirm made the closet go
+      // from empty to one item, and at most once per user (guarded in the helper).
+      void maybeTrackFirstItem(confirmData.item.category);
       setStage('saved');
       router.push('/closet');
     } catch {
@@ -346,10 +383,14 @@ export function AddItemFlow({ resumeItemId = null }: AddItemFlowProps) {
 
         {stage === 'error' ? (
           <div style={statusColumnStyle} aria-live="assertive">
-            <p style={errorTextStyle}>{strings.closet.addFailed}</p>
-            <Button variant="primary" onClick={handleRetry}>
-              {strings.closet.retryCta}
-            </Button>
+            <p style={errorTextStyle}>{limitMessage ?? strings.closet.addFailed}</p>
+            {/* A daily-limit stop offers no retry (it would re-hit the cap); the
+                top Cancel returns to the closet. Other failures keep Retry. */}
+            {limitMessage ? null : (
+              <Button variant="primary" onClick={handleRetry}>
+                {strings.closet.retryCta}
+              </Button>
+            )}
           </div>
         ) : null}
       </div>

@@ -142,13 +142,23 @@ function validateProposal(response: OviResponse, knownIds: ReadonlySet<string>):
   return { reply: response.reply, outfit: { ...response.outfit, itemIds } };
 }
 
+/** The Claude model Ovi styles with — single-sourced for the request and its usage log. */
+const OVI_MODEL = 'claude-opus-4-8';
+
+/** Model + token counts from a real Claude styling turn, for the AI spend log. */
+export interface OviUsage {
+  model: string;
+  inputTokens: number;
+  outputTokens: number;
+}
+
 /**
- * Ask Claude for a styled response. Returns a validated OviResponse, or null on
- * any failure (parse, timeout, API error) or a proposal that references no real
- * item — the caller then uses the deterministic stylist. Errors are logged
- * server-side only; the key is never logged or leaked.
+ * Ask Claude for a styled response. Returns the validated OviResponse alongside
+ * its token usage, or null on any failure (parse, timeout, API error) or a
+ * proposal that references no real item — the caller then uses the deterministic
+ * stylist. Errors are logged server-side only; the key is never logged or leaked.
  */
-async function styleWithLlm(apiKey: string, request: OviStyleRequest): Promise<OviResponse | null> {
+async function styleWithLlm(apiKey: string, request: OviStyleRequest): Promise<{ response: OviResponse; usage: OviUsage } | null> {
   try {
     const client = new Anthropic({ apiKey, maxRetries: 1 });
     const context = buildOviUserContext({
@@ -163,7 +173,7 @@ async function styleWithLlm(apiKey: string, request: OviStyleRequest): Promise<O
 
     const response = await client.messages.parse(
       {
-        model: 'claude-opus-4-8',
+        model: OVI_MODEL,
         max_tokens: 1024,
         system: buildOviSystemPrompt(request.profile, request.weather),
         // OviResponseSchema is a zod v3 schema (core pins zod ^3); the SDK helper's
@@ -179,7 +189,14 @@ async function styleWithLlm(apiKey: string, request: OviStyleRequest): Promise<O
     if (!parsed) {
       return null;
     }
-    return validateProposal(parsed, new Set(request.items.map((item) => item.id)));
+    const validated = validateProposal(parsed, new Set(request.items.map((item) => item.id)));
+    if (!validated) {
+      return null;
+    }
+    return {
+      response: validated,
+      usage: { model: OVI_MODEL, inputTokens: response.usage.input_tokens, outputTokens: response.usage.output_tokens },
+    };
   } catch (error) {
     console.error('[ovi] LLM styling failed; falling back to the deterministic stylist:', error);
     return null;
@@ -189,17 +206,26 @@ async function styleWithLlm(apiKey: string, request: OviStyleRequest): Promise<O
 /** Which path produced the response we returned. */
 export type OviSource = 'llm' | 'deterministic';
 
+/** A styled turn plus its provenance; `usage` is present only on the LLM path. */
+export interface OviStyleResult {
+  response: OviResponse;
+  source: OviSource;
+  usage?: OviUsage;
+}
+
 /**
  * Style one turn: Claude when a real key is configured and it returns a valid,
  * closet-grounded look, otherwise the deterministic stylist. Always resolves to
- * a real response — this is the method both Ovi routes call.
+ * a real response — this is the method both Ovi routes call. On the LLM path the
+ * result carries `usage` so the caller can log real spend; the deterministic
+ * path omits it (nothing to price).
  */
-export async function styleWithOvi(request: OviStyleRequest): Promise<{ response: OviResponse; source: OviSource }> {
+export async function styleWithOvi(request: OviStyleRequest): Promise<OviStyleResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (isRealCredential(apiKey)) {
     const llm = await styleWithLlm(apiKey, request);
     if (llm) {
-      return { response: llm, source: 'llm' };
+      return { response: llm.response, source: 'llm', usage: llm.usage };
     }
   }
   return {

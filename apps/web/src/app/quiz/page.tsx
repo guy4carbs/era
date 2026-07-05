@@ -8,6 +8,7 @@ import { type QuizAnswers } from '@era/core/quiz';
 import { Button, Card } from '../../components';
 import { QuizFlow, Reveal } from '../../components/quiz';
 import { useSession } from '../../lib/auth-client';
+import { track } from '../../lib/analytics';
 
 type Phase = 'intro' | 'quiz' | 'reveal';
 
@@ -98,7 +99,15 @@ export default function QuizPage() {
             <div style={introInner}>
               <h1 style={introTitleStyle}>{strings.quiz.introTitle}</h1>
               <p style={introBodyStyle}>{strings.quiz.introBody}</p>
-              <Button onClick={() => setPhase('quiz')}>{strings.common.continue}</Button>
+              <Button
+                onClick={() => {
+                  // The quiz begins here — the first step renders next.
+                  track('quiz_started');
+                  setPhase('quiz');
+                }}
+              >
+                {strings.common.continue}
+              </Button>
               <button type="button" style={skipLinkStyle} onClick={goToFeed}>
                 {strings.quiz.skip}
               </button>
@@ -109,6 +118,8 @@ export default function QuizPage() {
         {phase === 'quiz' ? (
           <QuizFlow
             onComplete={(collected) => {
+              // Last step answered — the reveal derives the starter era next.
+              track('quiz_completed');
               setAnswers(collected);
               setPhase('reveal');
             }}
