@@ -56,6 +56,16 @@ export const serverEnvSchema = z.object({
 export const webClientEnvSchema = z.object({
   NEXT_PUBLIC_API_URL: z.string().url(),
   NEXT_PUBLIC_R2_PUBLIC_URL: z.string().url(),
+  // Canonical public origin (e.g. https://era.style in prod). Drives
+  // metadataBase, the sitemap, robots.txt, OpenGraph URLs, and every
+  // canonical link — a wrong or missing value silently breaks SEO, so it is
+  // required. NEXT_PUBLIC_ vars are inlined at build time; this schema
+  // documents/validates the contract (boot is not gated on it — the web app
+  // reads process.env directly with a localhost dev fallback).
+  NEXT_PUBLIC_SITE_URL: z.string().url(),
+  // Google Search Console verification token. Set when verifying era.style;
+  // unset means no verification meta tag is emitted. Optional.
+  NEXT_PUBLIC_GSC_VERIFICATION: z.string().optional(),
 });
 
 /** Public configuration exposed to the Expo mobile client bundle. */

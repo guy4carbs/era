@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { LegalArticle } from '../../../components/site';
+import { JsonLd, breadcrumbSchema } from '../../../components/seo';
 
 /**
  * `/terms` — the Terms of Service. A server component that reads the
@@ -14,8 +15,24 @@ import { LegalArticle } from '../../../components/site';
 export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service — Era',
+  // Bare title — the (site) template renders it as "Terms of Service · Era" (no
+  // "— Era" here, so the brand suffix isn't doubled).
+  title: 'Terms of Service',
   description: 'The agreement between you and Era for using the app.',
+  // Own canonical + OpenGraph so this page stops inheriting the homepage's og:url.
+  alternates: { canonical: '/terms' },
+  openGraph: {
+    type: 'article',
+    url: '/terms',
+    siteName: 'Era',
+    title: 'Terms of Service · Era',
+    description: 'The agreement between you and Era for using the app.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Terms of Service · Era',
+    description: 'The agreement between you and Era for using the app.',
+  },
 };
 
 export default async function TermsPage() {
@@ -23,5 +40,15 @@ export default async function TermsPage() {
     join(process.cwd(), 'src/content/legal/terms.md'),
     'utf8',
   );
-  return <LegalArticle markdown={markdown} />;
+  return (
+    <>
+      <JsonLd
+        data={breadcrumbSchema([
+          { name: 'Home', url: '/' },
+          { name: 'Terms of Service', url: '/terms' },
+        ])}
+      />
+      <LegalArticle markdown={markdown} />
+    </>
+  );
 }
