@@ -21,7 +21,7 @@ import { rankProducts, type RankedProduct, type ShopProduct } from '@era/core/sh
 import type { OviItem, StyleProfileLite } from '@era/core/ovi';
 import type { DbClient } from '@era/db';
 
-import { checkDailyLimit, recordUsage } from './ai-usage.ts';
+import { checkDailyLimit, checkGlobalAiGate, recordUsage } from './ai-usage.ts';
 import { isRealCredential } from './ovi-server.ts';
 
 /** Which path produced the ranking we returned. */
@@ -78,6 +78,15 @@ export async function rankProductsForUser(
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!isRealCredential(apiKey)) {
+    return { products: deterministic, source: 'deterministic' };
+  }
+
+  // Global AI brake (B3): the app-wide kill-switch, or the day's global spend at
+  // or over the cap. When engaged we never touch the model — the browse still
+  // returns a real, closet-grounded deterministic ranking (never a 429). Layered
+  // ABOVE the per-user limit below; only queried once a real key is configured.
+  const globalGate = await checkGlobalAiGate(db);
+  if (!globalGate.open) {
     return { products: deterministic, source: 'deterministic' };
   }
 

@@ -287,6 +287,80 @@ export function fixtureCatalog(): readonly ShopProduct[] {
 }
 
 // -----------------------------------------------------------------------------
+// Canonical filter facets — ONE source of truth for the Shop filter controls so
+// web and mobile render identical budget bands, size chips, and tier order.
+// Nova (web) and Harbor (mobile) import these; neither hand-rolls its own set.
+// Client-safe — no server imports reach this subpath.
+// -----------------------------------------------------------------------------
+
+/** A budget filter chip. `minPrice`/`maxPrice` map straight onto a ShopSearchQuery. */
+export interface BudgetBand {
+  readonly id: string;
+  readonly label: string;
+  readonly minPrice?: number;
+  readonly maxPrice?: number;
+}
+
+/**
+ * The ordered budget bands, cheapest first. Each price bound maps directly onto
+ * {@link ShopSearchQuery}'s inclusive `minPrice`/`maxPrice`. The bands tile the
+ * $30–$1200 catalog with no overlap: a band's `maxPrice` sits one dollar below
+ * the next band's `minPrice`, so an item falls into exactly one band (the upper
+ * round number belongs to the higher band — e.g. a $150 piece is in `$150–$400`).
+ */
+export const BUDGET_BANDS: readonly BudgetBand[] = [
+  { id: 'under-50', label: 'Under $50', maxPrice: 49 },
+  { id: '50-150', label: '$50–$150', minPrice: 50, maxPrice: 149 },
+  { id: '150-400', label: '$150–$400', minPrice: 150, maxPrice: 399 },
+  { id: 'over-400', label: '$400+', minPrice: 400 },
+];
+
+/**
+ * The canonical, ordered size chips — the union of every size the fixture catalog
+ * actually carries, so every chip yields results: apparel (XS–XL), denim waist
+ * (24–32), a EU shoe subset (37–42), and `One Size` for accessories/bags/hats.
+ * This replaces mobile's free-text size box — both platforms render the same
+ * presets. Composed from the catalog's own size sets to stay in lockstep.
+ */
+export const SIZE_OPTIONS: readonly string[] = [
+  ...APPAREL_SIZES,
+  ...DENIM_SIZES,
+  ...SHOE_SIZES,
+  ...ONE_SIZE,
+];
+
+/**
+ * The fixed order of brand-tier chips, most exclusive first, so both platforms
+ * present the tier filter identically.
+ */
+export const BRAND_TIER_ORDER: readonly BrandTier[] = [
+  'luxury',
+  'premium',
+  'contemporary',
+  'high_street',
+];
+
+/**
+ * Resolve a budget band id to the price bounds a {@link ShopSearchQuery} takes.
+ * An unknown id yields `{}` (no price filter) so a stale chip degrades to "all
+ * prices" rather than erroring. Only the bounds a band sets are returned.
+ */
+export function budgetBandToQuery(bandId: string): { minPrice?: number; maxPrice?: number } {
+  const band = BUDGET_BANDS.find((b) => b.id === bandId);
+  if (band === undefined) {
+    return {};
+  }
+  const query: { minPrice?: number; maxPrice?: number } = {};
+  if (band.minPrice !== undefined) {
+    query.minPrice = band.minPrice;
+  }
+  if (band.maxPrice !== undefined) {
+    query.maxPrice = band.maxPrice;
+  }
+  return query;
+}
+
+// -----------------------------------------------------------------------------
 // Deterministic ranker — the 'why' engine when the Anthropic path is dormant.
 // Pure, total, and unit-tested. Reuses Ovi's gap/slot/palette primitives so the
 // two surfaces reason about the closet the same way.

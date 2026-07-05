@@ -215,6 +215,19 @@ export const strings = {
      * never punitive.
      */
     limitReachedProfile: "I've learned plenty about your style today — let's let it settle and refine tomorrow.",
+
+    // --- global AI brake (B3): app-wide kill-switch / daily spend cap, not per-user ---
+
+    /**
+     * Returned by ovi-chat (200, source `paused`) when the GLOBAL AI brake is
+     * engaged — the app-wide kill-switch or the day's global spend cap, which are
+     * operator controls, not a per-user limit. Ovi steps back for everyone,
+     * briefly and without alarm: no outfit, no paywall, no talk of errors — just a
+     * natural "back shortly". It renders as a normal Ovi turn, so it must read like
+     * her, not like an outage banner.
+     */
+    resting:
+      "I'm taking a short breather just now — give me a little while and I'll be right back to style with you. Nothing's lost.",
   },
 
   /** The Closet tab — everything the user owns, plus the add-a-piece flow. */

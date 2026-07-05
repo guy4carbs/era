@@ -38,7 +38,6 @@ import {
   toSearchQuery,
   type ShopFilterState,
 } from '@/components/shop';
-import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { useTheme } from '@/lib/theme';
 
 type LoadState = 'loading' | 'ready' | 'error';
@@ -60,9 +59,9 @@ export default function ShopScreen() {
   const [hasMore, setHasMore] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  // Size is free-entry; debounce it so typing doesn't fire a query per keystroke.
-  const size = useDebouncedValue(filters.size.trim(), 300);
-  const { brandTier, category, budgetId } = filters;
+  // Every axis is now a tap-only chip, so each selection re-queries immediately —
+  // no debounce (that only mattered for the old free-entry size box).
+  const { brandTier, category, budgetId, size } = filters;
 
   // A monotonic request id: a reset bumps it, so a slow page-append that resolves
   // after a re-query is discarded instead of appending stale results.

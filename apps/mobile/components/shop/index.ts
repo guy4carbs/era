@@ -10,13 +10,9 @@ export {
   type RecEventKind,
 } from './api';
 export {
-  BRAND_TIERS,
-  BUDGET_BANDS,
-  budgetBandLabel,
   EMPTY_FILTERS,
   hasActiveFilters,
   toSearchQuery,
-  type BudgetBand,
   type ShopFilterState,
 } from './filters';
 export { brandTierLabel, formatPrice, resolveWhy, type WhyDisplay } from './labels';

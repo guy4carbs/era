@@ -15,7 +15,14 @@ import assert from 'node:assert/strict';
 
 import type { DbClient } from '@era/db';
 
-import { checkDailyLimit, dailySpend, recordUsage, utcDayStart } from './ai-usage.ts';
+import {
+  checkDailyLimit,
+  checkGlobalAiGate,
+  dailySpend,
+  recordUsage,
+  sumAiSpendTodayUsd,
+  utcDayStart,
+} from './ai-usage.ts';
 
 /**
  * A chainable stand-in for the Drizzle client. `selectRows` is what a
@@ -133,4 +140,53 @@ test('dailySpend: empty day rolls up to zero', async () => {
   assert.equal(spend.count, 0);
   assert.equal(spend.totalUsd, 0);
   assert.deepEqual(spend.byRoute, {});
+});
+
+// --- global AI brake (B3): sum-across-all-users + the shared gate decision ---
+
+test('sumAiSpendTodayUsd: sums the day cost across all users (coalesced string → number)', async () => {
+  const { db } = fakeDb([{ totalUsd: '0.5175' }]);
+  assert.equal(await sumAiSpendTodayUsd(db), 0.5175);
+});
+
+test('sumAiSpendTodayUsd: an empty day sums to zero', async () => {
+  const { db } = fakeDb([]);
+  assert.equal(await sumAiSpendTodayUsd(db), 0);
+});
+
+/** A DB whose every query throws — proves the gate takes NO DB round-trip on a path. */
+function throwingDb(): DbClient {
+  return {
+    select: () => {
+      throw new Error('gate must not touch the DB on this path');
+    },
+  } as unknown as DbClient;
+}
+
+test('checkGlobalAiGate: inert (open, no DB) when neither control is set', async () => {
+  const decision = await checkGlobalAiGate(throwingDb(), {});
+  assert.deepEqual(decision, { open: true, reason: 'ok' });
+});
+
+test('checkGlobalAiGate: kill-switch closes the gate with zero DB work', async () => {
+  const decision = await checkGlobalAiGate(throwingDb(), { AI_KILL_SWITCH: 'on' });
+  assert.deepEqual(decision, { open: false, reason: 'kill_switch' });
+});
+
+test('checkGlobalAiGate: under the daily cap stays open', async () => {
+  const { db } = fakeDb([{ totalUsd: '5' }]);
+  const decision = await checkGlobalAiGate(db, { AI_GLOBAL_DAILY_USD: '10' });
+  assert.deepEqual(decision, { open: true, reason: 'ok' });
+});
+
+test('checkGlobalAiGate: at or over the cap closes the gate (== cap is blocked)', async () => {
+  const { db } = fakeDb([{ totalUsd: '10' }]);
+  const decision = await checkGlobalAiGate(db, { AI_GLOBAL_DAILY_USD: '10' });
+  assert.deepEqual(decision, { open: false, reason: 'global_cap' });
+});
+
+test('checkGlobalAiGate: kill-switch wins even when spend is under the cap', async () => {
+  const { db } = fakeDb([{ totalUsd: '0' }]);
+  const decision = await checkGlobalAiGate(db, { AI_KILL_SWITCH: '1', AI_GLOBAL_DAILY_USD: '100' });
+  assert.deepEqual(decision, { open: false, reason: 'kill_switch' });
 });

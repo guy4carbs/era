@@ -28,7 +28,7 @@ import { strings } from '@era/core/strings';
 import { createDbClient } from '@era/db';
 
 import { auth } from '../../../lib/auth.ts';
-import { checkDailyLimit, recordUsage } from '../../../lib/ai-usage.ts';
+import { checkDailyLimit, checkGlobalAiGate, recordUsage } from '../../../lib/ai-usage.ts';
 import { PipelineError, processItemPipeline } from '../../../lib/item-pipeline.ts';
 
 const db = createDbClient(process.env.DATABASE_URL!);
@@ -56,6 +56,16 @@ export async function POST(request: Request): Promise<NextResponse> {
   // prefix, so a caller can never process another user's object.
   if (!rawKey.startsWith(`${userId}/`)) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+  }
+
+  // Global AI brake (B3): the app-wide kill-switch, or the day's global spend at
+  // or over the cap. When engaged we do NOT run the vision/bg-removal pipeline —
+  // its provider calls are live AI spend. A soft, retryable 503: the raw upload
+  // already sits in R2, so the piece is deferred (client can retry later), not
+  // lost. Layered ABOVE the per-user limit below.
+  const globalGate = await checkGlobalAiGate(db);
+  if (!globalGate.open) {
+    return NextResponse.json({ retryable: true, reason: 'ai_paused' }, { status: 503 });
   }
 
   // Per-user daily rate limit on the add-a-piece pipeline (vision + bg removal).

@@ -42,7 +42,7 @@ import { strings } from '@era/core/strings';
 import { aiEvents, createDbClient, styleProfiles } from '@era/db';
 
 import { auth } from '../../../lib/auth.ts';
-import { checkDailyLimit, recordUsage } from '../../../lib/ai-usage.ts';
+import { checkDailyLimit, checkGlobalAiGate, recordUsage } from '../../../lib/ai-usage.ts';
 
 const db = createDbClient(process.env.DATABASE_URL!);
 
@@ -196,7 +196,13 @@ export async function POST(request: Request): Promise<NextResponse> {
   let usage: LlmPolish['usage'] | null = null;
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (isRealCredential(apiKey)) {
+  // Global AI brake (B3): only reach for Claude's polish when the app-wide
+  // kill-switch is off and the day's global spend is under the cap. When the brake
+  // is engaged we skip the LLM entirely and ship the deterministic profile —
+  // identical to the no-key path — so the quiz still completes and saves (the
+  // polish is an optional refinement, never a precondition for a result). The `&&`
+  // short-circuits, so no key means no gate query at all.
+  if (isRealCredential(apiKey) && (await checkGlobalAiGate(db)).open) {
     const polished = await polishWithLlm(apiKey, answers, det, scoring);
     if (polished) {
       result = polished.profile;
