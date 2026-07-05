@@ -135,3 +135,15 @@ test('real key + under limit but dormant refiner: still deterministic, meters no
     assert.equal(inserts.length, 0, 'dormant refiner ran no model, so nothing is metered');
   });
 });
+
+test('real key + global kill-switch engaged: DEGRADES to deterministic, never touches the model', async () => {
+  await withEnv('ANTHROPIC_API_KEY', 'sk-ant-real-key-abc123', async () => {
+    await withEnv('AI_KILL_SWITCH', 'on', async () => {
+      const { db, inserts } = fakeDb([{ used: 0 }]); // under the per-user limit — the brake still wins
+      const result = await rankProductsForUser(db, 'user-1', PRODUCTS, CLOSET, PROFILE);
+      assert.equal(result.source, 'deterministic');
+      assert.equal(result.products.length, PRODUCTS.length);
+      assert.equal(inserts.length, 0, 'a paused browse must not record usage');
+    });
+  });
+});

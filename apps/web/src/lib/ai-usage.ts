@@ -15,7 +15,14 @@
  */
 import { and, count, eq, gte, lt, sql } from 'drizzle-orm';
 
-import { type AiRoute, type UsageCheck, aiDailyLimit, estimateCostUsd } from '@era/core';
+import {
+  type AiRoute,
+  type UsageCheck,
+  aiDailyLimit,
+  estimateCostUsd,
+  globalSpendAllows,
+  readGlobalAiGate,
+} from '@era/core';
 import { type DbClient, aiUsage } from '@era/db';
 
 /**
@@ -129,4 +136,58 @@ export async function dailySpend(db: DbClient, opts: DailySpendOptions = {}): Pr
   }
 
   return { totalUsd, byRoute, count: total };
+}
+
+/**
+ * Total AI spend (USD) across ALL users for the current UTC day — the running
+ * figure the global daily cap (B3) is compared against before a live LLM call.
+ * Keyed to the same UTC-day window as {@link checkDailyLimit} and
+ * {@link dailySpend} (via {@link utcDayStart}), so the global cap and the
+ * per-user limits roll over together. One aggregate `sum(cost_usd)` over the day;
+ * an empty day sums to 0. Only worth spending — it is read exclusively when a cap
+ * is actually configured, see {@link checkGlobalAiGate}.
+ */
+export async function sumAiSpendTodayUsd(db: DbClient, now: Date = new Date()): Promise<number> {
+  const start = utcDayStart(now);
+  const end = new Date(start.getTime() + DAY_MS);
+  const [row] = await db
+    .select({ totalUsd: sql<string>`coalesce(sum(${aiUsage.costUsd}), 0)` })
+    .from(aiUsage)
+    .where(and(gte(aiUsage.createdAt, start), lt(aiUsage.createdAt, end)));
+  return Number(row?.totalUsd ?? 0);
+}
+
+/** Why the global AI gate is closed — surfaced for logging/analytics; `ok` = open. */
+export type GlobalGateReason = 'ok' | 'kill_switch' | 'global_cap';
+
+/** The global gate's verdict for one request. `open: false` → no live model may run. */
+export interface GlobalGateDecision {
+  readonly open: boolean;
+  readonly reason: GlobalGateReason;
+}
+
+/**
+ * The app-wide AI brake (B3), evaluated once per request BEFORE any live LLM call
+ * and layered ABOVE the per-user daily limit. When `open` is false the route MUST
+ * degrade to its deterministic / graceful path — it must not call Anthropic.
+ *
+ * Order, cheapest-first:
+ *   1. Kill-switch (`AI_KILL_SWITCH`) — refuses everything, zero DB work.
+ *   2. Global daily cap (`AI_GLOBAL_DAILY_USD`) — ONLY when a cap is set do we sum
+ *      the day's spend and block once it has reached the ceiling.
+ * With neither control set the gate is inert (`open`, no DB round-trip), so a
+ * dormant deployment pays nothing for it. The only throw path is a DB error from
+ * the spend sum, which runs solely under an active cap.
+ */
+export async function checkGlobalAiGate(
+  db: DbClient,
+  source: Record<string, string | undefined> = process.env,
+): Promise<GlobalGateDecision> {
+  const gate = readGlobalAiGate(source);
+  if (gate.killed) return { open: false, reason: 'kill_switch' };
+  if (gate.capUsd !== null) {
+    const spentTodayUsd = await sumAiSpendTodayUsd(db);
+    if (!globalSpendAllows(spentTodayUsd, source)) return { open: false, reason: 'global_cap' };
+  }
+  return { open: true, reason: 'ok' };
 }

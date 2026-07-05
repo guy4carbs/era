@@ -14,6 +14,7 @@ This policy is provided by [ERA LEGAL ENTITY] ("Era", "we", "us", or "our"). If 
 - We collect what we need to run your wardrobe: your email, the clothing photos and details you add, the outfits and style chapters ("eras") you create, your wear logs, and your style profile.
 - We use trusted service providers (for hosting, storage, email, weather, and AI) to operate the app. We don't sell your data.
 - Ovi, our AI stylist, sends your closet and style information — plus a coarse, city-level location you choose to grant — to an AI model to generate suggestions. That coarse location is used only to look up the weather, and it is not stored.
+- Era's **Shop** tab suggests products that fit your closet — ranked on our own servers by default, or (if AI ranking is on) with a text-only summary of your closet and style profile sent to our AI provider, never your photos. Shop links are affiliate links, and **commissions never affect the ranking**.
 - You can delete your account and everything in it at any time from **Settings → Delete account**. We immediately and permanently remove your live data — every record and every image you've stored — and any residual copies in our encrypted backups are purged automatically shortly after.
 - Your closet is **private by default**. If you choose to make it public, your item cutout images and outfit covers become viewable at public web links (no login needed) until you switch it back to private.
 
@@ -73,6 +74,13 @@ A few things to know:
 
 You have the right not to be subject to solely automated decisions that produce legal or similarly significant effects. Ovi's outfit suggestions do not have that kind of effect — they're style ideas — but if you have concerns, contact us and a human will help.
 
+## Shopping suggestions (the Shop tab)
+
+Era's Shop tab suggests cross-brand products that fit the wardrobe you already have — Ovi's "shop your closet first" rule pointed outward. Here's how it handles your data.
+
+- **How products are ranked.** By default, Era ranks products with a deterministic (rule-based) engine that runs entirely on our own servers — **nothing about you is sent to a third party** to produce the ranking. If AI ranking is active, Era sends a **compact, text-only view of your closet** — item categories, colors, and brands, **not your photos** — together with your style profile to our AI provider (Anthropic) to score how well each product fits you. We do not use this to train models on your data, we ask Anthropic not to train their general models on it, and we do not sell it. The AI ranking path is **currently dormant**; today the deterministic engine does the ranking, and in that mode Shop sends nothing about you to an AI provider.
+- **When you tap out to a retailer.** Product links in Shop are **affiliate links**, so Era may earn a commission if you buy — see our [Terms](/terms#7-third-party-links-brands-and-shopping) for the full disclosure, including our promise that commissions never affect how Ovi ranks anything. To improve future suggestions, we log that you opened or dismissed a pick — the product, the retailer, and the honest reason label the card showed — and this record holds **no personal information about you**. We don't share your personal information with retailers: the only thing that travels with an affiliate link is a standard, non-identifying affiliate sub-id used to attribute the click.
+
 ## Who we share data with
 
 We don't sell your personal information. We share it only with service providers ("processors") who help us run Era, and only as needed. These currently include:
@@ -81,6 +89,7 @@ We don't sell your personal information. We share it only with service providers
 - **Cloudflare R2** — to store your clothing images.
 - **Neon** — our PostgreSQL database host, where your account and closet records live.
 - **Railway** — our application hosting/infrastructure provider.
+- **Affiliate network** — when the Shop tab's live affiliate feed is enabled, to source shoppable products and attribute your clicks so Era can earn a commission. We pass only a standard, non-identifying affiliate sub-id — never your personal information. *(Currently dormant — today Shop runs on a built-in sample catalog.)* We will name the specific network here once the live feed is enabled.
 - **Open-Meteo** — a third-party weather API we query with your coarse location to fetch local weather. We send only the rounded location needed for the lookup.
 - **Email provider** — [EMAIL PROVIDER] — to send magic-link sign-in and account emails.
 - **Analytics provider (PostHog)** — for privacy-friendly product analytics. We use an EU-hosted, privacy-forward configuration: no broad autocapture, and events are tied only to identified accounts. *(Currently dormant and limited.)*

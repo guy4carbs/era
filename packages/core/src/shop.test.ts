@@ -5,6 +5,10 @@ import {
   createFixtureShopProvider,
   fixtureCatalog,
   rankProducts,
+  BUDGET_BANDS,
+  SIZE_OPTIONS,
+  BRAND_TIER_ORDER,
+  budgetBandToQuery,
   type BrandTier,
   type ItemCategory,
   type ShopProduct,
@@ -312,4 +316,86 @@ test('rankProducts returns results sorted by score descending', () => {
   const ranked = rankProducts(products, closet, NO_PROFILE);
   // Every ranked entry keeps its ShopProduct fields.
   assert.ok(ranked.every((p) => typeof p.title === 'string' && typeof p.affiliateUrl === 'string'));
+});
+
+// --- canonical filter facets (web/mobile parity) -----------------------------
+
+test('BUDGET_BANDS is a non-empty, ascending, non-overlapping tiling', () => {
+  assert.ok(BUDGET_BANDS.length >= 3, 'expected several budget bands');
+  const ids = BUDGET_BANDS.map((b) => b.id);
+  assert.equal(new Set(ids).size, ids.length, 'duplicate band id');
+
+  // Every price bound is a positive number and every band carries at least one.
+  for (const band of BUDGET_BANDS) {
+    assert.ok(band.label.length > 0, `${band.id} missing label`);
+    assert.ok(
+      band.minPrice !== undefined || band.maxPrice !== undefined,
+      `${band.id} sets no price bound`,
+    );
+  }
+
+  // Ascending, non-overlapping: each band's maxPrice is below the next minPrice.
+  for (let i = 1; i < BUDGET_BANDS.length; i += 1) {
+    const prev = BUDGET_BANDS[i - 1];
+    const cur = BUDGET_BANDS[i];
+    assert.ok(prev && cur);
+    assert.ok(prev.maxPrice !== undefined, `${prev.id} should cap so the tiling closes`);
+    assert.ok(cur.minPrice !== undefined, `${cur.id} should have a floor`);
+    assert.ok(
+      (prev.maxPrice as number) < (cur.minPrice as number),
+      `${prev.id} overlaps ${cur.id}`,
+    );
+  }
+
+  // First band opens at the bottom, last band is open-ended at the top.
+  assert.equal(BUDGET_BANDS[0]?.minPrice, undefined, 'cheapest band should have no floor');
+  assert.equal(
+    BUDGET_BANDS[BUDGET_BANDS.length - 1]?.maxPrice,
+    undefined,
+    'priciest band should be open-ended',
+  );
+});
+
+test('budgetBandToQuery maps each band onto its ShopSearchQuery bounds', () => {
+  assert.deepEqual(budgetBandToQuery('under-50'), { maxPrice: 49 });
+  assert.deepEqual(budgetBandToQuery('50-150'), { minPrice: 50, maxPrice: 149 });
+  assert.deepEqual(budgetBandToQuery('over-400'), { minPrice: 400 });
+  // Unknown / stale id degrades to no price filter rather than throwing.
+  assert.deepEqual(budgetBandToQuery('nope'), {});
+});
+
+test('every budget band actually selects fixtures via the provider', async () => {
+  const provider = createFixtureShopProvider();
+  for (const band of BUDGET_BANDS) {
+    const res = await provider.search(budgetBandToQuery(band.id));
+    assert.ok(res.products.length > 0, `${band.id} matched no fixtures`);
+  }
+});
+
+test('SIZE_OPTIONS is non-empty, unique, ordered, and covers real catalog sizes', () => {
+  assert.ok(SIZE_OPTIONS.length > 0, 'expected preset size chips');
+  assert.equal(new Set(SIZE_OPTIONS).size, SIZE_OPTIONS.length, 'duplicate size option');
+
+  // Apparel sizes lead, in ascending order.
+  assert.deepEqual(SIZE_OPTIONS.slice(0, 5), ['XS', 'S', 'M', 'L', 'XL']);
+
+  // Every canonical size is carried by at least one fixture (no dead chips).
+  const catalogSizes = new Set(fixtureCatalog().flatMap((p) => p.sizes ?? []));
+  for (const size of SIZE_OPTIONS) {
+    assert.ok(catalogSizes.has(size), `size chip ${size} matches no fixture`);
+  }
+  // ...and every size the catalog carries has a chip (full coverage).
+  for (const size of catalogSizes) {
+    assert.ok(SIZE_OPTIONS.includes(size), `catalog size ${size} has no chip`);
+  }
+});
+
+test('BRAND_TIER_ORDER fixes the tier chip order, most exclusive first', () => {
+  assert.deepEqual(BRAND_TIER_ORDER, ['luxury', 'premium', 'contemporary', 'high_street']);
+  // Covers exactly the tiers the catalog uses.
+  const catalogTiers = new Set(fixtureCatalog().map((p) => p.brandTier));
+  assert.equal(new Set(BRAND_TIER_ORDER).size, catalogTiers.size);
+  for (const tier of catalogTiers) {
+    assert.ok(BRAND_TIER_ORDER.includes(tier), `missing tier in order: ${tier}`);
+  }
 });

@@ -45,8 +45,15 @@ export type { AssetBucket, StorageConfig, StorageClient } from './storage.ts';
 // (ovi-chat, process-item, derive-style-profile, rank-products) gate and price
 // against. Reads optional env overrides, so it lives on the server-tainted
 // barrel. See ai-limits.ts.
-export { aiDailyLimit, estimateCostUsd } from './ai-limits.ts';
-export type { AiRoute, UsageCheck } from './ai-limits.ts';
+export {
+  aiDailyLimit,
+  estimateCostUsd,
+  aiKillSwitchEngaged,
+  aiGlobalDailyUsdCap,
+  globalSpendAllows,
+  readGlobalAiGate,
+} from './ai-limits.ts';
+export type { AiRoute, UsageCheck, GlobalAiGate } from './ai-limits.ts';
 
 // Persistence type contract, re-exported type-only from @era/db.
 export type * from './db-types.ts';

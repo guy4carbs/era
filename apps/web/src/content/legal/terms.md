@@ -56,6 +56,10 @@ Era — including the app, its design, branding, Ovi, and the software behind it
 
 Era may show product links, brand names, or a "Shop" experience. Brand names and trademarks belong to their owners and are used for identification only — their appearance in Era does not mean they endorse Era or that Era endorses them. If you follow a link to a third-party site or store, that third party's terms and privacy practices apply, not ours. We're not responsible for third-party products, prices, availability, or content, and any purchase you make is between you and that third party.
 
+**Affiliate links and how we make money.** Some links in Era — including in the Shop tab — are **affiliate links**. That means Era takes part in affiliate programs and may **earn a commission** when you buy something after following one of our links, at no extra cost to you. Prices, availability, and the terms of any sale are set by the retailer, not by Era, and can change at any time.
+
+**Our promise: commissions never influence ranking.** This is the important part. Ovi ranks and suggests products **only** on how well they fit the wardrobe you already own — filling a real gap, completing outfits you can already build, matching your style profile. **Whether or where Era earns a commission plays no part in that ranking.** We built it this way on purpose: the ranking has no notion of payout in it at all. If that ever changes, we'll say so here first.
+
 ## 8. Disclaimers — Era is provided "as is"
 
 Era is provided **"as is" and "as available"**, without warranties of any kind, whether express or implied, including implied warranties of merchantability, fitness for a particular purpose, and non-infringement. We don't guarantee that Era will be uninterrupted, error-free, secure, or that Ovi's suggestions will be accurate or suit you. Some jurisdictions don't allow certain warranty exclusions, so parts of this section may not apply to you.

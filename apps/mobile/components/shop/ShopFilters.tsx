@@ -2,31 +2,26 @@
  * ShopFilters — the frosted filter sheet.
  *
  * Four tap-only dimensions in a `GlassSheet`: brand tier, category, budget band,
- * and size. Each is single-select — tapping the active chip clears it — and every
- * change flows straight up via `onChange`, so the grid re-queries live (no Apply
- * step). Size is the one free-entry field (a plain `Input`). "Clear filters" resets
- * everything at once. All copy comes from `strings.shop` / `strings.closet`; all
- * colour and spacing from tokens.
+ * and size — all single-select chips (tapping the active chip clears it), every
+ * change flowing straight up via `onChange` so the grid re-queries live (no Apply
+ * step). The chip data (budget bands, size presets, tier order) comes from the
+ * canonical `@era/core/shop` constants so mobile matches web exactly. "Clear
+ * filters" resets everything at once. All copy comes from `strings.shop` /
+ * `strings.closet`; all colour and spacing from tokens.
  */
 import { strings } from '@era/core/strings';
 import type { BrandTier, ItemCategory } from '@era/core/shop';
+import { BRAND_TIER_ORDER, BUDGET_BANDS, SIZE_OPTIONS } from '@era/core/shop';
 import { spacing, typeRamp } from '@era/tokens';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
 import { GlassSheet } from '@/components/GlassSheet';
-import { Input } from '@/components/Input';
 import { CATEGORIES } from '@/components/items/constants';
 import { useTheme } from '@/lib/theme';
 
-import {
-  BRAND_TIERS,
-  BUDGET_BANDS,
-  budgetBandLabel,
-  EMPTY_FILTERS,
-  type ShopFilterState,
-} from './filters';
+import { EMPTY_FILTERS, type ShopFilterState } from './filters';
 import { brandTierLabel } from './labels';
 
 interface ShopFiltersProps {
@@ -44,7 +39,8 @@ export function ShopFilters({ open, onClose, filters, onChange }: ShopFiltersPro
     onChange({ ...filters, category: filters.category === category ? null : category });
   const setBudget = (id: string) =>
     onChange({ ...filters, budgetId: filters.budgetId === id ? null : id });
-  const setSize = (size: string) => onChange({ ...filters, size });
+  const setSize = (size: string) =>
+    onChange({ ...filters, size: filters.size === size ? '' : size });
 
   return (
     <GlassSheet open={open} onClose={onClose}>
@@ -54,7 +50,7 @@ export function ShopFilters({ open, onClose, filters, onChange }: ShopFiltersPro
         keyboardShouldPersistTaps="handled"
       >
         <Section title={strings.shop.filterBrandTier}>
-          {BRAND_TIERS.map((tier) => (
+          {BRAND_TIER_ORDER.map((tier) => (
             <Chip
               key={tier}
               label={brandTierLabel(tier)}
@@ -79,7 +75,7 @@ export function ShopFilters({ open, onClose, filters, onChange }: ShopFiltersPro
           {BUDGET_BANDS.map((band) => (
             <Chip
               key={band.id}
-              label={budgetBandLabel(band)}
+              label={band.label}
               selected={filters.budgetId === band.id}
               onToggle={() => setBudget(band.id)}
             />
@@ -87,14 +83,14 @@ export function ShopFilters({ open, onClose, filters, onChange }: ShopFiltersPro
         </Section>
 
         <Section title={strings.shop.filterSize}>
-          <Input
-            value={filters.size}
-            onChangeText={setSize}
-            autoCapitalize="characters"
-            autoCorrect={false}
-            containerStyle={styles.sizeInput}
-            accessibilityLabel={strings.shop.filterSize}
-          />
+          {SIZE_OPTIONS.map((size) => (
+            <Chip
+              key={size}
+              label={size}
+              selected={filters.size === size}
+              onToggle={() => setSize(size)}
+            />
+          ))}
         </Section>
 
         <Button
@@ -139,8 +135,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.s2,
-  },
-  sizeInput: {
-    alignSelf: 'stretch',
   },
 });
