@@ -21,9 +21,9 @@ import { magicLink } from 'better-auth/plugins';
 
 import { createDbClient, account, profiles, session, user, verification } from '@era/db';
 
-const db = createDbClient(process.env.DATABASE_URL!);
+import { sendMagicLinkEmail } from './send-magic-link-email.ts';
 
-const isProduction = process.env.NODE_ENV === 'production';
+const db = createDbClient(process.env.DATABASE_URL!);
 
 /**
  * True only for a real, operator-supplied credential. The committed
@@ -128,15 +128,11 @@ export const auth = betterAuth({
   plugins: [
     expo(),
     magicLink({
+      // Delivery + the dormant-credential activation branching (Resend send /
+      // dev-log / prod-throw) live in the helper; the URL and RESEND_API_KEY are
+      // never logged in prod nor placed in any thrown message.
       async sendMagicLink({ email, url }) {
-        if (isProduction) {
-          // No email provider is wired yet. Fail loudly rather than silently
-          // dropping the link — and NEVER log the token/url in production.
-          throw new Error('email provider not wired yet');
-        }
-        // Dev-only: emit a single greppable line so local sign-in works without
-        // an email provider. Gauge's E2E reads this exact format.
-        console.log(`[era-auth] magic link for ${email}: ${url}`);
+        await sendMagicLinkEmail({ email, url });
       },
     }),
   ],

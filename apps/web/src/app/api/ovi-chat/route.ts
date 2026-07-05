@@ -26,7 +26,7 @@ import { strings } from '@era/core/strings';
 import { createDbClient } from '@era/db';
 
 import { auth } from '../../../lib/auth.ts';
-import { checkDailyLimit, recordUsage } from '../../../lib/ai-usage.ts';
+import { checkDailyLimit, checkGlobalAiGate, recordUsage } from '../../../lib/ai-usage.ts';
 import { fetchWeather } from '../../../lib/weather.ts';
 import {
   type OviChatMessage,
@@ -130,6 +130,20 @@ export async function POST(request: Request): Promise<NextResponse> {
   const location = parseLocation(root.location);
   if (location === null) {
     return NextResponse.json({ error: 'invalid' }, { status: 400 });
+  }
+
+  // Global AI brake (B3): the app-wide kill-switch, or the day's global spend at
+  // or over the cap. When engaged Ovi never calls the model — she returns a
+  // graceful "resting" turn (200) the client renders as a normal Ovi message
+  // (reply present, null outfit, source 'paused'), so a chat never crashes and no
+  // live LLM call runs. Layered ABOVE the per-user limit below; the `error` field
+  // is an analytics discriminator the render path ignores.
+  const globalGate = await checkGlobalAiGate(db);
+  if (!globalGate.open) {
+    return NextResponse.json(
+      { error: 'ai_paused', reply: strings.ovi.resting, outfit: null, source: 'paused', weather: null },
+      { status: 200 },
+    );
   }
 
   // Per-user daily rate limit. On the wall we return HTTP 429 whose body is a

@@ -1,7 +1,8 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef } from 'react';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ActivityIndicator, StyleSheet } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { analytics } from '@/lib/analytics';
 import { useSession } from '@/lib/auth-client';
@@ -50,8 +51,43 @@ function AnalyticsIdentity() {
   return null;
 }
 
+/**
+ * The navigator plus the session-driven route guard. The signed-in surface — the
+ * `(tabs)` group and the top-level authed screens — lives inside a
+ * `Stack.Protected` gated on the session, so an unauthenticated user can never
+ * reach it: expo-router drops those screens from the tree when the guard is false
+ * and routes back to `index`, which redirects to `/sign-in`. `sign-in` is the
+ * inverse — hidden once signed in — so an authed user can't sit on it. `index`
+ * stays public in both states as the routing anchor.
+ *
+ * The guard must NOT fire while the session is still loading: on a cold start the
+ * session reads pending (looks signed-out for a tick) and flipping the guard then
+ * would bounce an authed user to sign-in. So we hold on a themed splash until the
+ * session resolves the first time, then keep the navigator mounted across any later
+ * transient pending (e.g. a sign-out refetch) so nothing unmounts mid-session.
+ */
 function ThemedStack() {
   const { colors, resolved } = useTheme();
+  const { data, isPending } = useSession();
+
+  // Latch the first resolution: only the initial load holds the splash; later
+  // transient `isPending` ticks reuse the last-known session and never unmount.
+  const resolvedOnce = useRef(false);
+  if (!isPending) {
+    resolvedOnce.current = true;
+  }
+
+  if (isPending && !resolvedOnce.current) {
+    return (
+      <SafeAreaView style={[styles.splash, { backgroundColor: colors.bg }]}>
+        <StatusBar style={resolved === 'dark' ? 'light' : 'dark'} />
+        <ActivityIndicator color={colors.text} />
+      </SafeAreaView>
+    );
+  }
+
+  const isSignedIn = data !== null;
+
   return (
     <>
       <StatusBar style={resolved === 'dark' ? 'light' : 'dark'} />
@@ -62,9 +98,35 @@ function ThemedStack() {
           headerStyle: { backgroundColor: colors.bg },
           headerTintColor: colors.text,
         }}
-      />
+      >
+        {/* Public anchor — self-routes to /feed or /sign-in by session. */}
+        <Stack.Screen name="index" />
+
+        {/* Authenticated surface — absent from the tree when signed out. */}
+        <Stack.Protected guard={isSignedIn}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="add-item" />
+          <Stack.Screen name="design-lab" />
+          <Stack.Screen name="outfit-canvas" />
+          <Stack.Screen name="quiz" />
+          <Stack.Screen name="settings" />
+        </Stack.Protected>
+
+        {/* Sign-in — hidden once authenticated so no one lands back on it. */}
+        <Stack.Protected guard={!isSignedIn}>
+          <Stack.Screen name="sign-in" />
+        </Stack.Protected>
+      </Stack>
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  splash: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
 
 export default wrapRoot(RootLayout);
