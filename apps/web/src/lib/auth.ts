@@ -114,7 +114,17 @@ export const auth = betterAuth({
   }),
   socialProviders: socialProviders(),
   // era:// is the Expo deep-link scheme; exp:// covers Expo Go during dev.
-  trustedOrigins: ['era://', 'exp://'],
+  // Web hosts are trusted explicitly so sign-in works on BOTH the canonical
+  // era.style domain and the Railway host during (and after) the domain
+  // migration — Better Auth also implicitly trusts baseURL (BETTER_AUTH_URL),
+  // but listing both avoids any auth breakage while DNS/env flips over.
+  trustedOrigins: [
+    'era://',
+    'exp://',
+    'https://era.style',
+    'https://www.era.style',
+    'https://era-production-3811.up.railway.app',
+  ],
   plugins: [
     expo(),
     magicLink({
