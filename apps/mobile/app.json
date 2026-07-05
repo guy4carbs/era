@@ -30,10 +30,22 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      ["@sentry/react-native/expo", { "url": "https://sentry.io/" }]
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "1a286870-918e-4213-b9ca-04f939315ba1"
+      }
+    },
+    "owner": "guy4carbss-team"
   }
 }
