@@ -2,32 +2,22 @@
  * Delivery of the passwordless magic-link email for Era's sign-in flow.
  *
  * This is the ONE place the magic link becomes an email. `lib/auth.ts`'s
- * `magicLink.sendMagicLink` delegates straight here; the activation branching
- * (send / dev-log / prod-throw) lives here so it is unit-testable in isolation
- * without instantiating Better Auth or a DB client.
+ * `magicLink.sendMagicLink` delegates straight here; this module renders the
+ * link email and hands it to the shared `sendEmail` transport
+ * (`lib/send-email.ts`), which owns the Resend POST and the dormant-credential
+ * activation truth-table (send / dev-log / prod-throw).
  *
- * Dormant-credential pattern (mirrors `lib/auth.ts` OAuth + `lib/shop-provider.ts`):
- *   - A real, operator-supplied `RESEND_API_KEY` engages the provider and the
- *     link is emailed via Resend — in BOTH dev and prod.
- *   - No real key + production → fail loudly (the deploy is misconfigured; a
- *     placeholder must never masquerade as a wired provider).
- *   - No real key + dev → emit the single greppable console line so local
- *     sign-in works with no email provider. Gauge's E2E reads that exact format.
- *
- * Security posture (see the repo's Security section):
- *   - `RESEND_API_KEY` and `EMAIL_FROM` are read from the server environment
- *     ONLY; nothing here reaches a client bundle.
- *   - The magic-link URL and the API key are secrets. They are NEVER logged in
- *     production and NEVER placed in a thrown Error message — a failed send
- *     surfaces a fixed message plus the HTTP status only, so Better Auth can
- *     react without anything sensitive leaking into logs or responses.
+ * The one behaviour this module keeps for itself is the dev-only fallback line:
+ * `[era-auth] magic link for ${email}: ${url}`. Gauge's E2E reads that EXACT
+ * format, so it is injected into `sendEmail` via `devLog` rather than left to
+ * the transport's generic line. The magic-link URL is a secret and never
+ * reaches a production log — the dev line runs in development only.
  */
+import { isRealCredential, sendEmail } from './send-email.ts';
 
-/** Resend's transactional send endpoint. Pinned in code — never user-derived. */
-const RESEND_ENDPOINT = 'https://api.resend.com/emails';
-
-/** Default sender when `EMAIL_FROM` is unset. A verified Era domain address. */
-const DEFAULT_FROM = 'Era <hello@era.style>';
+// Re-exported so existing importers (and tests) keep resolving it from here;
+// the source of truth now lives in the shared transport.
+export { isRealCredential };
 
 /** The magic link to deliver, plus the recipient. */
 export interface MagicLinkEmail {
@@ -47,20 +37,6 @@ export interface SendMagicLinkDeps {
 }
 
 /**
- * True only for a real, operator-supplied Resend key. The committed
- * `.env.example` ships an obvious `change-me-…` placeholder; treating that as
- * configured would fire an authenticated request that can only fail (and, in
- * prod, hide the fact that the key was never set). Same placeholder-guard idiom
- * as `lib/auth.ts` and `lib/shop-provider.ts`.
- */
-export function isRealCredential(value: string | undefined): value is string {
-  if (!value) {
-    return false;
-  }
-  return !value.startsWith('change-me');
-}
-
-/**
  * Deliver (or, in dev without a provider, log) the magic link.
  *
  * Resolves once the link has been handed off — a Resend 2xx, or the dev console
@@ -72,57 +48,17 @@ export async function sendMagicLinkEmail(
   { email, url }: MagicLinkEmail,
   deps: SendMagicLinkDeps = {},
 ): Promise<void> {
-  const env = deps.env ?? process.env;
-  const apiKey = env.RESEND_API_KEY;
-
-  if (isRealCredential(apiKey)) {
-    const from = env.EMAIL_FROM?.trim() ? env.EMAIL_FROM : DEFAULT_FROM;
-    const fetchImpl = deps.fetchImpl ?? globalThis.fetch;
-    await deliverViaResend({ apiKey, from, email, url }, fetchImpl);
-    return;
-  }
-
-  // No real key. In production this is a misconfiguration — fail loudly, and
-  // NEVER log the url. In dev, emit the single greppable line so local sign-in
-  // works without any email provider (Gauge's E2E depends on this exact format).
-  if (env.NODE_ENV === 'production') {
-    throw new Error('email provider not wired yet');
-  }
-  const log = deps.log ?? console.log;
-  log(`[era-auth] magic link for ${email}: ${url}`);
-}
-
-/** The fields a single Resend send needs, all resolved by the caller. */
-interface ResendSend {
-  readonly apiKey: string;
-  readonly from: string;
-  readonly email: string;
-  readonly url: string;
-}
-
-/**
- * POST the rendered email to Resend. Throws a fixed, secret-free message on a
- * non-2xx response (status only — never the response body, which we don't echo,
- * and never the url/key). A network-level fetch rejection propagates as-is; it
- * carries no Era secret.
- */
-async function deliverViaResend({ apiKey, from, email, url }: ResendSend, fetchImpl: typeof fetch): Promise<void> {
   const { subject, html, text } = renderEmail(url);
-
-  const response = await fetchImpl(RESEND_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
+  await sendEmail(
+    { to: email, subject, html, text },
+    {
+      env: deps.env,
+      fetchImpl: deps.fetchImpl,
+      log: deps.log,
+      // Preserve the exact greppable dev line the E2E depends on, byte-for-byte.
+      devLog: (_message, log) => log(`[era-auth] magic link for ${email}: ${url}`),
     },
-    body: JSON.stringify({ from, to: email, subject, html, text }),
-  });
-
-  if (!response.ok) {
-    // Status is safe to surface; the body is not echoed (it cannot contain our
-    // key, but the fixed message keeps the failure path uniform and leak-proof).
-    throw new Error(`failed to send magic link email (status ${response.status})`);
-  }
+  );
 }
 
 /** Era's magic-link email — warm, understated, one clear action. */

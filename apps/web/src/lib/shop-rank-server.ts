@@ -44,22 +44,56 @@ interface ShopRankUsage {
 }
 
 /**
+ * The payout-free projection of a product — the ONLY shape any future LLM ranking
+ * refinement may be built from. This is Ledger's standing promise made structural:
+ * the ToS pledge that "commissions never influence ranking" holds only if the
+ * model that ranks never sees a commission signal. `affiliateUrl` — our monetised
+ * deep-link, the sole payout-bearing field on a product — is omitted at the TYPE
+ * level, so a prompt built from this literally cannot read it, even by accident.
+ * Every closet-FIT signal (title, brand, brandTier, category, price, colors, plus
+ * the deterministic score/why on the ranked variant) is retained: price and fit
+ * are legitimate ranking inputs; monetisation is not.
+ */
+export type LlmSafeProduct = Omit<ShopProduct, 'affiliateUrl'>;
+
+/** A ranked product in that same payout-free shape (keeps score/why/whyDetail). */
+export type LlmSafeRankedProduct = Omit<RankedProduct, 'affiliateUrl'>;
+
+/**
+ * Project a product to its {@link LlmSafeProduct} shape by stripping the affiliate
+ * link. Pure; generic over the input so a {@link RankedProduct} keeps its
+ * score/why fields while still losing `affiliateUrl`. This is the guard that turns
+ * "commissions never influence ranking" from a comment into a property of the code.
+ */
+export function toLlmSafeProduct<T extends ShopProduct>(product: T): Omit<T, 'affiliateUrl'> {
+  const { affiliateUrl, ...safe } = product;
+  void affiliateUrl; // intentionally discarded — `safe` is the payout-free projection
+  return safe;
+}
+
+/**
  * Ask Claude to refine the deterministic ranking / `why` labels. DORMANT — the
  * Claude call is not built yet, so this always returns null and the caller uses
  * the deterministic ranking. When it lands it must: return a permutation of the
  * SAME products (never invent or drop a product), keep each `why` honest, and
  * report token usage so the caller can price the spend. Returning null on any
  * parse/timeout/API failure keeps the browse on the deterministic path.
+ *
+ * LEDGER GUARD: it receives — and may only ever return — {@link LlmSafeRankedProduct}s,
+ * never raw products. `affiliateUrl` is structurally absent from everything the
+ * refinement (and therefore any prompt built from it) touches, so a commission
+ * signal cannot reach the ranker. The caller re-hydrates the affiliate link it
+ * never saw, by id, before returning to the client (see `rankProductsForUser`).
  */
 async function refineRankingWithLlm(
   apiKey: string,
-  deterministic: readonly RankedProduct[],
+  deterministic: readonly LlmSafeRankedProduct[],
   closet: readonly OviItem[],
   styleProfile: StyleProfileLite | null,
-): Promise<{ products: RankedProduct[]; usage: ShopRankUsage } | null> {
+): Promise<{ products: readonly LlmSafeRankedProduct[]; usage: ShopRankUsage } | null> {
   // Dormant: no model in the loop yet. The args are the future contract — the
-  // Claude call will re-rank `deterministic` against `closet` + `styleProfile`
-  // under `apiKey`. Referenced here so the signature stands until it lands.
+  // Claude call will re-rank `deterministic` (already payout-free) against
+  // `closet` + `styleProfile` under `apiKey`. Referenced so the signature stands.
   void [apiKey, deterministic, closet, styleProfile];
   return null;
 }
@@ -100,14 +134,29 @@ export async function rankProductsForUser(
     return { products: deterministic, source: 'deterministic' };
   }
 
-  const refined = await refineRankingWithLlm(apiKey, deterministic, closet, styleProfile);
+  // LEDGER GUARD: the refinement only ever sees payout-free products — `affiliateUrl`
+  // is projected out here so a commission signal can never reach the ranker.
+  const refined = await refineRankingWithLlm(
+    apiKey,
+    deterministic.map((p) => toLlmSafeProduct(p)),
+    closet,
+    styleProfile,
+  );
   if (refined) {
     await recordUsage(db, userId, 'rank-products', {
       model: refined.usage.model,
       inputTokens: refined.usage.inputTokens,
       outputTokens: refined.usage.outputTokens,
     });
-    return { products: refined.products, source: 'llm' };
+    // Re-hydrate the affiliate link the model never saw. The refinement returns a
+    // permutation of the SAME products (by id) in their payout-free shape; rejoin
+    // each to the server-held original to restore `affiliateUrl` for the client.
+    const byId = new Map(deterministic.map((p) => [p.id, p] as const));
+    const products = refined.products.flatMap((p) => {
+      const original = byId.get(p.id);
+      return original ? [{ ...original, ...p, affiliateUrl: original.affiliateUrl }] : [];
+    });
+    return { products, source: 'llm' };
   }
 
   // Dormant / failed refinement: no model ran, so nothing is metered. Deterministic.

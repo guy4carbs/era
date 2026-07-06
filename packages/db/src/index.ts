@@ -9,10 +9,13 @@ import {
   eraOutfits,
   eras,
   follows,
+  inAppNotifications,
   items,
+  notificationPreferences,
   outfitItems,
   outfits,
   profiles,
+  pushTokens,
   savedProducts,
   styleProfiles,
   waitlist,
@@ -42,6 +45,9 @@ export {
   aiEvents,
   aiUsage,
   savedProducts,
+  notificationPreferences,
+  pushTokens,
+  inAppNotifications,
   waitlist,
 };
 
@@ -87,6 +93,15 @@ export type NewAiUsage = typeof aiUsage.$inferInsert;
 
 export type SavedProduct = typeof savedProducts.$inferSelect;
 export type NewSavedProduct = typeof savedProducts.$inferInsert;
+
+export type NotificationPreference = typeof notificationPreferences.$inferSelect;
+export type NewNotificationPreference = typeof notificationPreferences.$inferInsert;
+
+export type PushToken = typeof pushTokens.$inferSelect;
+export type NewPushToken = typeof pushTokens.$inferInsert;
+
+export type InAppNotification = typeof inAppNotifications.$inferSelect;
+export type NewInAppNotification = typeof inAppNotifications.$inferInsert;
 
 export type WaitlistEntry = typeof waitlist.$inferSelect;
 export type NewWaitlistEntry = typeof waitlist.$inferInsert;

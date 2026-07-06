@@ -16,6 +16,7 @@ import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet, Text, View }
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PrivacyToggle } from '@/components/closet';
+import { PriceAlertSettings } from '@/components/notifications';
 import { DeleteAccountSheet, SettingRow, ThemeControl } from '@/components/settings';
 import { eraAuth, useSession } from '@/lib/auth-client';
 import { forceError, reportingActive } from '@/lib/reporting';
@@ -86,6 +87,10 @@ export default function SettingsScreen() {
 
         <Section title={strings.settings.privacyTitle}>
           <PrivacyToggle />
+        </Section>
+
+        <Section title={strings.settings.priceAlerts.title}>
+          <PriceAlertSettings />
         </Section>
 
         <Section title={strings.settings.support}>

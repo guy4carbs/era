@@ -31,6 +31,8 @@ Era is intended for people who are old enough to use it under the law where they
 - **Closet data.** Photos of your clothing that you upload or import from a product link, and details about those items. When you add an item, our AI extracts attributes such as category, color, pattern, and brand to help organize your closet.
 - **Outfits and eras.** The outfits you compose and the "eras" (style chapters) you create.
 - **Wear logs.** Records of when you wear items or outfits, if you choose to log them.
+- **Saved products (your wishlist).** When you save a product from the **Shop** tab to come back to later, we store a snapshot of it — the item, the retailer, and its price at the moment you saved it — so you can find it again.
+- **Notification preferences and channels.** If you turn on notifications (for example, price-drop alerts on the pieces you've saved), we store your preferences and the channel you opted into: your email address (already on file) and/or a device push token you grant so we can send you a push notification. Each channel is opt-in on its own, and you can turn any of them off at any time.
 - **Style profile.** Answers to a short style quiz, which we use to build a taste model (for example, a style archetype and color palette).
 
 ### Information we generate or collect automatically
@@ -80,6 +82,8 @@ Era's Shop tab suggests cross-brand products that fit the wardrobe you already h
 
 - **How products are ranked.** By default, Era ranks products with a deterministic (rule-based) engine that runs entirely on our own servers — **nothing about you is sent to a third party** to produce the ranking. If AI ranking is active, Era sends a **compact, text-only view of your closet** — item categories, colors, and brands, **not your photos** — together with your style profile to our AI provider (Anthropic) to score how well each product fits you. We do not use this to train models on your data, we ask Anthropic not to train their general models on it, and we do not sell it. The AI ranking path is **currently dormant**; today the deterministic engine does the ranking, and in that mode Shop sends nothing about you to an AI provider.
 - **When you tap out to a retailer.** Product links in Shop are **affiliate links**, so Era may earn a commission if you buy — see our [Terms](/terms#7-third-party-links-brands-and-shopping) for the full disclosure, including our promise that commissions never affect how Ovi ranks anything. To improve future suggestions, we log that you opened or dismissed a pick — the product, the retailer, and the honest reason label the card showed — and this record holds **no personal information about you**. We don't share your personal information with retailers: the only thing that travels with an affiliate link is a standard, non-identifying affiliate sub-id used to attribute the click.
+- **Saving products for later (your wishlist).** You can save products from Shop to a wishlist so you can find them again. When you save one, we store a snapshot of it — the item, the retailer, and its price at the moment you saved it.
+- **Price-drop alerts (off by default).** If you turn on price alerts, Era periodically re-checks the price of the pieces you've saved — by looking up the retailer's public product page — and notifies you when one drops. This is **opt-in and off by default**, it only watches pieces you've saved, and you can turn it off at any time. Alerts reach you through the channels you've enabled: your email (sent via our email provider) and/or a push notification to a device you've granted a push token for, each opt-in on its own.
 
 ## Who we share data with
 
@@ -113,6 +117,7 @@ Era's providers may process and store data in countries other than the one you l
 We keep your information for as long as your account is active, so Era can do its job. Specifically:
 
 - **Account, closet, outfits, eras, wear logs, and style profile** — kept until you delete the item, or until you delete your account.
+- **Saved products, notification preferences, push tokens, and in-app notifications** — kept while your account is active; they cascade off automatically when you delete your account.
 - **Images in Cloudflare R2** — kept until you delete the item or your account.
 - **Coarse location** — not stored; used only for the live weather lookup.
 - **Waitlist email and referral data** — kept until you ask us to remove it or, if you become a user, folded into your account.

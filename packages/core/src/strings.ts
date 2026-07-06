@@ -637,6 +637,80 @@ export const strings = {
       paletteMatch: (colors?: string): string =>
         colors ? `Matches your palette — the ${colors} you reach for.` : 'Matches your palette.',
     },
+
+    /**
+     * Price-drop alerts — the honest way Shop follows up. These fire ONLY on a
+     * piece the user chose to save (see {@link strings.shop.saved}), never on
+     * something they merely browsed. The voice stays Era's: name the exact piece
+     * they saved, state old→new price plainly, and never manufacture urgency —
+     * no countdowns, no "BUY NOW", no "last chance". Every surface below leaves
+     * a piece easy to skip. Prices arrive already formatted (e.g. "$120") so a
+     * currency change never rewrites this copy.
+     */
+    priceAlerts: {
+      /**
+       * The transactional email. Reminds them it's a piece THEY saved, states
+       * the drop plainly, and closes on a click-out — warm, quiet, no pressure.
+       */
+      email: {
+        /**
+         * Subject line — names the exact saved piece and the new price, nothing
+         * more. `priceDropSubject('Dries linen shirt', '$96')`.
+         */
+        subject: (title: string, newPrice: string): string =>
+          `The ${title} you saved dropped to ${newPrice}`,
+        /** Warm opening line — grounds the note in their own save, not a sale. */
+        intro: 'A piece you saved is a little cheaper today.',
+        /**
+         * The plain old→new price line, naming the piece so it's unmistakable.
+         * `priceDropBody('Dries linen shirt', '$120', '$96')`.
+         */
+        body: (title: string, oldPrice: string, newPrice: string): string =>
+          `The ${title} you saved dropped from ${oldPrice} to ${newPrice}.`,
+        /** The one honest line — no urgency, still tied to the closet, easy to skip. */
+        honest:
+          "No countdown, no pressure — if it still fills a gap in your closet, it'll be here when you want it.",
+        /**
+         * The click-out CTA line to the retailer. Mirrors {@link strings.shop.viewAt}.
+         * `priceDropEmailCta('Ssense')` → "View at Ssense".
+         */
+        cta: (retailer: string): string => `View at ${retailer}`,
+      },
+
+      /**
+       * The in-app "price dropped" card that surfaces in Shop. A quiet heads-up,
+       * not a banner — one line of fact, a way in, and a way out.
+       */
+      card: {
+        /** Card heading — states what happened, plainly. */
+        title: 'Price dropped',
+        /**
+         * One-line body naming the saved piece and the drop.
+         * `priceDropCard('Dries linen shirt', '$120', '$96')`.
+         */
+        body: (title: string, oldPrice: string, newPrice: string): string =>
+          `The ${title} you saved dropped from ${oldPrice} to ${newPrice}.`,
+        /** Dismiss the card — the anti-pushy way out, no guilt. */
+        dismiss: 'Dismiss',
+        /** Take a look at the piece — quiet, not urgent. */
+        view: 'Take a look',
+      },
+
+      /**
+       * The push notification — terse by nature, so this is the tightest surface.
+       * Still no urgency: names the piece and the new price, and stops there.
+       */
+      push: {
+        /** Push title — short, names the piece. `priceDropPushTitle('Dries linen shirt')`. */
+        title: (title: string): string => `${title} dropped in price`,
+        /**
+         * Push body — the piece they saved, now at the new price.
+         * `priceDropPush('Dries linen shirt', '$96')`.
+         */
+        body: (title: string, newPrice: string): string =>
+          `The ${title} you saved is now ${newPrice}.`,
+      },
+    },
   },
 
   /** Authentication surfaces. */
@@ -709,6 +783,28 @@ export const strings = {
     contactSupport: 'Contact support',
     privacyPolicy: 'Privacy Policy',
     terms: 'Terms of Service',
+
+    /**
+     * Price-drop alerts — opt-IN by design, off until the user turns it on. The
+     * copy is deliberately plain about scope (only saved pieces are watched) and
+     * never dark-patterns the toggle: no pre-checked default, no "recommended"
+     * nudge. Pairs with {@link strings.shop.priceAlerts}, which sends them.
+     */
+    priceAlerts: {
+      /** Section heading. */
+      title: 'Price-drop alerts',
+      /** Plain opt-in explanation — states the default (off) honestly. */
+      explain:
+        "We'll let you know when a piece you saved drops in price. Off until you turn it on.",
+      /** The master toggle label. */
+      toggle: 'Price-drop alerts',
+      /** Channel row: alert by email. */
+      channelEmail: 'Email',
+      /** Channel row: alert by push notification. */
+      channelPush: 'Push notifications',
+      /** Honest scope note under the toggle — we watch only what they saved. */
+      savedOnlyNote: "We only watch prices on pieces you've saved — nothing else.",
+    },
 
     /** Account section heading + the sign-out row. */
     account: 'Account',

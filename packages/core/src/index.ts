@@ -24,6 +24,12 @@ export {
   canInsertSavedProduct,
   canDeleteSavedProduct,
   canReadSavedProduct,
+  canReadNotificationPreferences,
+  canUpsertNotificationPreferences,
+  canInsertPushToken,
+  canDeletePushToken,
+  canReadInAppNotification,
+  canUpdateInAppNotification,
 } from './authz.ts';
 export type { AuthContext, AuthzErrorCode, VisibilityResource } from './authz.ts';
 

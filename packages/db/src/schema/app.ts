@@ -245,12 +245,74 @@ export const savedProducts = pgTable(
     currency: text('currency').notNull(),
     // Price captured at save time — the baseline for future price-drop signals.
     priceSnapshot: numeric('price_snapshot').notNull(),
+    // Price-watch tracking (Phase 2B). Both null until the first price check runs.
+    // Stored as integer cents (not numeric like priceSnapshot) so drop-comparison
+    // math against lastPriceCents is exact integer arithmetic, no float rounding.
+    lastPriceCents: integer('last_price_cents'),
+    lastCheckedAt: timestamp('last_checked_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     // Idempotent add/remove: one saved row per (user, external product).
     unique('saved_products_user_id_product_id_key').on(table.userId, table.productId),
     index('saved_products_user_id_idx').on(table.userId),
+  ],
+);
+
+export const notificationPreferences = pgTable('notification_preferences', {
+  // 1:1 with Better Auth user — the user id is the primary key (like profiles).
+  userId: text('user_id')
+    .primaryKey()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  // Everything is OPT-IN: all channels default false. A user has to explicitly
+  // turn each one on. No price alert is ever sent to a user who has not enabled it.
+  priceAlertsEnabled: boolean('price_alerts_enabled').notNull().default(false),
+  emailAlerts: boolean('email_alerts').notNull().default(false),
+  pushAlerts: boolean('push_alerts').notNull().default(false),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+export const pushTokens = pgTable(
+  'push_tokens',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    token: text('token').notNull(),
+    // Device platform — 'ios' | 'android'. Stored as text; the app validates it.
+    platform: text('platform').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    // One registration per (user, token) — re-registering the same device is idempotent.
+    unique('push_tokens_user_id_token_key').on(table.userId, table.token),
+    index('push_tokens_user_id_idx').on(table.userId),
+  ],
+);
+
+export const inAppNotifications = pgTable(
+  'in_app_notifications',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    // Notification type — e.g. 'price_drop'. Stored as text; the app validates it.
+    kind: text('kind').notNull(),
+    // Denormalized card contents, e.g. { savedProductId, productId, retailer,
+    // title, oldPriceCents, newPriceCents, currency, imageUrl, affiliateUrl }.
+    payload: jsonb('payload').notNull(),
+    // Null until the user opens/dismisses the card.
+    readAt: timestamp('read_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    // Feed query: user's notifications newest-first.
+    index('in_app_notifications_user_id_created_at_idx').on(table.userId, table.createdAt),
   ],
 );
 
