@@ -95,7 +95,7 @@ We don't sell your personal information. We share it only with service providers
 - **Railway** — our application hosting/infrastructure provider.
 - **Affiliate network** — when the Shop tab's live affiliate feed is enabled, to source shoppable products and attribute your clicks so Era can earn a commission. We pass only a standard, non-identifying affiliate sub-id — never your personal information. *(Currently dormant — today Shop runs on a built-in sample catalog.)* We will name the specific network here once the live feed is enabled.
 - **Open-Meteo** — a third-party weather API we query with your coarse location to fetch local weather. We send only the rounded location needed for the lookup.
-- **Email provider** — [EMAIL PROVIDER] — to send magic-link sign-in and account emails.
+- **Email provider** — Resend — to send magic-link sign-in and account emails, and to hold waitlist signups on a contact list for launch announcements.
 - **Analytics provider (PostHog)** — for privacy-friendly product analytics. We use an EU-hosted, privacy-forward configuration: no broad autocapture, and events are tied only to identified accounts. *(Currently dormant and limited.)*
 - **Error diagnostics (Sentry)** — to capture error and crash reports so we can find and fix problems. It's configured not to capture personal data by default, so error reports don't include your closet content or other personal information.
 
@@ -132,7 +132,7 @@ We may retain limited records longer where we have a legal obligation to do so (
 
 You can access and edit most of your information directly in the app.
 
-**Delete everything.** You can permanently delete your account and all associated data at any time from **Settings → Delete account**. This is real and complete: it immediately and irreversibly removes your live data — every record we hold about you and every image you've stored. The only exception is residual copies in our encrypted backups, which are purged automatically within [BACKUP WINDOW — confirm against Neon retention; default 30 days] and are not used for anything else.
+**Delete everything.** You can permanently delete your account and all associated data at any time from **Settings → Delete account**. This is real and complete: it immediately and irreversibly removes your live data — every record we hold about you and every image you've stored. The only exceptions are residual copies in our encrypted backups, which are purged automatically within [BACKUP WINDOW — confirm against Neon retention; default 30 days] and are not used for anything else, and a minimal do-not-contact record — just your email address — kept for any address that has bounced or asked not to be emailed, so we never contact it again.
 
 Depending on where you live, you also have some or all of the following rights:
 

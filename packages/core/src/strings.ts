@@ -713,6 +713,72 @@ export const strings = {
     },
   },
 
+  /**
+   * Transactional emails sent by the server (via Resend). One block per email,
+   * each with a subject and a short warm body. These are Era's own voice, not a
+   * sales channel — no fake urgency, no dark patterns, and a plain, honest note
+   * at every turn. Where a value is interpolated (a name, a link) the leaf is a
+   * tiny pure function; the rest are plain strings. Pairs with the price-drop
+   * email under {@link strings.shop.priceAlerts.email}, the same restrained tone.
+   */
+  emails: {
+    /**
+     * Welcome — sent on first sign-in. Warm and brief: says hello, points at the
+     * one thing worth doing first (start a closet / meet Ovi), and offers a
+     * single way in. Not salesy; the app sells itself once they're inside.
+     */
+    welcome: {
+      /** Subject — warm, plain, no exclamation. */
+      subject: 'Welcome to Era',
+      /**
+       * Body — greets by name and names the first move. `body('Guy')`. Keeps the
+       * ask to one thing so the CTA is obvious.
+       */
+      body: (name: string): string =>
+        `Hi ${name} — you're in. Start by adding a few pieces you already own, and Ovi, your stylist, will begin building looks from your closet.`,
+      /** The single CTA — opens the app at the link passed in. */
+      cta: 'Open Era',
+    },
+
+    /**
+     * Waitlist confirmation — sent when someone joins the pre-launch waitlist.
+     * Confirms the spot, sets the early-access expectation, and mirrors the
+     * landing FAQ's pricing honesty ({@link strings.site.faq}). No CTA beyond a
+     * quiet "we'll be in touch"; nothing to do yet, and we don't pretend there is.
+     */
+    waitlist: {
+      /** Subject — states the fact plainly. */
+      subject: "You're on the Era waitlist",
+      /** Body — confirms the spot and sets honest expectations. */
+      body:
+        "Thanks for joining the Era waitlist. We're in early access and letting people in a few at a time, so it may be a little while. When it's your turn, this is the address we'll use.",
+      /** The pricing-honesty line — mirrors the landing FAQ, no false hype. */
+      pricingNote:
+        "Joining is free, and we'll share pricing openly before anyone is ever charged.",
+      /** Closing beat — quiet, no CTA. */
+      closer: "We'll be in touch.",
+    },
+
+    /**
+     * Account-deletion confirmation — sent after an account is deleted. Confirms
+     * the deletion is real and permanent (matches the in-app promise at
+     * {@link strings.settings.deleteBody}), leaves a genuine, guilt-free door
+     * open, and never tries to win them back. Honesty over retention.
+     */
+    deletion: {
+      /** Subject — plain and final. */
+      subject: 'Your Era account has been deleted',
+      /**
+       * Body — confirms the account, closet, and images are permanently gone.
+       * Matches the app's real-deletion promise; no euphemism, no hedging.
+       */
+      body:
+        "Your Era account is gone for good. Your closet, your images, and your data have been permanently deleted — there's nothing left on our end to recover.",
+      /** The warm, no-pressure open door — welcome back, never a win-back guilt. */
+      closer: "If you ever want to start fresh, you're always welcome back.",
+    },
+  },
+
   /** Authentication surfaces. */
   auth: {
     /** After a magic link is sent. */

@@ -6,6 +6,7 @@ import { aiEventKind, itemCategory, itemSource } from './schema/enums.ts';
 import {
   aiEvents,
   aiUsage,
+  emailSuppressions,
   eraOutfits,
   eras,
   follows,
@@ -49,6 +50,7 @@ export {
   pushTokens,
   inAppNotifications,
   waitlist,
+  emailSuppressions,
 };
 
 export { createDbClient } from './client.ts';
@@ -105,6 +107,9 @@ export type NewInAppNotification = typeof inAppNotifications.$inferInsert;
 
 export type WaitlistEntry = typeof waitlist.$inferSelect;
 export type NewWaitlistEntry = typeof waitlist.$inferInsert;
+
+export type EmailSuppression = typeof emailSuppressions.$inferSelect;
+export type NewEmailSuppression = typeof emailSuppressions.$inferInsert;
 
 // Enum value unions.
 export type ItemCategory = (typeof itemCategory.enumValues)[number];

@@ -15,6 +15,9 @@
  * `strings.notifications` (or `strings.shop`) lands in `@era/core`, lift these
  * into it and import them here, exactly as the rest of the app reads its copy.
  */
+import { type DbClient } from '@era/db';
+
+import { isEmailSuppressed } from './email-suppression.ts';
 import { sendEmail, type SendEmailDeps } from './send-email.ts';
 
 /** Everything the price-drop email renders from — resolved by the caller. */
@@ -38,6 +41,13 @@ export interface PriceDropContent {
 /** A price-drop email plus its recipient — everything one send needs. */
 export interface PriceDropEmail extends PriceDropContent {
   readonly to: string;
+  /**
+   * The DB client, used only for the suppression pre-check. Optional so the
+   * existing callers (and tests) that don't wire a db keep working unchanged;
+   * when supplied, a hard-bounced/complained recipient is skipped before the
+   * automated send, so price alerts respect bounces too.
+   */
+  readonly db?: DbClient;
 }
 
 /**
@@ -132,9 +142,18 @@ export function renderPriceDropEmail(content: PriceDropContent): { subject: stri
 /**
  * Send a price-drop alert. Dormant on `RESEND_API_KEY` exactly like every other
  * Era email — the shared transport owns the send / dev-log / prod-throw gate.
+ *
+ * When a `db` is supplied it checks the suppression list first (mirroring the
+ * welcome/waitlist/deletion senders), so a hard-bounced or complained recipient
+ * is skipped with a class-only log and no send. Without a `db` the check is a
+ * no-op and behavior is unchanged.
  */
 export async function sendPriceDropEmail(args: PriceDropEmail, deps: SendEmailDeps = {}): Promise<void> {
-  const { to, ...content } = args;
+  const { to, db, ...content } = args;
+  if (db && (await isEmailSuppressed(db, to))) {
+    (deps.log ?? console.log)('[era-email] skipped price-drop email — recipient suppressed');
+    return;
+  }
   const { subject, html, text } = renderPriceDropEmail(content);
   await sendEmail({ to, subject, html, text }, deps);
 }

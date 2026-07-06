@@ -114,6 +114,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       loadPushTokens,
       sendEmail: sendPriceDropEmail,
       sendPush: (tokens: readonly string[], message: ExpoPushMessage) => sendExpoPush(tokens, message),
+      // Thread the DB so each price-drop send runs its suppression pre-check.
+      db,
     });
     return NextResponse.json(summary);
   } catch (error) {

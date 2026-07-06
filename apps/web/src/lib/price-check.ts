@@ -31,7 +31,7 @@ import { extractProductMeta, readCapped, safeFetch } from './url-import.ts';
 import { type ExpoPushMessage } from './expo-push.ts';
 import { type PriceDropEmail } from './send-price-drop-email.ts';
 
-import { type SavedProduct } from '@era/db';
+import { type DbClient, type SavedProduct } from '@era/db';
 
 /** Wall timeout for the fallback product-page re-scrape. Mirrors the import flow. */
 const SCRAPE_TIMEOUT_MS = 10_000;
@@ -256,6 +256,12 @@ export interface PriceCheckDeps {
   readonly loadPushTokens: (userId: string) => Promise<readonly string[]>;
   /** Send the price-drop email (dormant on `RESEND_API_KEY`). */
   readonly sendEmail: (args: PriceDropEmail) => Promise<void>;
+  /**
+   * The DB client, threaded into each price-drop email so its suppression
+   * pre-check fires (a hard-bounced/complained recipient is skipped). Optional:
+   * omit it and the suppression check is a no-op, unchanged from before.
+   */
+  readonly db?: DbClient;
   /** Send the Expo push (dormant on tokens). */
   readonly sendPush: (tokens: readonly string[], message: ExpoPushMessage) => Promise<void>;
   readonly now?: () => Date;
@@ -334,6 +340,9 @@ export async function runPriceCheck(deps: PriceCheckDeps): Promise<PriceCheckSum
           newPrice: currentCents / 100,
           currency: row.saved.currency,
           affiliateUrl: row.saved.affiliateUrl,
+          // Thread the db so the send's suppression pre-check fires (skips a
+          // hard-bounced/complained recipient). Undefined when unwired → no-op.
+          db: deps.db,
         });
         alertsSent += 1;
       }
