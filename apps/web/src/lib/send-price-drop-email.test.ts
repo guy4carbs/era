@@ -9,7 +9,21 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
+import type { DbClient } from '@era/db';
+
 import { renderPriceDropEmail, sendPriceDropEmail, type PriceDropContent } from './send-price-drop-email.ts';
+
+/** A DB whose suppression lookup resolves to `rows` (present → suppressed). */
+function suppressionDb(rows: unknown[]): DbClient {
+  const chain: Record<string, unknown> = {
+    select: () => chain,
+    from: () => chain,
+    where: () => chain,
+    limit: () => chain,
+    then: (resolve: (r: unknown[]) => unknown, reject: (e: unknown) => unknown) => Promise.resolve(rows).then(resolve, reject),
+  };
+  return chain as unknown as DbClient;
+}
 
 const CONTENT: PriceDropContent = {
   title: 'Wool-blend overcoat',
@@ -81,4 +95,34 @@ test('sendPriceDropEmail: dormant with no key in dev — never calls fetch', asy
     { env: { NODE_ENV: 'development' }, fetchImpl, log: () => {} },
   );
   assert.equal(calls.length, 0);
+});
+
+test('sendPriceDropEmail: a db + suppressed recipient is skipped before send — never calls fetch', async () => {
+  const calls: unknown[] = [];
+  const fetchImpl = (() => {
+    calls.push(1);
+    return Promise.resolve(new Response('{}', { status: 200 }));
+  }) as typeof fetch;
+
+  await sendPriceDropEmail(
+    { to: 'bounced@example.com', db: suppressionDb([{ email: 'bounced@example.com' }]), ...CONTENT },
+    { env: { RESEND_API_KEY: 're_live_realkey123', NODE_ENV: 'production' }, fetchImpl, log: () => {} },
+  );
+  assert.equal(calls.length, 0);
+});
+
+test('sendPriceDropEmail: a db + un-suppressed recipient still POSTs to Resend', async () => {
+  const calls: Array<{ url: string; init?: RequestInit }> = [];
+  const fetchImpl = ((input: unknown, init?: RequestInit) => {
+    calls.push({ url: String(input), init });
+    return Promise.resolve(new Response('{"id":"x"}', { status: 200 }));
+  }) as typeof fetch;
+
+  await sendPriceDropEmail(
+    { to: 'wardrobe@example.com', db: suppressionDb([]), ...CONTENT },
+    { env: { RESEND_API_KEY: 're_live_realkey123', NODE_ENV: 'production' }, fetchImpl },
+  );
+  assert.equal(calls.length, 1);
+  const body = JSON.parse(calls[0]!.init!.body as string);
+  assert.equal(body.to, 'wardrobe@example.com');
 });

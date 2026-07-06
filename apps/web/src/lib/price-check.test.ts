@@ -217,6 +217,26 @@ test('a drop fans out to email and push when those channels are opted in', async
   assert.equal(h.pushes[0]!.tokens.length, 1);
 });
 
+test('the db is threaded into the price-drop email args so suppression can fire', async () => {
+  const row: PriceWatchRow = { saved: savedRow(), emailAlerts: true, pushAlerts: false, userEmail: 'u@e.com' };
+  const h = harness([row], 9000);
+  // A sentinel stands in for the DbClient — we only assert it is passed through.
+  const sentinelDb = { marker: 'db' } as unknown as import('@era/db').DbClient;
+  await runPriceCheck({ ...h.deps, db: sentinelDb });
+
+  assert.equal(h.emails.length, 1);
+  assert.equal(h.emails[0]!.db, sentinelDb);
+});
+
+test('without a db, the price-drop email args carry db: undefined (suppression no-op)', async () => {
+  const row: PriceWatchRow = { saved: savedRow(), emailAlerts: true, pushAlerts: false, userEmail: 'u@e.com' };
+  const h = harness([row], 9000);
+  await runPriceCheck(h.deps); // no db in deps
+
+  assert.equal(h.emails.length, 1);
+  assert.equal(h.emails[0]!.db, undefined);
+});
+
 test('push is skipped when the user has no registered tokens (dormant)', async () => {
   const row: PriceWatchRow = { saved: savedRow(), emailAlerts: false, pushAlerts: true, userEmail: 'u@e.com' };
   const h = harness([row], 9000, []); // opted into push but no tokens

@@ -15,8 +15,13 @@
 import { NextResponse } from 'next/server';
 
 import { canInsertWaitlist } from '@era/core';
+import { createDbClient } from '@era/db';
 
 import { joinWaitlist, normalizeEmail } from '../../../lib/waitlist-server.ts';
+import { notifyNewWaitlistSignup } from '../../../lib/waitlist-signup-notify.ts';
+
+/** Server-only DB client for the best-effort suppression check on the signup email. */
+const db = createDbClient(process.env.DATABASE_URL!);
 
 /** Reject bodies larger than this (bytes) — the payload is a tiny JSON object. */
 const MAX_BODY_BYTES = 2 * 1024;
@@ -130,6 +135,10 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   try {
     const result = await joinWaitlist({ email, ref });
+    // Best-effort: confirmation email + audience add for a genuinely NEW signup
+    // only. Gated on `alreadyJoined` and non-throwing, so it never turns a
+    // successful join into a 500 nor re-sends on a duplicate submit.
+    await notifyNewWaitlistSignup({ email, alreadyJoined: result.alreadyJoined, db });
     return NextResponse.json(result, { status: 200 });
   } catch {
     // Never leak database internals to the client.

@@ -33,6 +33,9 @@ export const profiles = pgTable('profiles', {
   displayName: text('display_name'),
   avatarUrl: text('avatar_url'),
   isPrivate: boolean('is_private').notNull().default(true),
+  // Stamped the first (and only) time the welcome email is sent, so the send
+  // path can skip anyone who already got it. Null until the welcome fires.
+  welcomeEmailSentAt: timestamp('welcome_email_sent_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -321,5 +324,18 @@ export const waitlist = pgTable('waitlist', {
   email: text('email').notNull().unique(),
   referralCode: text('referral_code'),
   referredBy: text('referred_by'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const emailSuppressions = pgTable('email_suppressions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  // Keyed by email, NOT user_id — hard bounces and complaints must suppress
+  // non-users too (e.g. waitlist signups). The writer lowercase-normalizes the
+  // value before insert; the column just guarantees uniqueness. The send path
+  // checks this table before every email; the Resend webhook writes to it.
+  email: text('email').notNull().unique(),
+  // Why the address is suppressed — 'bounced' | 'complained' | 'manual'.
+  // Stored as text; the app validates the value.
+  reason: text('reason').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });

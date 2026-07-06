@@ -22,6 +22,8 @@ import { magicLink } from 'better-auth/plugins';
 import { createDbClient, account, profiles, session, user, verification } from '@era/db';
 
 import { sendMagicLinkEmail } from './send-magic-link-email.ts';
+import { siteUrl } from './site-url.ts';
+import { sendWelcomeEmailOnSignup } from './welcome-on-signup.ts';
 
 const db = createDbClient(process.env.DATABASE_URL!);
 
@@ -140,7 +142,16 @@ export const auth = betterAuth({
     user: {
       create: {
         after: async (createdUser) => {
+          // Provision the profile FIRST — the welcome claim updates that row.
           await createProfileForUser(createdUser.id);
+          // Then the one-time welcome. Both are best-effort and swallow their
+          // own errors: a NEW user's first sign-in must never fail on either.
+          await sendWelcomeEmailOnSignup({
+            userId: createdUser.id,
+            email: createdUser.email,
+            url: siteUrl(),
+            db,
+          });
         },
       },
     },

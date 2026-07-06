@@ -38,6 +38,7 @@ import { type AuthContext, AuthzError, deleteUserObjects, requireUser } from '@e
 import { createDbClient, user, verification, waitlist } from '@era/db';
 
 import { auth } from '../../../lib/auth.ts';
+import { notifyAccountDeleted } from '../../../lib/account-deletion-notify.ts';
 import { serverStorageClient } from '../../../lib/storage-server.ts';
 
 const db = createDbClient(process.env.DATABASE_URL!);
@@ -147,6 +148,13 @@ export async function POST(request: Request): Promise<NextResponse> {
     console.error(`delete-account: db delete failed for user ${userId} (storage already deleted)`);
     return NextResponse.json({ error: 'deletion_failed' }, { status: 500 });
   }
+
+  // 8. Best-effort, post-deletion: confirm the deletion by email and drop the
+  //    marketing-audience contact, using the email captured BEFORE the delete.
+  //    Non-throwing — a failed send/removal must never turn a completed,
+  //    irreversible deletion into an error, so this runs after the point of no
+  //    return and the response below is unconditional.
+  await notifyAccountDeleted({ email: sessionEmail, db });
 
   return NextResponse.json({ deleted: true, storageObjectsDeleted });
 }

@@ -36,6 +36,13 @@
       "when": 1783295383397,
       "tag": "0004_late_inertia",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1783313791480,
+      "tag": "0005_noisy_hairball",
+      "breakpoints": true
     }
   ]
 }
