@@ -20,6 +20,11 @@ import { isRealCredential, sendMagicLinkEmail } from './send-magic-link-email.ts
 const EMAIL = 'wardrobe@example.com';
 const URL = 'https://era.style/api/auth/magic-link/verify?token=SECRET_TOKEN_abc123';
 const REAL_KEY = 're_live_realkey123';
+// The email links at the confirm interstitial, carrying the verify URL as an
+// encoded `next` — never straight at the raw verify endpoint (a link prefetch
+// there would burn the single-use token). Host-agnostic so it holds regardless
+// of NEXT_PUBLIC_SITE_URL in the test environment.
+const CONFIRM_LINK = `/sign-in/confirm?next=${encodeURIComponent(URL)}`;
 
 /** A fetch stub that records its calls and returns a canned Response. */
 function stubFetch(status = 200): { fetch: typeof fetch; calls: Array<{ url: string; init?: RequestInit }> } {
@@ -50,8 +55,10 @@ test('real key: sends via Resend in production', async () => {
   const body = JSON.parse(init.body as string);
   assert.equal(body.to, EMAIL);
   assert.equal(body.from, 'Era <hello@era.style>'); // default when EMAIL_FROM unset
-  assert.ok(body.html.includes(URL));
-  assert.ok(body.text.includes(URL));
+  assert.ok(body.html.includes(CONFIRM_LINK), 'html links to the confirm interstitial');
+  assert.ok(body.text.includes(CONFIRM_LINK), 'text links to the confirm interstitial');
+  // Defense: the raw verify URL is never a bare link target in the email.
+  assert.ok(!body.html.includes(`href="${URL}"`), 'must not link straight at verify');
 });
 
 test('real key: also sends in dev, and honours EMAIL_FROM override', async () => {
