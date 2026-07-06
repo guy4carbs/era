@@ -11,6 +11,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
+import { PriceDropList } from '@/components/notifications';
 import { TodayCard } from '@/components/ovi';
 import { eraAuth, useSession } from '@/lib/auth-client';
 import { useTheme } from '@/lib/theme';
@@ -54,6 +55,9 @@ export default function FeedScreen() {
 
         {/* Ovi's daily suggestion. Renders nothing until it has a look to show. */}
         <TodayCard />
+
+        {/* Price-drop cards for saved pieces. Quiet — renders nothing when empty. */}
+        <PriceDropList />
 
         <Text
           style={{

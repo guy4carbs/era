@@ -107,6 +107,8 @@ test('toSavedShopProduct maps a row to the client shape (id = productId, price c
     affiliateUrl: 'https://ganni.example/p/ganni-chunky-ankle-boot?aff=era-ganni',
     currency: 'USD',
     priceSnapshot: '415',
+    lastPriceCents: null,
+    lastCheckedAt: null,
     createdAt: new Date('2026-07-05T00:00:00Z'),
   };
   assert.deepEqual(toSavedShopProduct(row), {
@@ -170,6 +172,8 @@ test('listSavedProducts selects owner rows newest-first and maps them to the cli
       affiliateUrl: 'https://cos.example/p/p-newer?aff=era-cos',
       currency: 'USD',
       priceSnapshot: '45',
+      lastPriceCents: null,
+      lastCheckedAt: null,
       createdAt: new Date('2026-07-05T00:00:00Z'),
     },
     {
@@ -185,6 +189,8 @@ test('listSavedProducts selects owner rows newest-first and maps them to the cli
       affiliateUrl: 'https://uniqlo.example/p/p-older?aff=era-uniqlo',
       currency: 'USD',
       priceSnapshot: '30',
+      lastPriceCents: null,
+      lastCheckedAt: null,
       createdAt: new Date('2026-07-01T00:00:00Z'),
     },
   ];

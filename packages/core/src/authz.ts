@@ -171,6 +171,71 @@ export function canReadSavedProduct(
 }
 
 /**
+ * notification_preferences (price-alert opt-ins): a user's alert settings are
+ * private and owner-scoped. A user reads and upserts only their own row — every
+ * alert channel is opt-in, so no other user may read or flip these flags.
+ * `prefs.userId` is the id stored on (or written as) the row.
+ * @throws {AuthzError} `UNAUTHENTICATED` when anonymous, `FORBIDDEN` when the
+ *   caller is not the owner.
+ */
+export function canReadNotificationPreferences(
+  ctx: AuthContext,
+  prefs: { readonly userId: string },
+): void {
+  ownerOnly(ctx, prefs.userId);
+}
+
+export function canUpsertNotificationPreferences(
+  ctx: AuthContext,
+  prefs: { readonly userId: string },
+): void {
+  ownerOnly(ctx, prefs.userId);
+}
+
+/**
+ * push_tokens (device registrations for push alerts): a user registers and
+ * removes only their own device tokens. `token.userId` is the id stored on (or
+ * written as) the row.
+ * @throws {AuthzError} `UNAUTHENTICATED` when anonymous, `FORBIDDEN` when the
+ *   caller is not the owner.
+ */
+export function canInsertPushToken(
+  ctx: AuthContext,
+  token: { readonly userId: string },
+): void {
+  ownerOnly(ctx, token.userId);
+}
+
+export function canDeletePushToken(
+  ctx: AuthContext,
+  token: { readonly userId: string },
+): void {
+  ownerOnly(ctx, token.userId);
+}
+
+/**
+ * in_app_notifications (the "price dropped" card store): a user reads and marks
+ * read only their own notifications. `notification.userId` is the id stored on
+ * the row. There is no owner-facing insert guard — notifications are written by
+ * the server-side price-check job, not by the user.
+ * @throws {AuthzError} `UNAUTHENTICATED` when anonymous, `FORBIDDEN` when the
+ *   caller is not the owner.
+ */
+export function canReadInAppNotification(
+  ctx: AuthContext,
+  notification: { readonly userId: string },
+): void {
+  ownerOnly(ctx, notification.userId);
+}
+
+export function canUpdateInAppNotification(
+  ctx: AuthContext,
+  notification: { readonly userId: string },
+): void {
+  ownerOnly(ctx, notification.userId);
+}
+
+/**
  * Waitlist: a public, insert-only signup. Always allowed — no authentication
  * required. This guard exists so that every write handler calls an authz check,
  * keeping the "no route without a guard" invariant uniform and greppable.

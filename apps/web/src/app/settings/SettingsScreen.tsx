@@ -1,13 +1,19 @@
 'use client';
 
-import { useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, useReducedMotion } from 'framer-motion';
 import { motion as motionToken, boxShadows, spacing, typeRamp } from '@era/tokens';
+import { strings } from '@era/core/strings';
 import { transitionFor } from '../../lib/motion';
 import { useTheme, type ThemeMode } from '../../lib/theme';
 import { eraAuth } from '../../lib/auth-client';
+import {
+  getPreferences,
+  updatePreferences,
+  type NotificationPreferences,
+} from '../../lib/notifications-client';
 import { Container } from '../../components';
 import { DeleteAccountDialog } from './DeleteAccountDialog';
 import { SETTINGS_COPY, SUPPORT_MAILTO } from './copy';
@@ -56,6 +62,10 @@ export function SettingsScreen({ accountEmail, initialIsPrivate }: SettingsScree
 
         <Section title={SETTINGS_COPY.privacy}>
           <PrivacyControl initialIsPrivate={initialIsPrivate} />
+        </Section>
+
+        <Section title={strings.settings.priceAlerts.title}>
+          <PriceAlertsControl />
         </Section>
 
         <Section title={SETTINGS_COPY.support}>
@@ -208,12 +218,155 @@ function PrivacyControl({ initialIsPrivate }: { initialIsPrivate: boolean }) {
   );
 }
 
+/**
+ * A single labelled switch used across the price-alerts group: the master toggle
+ * and the two channel rows. `off`/`on` are driven by the parent; a disabled
+ * switch (channels while the master is off) greys out and stops accepting taps
+ * but keeps its `switch` role and `aria-checked` for assistive tech.
+ */
+function AlertSwitch({
+  label,
+  checked,
+  disabled,
+  onToggle,
+}: {
+  label: string;
+  checked: boolean;
+  disabled: boolean;
+  onToggle: () => void;
+}) {
+  const reduced = useReducedMotion();
+  const labelId = `alert-switch-${label.replace(/\s+/g, '-').toLowerCase()}`;
+  return (
+    <div style={{ ...rowStyle, opacity: disabled ? 0.5 : 1 }}>
+      <span id={labelId} style={rowLabelStyle}>
+        {label}
+      </span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-labelledby={labelId}
+        disabled={disabled}
+        onClick={onToggle}
+        style={{
+          ...trackStyle,
+          cursor: disabled ? 'not-allowed' : 'pointer',
+          background: checked ? 'var(--color-accent)' : 'var(--color-hairline)',
+        }}
+      >
+        <motion.span
+          aria-hidden="true"
+          style={thumbStyle}
+          animate={{ x: checked ? spacing.s6 : 0 }}
+          transition={transitionFor(motionToken.springs.snappy, reduced)}
+        />
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Price-drop alerts — opt-IN, off until the user turns it on. A master toggle
+ * gates two channel switches (email, push) that grey out until it's on. Every
+ * flip is optimistic against the `/api/notifications/preferences` contract and
+ * reverts on a failed write. Preferences are fetched on mount; until they land
+ * (or if the fetch fails) the switches stay disabled so nothing flips a value we
+ * haven't confirmed. Copy is Quill's {@link strings.settings.priceAlerts}.
+ */
+function PriceAlertsControl() {
+  const copy = strings.settings.priceAlerts;
+  const [prefs, setPrefs] = useState<NotificationPreferences | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      try {
+        const loaded = await getPreferences();
+        if (active) setPrefs(loaded);
+      } catch {
+        // Leave the switches disabled — we won't flip a value we can't read.
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  async function patch(field: keyof NotificationPreferences, next: boolean) {
+    if (!prefs || busy) return;
+    const previous = prefs;
+    setPrefs({ ...prefs, [field]: next }); // optimistic
+    setBusy(true);
+    try {
+      const saved = await updatePreferences({ [field]: next });
+      setPrefs(saved); // reconcile against the server's echoed truth
+    } catch {
+      setPrefs(previous); // revert
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const ready = prefs !== null;
+  const masterOn = prefs?.priceAlertsEnabled ?? false;
+
+  return (
+    <div style={alertsGroupStyle}>
+      <p style={rowHintStyle}>{copy.explain}</p>
+
+      <AlertSwitch
+        label={copy.toggle}
+        checked={masterOn}
+        disabled={!ready || busy}
+        onToggle={() => void patch('priceAlertsEnabled', !masterOn)}
+      />
+
+      <div style={channelsStyle}>
+        <AlertSwitch
+          label={copy.channelEmail}
+          checked={prefs?.emailAlerts ?? false}
+          disabled={!ready || !masterOn || busy}
+          onToggle={() => void patch('emailAlerts', !(prefs?.emailAlerts ?? false))}
+        />
+        <AlertSwitch
+          label={copy.channelPush}
+          checked={prefs?.pushAlerts ?? false}
+          disabled={!ready || !masterOn || busy}
+          onToggle={() => void patch('pushAlerts', !(prefs?.pushAlerts ?? false))}
+        />
+      </div>
+
+      <p style={rowHintStyle}>{copy.savedOnlyNote}</p>
+    </div>
+  );
+}
+
 const screenStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: 'var(--space-8)',
   paddingBlock: 'var(--space-8)',
   maxWidth: 'var(--feed-col)',
+};
+
+// The price-alerts group stacks its explain line, the master toggle, the indented
+// channel rows, and the saved-only note.
+const alertsGroupStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-3)',
+};
+
+// Channel rows sit slightly inset from the master toggle to read as its children.
+const channelsStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-3)',
+  paddingLeft: 'var(--space-3)',
+  borderLeft: '1px solid var(--color-hairline)',
+  marginLeft: 'var(--space-1)',
 };
 
 const headerStyle: CSSProperties = {
