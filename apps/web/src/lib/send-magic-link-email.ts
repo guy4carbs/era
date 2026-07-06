@@ -14,6 +14,7 @@
  * reaches a production log — the dev line runs in development only.
  */
 import { isRealCredential, sendEmail } from './send-email.ts';
+import { siteUrl } from './site-url.ts';
 
 // Re-exported so existing importers (and tests) keep resolving it from here;
 // the source of truth now lives in the shared transport.
@@ -48,7 +49,14 @@ export async function sendMagicLinkEmail(
   { email, url }: MagicLinkEmail,
   deps: SendMagicLinkDeps = {},
 ): Promise<void> {
-  const { subject, html, text } = renderEmail(url);
+  // Point the email at the confirm INTERSTITIAL, never the raw verify URL.
+  // Gmail-style link prefetch would otherwise trip the GET verify endpoint and
+  // burn the single-use token before the human clicks. The interstitial only
+  // reaches verify via a human POST — a prefetch renders the button, never
+  // submits it. `url` (Better Auth's verify URL, token and all) rides along as
+  // the `next` param; the confirm page + route re-validate it before use.
+  const confirmUrl = `${siteUrl()}/sign-in/confirm?next=${encodeURIComponent(url)}`;
+  const { subject, html, text } = renderEmail(confirmUrl);
   await sendEmail(
     { to: email, subject, html, text },
     {
