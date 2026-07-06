@@ -14,7 +14,12 @@ import { rankProducts, type ShopProduct } from '@era/core/shop';
 import type { OviItem, StyleProfileLite } from '@era/core/ovi';
 import type { DbClient } from '@era/db';
 
-import { attachWhyThumbnails, rankProductsForUser, type WhyThumbnailLookup } from './shop-rank-server.ts';
+import {
+  attachWhyThumbnails,
+  rankProductsForUser,
+  toLlmSafeProduct,
+  type WhyThumbnailLookup,
+} from './shop-rank-server.ts';
 
 /** Chainable Drizzle stand-in: select-chains resolve to `selectRows`; inserts are captured. */
 function fakeDb(selectRows: unknown[] = []): { db: DbClient; inserts: unknown[] } {
@@ -173,6 +178,30 @@ test('attachWhyThumbnails resolves whyDetail ref images via the lookup; unresolv
   // The lookup is asked for the deduped owned ids exactly once.
   assert.equal(seen.length, 1);
   assert.deepEqual(seen[0]!.sort(), ['c1', 'c2']);
+});
+
+test('toLlmSafeProduct drops the payout link but keeps every closet-fit signal (Ledger guard)', () => {
+  const [product] = PRODUCTS;
+  assert.ok(product);
+  const safe = toLlmSafeProduct(product);
+
+  // The monetised deep-link is structurally absent from what any future ranker sees.
+  assert.equal('affiliateUrl' in safe, false, 'affiliateUrl must be stripped from the LLM-safe projection');
+
+  // Every fit signal survives — price/fit is legitimate ranking input.
+  assert.equal(safe.id, product.id);
+  assert.equal(safe.title, product.title);
+  assert.equal(safe.brand, product.brand);
+  assert.equal(safe.brandTier, product.brandTier);
+  assert.equal(safe.category, product.category);
+  assert.equal(safe.price, product.price);
+  assert.equal(safe.currency, product.currency);
+  assert.deepEqual(safe.colors, product.colors);
+  // The raw (non-affiliate) retailer link is a fit/identity field, not a payout field.
+  assert.equal(safe.productUrl, product.productUrl);
+
+  // The original is untouched — projection is pure, not a mutation.
+  assert.equal(product.affiliateUrl, 'https://cos.example/p/top?aff=era');
 });
 
 test('attachWhyThumbnails is a no-op (no lookup call) when no whyDetail names an item', async () => {
