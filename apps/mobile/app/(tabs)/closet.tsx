@@ -200,6 +200,7 @@ export default function ClosetScreen() {
             selected={category}
             onSelect={setCategory}
             onOpenSettings={() => router.push('/settings')}
+            onOpenWorn={() => router.push('/worn')}
           />
         }
         stickySectionHeadersEnabled={false}
@@ -217,6 +218,7 @@ export default function ClosetScreen() {
         onClose={() => setSheetOpen(false)}
         onUpdated={onUpdated}
         onArchived={onArchived}
+        onToast={setToast}
       />
 
       <Toast message={toast} onHide={() => setToast(null)} bottom={toastBottom} />

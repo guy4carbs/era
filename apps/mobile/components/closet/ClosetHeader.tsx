@@ -17,6 +17,7 @@ import { useTheme } from '@/lib/theme';
 
 import { PrivacyToggle } from './PrivacyToggle';
 import { SettingsGear } from './SettingsGear';
+import { WearHistoryButton } from './WearHistoryButton';
 
 interface ClosetHeaderProps {
   readonly search: string;
@@ -28,6 +29,8 @@ interface ClosetHeaderProps {
   readonly onSelect: (category: ItemCategory | null) => void;
   /** Open the settings screen (the gear beside the title). */
   readonly onOpenSettings: () => void;
+  /** Open the wear calendar (the glyph beside the gear). */
+  readonly onOpenWorn: () => void;
 }
 
 export function ClosetHeader({
@@ -37,6 +40,7 @@ export function ClosetHeader({
   selected,
   onSelect,
   onOpenSettings,
+  onOpenWorn,
 }: ClosetHeaderProps) {
   const { colors } = useTheme();
 
@@ -54,7 +58,10 @@ export function ClosetHeader({
         >
           Closet
         </Text>
-        <SettingsGear onPress={onOpenSettings} />
+        <View style={styles.actions}>
+          <WearHistoryButton onPress={onOpenWorn} />
+          <SettingsGear onPress={onOpenSettings} />
+        </View>
       </View>
 
       <PrivacyToggle />
@@ -97,6 +104,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.s2,
   },
   chips: {
     flexDirection: 'row',

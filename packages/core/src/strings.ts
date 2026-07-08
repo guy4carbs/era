@@ -122,6 +122,29 @@ const joinCategoryLabels = (categories: readonly string[] = []): string => {
 const newOutfits = (n: number): string => `${n} new ${n === 1 ? 'outfit' : 'outfits'}`;
 
 /**
+ * Coerce a possibly-untyped count to a finite number, never NaN — the boundary
+ * guard the wear helpers share so garbage input renders "0", never "undefined"
+ * or "NaN". `safeCount('nope')` → 0, `safeCount(3)` → 3.
+ */
+const safeCount = (n: unknown): number => {
+  const c = Number(n);
+  return Number.isFinite(c) ? c : 0;
+};
+
+/** Wear count with singular at one: `wearsLabel(1)` → "1 wear", `wearsLabel(3)` → "3 wears". */
+const wearsLabel = (n: number): string => `${n} ${n === 1 ? 'wear' : 'wears'}`;
+
+/**
+ * Trim an interpolated text value, falling back rather than rendering an empty
+ * or non-string slot — so a missing price/label never leaves a dangling "your "
+ * or a bare "undefined" in user-facing copy.
+ */
+const cleanText = (value: unknown, fallback: string): string => {
+  const text = typeof value === 'string' ? value.trim() : '';
+  return text.length > 0 ? text : fallback;
+};
+
+/**
  * The full copy deck, grouped by surface. `as const` so every leaf is a literal
  * type — callers get autocomplete on the exact strings and can't typo a key.
  */
@@ -407,6 +430,128 @@ export const strings = {
     emptyDesign: 'Nothing built yet. Pick a few pieces and make something.',
     /** After the user logs that they wore an outfit. */
     wearLogged: 'Logged. Every wear teaches me your taste.',
+  },
+
+  /**
+   * Wear tracking — the loop that turns "I wore this" into something the user can
+   * see: per-item stats, a month calendar, and a screenshot-friendly recap. Warm
+   * and honest, never a productivity scold — a busy month is celebrated lightly, a
+   * quiet one is fine, and cost-per-wear is framed as a piece earning its place,
+   * never as guilt over what it cost. Ovi speaks as "I" only where it lands as a
+   * genuine stylist beat. The quick-log confirmations here EXTEND the existing wear
+   * copy ({@link strings.ovi.woreItConfirmed}, {@link strings.outfits.wearLogged})
+   * for the item-level "worn today" tap rather than duplicating it. Every helper is
+   * boundary-hardened: counts pass through {@link safeCount} (NaN/garbage → 0) and
+   * interpolated text through {@link cleanText} (never a bare "undefined"), so the
+   * voice-lint can probe them with any input without a throw.
+   */
+  wear: {
+    // --- item detail: wear count + cost per wear ---
+
+    /**
+     * Natural-language wear count for the item-detail stats block — distinct from
+     * the terse meta chip {@link strings.closet.detailWearCount} ("Worn 3×"): this
+     * reads as a sentence for the stats surface. Singular at one; zero reads as a
+     * plain, unpressured "not yet". `count(0)` → "Not worn yet".
+     */
+    count: (n: number): string => {
+      const c = safeCount(n);
+      if (c <= 0) return 'Not worn yet';
+      return c === 1 ? 'Worn once' : `Worn ${c} times`;
+    },
+    /**
+     * Cost-per-wear line for the stats block. Takes an ALREADY-formatted price
+     * string — money formatting lives elsewhere, never here. `costPerWear('$15')`
+     * → "$15 per wear". The lower it goes, the more a piece has earned its keep.
+     */
+    costPerWear: (price: string): string => `${cleanText(price, '—')} per wear`,
+    /**
+     * Shown in place of cost-per-wear when the purchase price is unknown. A gentle
+     * invitation to add it — honest that it's optional, no pressure either way.
+     */
+    costPerWearUnknown: 'Add what you paid to see your cost per wear.',
+
+    // --- the wear calendar: a month of what got worn ---
+
+    calendar: {
+      /** Calendar screen / section title. */
+      title: 'Your wear calendar',
+      /**
+       * Empty-month state — nothing logged for the month in view. Invitational,
+       * points back at the "wore it" tap, no scold for a blank month.
+       */
+      emptyMonth: "Nothing logged this month yet — mark a look as worn and it'll show up here.",
+      /**
+       * Accessible label for a calendar day, from its wear count. Screen-reader
+       * plain: `dayA11y(2)` → "2 wears", `dayA11y(1)` → "1 wear". Zero-hardened for
+       * a day that renders without wears; pairs with the visible count badge.
+       */
+      dayA11y: (n: number): string => {
+        const c = safeCount(n);
+        return c <= 0 ? 'No wears' : wearsLabel(c);
+      },
+    },
+
+    // --- monthly recap: the screenshot card ("your month, worn") ---
+
+    recap: {
+      /** Recap card title — the card is designed to be screenshotted and shared. */
+      title: 'Your month, worn',
+      /**
+       * The card's date header, from an already-formatted month label. Guarded
+       * pass-through so a missing month never renders blank. `monthHeader('July
+       * 2026')` → "July 2026".
+       */
+      monthHeader: (month: string): string => cleanText(month, 'This month'),
+      /**
+       * Total wears logged across the month. Singular at one; zero reads as a
+       * plain, unpressured line. `totalWears(24)` → "You logged 24 wears".
+       */
+      totalWears: (n: number): string => {
+        const c = safeCount(n);
+        return c <= 0 ? 'No wears logged yet' : `You logged ${wearsLabel(c)}`;
+      },
+      /**
+       * Days-dressed of days-in-month. Both numbers coerce at the boundary.
+       * `daysDressed(18, 31)` → "Dressed on 18 of 31 days".
+       */
+      daysDressed: (dressed: number, daysInMonth: number): string =>
+        `Dressed on ${safeCount(dressed)} of ${safeCount(daysInMonth)} days`,
+      /** Section label above the month's most-worn pieces. */
+      topPieces: 'Your most-worn pieces',
+      /**
+       * The month's most-worn category, from an already-lowercased category label
+       * (the same map {@link strings.closet.categoryLabel} draws from).
+       * `mostWornCategory('tops')` → "Mostly tops this month".
+       */
+      mostWornCategory: (label: string): string => `Mostly ${cleanText(label, 'a mix')} this month`,
+      /**
+       * The piece that earned its keep most — the lowest cost per wear. Takes an
+       * already-formatted price and the item's label. `bestCostPerWear('$4', 'navy
+       * blazer')` → "Best value: your navy blazer at $4 per wear".
+       */
+      bestCostPerWear: (price: string, itemLabel: string): string =>
+        `Best value: your ${cleanText(itemLabel, 'go-to piece')} at ${cleanText(price, '—')} per wear`,
+      /**
+       * Empty-month recap line — nothing to recap yet. Warm; frames the card as
+       * something that fills in over the month rather than a blank scold.
+       */
+      empty: 'No wears logged this month yet — your recap fills in as you go.',
+      /** Footer tag for the screenshot — a quiet brand mark, no call to action. */
+      shareTag: 'Tracked with Era',
+    },
+
+    // --- quick-log: the item-level "worn today" tap ---
+
+    /**
+     * Confirmation after logging a single piece as worn today — the item-level
+     * counterpart to the outfit-level {@link strings.outfits.wearLogged} and
+     * {@link strings.ovi.woreItConfirmed}. Kept distinct so it doesn't duplicate
+     * them: this one names the day.
+     */
+    logged: 'Logged for today.',
+    /** Quick-log failed — honest, no blame, invites a retry. */
+    logFailed: "That didn't log — give it another go.",
   },
 
   /**
@@ -912,6 +1057,8 @@ export const strings = {
     save: 'Save',
     cancel: 'Cancel',
     continue: 'Continue',
+    /** Share action label — reused wherever a surface exports via the OS sheet. */
+    share: 'Share',
     /** The anti-pushy escape hatch. Every promo surface must offer it. */
     notNow: 'Not now',
   },

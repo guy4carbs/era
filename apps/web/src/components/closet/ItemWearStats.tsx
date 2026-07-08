@@ -1,0 +1,124 @@
+'use client';
+
+import { useEffect, useState, type CSSProperties } from 'react';
+import { typeRamp } from '@era/tokens';
+import { strings } from '@era/core/strings';
+import { costPerWear } from '@era/core/wear-stats';
+import { formatMoney } from '../../lib/format-money';
+import { WoreItButton } from '../ovi/WoreItButton';
+import type { GalleryItem } from './types';
+
+export interface ItemWearStatsProps {
+  /** The piece whose wear stats are shown; seeds the count with no flash. */
+  item: GalleryItem;
+}
+
+/** Stats for one owned piece: how often it's been worn and its cost per wear.
+ *  `wearCount` is null until the authoritative stats read lands. */
+interface Stats {
+  wearCount: number;
+  purchasePrice: string | null;
+}
+
+const blockStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-3)',
+};
+
+const rowStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-1)',
+};
+
+const countStyle: CSSProperties = {
+  margin: 0,
+  fontSize: typeRamp.body.rem,
+  lineHeight: `${typeRamp.body.lineHeight}px`,
+  fontWeight: 600,
+  color: 'var(--color-text)',
+};
+
+const cpwStyle: CSSProperties = {
+  margin: 0,
+  fontSize: typeRamp.subhead.rem,
+  lineHeight: `${typeRamp.subhead.lineHeight}px`,
+  color: 'var(--color-secondary-strong)',
+};
+
+const errorStyle: CSSProperties = {
+  margin: 0,
+  fontSize: typeRamp.footnote.rem,
+  lineHeight: `${typeRamp.footnote.lineHeight}px`,
+  color: 'var(--color-secondary-strong)',
+};
+
+/**
+ * The item-detail wear stats block: a natural-language wear count, the piece's
+ * cost per wear (or a gentle invite to add its price), and a one-tap "Wore it
+ * today" action. Seeds from the gallery row's own `wearCount`/`purchasePrice` so
+ * it lands without a flash, then reconciles against `GET /api/wear-logs/stats`
+ * (the authoritative owner-scoped read). Logging a wear here bumps the count
+ * locally, so cost per wear visibly ticks down the moment the piece is worn —
+ * the loop's payoff, felt immediately. All copy is Quill's `strings.wear`.
+ */
+export function ItemWearStats({ item }: ItemWearStatsProps) {
+  const [stats, setStats] = useState<Stats>({
+    wearCount: item.wearCount,
+    purchasePrice: item.purchasePrice,
+  });
+  const [logFailed, setLogFailed] = useState(false);
+
+  // Reconcile against the authoritative stats read; a failure keeps the seeded
+  // values (the list route's correlated count is already accurate at load).
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      try {
+        const res = await fetch(`/api/wear-logs/stats?itemId=${item.id}`);
+        if (!res.ok) return;
+        const body = (await res.json()) as { wearCount: number; purchasePrice: string | null };
+        if (active) setStats({ wearCount: body.wearCount, purchasePrice: body.purchasePrice });
+      } catch {
+        // Leave the seeded values in place — nothing to correct.
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [item.id]);
+
+  // A usable price is one costPerWear accepts (positive, parseable); probe with a
+  // wear count of 1 so the check is about the price alone.
+  const priceUsable = costPerWear(stats.purchasePrice, 1) !== null;
+  const cpw = costPerWear(stats.purchasePrice, stats.wearCount);
+
+  return (
+    <div style={blockStyle}>
+      <div style={rowStyle}>
+        <p style={countStyle}>{strings.wear.count(stats.wearCount)}</p>
+        {priceUsable ? (
+          cpw !== null ? (
+            <p style={cpwStyle}>{strings.wear.costPerWear(formatMoney(cpw, item.currency))}</p>
+          ) : null
+        ) : (
+          <p style={cpwStyle}>{strings.wear.costPerWearUnknown}</p>
+        )}
+      </div>
+
+      <WoreItButton
+        itemIds={[item.id]}
+        via="item_detail"
+        confirmedLabel={strings.wear.logged}
+        onLogged={() => {
+          setLogFailed(false);
+          setStats((prev) => ({ ...prev, wearCount: prev.wearCount + 1 }));
+        }}
+        onError={() => setLogFailed(true)}
+      />
+
+      {logFailed ? <p style={errorStyle}>{strings.wear.logFailed}</p> : null}
+    </div>
+  );
+}

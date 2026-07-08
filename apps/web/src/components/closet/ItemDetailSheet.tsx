@@ -8,6 +8,7 @@ import { Button } from '../Button';
 import { GlassSheet } from '../GlassSheet';
 import type { ItemEdits } from '../items';
 import { ItemEditor } from './ItemEditor';
+import { ItemWearStats } from './ItemWearStats';
 import type { GalleryItem } from './types';
 
 export interface ItemDetailSheetProps {
@@ -132,9 +133,10 @@ export function ItemDetailSheet({ item, onClose, onArchived, onUpdated }: ItemDe
 
             <div style={metaColumnStyle}>
               <span style={metaStyle}>{strings.closet.detailSource(item.source)}</span>
-              <span style={metaStyle}>{strings.closet.detailWearCount(item.wearCount)}</span>
               {priceLine ? <span style={metaStyle}>{priceLine}</span> : null}
             </div>
+
+            <ItemWearStats item={item} />
 
             {confirmingArchive ? (
               <div style={confirmColumnStyle}>
