@@ -517,3 +517,83 @@ test('the affiliate disclosure is FTC-honest: names the commission AND the close
   assert.match(disclosure, /closet/, 'disclosure must state ranking is on the closet');
   assert.match(disclosure, /payout/, 'disclosure must state ranking is not on payouts');
 });
+
+// --- wear tracking (item stats, calendar, monthly recap, quick-log) ----------
+
+test('wear.count handles zero, one, and many with a singular at one', () => {
+  assert.equal(strings.wear.count(0), 'Not worn yet');
+  assert.equal(strings.wear.count(1), 'Worn once');
+  assert.equal(strings.wear.count(4), 'Worn 4 times');
+  assert.doesNotMatch(strings.wear.count(1), /times/, 'count(1) should not pluralize');
+});
+
+test('wear.costPerWear appends to an already-formatted price and never formats money itself', () => {
+  assert.equal(strings.wear.costPerWear('$15'), '$15 per wear');
+  assert.equal(strings.wear.costPerWear('€9,50'), '€9,50 per wear');
+});
+
+test('wear.costPerWearUnknown gently invites adding the price, without pressure', () => {
+  const line = strings.wear.costPerWearUnknown;
+  assert.ok(line.trim().length > 0, 'costPerWearUnknown is empty');
+  assert.match(line, /cost per wear/i, 'should name what adding the price unlocks');
+  const pushy = [/\bmust\b/i, /\bnow\b/i, /\brequired\b/i];
+  for (const pattern of pushy) {
+    assert.doesNotMatch(line, pattern, `costPerWearUnknown should stay gentle (${pattern})`);
+  }
+});
+
+test('wear.calendar copy is present and dayA11y reads as a plain wear count', () => {
+  assert.ok(strings.wear.calendar.title.trim().length > 0, 'calendar.title is empty');
+  assert.ok(strings.wear.calendar.emptyMonth.trim().length > 0, 'calendar.emptyMonth is empty');
+  assert.equal(strings.wear.calendar.dayA11y(0), 'No wears');
+  assert.equal(strings.wear.calendar.dayA11y(1), '1 wear');
+  assert.equal(strings.wear.calendar.dayA11y(3), '3 wears');
+});
+
+test('wear.recap surfaces every stat and stays honest on an empty month', () => {
+  const r = strings.wear.recap;
+  assert.equal(r.title, 'Your month, worn');
+  assert.equal(r.monthHeader('July 2026'), 'July 2026');
+  assert.equal(r.totalWears(0), 'No wears logged yet');
+  assert.match(r.totalWears(24), /24 wears/, 'totalWears should surface the count');
+  assert.equal(r.daysDressed(18, 31), 'Dressed on 18 of 31 days');
+  assert.ok(r.topPieces.trim().length > 0, 'topPieces label is empty');
+  assert.match(r.mostWornCategory('tops'), /tops/, 'mostWornCategory should name the category');
+  assert.match(
+    r.bestCostPerWear('$4', 'navy blazer'),
+    /navy blazer.*\$4 per wear/,
+    'bestCostPerWear should name the piece and its cost per wear',
+  );
+  assert.ok(r.empty.trim().length > 0, 'recap.empty is empty');
+  assert.ok(r.shareTag.trim().length > 0, 'recap.shareTag is empty');
+});
+
+test('wear quick-log confirmations extend, and do not duplicate, the existing wear copy', () => {
+  assert.ok(strings.wear.logged.trim().length > 0, 'wear.logged is empty');
+  assert.ok(strings.wear.logFailed.trim().length > 0, 'wear.logFailed is empty');
+  for (const existing of [strings.ovi.woreItConfirmed, strings.outfits.wearLogged]) {
+    assert.notEqual(strings.wear.logged, existing, 'wear.logged should not duplicate existing wear copy');
+  }
+});
+
+test('every wear helper survives garbage input without throwing or leaking NaN/undefined', () => {
+  const junk: unknown[] = [undefined, null, NaN, 'nope', {}];
+  for (const bad of junk) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const b = bad as any;
+    const outputs = [
+      strings.wear.count(b),
+      strings.wear.costPerWear(b),
+      strings.wear.calendar.dayA11y(b),
+      strings.wear.recap.monthHeader(b),
+      strings.wear.recap.totalWears(b),
+      strings.wear.recap.daysDressed(b, b),
+      strings.wear.recap.mostWornCategory(b),
+      strings.wear.recap.bestCostPerWear(b, b),
+    ];
+    for (const out of outputs) {
+      assert.ok(out.trim().length > 0, `wear helper returned empty for input ${String(bad)}`);
+      assert.doesNotMatch(out, /undefined|NaN/, `wear helper leaked a raw ${out} for input ${String(bad)}`);
+    }
+  }
+});

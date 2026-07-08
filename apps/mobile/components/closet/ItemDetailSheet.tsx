@@ -25,6 +25,7 @@ import { Alert, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button } from '@/components/Button';
 import { GlassSheet } from '@/components/GlassSheet';
 import { archiveItem, patchItem, type ItemUpdates, type ItemWithDisplay } from '@/components/items';
+import { WearStatsBlock } from '@/components/wear';
 import { useTheme } from '@/lib/theme';
 
 import { ItemEditor } from './ItemEditor';
@@ -37,9 +38,11 @@ interface ItemDetailSheetProps {
   readonly onUpdated: (item: ItemWithDisplay) => void;
   /** Called after the item is archived — the screen toasts and drops the tile. */
   readonly onArchived: (id: string) => void;
+  /** Surface a toast (wear-logged confirmation) to the screen's own Toast. */
+  readonly onToast: (message: string) => void;
 }
 
-export function ItemDetailSheet({ item, open, onClose, onUpdated, onArchived }: ItemDetailSheetProps) {
+export function ItemDetailSheet({ item, open, onClose, onUpdated, onArchived, onToast }: ItemDetailSheetProps) {
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -96,6 +99,7 @@ export function ItemDetailSheet({ item, open, onClose, onUpdated, onArchived }: 
             onEdit={() => setEditing(true)}
             onArchived={onArchived}
             onClose={onClose}
+            onToast={onToast}
           />
         )
       ) : null}
@@ -108,9 +112,10 @@ interface DetailProps {
   readonly onEdit: () => void;
   readonly onArchived: (id: string) => void;
   readonly onClose: () => void;
+  readonly onToast: (message: string) => void;
 }
 
-function Detail({ item, onEdit, onArchived, onClose }: DetailProps) {
+function Detail({ item, onEdit, onArchived, onClose, onToast }: DetailProps) {
   const { colors } = useTheme();
 
   const tags = buildTags(item);
@@ -209,8 +214,18 @@ function Detail({ item, onEdit, onArchived, onClose }: DetailProps) {
       <View style={styles.meta}>
         <MetaLine text={strings.closet.detailSource(item.source)} />
         {price ? <MetaLine text={price} /> : null}
-        <MetaLine text={strings.closet.detailWearCount(item.wearCount)} />
       </View>
+
+      {/* Wear count + cost-per-wear + one-tap "wore it today", keyed per item so
+          the button's session guard resets when a different piece opens. */}
+      <WearStatsBlock
+        key={item.id}
+        itemId={item.id}
+        currency={item.currency}
+        seedWearCount={item.wearCount}
+        seedPrice={item.purchasePrice}
+        onToast={onToast}
+      />
 
       <View style={styles.actions}>
         <Button label={strings.closet.edit} variant="secondary" onPress={onEdit} style={styles.action} />

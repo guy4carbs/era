@@ -12,6 +12,7 @@ import { GalleryTile } from './GalleryTile';
 import { ItemDetailSheet } from './ItemDetailSheet';
 import { PrivacyToggle } from './PrivacyToggle';
 import { SettingsLink } from './SettingsLink';
+import { WornLink } from './WornLink';
 import type { GalleryItem } from './types';
 
 export interface ClosetGalleryProps {
@@ -116,6 +117,7 @@ export function ClosetGallery({ items, onArchived, onUpdated }: ClosetGalleryPro
         <div style={titleRowStyle}>
           <h1 style={titleStyle}>Closet</h1>
           <div style={headerActionsStyle}>
+            <WornLink />
             <SettingsLink />
             <PrivacyToggle />
           </div>

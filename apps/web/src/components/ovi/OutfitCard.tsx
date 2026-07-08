@@ -34,6 +34,13 @@ export interface OutfitCardProps {
    * surfaces that shouldn't close the daily-wear loop (e.g. the chat sheet).
    */
   wearSurface?: string;
+  /**
+   * Coarse coordinates the surface already resolved (e.g. the Today card's
+   * weather lookup), forwarded to the wear log so the server captures a weather
+   * snapshot. Never prompted for here — passed only when the surface already has
+   * them, otherwise the wear is logged weatherless.
+   */
+  wearLocation?: { lat: number; lon: number } | null;
 }
 
 type Status = 'idle' | 'saving' | 'saved';
@@ -148,6 +155,7 @@ export function OutfitCard({
   onDismissed,
   onOpen,
   wearSurface,
+  wearLocation,
 }: OutfitCardProps) {
   const reduced = useReducedMotion();
   const { data: session } = useSession();
@@ -186,7 +194,11 @@ export function OutfitCard({
     // Local guard: never double-log the same card in one session.
     if (!savedId || wearSurface === undefined || wearStatus !== 'idle') return;
     setWearStatus('logging');
-    const logged = await logWear(savedId);
+    const logged = await logWear({
+      outfitId: savedId,
+      lat: wearLocation?.lat ?? null,
+      lon: wearLocation?.lon ?? null,
+    });
     if (logged) {
       setWearStatus('logged');
       // Fire the funnel event only on a real 201 — the wear actually landed.

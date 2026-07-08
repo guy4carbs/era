@@ -5,3 +5,4 @@ export { ItemDetailSheet } from './ItemDetailSheet';
 export { PrivacyToggle } from './PrivacyToggle';
 export { SettingsGear } from './SettingsGear';
 export { Toast } from './Toast';
+export { WearHistoryButton } from './WearHistoryButton';

@@ -37,9 +37,21 @@ interface WoreItButtonProps {
   readonly via: string;
   /** Surface a toast line to the parent (which owns the on-screen Toast). */
   readonly onToast: (message: string) => void;
+  /**
+   * Coarse coordinates for the server's weather snapshot — forwarded ONLY when
+   * the surface already holds them (weatherless otherwise; never a new prompt).
+   */
+  readonly lat?: number;
+  readonly lon?: number;
+  /**
+   * Fired after a real 201, so a surface showing wear stats (e.g. item detail)
+   * can optimistically bump its count and refetch. Optional — the Feed card
+   * that only toasts leaves it unset.
+   */
+  readonly onLogged?: () => void;
 }
 
-export function WoreItButton({ itemIds, outfitId, via, onToast }: WoreItButtonProps) {
+export function WoreItButton({ itemIds, outfitId, via, onToast, lat, lon, onLogged }: WoreItButtonProps) {
   const { colors } = useTheme();
   const reduced = useReducedMotionSafe();
   const [status, setStatus] = useState<WearStatus>('idle');
@@ -51,11 +63,13 @@ export function WoreItButton({ itemIds, outfitId, via, onToast }: WoreItButtonPr
     void Haptics.selectionAsync();
     setStatus('confirmed'); // Optimistic — the loop should feel instant.
 
-    void logWear({ outfitId, itemIds })
+    void logWear({ outfitId, itemIds, lat, lon })
       .then(() => {
         // Only a real 201 counts toward the funnel.
         analytics.track('wear_logged', { via });
         onToast(strings.outfits.wearLogged);
+        // Let a stats surface reconcile (bump + refetch) off the confirmed log.
+        onLogged?.();
       })
       .catch(() => {
         // Graceful failure: revert so the user can try again, honestly toasted.

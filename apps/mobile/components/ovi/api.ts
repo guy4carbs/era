@@ -200,6 +200,14 @@ export interface WearLogInput {
   readonly itemIds?: readonly string[];
   readonly wornOn?: string;
   readonly note?: string;
+  /**
+   * Coarse coordinates for the server's best-effort weather snapshot — passed
+   * ONLY when the logging surface already holds them (same contract as
+   * ovi/today). Absent → the log is weatherless; never a permission prompt just
+   * to log a wear.
+   */
+  readonly lat?: number;
+  readonly lon?: number;
 }
 
 /** The persisted wear-log row the endpoint returns on a 201. */
@@ -222,6 +230,8 @@ export async function logWear(input: WearLogInput): Promise<WearLog> {
   if (input.itemIds && input.itemIds.length > 0) body.itemIds = input.itemIds;
   if (input.wornOn) body.wornOn = input.wornOn;
   if (input.note) body.note = input.note;
+  if (Number.isFinite(input.lat)) body.lat = input.lat;
+  if (Number.isFinite(input.lon)) body.lon = input.lon;
   const { wearLog } = await apiFetch<{ wearLog: WearLog }>('/api/wear-logs', {
     method: 'POST',
     body,

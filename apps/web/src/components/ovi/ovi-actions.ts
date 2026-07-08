@@ -70,18 +70,49 @@ export async function rejectOutfit(
   }
 }
 
+/** Inputs to a wear log — a saved outfit id or bare item ids, with optional coords. */
+export interface WearLogInput {
+  /** A saved outfit's id (the Today card / outfit surfaces). */
+  outfitId?: string;
+  /** Bare item ids when there's no saved outfit (the item-detail quick log). */
+  itemIds?: readonly string[];
+  /**
+   * Coarse coordinates the surface already holds, forwarded so the server can
+   * capture a weather snapshot. NEVER prompt for location just to log a wear —
+   * pass these only where the surface already resolved them (e.g. the Today card).
+   */
+  lat?: number | null;
+  lon?: number | null;
+  /**
+   * The day worn, as `YYYY-MM-DD` (UTC). Omit to default to today on the server —
+   * pass it only when back-dating a log (e.g. the calendar's "log a past day").
+   * An invalid date is rejected by the server, never silently coerced.
+   */
+  wornOn?: string;
+}
+
 /**
- * Log a saved outfit as worn today. Sends the outfit id to the session-gated,
- * same-origin `POST /api/wear-logs` (cookies flow by default). Returns true only
- * on a real 201 so the caller fires `wear_logged` exactly once the wear landed;
- * any failure resolves false and is handled quietly.
+ * Log a look as worn today via the session-gated, same-origin `POST
+ * /api/wear-logs` (cookies flow by default). Accepts a saved outfit id or bare
+ * item ids; `lat`/`lon` are forwarded only when the surface already has them, so
+ * the weather snapshot rides along without a fresh permission prompt. Returns
+ * true only on a real 201 so the caller fires `wear_logged` exactly once the wear
+ * landed; any failure resolves false and is handled quietly.
  */
-export async function logWear(outfitId: string): Promise<boolean> {
+export async function logWear(input: WearLogInput): Promise<boolean> {
+  const body: Record<string, unknown> = {};
+  if (input.outfitId) body.outfitId = input.outfitId;
+  if (input.itemIds && input.itemIds.length > 0) body.itemIds = [...input.itemIds];
+  if (typeof input.lat === 'number' && typeof input.lon === 'number') {
+    body.lat = input.lat;
+    body.lon = input.lon;
+  }
+  if (input.wornOn) body.wornOn = input.wornOn;
   try {
     const res = await fetch('/api/wear-logs', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ outfitId }),
+      body: JSON.stringify(body),
     });
     return res.status === 201;
   } catch {

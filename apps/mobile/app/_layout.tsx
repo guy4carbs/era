@@ -110,6 +110,7 @@ function ThemedStack() {
           <Stack.Screen name="outfit-canvas" />
           <Stack.Screen name="quiz" />
           <Stack.Screen name="settings" />
+          <Stack.Screen name="worn" />
         </Stack.Protected>
 
         {/* Sign-in — hidden once authenticated so no one lands back on it. */}

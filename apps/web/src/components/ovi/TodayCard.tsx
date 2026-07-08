@@ -74,13 +74,17 @@ export function TodayCard() {
   const [state, setState] = useState<LoadState>({ status: 'loading' });
   const [dismissed, setDismissed] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  // The coarse location resolved for the weather lookup, reused for the wear log
+  // so "Wore it today" captures the same weather snapshot without re-prompting.
+  const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
 
   useEffect(() => {
     if (isPending || !session) return;
     let active = true;
     void (async () => {
-      const location = await getCoarseLocation();
-      const res = await fetchOviToday(location);
+      const coords = await getCoarseLocation();
+      if (active) setLocation(coords);
+      const res = await fetchOviToday(coords);
       if (!active) return;
       setState(
         res
@@ -138,6 +142,7 @@ export function TodayCard() {
                 }}
                 onOpen={(outfitId) => router.push(`/design/canvas?outfit=${outfitId}`)}
                 wearSurface="today_card"
+                wearLocation={location}
               />
             ) : null}
           </AnimatePresence>
