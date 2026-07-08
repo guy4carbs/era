@@ -115,6 +115,14 @@ export const auth = betterAuth({
     schema: { user, session, account, verification },
   }),
   socialProviders: socialProviders(),
+  // "Keep me logged in" — long-lived, sliding sessions. A 90-day expiry that
+  // refreshes at most once a day means an active user effectively never gets
+  // logged out; Better Auth issues a persistent (not session-only) cookie once
+  // expiresIn is set, so it survives browser restarts.
+  session: {
+    expiresIn: 60 * 60 * 24 * 90, // 90 days
+    updateAge: 60 * 60 * 24, // slide the expiry forward at most once/day
+  },
   // era:// is the Expo deep-link scheme; exp:// covers Expo Go during dev.
   // Web hosts are trusted explicitly so sign-in works on BOTH the canonical
   // era.style domain and the Railway host during (and after) the domain
