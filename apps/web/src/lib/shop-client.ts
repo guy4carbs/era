@@ -18,6 +18,7 @@ import type {
   ShopProduct,
   ShopSearchQuery,
   ShopSearchResult,
+  WardrobeGap,
 } from '@era/core/shop';
 
 /**
@@ -137,6 +138,27 @@ export async function unsaveProduct(productId: string): Promise<void> {
   if (!res.ok) {
     throw new Error(`shop-unsave failed: ${res.status}`);
   }
+}
+
+/**
+ * The genuine wardrobe gaps for the signed-in user: `POST /api/wardrobe-gaps`.
+ * Session-gated and owner-scoped server-side (the closet is read from the session,
+ * never the client), and deterministic — the engine returns at most a handful of
+ * real gaps, often none. Awaited and throws on non-200 so the Shop's gaps hero can
+ * decide, honestly, whether to show anything; the caller keeps that failure
+ * non-blocking so a gaps miss never breaks browse.
+ */
+export async function getWardrobeGaps(): Promise<WardrobeGap[]> {
+  const res = await fetch('/api/wardrobe-gaps', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    credentials: 'same-origin',
+  });
+  if (!res.ok) {
+    throw new Error(`wardrobe-gaps failed: ${res.status}`);
+  }
+  const body = (await res.json()) as { gaps: WardrobeGap[] };
+  return body.gaps;
 }
 
 /** Hydrate the wishlist: `GET /api/shop/saved` → the user's saved picks. Throws on non-200. */

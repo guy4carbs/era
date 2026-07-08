@@ -30,6 +30,7 @@ import type {
   ShopProduct,
   ShopSearchQuery,
   ShopSearchResult,
+  WardrobeGap,
 } from '@era/core/shop';
 
 import { authClient } from '@/lib/auth-client';
@@ -111,6 +112,23 @@ export async function rankProducts(
     return ranked;
   } catch {
     return products.map((product) => ({ ...product, score: 0, why: null, whyDetail: null }));
+  }
+}
+
+/**
+ * The genuine wardrobe gaps for the caller's closet — the honest "what am I
+ * missing?" answer the GapsHero renders. NEVER hard-fails: on any error (network,
+ * 5xx, empty closet) it degrades to `[]` so a gaps miss stays invisible and never
+ * breaks browse. The engine already caps the list (≤5), so callers render all.
+ */
+export async function getWardrobeGaps(): Promise<readonly WardrobeGap[]> {
+  try {
+    const { gaps } = await apiFetch<{ gaps: readonly WardrobeGap[] }>('/api/wardrobe-gaps', {
+      method: 'POST',
+    });
+    return gaps;
+  } catch {
+    return [];
   }
 }
 

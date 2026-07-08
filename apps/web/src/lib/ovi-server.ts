@@ -24,6 +24,8 @@ import {
   type WearLogLite,
   type Weather,
 } from '@era/core/ovi';
+import { findWardrobeGaps, type WardrobeGap } from '@era/core/shop';
+import { strings } from '@era/core/strings';
 import { type DbClient, items, styleProfiles, wearLogs } from '@era/db';
 
 /** One turn of the Ovi chat, as the client sends it. */
@@ -113,6 +115,50 @@ export async function loadRecentWearLogs(db: DbClient, userId: string): Promise<
     .limit(OVI_WEAR_LOG_LIMIT);
 
   return rows.map((row) => ({ itemIds: row.itemIds ?? [], wornOn: row.wornOn }));
+}
+
+/** Ovi's deterministic "what am I missing?" turn: the engine's gaps + her narration. */
+export interface WhatsMissingResult {
+  reply: string;
+  gaps: readonly WardrobeGap[];
+}
+
+/**
+ * Compose Ovi's "what am I missing?" turn — fully deterministic, no model in the
+ * loop. The gaps come from {@link findWardrobeGaps} (the same engine the Shop
+ * gaps route uses), and Ovi's copy is built AROUND them from Quill's strings: the
+ * honest lead-in, then one truthful sentence per gap. A covered closet yields no
+ * gaps and the warm empty line. The returned `gaps` carry each pre-filtered
+ * `suggestedQuery`, so the client can render tappable "fill this gap" actions.
+ */
+export function styleWhatsMissing(input: {
+  items: OviItem[];
+  profile: StyleProfileLite | null;
+  wearLogs: WearLogLite[];
+}): WhatsMissingResult {
+  const gaps = findWardrobeGaps(input.items, input.profile, input.wearLogs);
+  const copy = strings.shop.gaps;
+  if (gaps.length === 0) {
+    return { reply: copy.empty, gaps };
+  }
+  const lines = gaps.map((gap) => copy.reason(gap));
+  return { reply: [copy.oviIntro, ...lines].join('\n\n'), gaps };
+}
+
+/**
+ * Load the caller's genuine wardrobe gaps — owner-scoped and deterministic (no
+ * model, nothing metered). Loads their own closet, style profile, and recent
+ * wears (each already filtered by `userId`) and runs the model-free gap engine.
+ * This is the delegate `POST /api/wardrobe-gaps` returns; the Ovi chat route runs
+ * {@link findWardrobeGaps} directly on the closet it already loaded.
+ */
+export async function loadWardrobeGaps(db: DbClient, userId: string): Promise<readonly WardrobeGap[]> {
+  const [profile, closet, recentWears] = await Promise.all([
+    loadStyleProfile(db, userId),
+    loadOviItems(db, userId),
+    loadRecentWearLogs(db, userId),
+  ]);
+  return findWardrobeGaps(closet, profile, recentWears);
 }
 
 /** Everything the stylist needs for one turn, owner-loaded and coarse-weathered. */

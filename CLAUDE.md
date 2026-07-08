@@ -21,6 +21,8 @@ Era is a virtual wardrobe app. Ovi is the AI stylist — she appears as a floati
 | Lint/format | `packages/eslint-config` (ESLint 9 flat config + Prettier 3) |
 | Runtime | Node >= 22, pnpm 10, Turbo 2 |
 
+> This repo is pnpm/turbo — any global bun/npm preference does not apply here.
+
 ## Repo structure
 
 ```

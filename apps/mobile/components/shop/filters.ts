@@ -9,7 +9,7 @@
  * so it's unit-checkable and importable by the screen.
  */
 import type { BrandTier, ItemCategory, ShopSearchQuery } from '@era/core/shop';
-import { budgetBandToQuery } from '@era/core/shop';
+import { BUDGET_BANDS, budgetBandToQuery } from '@era/core/shop';
 
 /** The full filter selection. `null`/empty means the dimension is unfiltered. */
 export interface ShopFilterState {
@@ -35,6 +35,30 @@ export function hasActiveFilters(filters: ShopFilterState): boolean {
     filters.budgetId !== null ||
     filters.size.trim().length > 0
   );
+}
+
+/**
+ * Fold a `ShopSearchQuery` (e.g. a wardrobe gap's `suggestedQuery`) into the
+ * mobile filter state, so "Fill this gap" lands in a pre-filtered Shop view via
+ * the exact same filter→query path a manual refine uses. Category and brand tier
+ * map straight across; any price bounds resolve back to their budget band (the
+ * inverse of {@link toSearchQuery}), and anything unset clears to `EMPTY_FILTERS`.
+ * Total: an unmatched price range simply carries no budget chip (all prices).
+ */
+export function filtersFromQuery(query: ShopSearchQuery): ShopFilterState {
+  const budgetId =
+    query.minPrice === undefined && query.maxPrice === undefined
+      ? null
+      : (BUDGET_BANDS.find((band) => {
+          const bounds = budgetBandToQuery(band.id);
+          return bounds.minPrice === query.minPrice && bounds.maxPrice === query.maxPrice;
+        })?.id ?? null);
+  return {
+    brandTier: query.brandTier ?? null,
+    category: query.category ?? null,
+    budgetId,
+    size: query.size ?? '',
+  };
 }
 
 /** Translate the filter state (plus a page) into the provider query. */

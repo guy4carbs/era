@@ -60,6 +60,25 @@ export function queryFromFilters(filters: ShopFilterState): ShopSearchQuery {
   };
 }
 
+/**
+ * The inverse of {@link queryFromFilters}: fold a provider query back into filter
+ * state so a pre-filtered entry point — a wardrobe gap's `suggestedQuery` — can
+ * drive the same chip bar the user would set by hand. Price bounds resolve back to
+ * the single budget band that set them; a query with no (or an unrecognised) price
+ * pair leaves budget unset. Every axis the query omits stays `null`.
+ */
+export function filtersFromQuery(query: ShopSearchQuery): ShopFilterState {
+  const band = BUDGET_BANDS.find(
+    (b) => b.minPrice === query.minPrice && b.maxPrice === query.maxPrice,
+  );
+  return {
+    budgetId: band?.id ?? null,
+    brandTier: query.brandTier ?? null,
+    category: query.category ?? null,
+    size: query.size ?? null,
+  };
+}
+
 export interface ShopFiltersProps {
   filters: ShopFilterState;
   onChange: (next: ShopFilterState) => void;

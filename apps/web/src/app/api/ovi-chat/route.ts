@@ -33,6 +33,7 @@ import {
   loadOviItems,
   loadRecentWearLogs,
   loadStyleProfile,
+  styleWhatsMissing,
   styleWithOvi,
 } from '../../../lib/ovi-server.ts';
 
@@ -166,6 +167,19 @@ export async function POST(request: Request): Promise<NextResponse> {
     loadOviItems(db, userId),
     loadRecentWearLogs(db, userId),
   ]);
+
+  // "What am I missing?" — a deterministic, model-free turn. The gaps come from
+  // the engine (findWardrobeGaps), never the LLM; Ovi only narrates around them.
+  // We short-circuit before any Claude call, but still log a null-model usage row
+  // so the turn counts against the daily limit like every other deterministic Ovi
+  // path. Weather is irrelevant to gaps, so it is not fetched here. The `gaps`
+  // (each with its suggestedQuery) ride the response so the client can render
+  // tappable "fill this gap" actions.
+  if (intent === 'whats_missing') {
+    const { reply, gaps } = styleWhatsMissing({ items: closet, profile, wearLogs: recentWears });
+    await recordUsage(db, userId, 'ovi-chat', { model: null });
+    return NextResponse.json({ reply, outfit: null, gaps, source: 'deterministic', weather: null });
+  }
 
   // Coarse, never persisted — used only for this styling turn.
   const weather = location ? await fetchWeather(location.lat, location.lon) : null;

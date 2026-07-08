@@ -626,3 +626,12 @@ export function rankProducts(
 
   return ranked.sort((a, b) => b.score - a.score);
 }
+
+// -----------------------------------------------------------------------------
+// Wardrobe-gap engine — the honest "what's worth shopping for" counterpart to
+// the ranker above. Re-exported here so a caller gets gaps and product ranking
+// from the one `@era/core/shop` import; also available via `@era/core/wardrobe-gaps`.
+// -----------------------------------------------------------------------------
+
+export { findWardrobeGaps } from './wardrobe-gaps.ts';
+export type { WardrobeGap } from './wardrobe-gaps.ts';
