@@ -13,6 +13,7 @@
     "./quiz": "./src/quiz.ts",
     "./ovi": "./src/ovi.ts",
     "./shop": "./src/shop.ts",
+    "./wardrobe-gaps": "./src/wardrobe-gaps.ts",
     "./analytics": "./src/analytics.ts",
     "./reporting": "./src/reporting.ts"
   },

@@ -99,6 +99,29 @@ const CLOSET_CATEGORY_LABELS: Record<string, string> = {
 };
 
 /**
+ * A lowercased category label for mid-sentence use, drawn from the same map
+ * {@link strings.closet.categoryLabel} reads — so 'bottom' → "bottoms" reads
+ * naturally inside a gap sentence. Unknown slugs fall back to a plain "pieces".
+ */
+const categoryLabelLower = (category: string): string =>
+  (CLOSET_CATEGORY_LABELS[category] ?? 'pieces').toLowerCase();
+
+/**
+ * Joins owned category slugs into a warm, lowercased list — "tops and shoes",
+ * "tops, shoes, and bags". Used to name what a gap pairs with, in plain English.
+ */
+const joinCategoryLabels = (categories: readonly string[] = []): string => {
+  const labels = (categories ?? []).map(categoryLabelLower);
+  if (labels.length <= 1) return labels.join('');
+  if (labels.length === 2) return labels.join(' and ');
+  const last = labels[labels.length - 1] as string;
+  return `${labels.slice(0, -1).join(', ')}, and ${last}`;
+};
+
+/** Outfit count with singular at one: `newOutfits(1)` → "1 new outfit". */
+const newOutfits = (n: number): string => `${n} new ${n === 1 ? 'outfit' : 'outfits'}`;
+
+/**
  * The full copy deck, grouped by surface. `as const` so every leaf is a literal
  * type — callers get autocomplete on the exact strings and can't typo a key.
  */
@@ -636,6 +659,75 @@ export const strings = {
        */
       paletteMatch: (colors?: string): string =>
         colors ? `Matches your palette — the ${colors} you reach for.` : 'Matches your palette.',
+    },
+
+    /**
+     * Wardrobe gaps — the honest, restrained answer to "what am I missing?". The
+     * engine surfaces at most a handful of GENUINE gaps: categories thin enough
+     * that one more piece meaningfully unlocks looks from what's already owned.
+     * This is not a shopping list and never manufactures need — a well-covered
+     * closet shows few gaps, often none (see {@link strings.shop.gaps.empty}).
+     * Every line here reports only the numbers the engine passes in; it never
+     * overstates. Category names come lowercased mid-sentence from the same map
+     * {@link strings.closet.categoryLabel} uses, so the copy and the gallery agree.
+     */
+    gaps: {
+      /** Section heading — sets the restrained frame before any gap is listed. */
+      title: 'A few real gaps',
+      /**
+       * One-line intro. Names these as genuine gaps, not a feed, and sets the
+       * honest expectation that a covered closet has few — sometimes none.
+       */
+      intro:
+        "These are genuine gaps — the pieces that would unlock the most from what you already own. A covered closet shows only a few, sometimes none.",
+      /**
+       * The heart of the feature: ONE honest sentence per gap, built from the
+       * gap's own numbers. Names the thin category, how little is owned, the
+       * owned categories a new piece would pair with, and how many new outfits it
+       * unlocks — never more than the fields say. `ownedCount` 0 reads as a plain
+       * "you have no ___ yet"; otherwise it counts what's there without a scold.
+       */
+      reason: (gap: {
+        readonly category: string;
+        readonly ownedCount: number;
+        readonly unlocksOutfits: number;
+        readonly pairsWith: readonly string[];
+      }): string => {
+        const cat = categoryLabelLower(gap.category);
+        const pairs = joinCategoryLabels(gap.pairsWith);
+        // Coerce at the boundary so a partial/absent field never renders as
+        // "undefined" or NaN in user-facing copy.
+        const owned = typeof gap.ownedCount === 'number' ? gap.ownedCount : 0;
+        const unlockCount = typeof gap.unlocksOutfits === 'number' ? gap.unlocksOutfits : 0;
+        const unlocks = unlockCount > 0;
+        // What one more piece would do — pair, unlock, or both. Stays truthful:
+        // drops any clause the passed-in fields don't support.
+        let tail: string;
+        if (pairs && unlocks) tail = `would pair with your ${pairs} to unlock ${newOutfits(unlockCount)}`;
+        else if (unlocks) tail = `unlocks ${newOutfits(unlockCount)}`;
+        else if (pairs) tail = `would pair with your ${pairs}`;
+        else tail = 'would round things out';
+        return owned <= 0
+          ? `You have no ${cat} yet — adding one ${tail}.`
+          : `You're light on ${cat} — ${owned} in your closet so far, and one more ${tail}.`;
+      },
+      /** Outfit-unlock badge on a gap card. Singular at one: "Unlocks 1 new outfit". */
+      unlocksLabel: (n: number): string => `Unlocks ${newOutfits(n)}`,
+      /** CTA that opens Shop pre-filtered to the gap's category — plain, not pushy. */
+      fillCta: 'Fill this gap',
+      /**
+       * Empty state — the brand's whole point. When the closet is well-covered,
+       * we say so warmly and ask for nothing. No fabricated gap, no nudge to buy.
+       */
+      empty: 'Your essentials are covered — nothing to chase right now.',
+      /**
+       * Ovi's lead-in when she presents gaps in chat (the "What am I missing?"
+       * intent). Restrained and honest: frames the list as the few pieces worth
+       * adding, and quietly reaffirms that most of what she'll suggest is already
+       * buildable from the closet. Pairs with {@link strings.ovi.gapHonest}.
+       */
+      oviIntro:
+        "Here's what I'd actually add — just the real gaps, nothing you don't need. Everything else, you can already build.",
     },
 
     /**

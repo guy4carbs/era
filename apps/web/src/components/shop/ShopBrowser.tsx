@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties }
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { motion as motionToken, layout, typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
-import type { RankedProduct } from '@era/core/shop';
+import type { RankedProduct, WardrobeGap } from '@era/core/shop';
 import { transitionFor } from '../../lib/motion';
 import {
   listSaved,
@@ -14,10 +14,12 @@ import {
   unsaveProduct,
   type SavedShopProduct,
 } from '../../lib/shop-client';
+import { GapsHero } from './GapsHero';
 import { ShopCard } from './ShopCard';
 import {
   EMPTY_FILTERS,
   ShopFilters,
+  filtersFromQuery,
   queryFromFilters,
   type ShopFilterState,
 } from './ShopFilters';
@@ -154,6 +156,14 @@ export function ShopBrowser() {
     }
   }
 
+  // "Fill this gap": fold the gap's pre-filtered query into the Shop filters. That
+  // reuses the one filter→query→search path — the `load` effect keyed on `filters`
+  // re-runs on its own — so the user lands in a Shop view scoped to the gap's
+  // category (and any implied tier), no parallel search.
+  function handleFillGap(gap: WardrobeGap) {
+    setFilters(filtersFromQuery(gap.suggestedQuery));
+  }
+
   const visible = useMemo(
     () => products.filter((p) => !dismissed.has(p.id)),
     [products, dismissed],
@@ -175,6 +185,8 @@ export function ShopBrowser() {
 
       {view === 'browse' ? (
         <>
+          <GapsHero onFill={handleFillGap} />
+
           <ShopFilters filters={filters} onChange={setFilters} />
 
           {status !== 'error' ? (

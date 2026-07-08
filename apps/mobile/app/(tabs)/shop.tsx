@@ -17,7 +17,7 @@
  * Ranking is a bonus, not a gate: `rankProducts` never hard-fails, so a dormant
  * ranker still yields a browsable grid (unranked, no labels).
  */
-import type { RankedProduct } from '@era/core/shop';
+import type { RankedProduct, WardrobeGap } from '@era/core/shop';
 import { strings } from '@era/core/strings';
 import { layout, radii, spacing, typeRamp } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
@@ -29,6 +29,9 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Button } from '@/components/Button';
 import {
   EMPTY_FILTERS,
+  filtersFromQuery,
+  GapsHero,
+  getWardrobeGaps,
   hasActiveFilters,
   listSaved,
   logRecEvent,
@@ -82,6 +85,11 @@ export default function ShopScreen() {
   // per-card GlassSheet would fill only its cell, not the screen.
   const [whyProduct, setWhyProduct] = useState<RankedProduct | null>(null);
 
+  // The genuine wardrobe gaps shown atop the ranked feed. Hydrated once,
+  // independently and non-blocking: `getWardrobeGaps` degrades to [] on any error,
+  // so a gaps miss never breaks browse — the hero just collapses to its empty line.
+  const [gaps, setGaps] = useState<readonly WardrobeGap[]>([]);
+
   // Hydrate the wishlist once. `listSaved` degrades to [] on error, so this always
   // resolves — the Saved view opens empty rather than erroring.
   useEffect(() => {
@@ -95,6 +103,27 @@ export default function ShopScreen() {
     return () => {
       active = false;
     };
+  }, []);
+
+  // Hydrate the wardrobe gaps once, non-blocking. `getWardrobeGaps` degrades to []
+  // on error, so this always resolves — a gaps failure never blocks the feed.
+  useEffect(() => {
+    let active = true;
+    void getWardrobeGaps().then((next) => {
+      if (active) setGaps(next);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // "Fill this gap": apply the gap's pre-filtered query to the Shop filter state
+  // (via the same filter→query path a manual refine uses) and return to the ranked
+  // feed. Changing `filters` re-runs `loadReset`, landing in a pre-filtered view.
+  const onFillGap = useCallback((gap: WardrobeGap) => {
+    void Haptics.selectionAsync();
+    setFilters(filtersFromQuery(gap.suggestedQuery));
+    setView('forYou');
   }, []);
 
   // Every axis is now a tap-only chip, so each selection re-queries immediately —
@@ -289,12 +318,17 @@ export default function ShopScreen() {
           )
         }
         ListHeaderComponent={
-          <ShopHeader
-            view={view}
-            onSelectView={setView}
-            active={hasActiveFilters(filters)}
-            onOpenFilters={() => setFiltersOpen(true)}
-          />
+          <>
+            <ShopHeader
+              view={view}
+              onSelectView={setView}
+              active={hasActiveFilters(filters)}
+              onOpenFilters={() => setFiltersOpen(true)}
+            />
+            {/* The gaps band leads the ranked feed only — it's guidance toward the
+                picks below, not part of the Saved wishlist. */}
+            {saved ? null : <GapsHero gaps={gaps} onFill={onFillGap} />}
+          </>
         }
         ListEmptyComponent={
           saved ? (

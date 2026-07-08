@@ -3,7 +3,9 @@ export { ShopCard, type ShopCardProduct } from './ShopCard';
 export { ShopFilters } from './ShopFilters';
 export { WhyLabel } from './WhyLabel';
 export { WhyDetailSheet } from './WhyDetailSheet';
+export { GapsHero } from './GapsHero';
 export {
+  getWardrobeGaps,
   listSaved,
   logRecEvent,
   rankProducts,
@@ -16,6 +18,7 @@ export {
 } from './api';
 export {
   EMPTY_FILTERS,
+  filtersFromQuery,
   hasActiveFilters,
   toSearchQuery,
   type ShopFilterState,
