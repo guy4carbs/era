@@ -204,8 +204,10 @@ export function OutfitCard({
       // Fire the funnel event only on a real 201 — the wear actually landed.
       analytics.track('wear_logged', { via: wearSurface });
     } else {
-      // Failed quietly: let the wearer try again without breaking the card.
+      // Revert so the wearer can retry, and surface the honest failure line
+      // through the parent's toast (Gauge LOW: don't fail silently).
       setWearStatus('idle');
+      onSaved(strings.wear.logFailed);
     }
   }
 

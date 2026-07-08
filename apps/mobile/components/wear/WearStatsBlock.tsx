@@ -63,13 +63,17 @@ export function WearStatsBlock({ itemId, currency, seedWearCount, seedPrice, onT
     void load();
   }, [load]);
 
+  // A usable price is one costPerWear accepts (positive, parseable); probe with a
+  // wear count of 1 so the check is about the price alone. This matches web's
+  // ItemWearStats: any non-usable price (null, empty, OR garbage like 'abc')
+  // shows the gentle invite, never a blank — Gauge usability gate.
+  const priceUsable = costPerWear(price, 1) !== null;
   const cpw = costPerWear(price, wearCount);
-  const costLine =
-    cpw !== null
+  const costLine = priceUsable
+    ? cpw !== null
       ? strings.wear.costPerWear(formatMoney(cpw, currency))
-      : price === null || price === ''
-        ? strings.wear.costPerWearUnknown
-        : null;
+      : null
+    : strings.wear.costPerWearUnknown;
 
   return (
     <View style={styles.container}>

@@ -6,6 +6,7 @@ import { motion as motionToken, typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { groupWearsByDay, type WearLogLike } from '@era/core/wear-stats';
 import { transitionFor } from '../../lib/motion';
+import { localToday } from '../../lib/local-date';
 import type { WornItem, WornLog } from './types';
 
 export interface WearCalendarProps {
@@ -23,11 +24,6 @@ const WEEKDAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'] as const;
 const MAX_DAY_THUMBS = 3;
 
 const pad2 = (n: number): string => String(n).padStart(2, '0');
-
-/** Today's calendar date in UTC (`YYYY-MM-DD`) — mirrors the server's wear-log default. */
-function todayUtc(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 /** Resolve a day's `itemIds` (deduped, in first-seen order) to owned pieces. */
 function resolveDayItems(logs: readonly WearLogLike[], itemsById: ReadonlyMap<string, WornItem>): WornItem[] {
@@ -67,7 +63,9 @@ export function WearCalendar({ month, logs, itemsById }: WearCalendarProps) {
 
   const daysInMonth = new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
   const firstWeekday = new Date(Date.UTC(year, monthIndex, 1)).getUTCDay();
-  const today = todayUtc();
+  // The today-ring keys off the LOCAL date (matches the wornOn a log writes),
+  // not UTC — same Gauge TZ fix as logWear. See lib/local-date.
+  const today = localToday();
 
   // Selected day resolves to its pieces + a long-form heading for the panel.
   const selected = useMemo(() => {

@@ -6,6 +6,7 @@ import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { buildMonthlyRecap } from '@era/core/wear-stats';
 import { Container } from '../Container';
+import { localMonthToday } from '../../lib/local-date';
 import { MonthlyRecapCard } from './MonthlyRecapCard';
 import { WearCalendar } from './WearCalendar';
 import type { WornItem, WornMonthData } from './types';
@@ -14,11 +15,6 @@ type LoadState =
   | { status: 'loading' }
   | { status: 'error' }
   | { status: 'ready'; data: WornMonthData };
-
-/** Current calendar month as `YYYY-MM` in UTC (matches the wear-log date basis). */
-function currentMonthUtc(): string {
-  return new Date().toISOString().slice(0, 7);
-}
 
 /** Shift a `YYYY-MM` string by whole months, wrapping the year. */
 function shiftMonth(month: string, delta: number): string {
@@ -49,7 +45,7 @@ function monthLabelOf(month: string): string {
  * `strings.wear`.
  */
 export function WornScreen() {
-  const [month, setMonth] = useState<string>(currentMonthUtc);
+  const [month, setMonth] = useState<string>(localMonthToday);
   const [state, setState] = useState<LoadState>({ status: 'loading' });
 
   useEffect(() => {
@@ -95,7 +91,7 @@ export function WornScreen() {
   );
 
   const monthLabel = monthLabelOf(month);
-  const atCurrentMonth = month >= currentMonthUtc();
+  const atCurrentMonth = month >= localMonthToday();
 
   return (
     <Container>

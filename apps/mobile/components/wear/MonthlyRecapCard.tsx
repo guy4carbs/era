@@ -28,6 +28,9 @@ import { formatMoney, monthLabel } from './format';
 /** The brand mark on the card — a proper-noun wordmark, not UI copy. */
 const WORDMARK = 'Era';
 
+/** Wordmark tracking — web's 0.14em over the subhead size (~15pt), in px. */
+const LETTERSPACE = Math.round(typeRamp.subhead.pt * 0.14 * 10) / 10;
+
 interface MonthlyRecapCardProps {
   readonly recap: MonthlyRecap;
   /** The month's items, for resolving a top piece's cutout + name. */
@@ -78,24 +81,27 @@ export function MonthlyRecapCard({ recap, items }: MonthlyRecapCardProps) {
       ]}
     >
       <View style={styles.header}>
+        {/* Quiet letterspaced small-caps mark in accent — matches web's wordmark
+            so a shared screenshot reads as a sibling of the web recap. */}
         <Text
           accessibilityRole="text"
           style={{
-            color: colors.text,
-            fontSize: typeRamp.largeTitle.pt,
-            lineHeight: typeRamp.largeTitle.lineHeight,
+            color: colors.accent,
+            fontSize: typeRamp.subhead.pt,
+            lineHeight: typeRamp.subhead.lineHeight,
             fontWeight: '700',
+            letterSpacing: LETTERSPACE,
+            textTransform: 'uppercase',
           }}
         >
           {WORDMARK}
         </Text>
         <Text
           style={{
-            color: colors.accent,
+            color: colors.secondaryStrong,
             fontSize: typeRamp.footnote.pt,
             lineHeight: typeRamp.footnote.lineHeight,
             fontWeight: '600',
-            textTransform: 'uppercase',
           }}
         >
           {strings.wear.recap.monthHeader(label)}
@@ -108,7 +114,7 @@ export function MonthlyRecapCard({ recap, items }: MonthlyRecapCardProps) {
           color: colors.text,
           fontSize: typeRamp.title1.pt,
           lineHeight: typeRamp.title1.lineHeight,
-          fontWeight: '600',
+          fontWeight: '700',
         }}
       >
         {strings.wear.recap.title}
@@ -246,16 +252,17 @@ function categoryLower(category: string): string {
 
 const styles = StyleSheet.create({
   card: {
-    gap: spacing.s3,
+    gap: spacing.s4,
     padding: spacing.s6,
-    borderRadius: radii.hero,
+    borderRadius: radii.card,
     borderWidth: StyleSheet.hairlineWidth,
     borderCurve: 'continuous',
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'baseline',
     justifyContent: 'space-between',
+    gap: spacing.s3,
   },
   metrics: {
     gap: spacing.s1,

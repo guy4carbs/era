@@ -7,9 +7,14 @@
  * OPTIONAL: the item-detail card knows it (`item.currency`), the recap's month
  * feed does not carry it, so a bare number is the honest fallback there.
  *
- * Month helpers work in UTC to match the server's `wornOn` (a pg `date` defaulted
- * to today UTC) and the `@era/core/wear-stats` `YYYY-MM` contract. Every parser is
- * defensive: a malformed month yields sensible zeros, never a throw.
+ * Clock helpers read LOCAL wall-clock time, NOT UTC (Gauge gate). A wear is a
+ * lived event: an evening log in Chicago must carry that evening's LOCAL date, or
+ * the server's UTC-today default rolls a 7pm log to tomorrow — and a July-31
+ * evening wear then vanishes from July's recap. So `localToday()` (what logWear
+ * sends as `wornOn`), `currentMonth()`, and the calendar's today-ring all read the
+ * device clock. Pure calendar arithmetic on an explicit `YYYY-MM` (shiftMonth,
+ * firstWeekdayOf) stays UTC — it never reads "now", so it's offset-independent.
+ * Every parser is defensive: a malformed month yields sensible zeros, never a throw.
  */
 
 /** Month names for a mid-sentence, `Intl`-free label — index 0 = January. */
@@ -57,14 +62,20 @@ function pad2(n: number): string {
   return n < 10 ? `0${n}` : String(n);
 }
 
-/** The current calendar month as `YYYY-MM`, in UTC. */
+/** The current LOCAL calendar month as `YYYY-MM` (device wall clock, not UTC). */
 export function currentMonth(): string {
-  return new Date().toISOString().slice(0, 7);
+  const now = new Date();
+  return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}`;
 }
 
-/** Today's calendar date as `YYYY-MM-DD`, in UTC (matches a wear log's default). */
-export function todayUtc(): string {
-  return new Date().toISOString().slice(0, 10);
+/**
+ * Today's LOCAL calendar date as `YYYY-MM-DD` (device wall clock) — the date a
+ * wear should carry, and what logWear sends as `wornOn`. Local, not UTC, so an
+ * evening log west of UTC keeps today's date instead of rolling to tomorrow.
+ */
+export function localToday(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
 }
 
 /**

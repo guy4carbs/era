@@ -19,7 +19,7 @@ import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '@/lib/theme';
 
 import type { WearMonthItem } from './api';
-import { WEEKDAY_LABELS, currentMonth, dayDate, firstWeekdayOf, todayUtc } from './format';
+import { WEEKDAY_LABELS, currentMonth, dayDate, firstWeekdayOf, localToday } from './format';
 
 /** Seven columns — each cell is exactly a seventh so the grid wraps cleanly. */
 const CELL_WIDTH = `${100 / 7}%`;
@@ -38,7 +38,7 @@ export function WearCalendar({ month, daysInMonth, byDay, items }: WearCalendarP
 
   const itemById = useMemo(() => new Map(items.map((item) => [item.id, item])), [items]);
   const leading = firstWeekdayOf(month);
-  const today = month === currentMonth() ? todayUtc() : null;
+  const today = month === currentMonth() ? localToday() : null;
 
   // The pieces worn on the selected day, deduped across that day's logs and
   // resolved to owned items (unknown/outfit-only ids simply drop out).

@@ -24,6 +24,9 @@
 import { strings } from '@era/core/strings';
 
 import { authClient } from '@/lib/auth-client';
+// Leaf date helper (no app imports), so this direct file import forms no cycle
+// with the components/wear barrel that re-exports it.
+import { localToday } from '@/components/wear/format';
 import { LimitReachedError, limitFromFetchError, limitFromResponse } from '@/lib/rate-limit';
 
 import type { OviIntent, ProposedOutfit } from '@era/core/ovi';
@@ -221,14 +224,18 @@ export interface WearLog {
 /**
  * Log a look as worn today. Accepts a saved outfit id or bare item ids (a
  * proposal has no id yet, so the Feed "Today" card logs by itemIds). `wornOn`
- * is omitted so the server dates it today. Throws on any non-201 so the caller
- * can revert its optimistic state.
+ * defaults to the device's LOCAL calendar date (via {@link localToday}) rather
+ * than being omitted: the server's own default is UTC-today, which mis-dates an
+ * evening log west of UTC (a 7pm Chicago wear lands tomorrow, and a July-31
+ * evening wear drops out of July's recap) — Gauge's TZ gate. A caller may still
+ * pass an explicit `wornOn`. Throws on any non-201 so the caller can revert its
+ * optimistic state.
  */
 export async function logWear(input: WearLogInput): Promise<WearLog> {
   const body: Record<string, unknown> = {};
   if (input.outfitId) body.outfitId = input.outfitId;
   if (input.itemIds && input.itemIds.length > 0) body.itemIds = input.itemIds;
-  if (input.wornOn) body.wornOn = input.wornOn;
+  body.wornOn = input.wornOn ?? localToday();
   if (input.note) body.note = input.note;
   if (Number.isFinite(input.lat)) body.lat = input.lat;
   if (Number.isFinite(input.lon)) body.lon = input.lon;

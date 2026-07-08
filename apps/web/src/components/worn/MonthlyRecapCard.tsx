@@ -41,6 +41,9 @@ export function MonthlyRecapCard({ recap, itemsById, monthLabel }: MonthlyRecapC
   return (
     <section style={cardStyle} aria-label={copy.title}>
       <header style={headerStyle}>
+        {/* Axiom spec (kept in lockstep with mobile): quiet letterspaced
+            uppercase 'ERA' mark in accent, with the month prominent in text
+            colour directly below it. */}
         <span style={wordmarkStyle}>Era</span>
         <span style={monthStyle}>{copy.monthHeader(monthLabel)}</span>
       </header>
@@ -108,28 +111,31 @@ const cardStyle: CSSProperties = {
   boxShadow: boxShadows.e2,
 };
 
+// Mark stacked directly above the month, left-aligned.
 const headerStyle: CSSProperties = {
   display: 'flex',
-  alignItems: 'baseline',
-  justifyContent: 'space-between',
-  gap: 'var(--space-3)',
+  flexDirection: 'column',
+  gap: 'var(--space-1)',
 };
 
-// The Era wordmark — a quiet brand mark, letterspaced small caps.
+// The Era wordmark — a quiet, small, letterspaced uppercase mark in the accent.
 const wordmarkStyle: CSSProperties = {
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
+  fontSize: typeRamp.footnote.rem,
+  lineHeight: `${typeRamp.footnote.lineHeight}px`,
   fontWeight: 700,
-  letterSpacing: '0.14em',
+  letterSpacing: '0.16em',
   textTransform: 'uppercase',
   color: 'var(--color-accent)',
 };
 
+// The month — prominent, uppercase, in text colour (the card's dateline).
 const monthStyle: CSSProperties = {
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  fontWeight: 600,
-  color: 'var(--color-secondary-strong)',
+  fontSize: typeRamp.title3.rem,
+  lineHeight: `${typeRamp.title3.lineHeight}px`,
+  fontWeight: 700,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  color: 'var(--color-text)',
 };
 
 const titleStyle: CSSProperties = {

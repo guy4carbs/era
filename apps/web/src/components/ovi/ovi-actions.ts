@@ -5,6 +5,7 @@
  */
 import type { OviIntent, ProposedOutfit } from '@era/core/ovi';
 
+import { localToday } from '../../lib/local-date';
 import type { OviChatApiResponse, OviTodayApiResponse } from './types';
 
 /** The outfit row `POST /api/ovi/accept` returns on success (201). */
@@ -84,9 +85,9 @@ export interface WearLogInput {
   lat?: number | null;
   lon?: number | null;
   /**
-   * The day worn, as `YYYY-MM-DD` (UTC). Omit to default to today on the server —
-   * pass it only when back-dating a log (e.g. the calendar's "log a past day").
-   * An invalid date is rejected by the server, never silently coerced.
+   * The day worn, as `YYYY-MM-DD`. Omit and `logWear` fills in the user's LOCAL
+   * calendar date ({@link localToday}); pass it only when back-dating a log. An
+   * invalid date is rejected by the server, never silently coerced.
    */
   wornOn?: string;
 }
@@ -98,6 +99,10 @@ export interface WearLogInput {
  * the weather snapshot rides along without a fresh permission prompt. Returns
  * true only on a real 201 so the caller fires `wear_logged` exactly once the wear
  * landed; any failure resolves false and is handled quietly.
+ *
+ * `wornOn` defaults to the user's LOCAL calendar date, NOT the server's UTC today
+ * (Gauge gate, TZ veto): the server would otherwise stamp an evening log west of
+ * UTC a day ahead. See {@link localToday}.
  */
 export async function logWear(input: WearLogInput): Promise<boolean> {
   const body: Record<string, unknown> = {};
@@ -107,7 +112,7 @@ export async function logWear(input: WearLogInput): Promise<boolean> {
     body.lat = input.lat;
     body.lon = input.lon;
   }
-  if (input.wornOn) body.wornOn = input.wornOn;
+  body.wornOn = input.wornOn ?? localToday();
   try {
     const res = await fetch('/api/wear-logs', {
       method: 'POST',
