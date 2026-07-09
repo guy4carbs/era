@@ -308,15 +308,17 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
   },
   // A small accent dot pinned to the card's top-right, ringed in the surface
-  // colour so it reads over any cutout. Diameter/inset from spacing tokens; the
-  // radius equals the diameter so it renders fully round.
+  // colour so it reads over any cutout (a mobile-only addition — web tiles have a
+  // consistent light backing). Diameter + inset match web's GalleryTile for
+  // parity (spacing.s2 = 8px dot, itemCard.padding = 12px in); the radius equals
+  // the diameter so it renders fully round.
   draftDot: {
     position: 'absolute',
-    top: spacing.s2,
-    right: spacing.s2,
-    width: spacing.s3,
-    height: spacing.s3,
-    borderRadius: spacing.s3,
+    top: layout.itemCard.padding,
+    right: layout.itemCard.padding,
+    width: spacing.s2,
+    height: spacing.s2,
+    borderRadius: spacing.s2,
     borderWidth: StyleSheet.hairlineWidth,
   },
   image: {
