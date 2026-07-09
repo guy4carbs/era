@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, useReducedMotion } from 'framer-motion';
 import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { Button } from '../Button';
+import { BulkCapture } from './BulkCapture';
 import { ConfirmItem } from './ConfirmItem';
 import { PhotoPicker } from './PhotoPicker';
+import { ReceiptImport } from './ReceiptImport';
+import { StatusPulse } from './StatusPulse';
 import { downscaleToJpeg } from './downscale';
 import { trackFirstOnce } from '../../lib/analytics';
 import { useSession } from '../../lib/auth-client';
@@ -26,7 +28,11 @@ type Stage =
   | 'importing'
   | 'confirm'
   | 'saved'
-  | 'error';
+  | 'error'
+  // The two additional capture paths, each a self-contained sub-flow rendered in
+  // place of the picker (own internal steps; the top Cancel still exits to closet).
+  | 'receipt'
+  | 'bulk';
 
 /** Which stage failed — drives what the retry action re-runs. */
 type FailedStage = 'load' | 'upload' | 'process' | 'confirm';
@@ -76,13 +82,6 @@ const statusColumnStyle: CSSProperties = {
   textAlign: 'center',
 };
 
-const statusTextStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
-};
-
 const errorTextStyle: CSSProperties = {
   margin: 0,
   fontSize: typeRamp.body.rem,
@@ -97,22 +96,6 @@ const linkErrorStyle: CSSProperties = {
   lineHeight: `${typeRamp.footnote.lineHeight}px`,
   color: 'var(--color-rust)',
 };
-
-/** A gentle breathing status line for the in-flight stages (reduced-motion safe). */
-function StatusPulse({ label }: { label: string }) {
-  const reduced = useReducedMotion();
-  return (
-    <div style={statusColumnStyle} aria-live="polite">
-      <motion.p
-        style={statusTextStyle}
-        animate={reduced ? undefined : { opacity: [0.55, 1, 0.55] }}
-        transition={reduced ? undefined : { duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
-      >
-        {label}
-      </motion.p>
-    </div>
-  );
-}
 
 /**
  * On a resume we lack the process result, so infer whether vision produced tags
@@ -313,6 +296,18 @@ export function AddItemFlow({ resumeItemId = null }: AddItemFlowProps) {
     void runImport(url);
   }
 
+  // The two additional capture paths. Each is a self-contained sub-flow; entering
+  // one clears any stale link-import notice so it doesn't linger on return.
+  function handleReceipt() {
+    setLinkError(null);
+    setStage('receipt');
+  }
+
+  function handleBulk() {
+    setLinkError(null);
+    setStage('bulk');
+  }
+
   function handleRetry() {
     switch (failedStage) {
       case 'load':
@@ -335,7 +330,12 @@ export function AddItemFlow({ resumeItemId = null }: AddItemFlowProps) {
     if (resumeItemId) void runLoad(resumeItemId);
   }, [resumeItemId]);
 
-  const showCancel = stage === 'picker' || stage === 'confirm' || stage === 'error';
+  const showCancel =
+    stage === 'picker' ||
+    stage === 'confirm' ||
+    stage === 'error' ||
+    stage === 'receipt' ||
+    stage === 'bulk';
 
   return (
     <main style={screenStyle}>
@@ -361,8 +361,21 @@ export function AddItemFlow({ resumeItemId = null }: AddItemFlowProps) {
               linkValue={linkUrl}
               onLinkChange={setLinkUrl}
               linkFailed={Boolean(linkError)}
+              onBulk={handleBulk}
+              onReceipt={handleReceipt}
             />
           </>
+        ) : null}
+
+        {stage === 'receipt' ? (
+          <ReceiptImport onReview={() => router.push('/closet')} />
+        ) : null}
+
+        {stage === 'bulk' ? (
+          <BulkCapture
+            onDone={() => router.push('/closet')}
+            onBack={() => setStage('picker')}
+          />
         ) : null}
 
         {stage === 'loading' ? <StatusPulse label={strings.closet.processing} /> : null}

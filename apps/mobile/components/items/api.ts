@@ -92,6 +92,46 @@ export interface ImportResult extends ProcessResult {
   readonly meta: Record<string, unknown>;
 }
 
+/**
+ * A single garment created by the batch route — one crop segmented out of a
+ * flat-lay, already run through the same pipeline a lone photo takes, so it lands
+ * as an unconfirmed draft the per-item confirm can review by id.
+ */
+export interface BatchItem {
+  readonly id: string;
+  readonly name: string;
+  readonly category: ItemCategory;
+  /** The resolved (signed/public) display URL — cutout when bg removal landed. */
+  readonly imageUrl: string | null;
+}
+
+/** Why a batch returned no items — present only when `items` is empty. */
+export type BatchEmptyReason = 'segmentation_unavailable' | 'no_items_found';
+
+/** The 200 body of POST /api/process-batch — many drafts from one flat-lay. */
+export interface BatchResult {
+  readonly items: readonly BatchItem[];
+  /** How many segmented crops failed to process — the partial-failure signal. */
+  readonly failed: number;
+  /** Set only when `items` is empty: dormant credential vs nothing segmented. */
+  readonly reason?: BatchEmptyReason;
+}
+
+/**
+ * The global AI brake is engaged (HTTP 503) — an operator control, not a per-user
+ * cap. Retryable: the flat-lay is safe in R2, so the flow invites a later retry
+ * rather than surfacing an error. Mirrors {@link LimitReachedError} as a typed,
+ * catchable signal distinct from a genuine failure.
+ */
+export class AiPausedError extends Error {
+  readonly status = 503;
+
+  constructor() {
+    super('ai paused');
+    this.name = 'AiPausedError';
+  }
+}
+
 /** The structural slice of the auth client we call, named to stay strict. */
 interface AuthFetchClient {
   readonly $fetch?: <T>(
@@ -231,6 +271,54 @@ export async function importFromUrl(url: string): Promise<ImportResult> {
     method: 'POST',
     body: { url },
   });
+}
+
+/**
+ * Segment one already-uploaded flat-lay raw (PUT to items-raw via the same
+ * {@link requestUpload} → {@link uploadToR2} path a single photo takes) into many
+ * draft items. Mirrors {@link apiFetch}'s auth handling — session via `$fetch`,
+ * cookie fallback — but keeps the batch's richer status contract distinct: a 429
+ * throws {@link LimitReachedError} (daily cap), a 503 throws {@link AiPausedError}
+ * (global brake), and every other non-2xx throws a plain error the flow surfaces
+ * as a retry. The 200 body (items + partial-failure count + empty-reason) returns
+ * as-is; an empty `items` with a `reason` is a success, not a throw.
+ */
+export async function processBatch(rawKey: string): Promise<BatchResult> {
+  const client = authClient as unknown as AuthFetchClient;
+
+  if (typeof client.$fetch === 'function') {
+    const { data, error } = await client.$fetch<BatchResult>('/api/process-batch', {
+      method: 'POST',
+      body: { rawKey },
+    });
+    if (error) {
+      const limit = limitFromFetchError(error);
+      if (limit) throw limit;
+      if ((error as Record<string, unknown>).status === 503) throw new AiPausedError();
+      throw new Error(error.message ?? '/api/process-batch failed');
+    }
+    if (data === null) {
+      throw new Error('/api/process-batch failed');
+    }
+    return data;
+  }
+
+  const cookie = client.getCookie?.() ?? '';
+  const response = await fetch(`${baseURL}/api/process-batch`, {
+    method: 'POST',
+    headers: { cookie, 'content-type': 'application/json' },
+    body: JSON.stringify({ rawKey }),
+  });
+  if (!response.ok) {
+    if (response.status === 429) {
+      throw await limitFromResponse(response);
+    }
+    if (response.status === 503) {
+      throw new AiPausedError();
+    }
+    throw new Error(`/api/process-batch failed: ${response.status}`);
+  }
+  return (await response.json()) as BatchResult;
 }
 
 /** Patch an item's tags and/or confirm it. Returns the updated item. */

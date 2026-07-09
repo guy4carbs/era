@@ -18,6 +18,10 @@ export interface PhotoPickerProps {
   onLinkChange: (value: string) => void;
   /** When a prior import failed, the submit reads as a retry. */
   linkFailed?: boolean;
+  /** Enters the batch (several-at-once) capture path. */
+  onBulk: () => void;
+  /** Enters the receipt-import path. */
+  onReceipt: () => void;
 }
 
 const containerStyle: CSSProperties = {
@@ -97,6 +101,39 @@ const submitGlyphStyle: CSSProperties = {
   lineHeight: 1,
 };
 
+// The two secondary capture paths (batch + receipt) sit as quiet rows beneath
+// the link, subordinate to the two photo tiles — one primary way in (a photo),
+// a couple of understated alternates, rather than five equal choices.
+const moreSectionStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  paddingTop: 'var(--space-4)',
+  borderTop: '1px solid var(--color-hairline)',
+};
+
+const moreRowStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 'var(--space-3)',
+  minHeight: 'var(--touch-target-min)',
+  paddingInline: 'var(--space-2)',
+  background: 'transparent',
+  border: 'none',
+  cursor: 'pointer',
+  color: 'var(--color-secondary-strong)',
+  fontSize: typeRamp.subhead.rem,
+  fontWeight: 600,
+  textAlign: 'left',
+  width: '100%',
+};
+
+const moreGlyphStyle: CSSProperties = {
+  color: 'var(--color-secondary)',
+  fontSize: typeRamp.body.rem,
+  lineHeight: 1,
+};
+
 /** Parse a trimmed value to an https URL, or null when it isn't one. */
 function parseHttpsUrl(value: string): string | null {
   try {
@@ -121,6 +158,8 @@ export function PhotoPicker({
   linkValue,
   onLinkChange,
   linkFailed = false,
+  onBulk,
+  onReceipt,
 }: PhotoPickerProps) {
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -209,6 +248,21 @@ export function PhotoPicker({
             )}
           </Button>
         </div>
+      </div>
+
+      <div style={moreSectionStyle}>
+        <button type="button" style={moreRowStyle} onClick={onBulk}>
+          <span>{strings.closet.bulkCapture.entryCta}</span>
+          <span style={moreGlyphStyle} aria-hidden="true">
+            →
+          </span>
+        </button>
+        <button type="button" style={moreRowStyle} onClick={onReceipt}>
+          <span>{strings.closet.importReceipt.entryCta}</span>
+          <span style={moreGlyphStyle} aria-hidden="true">
+            →
+          </span>
+        </button>
       </div>
     </div>
   );
