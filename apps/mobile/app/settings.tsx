@@ -13,11 +13,16 @@ import { spacing, typeRamp } from '@era/tokens';
 import { Redirect, Stack, useRouter } from 'expo-router';
 import { useCallback, useState, type PropsWithChildren } from 'react';
 import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { PrivacyToggle } from '@/components/closet';
+import { PrivacyToggle, Toast } from '@/components/closet';
 import { PriceAlertSettings } from '@/components/notifications';
-import { DeleteAccountSheet, SettingRow, ThemeControl } from '@/components/settings';
+import {
+  DeleteAccountSheet,
+  ReceiptAddressSettings,
+  SettingRow,
+  ThemeControl,
+} from '@/components/settings';
 import { eraAuth, useSession } from '@/lib/auth-client';
 import { forceError, reportingActive } from '@/lib/reporting';
 import { useTheme } from '@/lib/theme';
@@ -32,8 +37,12 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 export default function SettingsScreen() {
   const { colors } = useTheme();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { data, isPending } = useSession();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  // Toast for the receipt-address regenerate confirmation/failure — owned here so
+  // it pins to the screen (above the home indicator), mirroring the closet idiom.
+  const [toast, setToast] = useState<string | null>(null);
 
   // Clear the session and return to the sign-in gate. Used by sign-out, by a
   // confirmed deletion, and by a 401 during deletion (session already gone).
@@ -93,6 +102,10 @@ export default function SettingsScreen() {
           <PriceAlertSettings />
         </Section>
 
+        <Section title={strings.settings.receiptAddress.title}>
+          <ReceiptAddressSettings onToast={setToast} />
+        </Section>
+
         <Section title={strings.settings.support}>
           <SettingRow
             label={strings.settings.contactSupport}
@@ -145,6 +158,8 @@ export default function SettingsScreen() {
           void exitToSignIn();
         }}
       />
+
+      <Toast message={toast} onHide={() => setToast(null)} bottom={insets.bottom + spacing.s6} />
     </View>
   );
 }

@@ -57,6 +57,15 @@ export const serverEnvSchema = z.object({
   // Optional base URL override for the affiliate feed, for STAGING only. Never
   // user-derived; the adapter pins a documented default when this is unset. Optional.
   AFFILIATE_FEED_BASE_URL: z.string().url().optional(),
+  // Inbound receipt email (Phase 2 — forward-a-receipt). Both OPTIONAL and the
+  // feature stays DORMANT until BOTH are provisioned. INBOUND_EMAIL_DOMAIN is the
+  // catch-all subdomain a user's private address lives on (`u_<token>@<domain>`);
+  // RESEND_INBOUND_WEBHOOK_SECRET is the Svix secret for the inbound webhook
+  // endpoint (SEPARATE from the outbound RESEND_WEBHOOK_SECRET). Read at the edge
+  // through isRealCredential, so a committed `change-me-…` placeholder reads as
+  // unconfigured. Never a client var — server-only.
+  INBOUND_EMAIL_DOMAIN: z.string().min(1).optional(),
+  RESEND_INBOUND_WEBHOOK_SECRET: z.string().min(1).optional(),
 });
 
 /** Public configuration exposed to the Next.js web client bundle. */

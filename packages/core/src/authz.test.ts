@@ -9,6 +9,9 @@ import {
   canInsertFollow,
   canInsertAiEvent,
   canInsertWaitlist,
+  canReadReceiptInboxToken,
+  canInsertReceiptInboxToken,
+  canRevokeReceiptInboxToken,
   type AuthContext,
 } from './authz.ts';
 
@@ -113,6 +116,26 @@ test('canInsertAiEvent throws UNAUTHENTICATED for anonymous', () => {
 
 test('canInsertWaitlist is always allowed, including anonymously', () => {
   assert.doesNotThrow(() => canInsertWaitlist());
+});
+
+// --- receipt inbox token guards ---------------------------------------------
+
+test('canReadReceiptInboxToken allows the owner and blocks others', () => {
+  assert.doesNotThrow(() => canReadReceiptInboxToken(ctxA, { userId: A }));
+  assertAuthz(() => canReadReceiptInboxToken(ctxB, { userId: A }), 'FORBIDDEN', [A, B]);
+  assertAuthz(() => canReadReceiptInboxToken(anon, { userId: A }), 'UNAUTHENTICATED', [A]);
+});
+
+test('canInsertReceiptInboxToken allows the owner to mint their own token', () => {
+  assert.doesNotThrow(() => canInsertReceiptInboxToken(ctxA, { userId: A }));
+  assertAuthz(() => canInsertReceiptInboxToken(ctxA, { userId: B }), 'FORBIDDEN', [A, B]);
+  assertAuthz(() => canInsertReceiptInboxToken(anon, { userId: A }), 'UNAUTHENTICATED', [A]);
+});
+
+test('canRevokeReceiptInboxToken allows the owner to revoke their own token', () => {
+  assert.doesNotThrow(() => canRevokeReceiptInboxToken(ctxA, { userId: A }));
+  assertAuthz(() => canRevokeReceiptInboxToken(ctxB, { userId: A }), 'FORBIDDEN', [A, B]);
+  assertAuthz(() => canRevokeReceiptInboxToken(anon, { userId: A }), 'UNAUTHENTICATED', [A]);
 });
 
 // --- AuthzError shape -------------------------------------------------------

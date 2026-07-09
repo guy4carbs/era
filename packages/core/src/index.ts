@@ -30,6 +30,9 @@ export {
   canDeletePushToken,
   canReadInAppNotification,
   canUpdateInAppNotification,
+  canReadReceiptInboxToken,
+  canInsertReceiptInboxToken,
+  canRevokeReceiptInboxToken,
 } from './authz.ts';
 export type { AuthContext, AuthzErrorCode, VisibilityResource } from './authz.ts';
 

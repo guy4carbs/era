@@ -102,16 +102,44 @@ export interface PriceDropPayload {
 }
 
 /**
- * One in-app notification row. `kind` is `'price_drop'` today (the only surface
- * built); `readAt` is null until the user views or dismisses the card. Kept a
- * plain string so a future kind doesn't need a client change to fetch.
+ * The payload a forwarded-receipt notification carries — the async counterpart to
+ * the in-flow import toast. `count` is how many pieces landed as drafts; `message`
+ * is the already-composed line to render (built server-side from
+ * {@link strings.settings.receiptAddress.newDrafts}), so the client renders it
+ * verbatim without re-deriving copy.
  */
-export interface InAppNotification {
+export interface ReceiptImportPayload {
+  readonly count: number;
+  readonly message: string;
+}
+
+/** Every payload shape an in-app notification can carry, discriminated by `kind`. */
+export type NotificationPayload = PriceDropPayload | ReceiptImportPayload;
+
+/**
+ * One in-app notification row. `kind` is `'price_drop'` or `'receipt_import'`
+ * today; `readAt` is null until the user views or dismisses the card. `kind`
+ * stays a plain string so a future kind doesn't need a client change to fetch —
+ * the {@link isPriceDrop} / {@link isReceiptImport} guards narrow the payload.
+ */
+export interface InAppNotification<P extends NotificationPayload = NotificationPayload> {
   readonly id: string;
   readonly kind: string;
-  readonly payload: PriceDropPayload;
+  readonly payload: P;
   readonly createdAt: string;
   readonly readAt: string | null;
+}
+
+/** Narrow a notification to the price-drop surface (payload → {@link PriceDropPayload}). */
+export function isPriceDrop(n: InAppNotification): n is InAppNotification<PriceDropPayload> {
+  return n.kind === 'price_drop';
+}
+
+/** Narrow a notification to the receipt-import surface (payload → {@link ReceiptImportPayload}). */
+export function isReceiptImport(
+  n: InAppNotification,
+): n is InAppNotification<ReceiptImportPayload> {
+  return n.kind === 'receipt_import';
 }
 
 /** The device platforms a push token can register under. */

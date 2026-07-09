@@ -35,6 +35,12 @@ export const SETTINGS_COPY = {
   privateClosetTitle: 'Private closet',
   privateClosetHint: 'Only you can see your items and outfits.',
 
+  // --- shared error idiom (reused by any settings action that can fail) ---
+  /** The settings-wide "action failed, try again" line — matches {@link SETTINGS_COPY.deleteError}. */
+  genericError: 'Something went wrong — please try again.',
+  /** Quiet retry affordance for a failed settings read. */
+  retry: 'Try again',
+
   // --- support & legal ---
   support: 'Support',
   contactSupport: 'Contact support',

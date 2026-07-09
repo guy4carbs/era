@@ -6,7 +6,7 @@ import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { eraAuth, useSession } from '../../../lib/auth-client';
 import { TodayCard } from '../../../components/ovi';
-import { PriceDropFeed } from '../../../components/shop';
+import { NotificationFeed } from '../../../components/shop';
 
 const screenStyle: CSSProperties = {
   display: 'flex',
@@ -83,7 +83,7 @@ export default function FeedPage() {
     <main style={screenStyle}>
       <SessionHeader />
       <TodayCard />
-      <PriceDropFeed />
+      <NotificationFeed />
       <h1 style={titleStyle}>Feed</h1>
       <p style={emptyStyle}>{strings.feed.empty}</p>
     </main>

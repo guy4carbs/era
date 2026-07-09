@@ -236,6 +236,38 @@ export function canUpdateInAppNotification(
 }
 
 /**
+ * receipt_inbox_tokens (per-user inbound receipt address): a user reads, mints,
+ * and revokes only their own tokens. `token.userId` is the id stored on (or
+ * written as) the row. Rotation is revoke-old + mint-new, so the insert and
+ * revoke guards together cover it. The webhook that resolves inbound mail by
+ * token is a SERVER-side ingestion path with no user context — it does NOT go
+ * through these guards; it looks the token up directly and never trusts a
+ * caller-supplied identity.
+ * @throws {AuthzError} `UNAUTHENTICATED` when anonymous, `FORBIDDEN` when the
+ *   caller is not the owner.
+ */
+export function canReadReceiptInboxToken(
+  ctx: AuthContext,
+  token: { readonly userId: string },
+): void {
+  ownerOnly(ctx, token.userId);
+}
+
+export function canInsertReceiptInboxToken(
+  ctx: AuthContext,
+  token: { readonly userId: string },
+): void {
+  ownerOnly(ctx, token.userId);
+}
+
+export function canRevokeReceiptInboxToken(
+  ctx: AuthContext,
+  token: { readonly userId: string },
+): void {
+  ownerOnly(ctx, token.userId);
+}
+
+/**
  * Waitlist: a public, insert-only signup. Always allowed — no authentication
  * required. This guard exists so that every write handler calls an authz check,
  * keeping the "no route without a guard" invariant uniform and greppable.
