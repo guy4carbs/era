@@ -12,7 +12,7 @@
  * nothing), so it is the catch-all, not a competitor.
  */
 import type { ParsedEmail, ReceiptItem, ReceiptParser } from '../email-receipt.ts';
-import { capName, decodeEntities, firstImageUrl, firstProductUrl, parsePrice, toText } from './html.ts';
+import { MAX_SCAN_BYTES, capName, decodeEntities, firstImageUrl, firstProductUrl, parsePrice, toText } from './html.ts';
 
 const MAX_GENERIC_ITEMS = 25;
 
@@ -21,8 +21,15 @@ const MAX_GENERIC_ITEMS = 25;
 const MONEY_RE =
   /(?:[$£€¥₩₹]\s?[0-9][0-9.,]*[0-9])|(?:[0-9][0-9.,]*[0-9]\s?(?:[$£€¥₩₹]|\b(?:USD|EUR|GBP|JPY|CAD|AUD|CHF|SEK|NOK|DKK|PLN|KRW|CNY|INR|HKD|SGD|NZD)\b))/g;
 
-// Amounts adjacent to these words are order math, not a line item.
-const TOTAL_WORDS = /(sub-?total|total|shipping|delivery|\btax\b|\bvat\b|discount|order summary|you (?:saved|save)|estimated)/i;
+// Amounts LABELED by one of these words are order math (subtotal/shipping/tax),
+// not a line item. Multilingual because EU receipts are a supported case:
+// en (total/shipping/tax/vat), de (Versand/Lieferung/Gesamt/Summe/MwSt),
+// fr (Livraison/TVA/frais de port; "Total"/"Sous-total" caught by `total`),
+// es (Envío/IVA; "Totale"/"Subtotal" caught by `total`), it (Spedizione/IVA).
+// `total` already substring-matches Totale/Total TTC/Sous-total; `summe` matches
+// Zwischensumme; `gesamt` matches Gesamtbetrag.
+const TOTAL_WORDS =
+  /(sub-?total|total|shipping|delivery|\btax\b|\bvat\b|discount|order summary|you (?:saved|save)|estimated|versand|lieferung|gesamt|summe|mwst|livraison|\btva\b|env[íi]o|spedizione|\biva\b|frais de port)/i;
 
 /** Text of the last `<a>…</a>` in a chunk, or undefined. */
 function lastAnchorText(chunk: string): string | undefined {
@@ -53,7 +60,10 @@ function parseHtml(html: string): ReceiptItem[] {
     // only at the window BEFORE the amount — looking forward would grab the NEXT
     // item's anchor.
     const before = html.slice(Math.max(0, match.index - 600), match.index);
-    const contextText = toText(html.slice(Math.max(0, match.index - 80), match.index + 40));
+    // Only suppress when the totals word sits BEFORE the amount it labels
+    // ("Shipping $5.00") — a forward window would swallow a real last item whose
+    // price is immediately followed by a "Total"/"Versand" row in compact markup.
+    const contextText = toText(html.slice(Math.max(0, match.index - 80), match.index));
     if (TOTAL_WORDS.test(contextText)) continue;
 
     const { price, currency } = parsePrice(match[0]);
@@ -111,7 +121,10 @@ export const genericParser: ReceiptParser = {
   parse: (email: ParsedEmail): ReceiptItem[] => {
     try {
       if (email.html !== null && email.html !== '') {
-        const fromHtml = parseHtml(email.html);
+        // Cap the scanned region — the anchor/img `[\s\S]*?` matchers on this
+        // attacker-supplied body carry the same O(n²) risk as the retailer blocks.
+        const html = email.html.length > MAX_SCAN_BYTES ? email.html.slice(0, MAX_SCAN_BYTES) : email.html;
+        const fromHtml = parseHtml(html);
         if (fromHtml.length > 0) return fromHtml;
       }
       if (email.text !== null && email.text !== '') {

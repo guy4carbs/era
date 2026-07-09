@@ -36,10 +36,19 @@
  *   - 503 { retryable: true, reason: 'ai_paused' }   global AI brake engaged
  *   - 429 { error: 'daily_limit', message }  no headroom for a batch today
  *   - 502 { error: 'raw_unavailable' }       the flat-lay raw object could not be fetched
- *   - 413 { error: 'too_large' }             the raw photo exceeds the input cap
+ *   - 413 { error: 'too_large' }             the raw photo exceeds the byte cap
  *   - 200 { items: [{ id, name, category, imageUrl }...], failed, reason? }
  *       reason: 'segmentation_unavailable' (dormant / unreadable media) |
  *               'no_items_found' (model returned nothing) — present only when items is empty.
+ *
+ * Decompression-bomb defense (two byte-vs-pixel layers, since a small file can
+ * decode to an enormous bitmap): the byte cap below rejects an oversized upload
+ * with 413; the DECODED-pixel cap ({@link MAX_INPUT_PIXELS}) is enforced inside
+ * {@link processBatchPipeline} on the header-only dimensions, before any pixel
+ * decode — an over-limit image fails the whole batch gracefully as an empty
+ * 200 `{ items: [], failed: <boxCount> }` (never a 500, and no bitmap is ever
+ * allocated). Every sharp construction here also carries `limitInputPixels` as a
+ * backstop so no code path can decode past the budget.
  */
 import Sharp from 'sharp';
 import { NextResponse } from 'next/server';
@@ -50,7 +59,7 @@ import { createDbClient } from '@era/db';
 
 import { auth } from '../../../lib/auth.ts';
 import { checkDailyLimit, checkGlobalAiGate, recordUsage } from '../../../lib/ai-usage.ts';
-import { hasBatchHeadroom, processBatchPipeline, type PixelRect } from '../../../lib/flatlay-batch.ts';
+import { MAX_INPUT_PIXELS, hasBatchHeadroom, processBatchPipeline, type PixelRect } from '../../../lib/flatlay-batch.ts';
 import { segmentFlatLay } from '../../../lib/flatlay-segment.ts';
 import { PipelineError, processItemPipeline } from '../../../lib/item-pipeline.ts';
 import { itemDisplayUrl } from '../../../lib/outfit-server.ts';
@@ -197,12 +206,14 @@ export async function POST(request: Request): Promise<NextResponse> {
     {
       segment: (bytes, mt) => segmentFlatLay(bytes, mt),
       imageSize: async (bytes) => {
-        const meta = await Sharp(bytes).metadata();
+        // Header-only read; `limitInputPixels` backstops the authoritative pixel
+        // gate in processBatchPipeline (metadata does not decode the bitmap).
+        const meta = await Sharp(bytes, { limitInputPixels: MAX_INPUT_PIXELS }).metadata();
         return { width: meta.width ?? 0, height: meta.height ?? 0 };
       },
       cropJpeg: async (bytes, rect: PixelRect) =>
         new Uint8Array(
-          await Sharp(bytes)
+          await Sharp(bytes, { limitInputPixels: MAX_INPUT_PIXELS, sequentialRead: true })
             .extract({ left: rect.left, top: rect.top, width: rect.width, height: rect.height })
             .jpeg()
             .toBuffer(),

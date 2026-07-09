@@ -12,6 +12,16 @@
 const NAME_MAX = 120;
 const BRAND_MAX = 64;
 
+/**
+ * Upper bound on how much HTML the block/money regexes ever scan. The
+ * `<tag …>([\s\S]*?)</tag>` block matchers degrade to O(n²) on a body full of
+ * unclosed opening tags (benchmarked ~4s at 1MB — a DoS vector on an
+ * attacker-supplied email), so callers slice the body to this size before
+ * matchAll. A real order-confirmation's item region is a few KB; 256KB is far
+ * beyond any legitimate receipt while capping the worst case to milliseconds.
+ */
+export const MAX_SCAN_BYTES = 256 * 1024;
+
 const NAMED_ENTITIES: Record<string, string> = {
   amp: '&',
   lt: '<',

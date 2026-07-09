@@ -71,13 +71,6 @@ const resultTextStyle: CSSProperties = {
   color: 'var(--color-text)',
 };
 
-const supportTextStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
-};
-
 /**
  * The receipt-import view: paste (or drop a .eml onto) a forwarded order email,
  * POST it to /api/import-email, and report how many drafts landed. Imported items
@@ -86,9 +79,9 @@ const supportTextStyle: CSSProperties = {
  *
  * The paste is capped client-side at the server's 1MB `rawEmail` limit (a
  * friendly over-limit line, submit disabled) so an oversized paste never makes
- * the round-trip. A zero-result import is honest, not an error: it shows the
- * count line plus the "try a photo or link" nudge. Drag-and-drop of a `.eml`
- * file reads it as text into the same box (native paste works too) — no new deps.
+ * the round-trip. A zero-result import is honest, not an error: it shows a single
+ * "try a photo or link" nudge. Drag-and-drop of a `.eml` file reads it as text
+ * into the same box (native paste works too) — no new deps.
  */
 export function ReceiptImport({ onReview }: ReceiptImportProps) {
   const [mode, setMode] = useState<Mode>('input');
@@ -160,8 +153,9 @@ export function ReceiptImport({ onReview }: ReceiptImportProps) {
           </>
         ) : (
           <>
-            <p style={resultTextStyle}>{strings.closet.importReceipt.added(0)}</p>
-            <p style={supportTextStyle}>{strings.closet.importReceipt.unsupported}</p>
+            {/* Zero drafts: one honest line that carries the way forward (a photo
+                or a link), not two near-identical "couldn't read it" lines. */}
+            <p style={resultTextStyle}>{strings.closet.importReceipt.unsupported}</p>
             <Button variant="primary" onClick={() => setMode('input')}>
               {strings.closet.retryCta}
             </Button>

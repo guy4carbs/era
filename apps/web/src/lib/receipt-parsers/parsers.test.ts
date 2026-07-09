@@ -218,3 +218,49 @@ test('parsePrice: a bare number has no currency; junk yields nothing', () => {
   assert.deepEqual(parsePrice('49.99'), { price: '49.99' });
   assert.deepEqual(parsePrice('no price here'), {});
 });
+
+test('generic: a German "Versand" shipping row does not become a phantom draft', () => {
+  // Compact markup: the item price is immediately followed by the shipping row.
+  // The shipping/total amounts must be filtered (Versand/Gesamt), and the item
+  // must NOT be swallowed by them.
+  const html = `
+    <a href="https://shop.de/p/1">Wollpullover</a> <span>89,00 EUR</span>
+    <span>Versand</span> <span>4,99 EUR</span>
+    <span>Gesamt</span> <span>93,99 EUR</span>`;
+  const items = genericParser.parse(email('bestellung@shop.de', html));
+  assert.deepEqual(
+    items.map((i) => i.name),
+    ['Wollpullover'],
+  );
+  assert.equal(items[0]!.price, '89.00');
+  assert.equal(items[0]!.currency, 'EUR');
+});
+
+test('ReDoS guard: a hostile body of unclosed tags parses fast and returns an array', () => {
+  // ~1.2MB of unclosed opening tags — the pathological input for the block/anchor
+  // `[\s\S]*?` matchers. The 256KB scan cap keeps the quadratic scan bounded.
+  // Guard shape: the capped scan is ~16x cheaper than quadratic-on-full-input, so
+  // we assert the RATIO between the hostile 1.2MB body and the same body pre-cut
+  // to the cap — a wall-clock budget here flakes under parallel test load, but
+  // the ratio is load-independent (both runs share the same machine conditions).
+  const unit = '<tr class="order-line"><a href="x">';
+  const hostile = unit.repeat(35_000); // ~1.2MB
+  const capped = hostile.slice(0, 256 * 1024); // what the scan cap admits
+  for (const parser of [zaraParser, genericParser]) {
+    const startCapped = performance.now();
+    parser.parse(email('e.zara.com', capped));
+    const cappedMs = Math.max(performance.now() - startCapped, 1);
+
+    const start = performance.now();
+    const result = parser.parse(email('e.zara.com', hostile));
+    const elapsedMs = performance.now() - start;
+
+    assert.ok(Array.isArray(result));
+    // Without the cap the full body costs ~(1.2MB/256KB)^2 ≈ 22x the capped run.
+    // With the cap both runs do the same bounded scan; allow generous headroom.
+    assert.ok(
+      elapsedMs < cappedMs * 8 + 250,
+      `hostile parse took ${elapsedMs.toFixed(0)}ms vs capped baseline ${cappedMs.toFixed(0)}ms — cap not effective?`,
+    );
+  }
+});

@@ -108,6 +108,16 @@ export function BulkCapture({ onDone, onBack }: BulkCaptureProps) {
     if (rawKeyRef.current) void runBatch(rawKeyRef.current);
   }
 
+  /**
+   * Retry after a generic failure. A post-upload failure kept the raw, so we can
+   * genuinely re-run the batch (what "Try again" promises); an upload failure has
+   * no raw to retry, so fall back to re-picking a photo.
+   */
+  function retryError(): void {
+    if (rawKeyRef.current) void runBatch(rawKeyRef.current);
+    else onBack();
+  }
+
   if (mode === 'uploading') return <StatusPulse label={strings.closet.uploading} />;
   if (mode === 'working') return <StatusPulse label={strings.closet.bulkCapture.working} />;
 
@@ -158,7 +168,7 @@ export function BulkCapture({ onDone, onBack }: BulkCaptureProps) {
   if (mode === 'error') {
     return (
       <StatusMessage tone="assertive" message={strings.closet.addFailed}>
-        <Button variant="primary" onClick={onBack}>
+        <Button variant="primary" onClick={retryError}>
           {strings.closet.retryCta}
         </Button>
       </StatusMessage>

@@ -437,10 +437,12 @@ export const strings = {
        */
       confirmTitle: "Here's what I pulled out.",
       /**
-       * The review nudge under the batch title. Frames the confirm as a quick
-       * per-piece check before anything lands, owning that some tags may need a fix.
+       * The review nudge under the batch title. Trust-the-user framing — an
+       * invitation to glance, not an obligation: the web confirm-all button
+       * ({@link strings.closet.bulkCapture.confirmRestCta}) doesn't gate each
+       * piece, so this offers a fix without demanding one.
        */
-      confirmSubtitle: 'Check each one before it lands in your closet — tweak anything I misread.',
+      confirmSubtitle: 'Give these a glance — tweak anything I misread.',
       /**
        * The batch confirm-all affordance, shown once at least one piece has been
        * reviewed: confirm every remaining draft as it stands, tags untouched. A
@@ -487,6 +489,15 @@ export const strings = {
     searchPlaceholder: 'Search your closet…',
     /** The "All" category chip that clears the filter and shows everything. */
     filterAll: 'All',
+    /**
+     * A11y label for an unconfirmed draft tile — a piece that landed in the
+     * closet with its tags unconfirmed (an add-flow the user backed out of, a
+     * receipt import). An accent dot flags it visually; this names the state and
+     * the way out for a screen reader. Mobile's tap opens the detail sheet to
+     * review and confirm, so it reads "tap to review" (web jumps straight to the
+     * confirm screen). `draftTileA11y('Blue oxford shirt')`.
+     */
+    draftTileA11y: (name: string): string => `${name} — draft, tap to review`,
 
     /** Toggle state: this piece is private (only the owner sees it). */
     privacyPrivate: 'Private',

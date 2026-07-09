@@ -10,10 +10,11 @@
  */
 
 /**
- * Client cap for the pasted raw email, mirroring the server's `MAX_EMAIL_BYTES`
- * (1MB) so we reject an oversized paste before the round-trip (the route answers
- * 400 for the same condition). Measured in UTF-8 bytes, matching how the server
- * sizes `rawEmail`.
+ * Client cap for the pasted raw email: a round 1,000,000 bytes, deliberately
+ * STRICTER than the server's `MAX_EMAIL_BYTES` (1,048,576 = 1 MiB). Anything the
+ * client accepts the server accepts too; a paste in the gap between the two still
+ * round-trips and the route answers 400 for the same oversized condition.
+ * Measured in UTF-8 bytes, matching how the server sizes `rawEmail`.
  */
 export const MAX_RAW_EMAIL_BYTES = 1_000_000;
 

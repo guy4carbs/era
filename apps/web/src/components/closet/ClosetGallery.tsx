@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { motion as motionToken, layout, spacing, typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
@@ -44,6 +45,7 @@ const gridCss = [
  */
 export function ClosetGallery({ items, onArchived, onUpdated }: ClosetGalleryProps) {
   const reduced = useReducedMotion();
+  const router = useRouter();
   const [query, setQuery] = useState('');
   const [debounced, setDebounced] = useState('');
   const [category, setCategory] = useState<string | null>(null);
@@ -109,6 +111,18 @@ export function ClosetGallery({ items, onArchived, onUpdated }: ClosetGalleryPro
     setToast(strings.closet.itemSaved);
   }
 
+  // A tap on a confirmed piece opens the detail sheet; a tap on an unconfirmed
+  // draft (the accent dot's "tap to confirm" promise) resumes it straight into
+  // the confirm screen via the add flow's existing `?item=` resume path — the
+  // one surface where tags_confirmed actually gets flipped.
+  function openTile(item: GalleryItem) {
+    if (item.tagsConfirmed) {
+      setSelectedId(item.id);
+    } else {
+      router.push(`/closet/add?item=${item.id}`);
+    }
+  }
+
   return (
     <div style={screenStyle}>
       <style>{gridCss}</style>
@@ -160,7 +174,7 @@ export function ClosetGallery({ items, onArchived, onUpdated }: ClosetGalleryPro
                   exit={{ opacity: 0 }}
                   transition={transitionFor(motionToken.springs.gentle, reduced)}
                 >
-                  <GalleryTile item={item} onOpen={() => setSelectedId(item.id)} />
+                  <GalleryTile item={item} onOpen={() => openTile(item)} />
                 </motion.div>
               ))}
             </AnimatePresence>

@@ -9,7 +9,7 @@
  * unrecognized layout, a missing name, or any thrown error yields `[]`.
  */
 import type { ParsedEmail, ReceiptItem, ReceiptParser } from '../email-receipt.ts';
-import { capBrand, capName, firstImageUrl, firstProductUrl, firstText, parsePrice, toText } from './html.ts';
+import { MAX_SCAN_BYTES, capBrand, capName, firstImageUrl, firstProductUrl, firstText, parsePrice, toText } from './html.ts';
 
 /** Hard cap on line items lifted from a single receipt (mirrors the route cap). */
 export const MAX_ITEMS_PER_RECEIPT = 25;
@@ -61,8 +61,12 @@ export function makeRetailerParser(config: RetailerConfig): ReceiptParser {
   return {
     supports: (fromDomain: string) => matchesDomain(config.domains, fromDomain),
     parse: (email: ParsedEmail): ReceiptItem[] => {
-      const html = email.html;
-      if (html === null || html === '') return [];
+      const full = email.html;
+      if (full === null || full === '') return [];
+      // Cap the scanned region: the `[\s\S]*?</tag>` block regex is O(n²) on a
+      // body of unclosed tags (a hostile email), and no real receipt's item
+      // region approaches 256KB.
+      const html = full.length > MAX_SCAN_BYTES ? full.slice(0, MAX_SCAN_BYTES) : full;
       try {
         const items: ReceiptItem[] = [];
         const blockRe = new RegExp(config.blockRe.source, config.blockRe.flags.includes('g') ? config.blockRe.flags : `${config.blockRe.flags}g`);

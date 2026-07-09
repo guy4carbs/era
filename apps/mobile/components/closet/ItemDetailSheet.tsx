@@ -83,6 +83,32 @@ export function ItemDetailSheet({ item, open, onClose, onUpdated, onArchived, on
     }
   }
 
+  // Confirm an unconfirmed draft as it stands (PATCH `confirm: true`, no edits) —
+  // the detail-sheet path out of the draft dead-end for a piece the user backed
+  // out of before confirming, or a web receipt draft viewed here. Confirming from
+  // the sheet keeps mobile's per-item surface in one place; Edit is right there
+  // first if a tag needs a fix.
+  async function confirmDraft() {
+    if (!item) return;
+    setBusy(true);
+    try {
+      const saved = await patchItem(item.id, { confirm: true });
+      const merged: ItemWithDisplay = {
+        ...item,
+        ...saved,
+        displayUrl: item.displayUrl,
+        wearCount: item.wearCount,
+      };
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      onUpdated(merged);
+      onClose();
+    } catch {
+      // Leave the sheet open so the user can retry; nothing destructive happened.
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <GlassSheet open={open} onClose={onClose}>
       {item ? (
@@ -96,6 +122,8 @@ export function ItemDetailSheet({ item, open, onClose, onUpdated, onArchived, on
         ) : (
           <Detail
             item={item}
+            busy={busy}
+            onConfirm={confirmDraft}
             onEdit={() => setEditing(true)}
             onArchived={onArchived}
             onClose={onClose}
@@ -109,13 +137,17 @@ export function ItemDetailSheet({ item, open, onClose, onUpdated, onArchived, on
 
 interface DetailProps {
   readonly item: ItemWithDisplay;
+  /** A confirm/edit request is in flight — guards the draft-confirm button. */
+  readonly busy: boolean;
+  /** Confirm an unconfirmed draft as it stands (PATCH `confirm: true`). */
+  readonly onConfirm: () => void;
   readonly onEdit: () => void;
   readonly onArchived: (id: string) => void;
   readonly onClose: () => void;
   readonly onToast: (message: string) => void;
 }
 
-function Detail({ item, onEdit, onArchived, onClose, onToast }: DetailProps) {
+function Detail({ item, busy, onConfirm, onEdit, onArchived, onClose, onToast }: DetailProps) {
   const { colors } = useTheme();
 
   const tags = buildTags(item);
@@ -226,6 +258,13 @@ function Detail({ item, onEdit, onArchived, onClose, onToast }: DetailProps) {
         seedPrice={item.purchasePrice}
         onToast={onToast}
       />
+
+      {/* An unconfirmed draft (backed out of before confirming, or a receipt
+          draft) gets the primary confirm here — the sheet's way out of the
+          dead-end. Confirmed pieces never show it. */}
+      {!item.tagsConfirmed ? (
+        <Button label={strings.closet.confirmCta} onPress={onConfirm} disabled={busy} />
+      ) : null}
 
       <View style={styles.actions}>
         <Button label={strings.closet.edit} variant="secondary" onPress={onEdit} style={styles.action} />

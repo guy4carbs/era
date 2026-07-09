@@ -44,8 +44,20 @@ export interface PixelRect {
 const DEFAULT_CONCURRENCY = 4;
 
 /**
+ * Decompression-bomb ceiling: the max decoded pixel count (width × height) we
+ * will crop. A small file can decode to an enormous bitmap (a few-KB PNG →
+ * hundreds of MP), and a near-ceiling image cropped across up to 12 boxes at
+ * concurrency 4 is multi-GB of transient memory on the container. 50MP is
+ * generous for any phone photo (a 12000×4000 panorama is 48MP). The route passes
+ * this to sharp as `limitInputPixels` too, but THIS check is the authoritative
+ * gate: it runs on the header-only dimensions BEFORE any pixel decode, so a bomb
+ * is refused before sharp ever allocates a bitmap or a single crop runs.
+ */
+export const MAX_INPUT_PIXELS = 5e7;
+
+/**
  * Injected side-effect seams. Production wiring lives in the route; tests pass
- * fakes. All are required except `concurrency`/`log`.
+ * fakes. All are required except `concurrency`/`maxInputPixels`/`log`.
  */
 export interface BatchDeps {
   /** Segment the flat lay into normalized boxes, or null when nothing usable. */
@@ -62,6 +74,8 @@ export interface BatchDeps {
   readonly meter: () => Promise<void>;
   /** Max concurrent crop pipelines. Defaults to {@link DEFAULT_CONCURRENCY}. */
   readonly concurrency?: number;
+  /** Decompression-bomb ceiling in pixels. Defaults to {@link MAX_INPUT_PIXELS}. */
+  readonly maxInputPixels?: number;
   /** Error sink. Defaults to `console.error`. */
   readonly log?: (message: string) => void;
 }
@@ -157,6 +171,7 @@ async function mapPool<T>(count: number, concurrency: number, worker: (index: nu
 export async function processBatchPipeline(deps: BatchDeps, input: BatchInput): Promise<BatchResult> {
   const log = deps.log ?? console.error;
   const concurrency = deps.concurrency ?? DEFAULT_CONCURRENCY;
+  const maxInputPixels = deps.maxInputPixels ?? MAX_INPUT_PIXELS;
 
   // Dormant / unsupported media: the segmentation call would never fire, so meter
   // nothing and report honestly. Distinct from "the model found no items" below.
@@ -185,6 +200,15 @@ export async function processBatchPipeline(deps: BatchDeps, input: BatchInput): 
     }
   } catch (error) {
     log(`[era-batch] could not size the flat lay; no crops possible: ${errName(error)}`);
+    return { items: [], failed: boxes.length };
+  }
+
+  // Decompression-bomb guard: refuse an image that decodes to more than the pixel
+  // budget rather than let sharp allocate a huge bitmap per crop. Checked on the
+  // header-only dimensions, BEFORE the crop loop, so no pixel is ever decoded; the
+  // whole batch fails gracefully (no items) instead of exhausting container memory.
+  if (imgW * imgH > maxInputPixels) {
+    log(`[era-batch] flat lay ${imgW}x${imgH} exceeds ${maxInputPixels}px budget; refusing to crop`);
     return { items: [], failed: boxes.length };
   }
 

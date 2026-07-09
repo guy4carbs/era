@@ -16,7 +16,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { hasBatchHeadroom, processBatchPipeline, toPixelRect, type BatchDeps, type PixelRect } from './flatlay-batch.ts';
+import { MAX_INPUT_PIXELS, hasBatchHeadroom, processBatchPipeline, toPixelRect, type BatchDeps, type PixelRect } from './flatlay-batch.ts';
 import type { SegmentBox } from './flatlay-segment.ts';
 import type { Item } from '@era/db';
 
@@ -216,6 +216,50 @@ test('an unsizeable image fails every crop without throwing', async () => {
   assert.deepEqual(result, { items: [], failed: 2 });
   assert.equal(calls.crops.length, 0);
   assert.equal(calls.meter, 1); // only the segmentation call fired
+});
+
+// --- decompression-bomb guard -----------------------------------------------
+
+test('a pixel-bomb (over the budget) is refused before any crop is cut', async () => {
+  // A modest file can report enormous decoded dimensions; sizing is header-only,
+  // so we must reject on the dimensions before a single crop decodes the bitmap.
+  const over = Math.ceil(Math.sqrt(MAX_INPUT_PIXELS)) + 1; // just past 50MP when squared
+  const { deps, calls } = makeDeps({
+    segment: async () => [box(), box(), box()],
+    imageSize: async () => ({ width: over, height: over }),
+  });
+  const result = await processBatchPipeline(deps, { rawBytes: BYTES, mediaType: JPEG, segmentationActive: true });
+
+  assert.deepEqual(result, { items: [], failed: 3 }); // whole batch fails gracefully
+  assert.equal(calls.crops.length, 0); // never reached the cropper
+  assert.equal(calls.meter, 1); // only the segmentation call fired
+});
+
+test('an image exactly at the pixel budget is still cropped', async () => {
+  // Boundary: width*height === MAX_INPUT_PIXELS is allowed (only strictly-over is
+  // refused). 25000 * 2000 === 5e7, both sides large enough to crop.
+  assert.equal(25000 * 2000, MAX_INPUT_PIXELS);
+  const { deps, calls } = makeDeps({
+    segment: async () => [box()],
+    imageSize: async () => ({ width: 25000, height: 2000 }),
+  });
+  const result = await processBatchPipeline(deps, { rawBytes: BYTES, mediaType: JPEG, segmentationActive: true });
+
+  assert.equal(result.items.length, 1);
+  assert.equal(result.failed, 0);
+  assert.equal(calls.crops.length, 1);
+});
+
+test('a custom (lower) maxInputPixels bound is honored', async () => {
+  const { deps, calls } = makeDeps({
+    maxInputPixels: 100, // 10x10
+    segment: async () => [box()],
+    imageSize: async () => ({ width: 200, height: 200 }), // 40000px, over the tiny bound
+  });
+  const result = await processBatchPipeline(deps, { rawBytes: BYTES, mediaType: JPEG, segmentationActive: true });
+
+  assert.deepEqual(result, { items: [], failed: 1 });
+  assert.equal(calls.crops.length, 0);
 });
 
 // --- concurrency bound ------------------------------------------------------
