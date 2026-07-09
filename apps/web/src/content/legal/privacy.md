@@ -28,7 +28,7 @@ Era is intended for people who are old enough to use it under the law where they
 
 - **Account information.** Your email address, which we use to sign you in with a magic link. We plan to add Apple and Google sign-in; if you use those, the provider shares a limited identifier and your email with us so we can create or match your account.
 - **Waitlist information.** If you join our waitlist before you have an account, we collect your email address and, optionally, referral attribution (for example, who referred you or which link you came from).
-- **Closet data.** Photos of your clothing that you upload or import from a product link, and details about those items. When you add an item, our AI extracts attributes such as category, color, pattern, and brand to help organize your closet.
+- **Closet data.** Photos of your clothing that you upload or import from a product link, and details about those items. When you add an item, our AI extracts attributes such as category, color, pattern, and brand to help organize your closet. You can also import items by forwarding or pasting a retailer order-confirmation email. When you do, we parse only the purchased garments' details — name, brand, price, and product image — and discard the rest: we do not store the email itself or other information it may contain, such as your shipping address, order number, or payment details.
 - **Outfits and eras.** The outfits you compose and the "eras" (style chapters) you create.
 - **Wear logs.** Records of when you wear items or outfits, if you choose to log them.
 - **Saved products (your wishlist).** When you save a product from the **Shop** tab to come back to later, we store a snapshot of it — the item, the retailer, and its price at the moment you saved it — so you can find it again.
@@ -37,7 +37,7 @@ Era is intended for people who are old enough to use it under the law where they
 
 ### Information we generate or collect automatically
 
-- **AI-extracted attributes.** The clothing attributes described above, produced automatically when you add items.
+- **AI-extracted attributes.** The clothing attributes described above, produced automatically when you add an item by sending its photo to our AI provider (Anthropic) for analysis — whether you add a single photo, several garments in one flat-lay photo, or import from a link or receipt.
 - **Coarse location (only if you grant it).** If you allow it, Era uses a rounded, approximately city-level location to fetch local weather so Ovi can suggest weather-appropriate outfits. This location is deliberately imprecise, is used only for the weather lookup, and is **not stored**.
 - **Product and usage analytics.** We may collect privacy-friendly, event-level analytics about how the app is used (for example, that a feature was opened) to understand and improve Era. This is not used to build advertising profiles, and we do not sell it. *(Our analytics capability is currently dormant and not active.)*
 - **Device and session information.** When you sign in, we log your IP address and browser/device user agent with your session. We use this to keep your account secure, operate the service, and help prevent abuse.
@@ -89,7 +89,7 @@ Era's Shop tab suggests cross-brand products that fit the wardrobe you already h
 
 We don't sell your personal information. We share it only with service providers ("processors") who help us run Era, and only as needed. These currently include:
 
-- **AI model provider (Anthropic)** — to power Ovi's styling suggestions when the AI stylist is active.
+- **AI model provider (Anthropic)** — to power Ovi's styling suggestions when the AI stylist is active, and to analyze the photos you add to your closet so we can extract each item's attributes (category, color, pattern, brand).
 - **Cloudflare R2** — to store your clothing images.
 - **Neon** — our PostgreSQL database host, where your account and closet records live.
 - **Railway** — our application hosting/infrastructure provider.

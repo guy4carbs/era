@@ -36,6 +36,7 @@ import { trackOnce } from '@/lib/analytics';
 import { LimitReachedError } from '@/lib/rate-limit';
 import { useTheme } from '@/lib/theme';
 
+import { BulkCaptureFlow } from './BulkCaptureFlow';
 import { ConfirmItem } from './ConfirmItem';
 import { importFromUrl, processItem, requestUpload, uploadToR2 } from './api';
 
@@ -56,7 +57,9 @@ type Stage =
   | 'failed'
   | 'linkFailed'
   // The AI daily cap was hit while processing — Ovi's warm line, not a failure.
-  | 'limitReached';
+  | 'limitReached'
+  // The batch path: one photo of several pieces, split into per-item drafts.
+  | 'bulk';
 
 interface AddItemFlowProps {
   /** When present, skip the picker and resume confirming this item. */
@@ -171,7 +174,11 @@ export function AddItemFlow({ resumeItemId }: AddItemFlowProps) {
 
   switch (stage) {
     case 'picker':
-      return <Picker onPick={pick} onImport={runImport} />;
+      return <Picker onPick={pick} onImport={runImport} onBulk={() => setStage('bulk')} />;
+    // The batch sub-flow owns its own states + return; its exit drops back here so
+    // the single-add paths (photo, link) stay one tap away.
+    case 'bulk':
+      return <BulkCaptureFlow onExit={() => setStage('picker')} />;
     case 'uploading':
       return <Progress line={strings.closet.uploading} />;
     case 'processing':
@@ -210,14 +217,16 @@ export function AddItemFlow({ resumeItemId }: AddItemFlowProps) {
 interface PickerProps {
   readonly onPick: (source: 'camera' | 'library') => void;
   readonly onImport: (url: string) => void;
+  readonly onBulk: () => void;
 }
 
 /**
  * The source chooser — take / choose a photo, plus an "add from a link" card
  * that reveals a URL field. The link is validated as https before it can submit,
- * so the submit button stays disabled until the paste is a usable link.
+ * so the submit button stays disabled until the paste is a usable link. A quiet
+ * "add several at once" card at the foot opens the batch flow.
  */
-function Picker({ onPick, onImport }: PickerProps) {
+function Picker({ onPick, onImport, onBulk }: PickerProps) {
   const [linkOpen, setLinkOpen] = useState(false);
   const [url, setUrl] = useState('');
   const trimmed = url.trim();
@@ -257,6 +266,7 @@ function Picker({ onPick, onImport }: PickerProps) {
       ) : (
         <SourceCard label={strings.closet.addFromLink} onPress={() => setLinkOpen(true)} />
       )}
+      <SourceCard label={strings.closet.bulkCapture.entryCta} onPress={onBulk} />
     </View>
   );
 }

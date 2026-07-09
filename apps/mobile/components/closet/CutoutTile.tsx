@@ -22,6 +22,7 @@
  * press/drag and out on release. Under reduced motion neither fires: the card
  * holds a static e3 with no glow.
  */
+import { strings } from '@era/core/strings';
 import { elevation, glow, layout, motion, radii, rnShadow, sheen, spacing, typeRamp } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -198,7 +199,9 @@ export function CutoutTile({ item, onPress }: CutoutTileProps) {
         >
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={item.name}
+            accessibilityLabel={
+              item.tagsConfirmed ? item.name : strings.closet.draftTileA11y(item.name)
+            }
             onPressIn={() => {
               pressScale.value = pressTo(PRESS_SCALE);
               if (!reduced) active.value = withSpring(1, springFromToken('snappy'));
@@ -238,6 +241,18 @@ export function CutoutTile({ item, onPress }: CutoutTileProps) {
             />
           </Pressable>
         </Animated.View>
+        {/* Draft flag: an unconfirmed piece (backed-out add-flow, receipt import)
+            gets a quiet accent dot so the tap-to-review path is discoverable. The
+            a11y state lives on the Pressable's label; this dot is decorative and
+            never intercepts the tap. Confirmed pieces show nothing. */}
+        {!item.tagsConfirmed ? (
+          <View
+            pointerEvents="none"
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            style={[styles.draftDot, { backgroundColor: colors.accent, borderColor: colors.surface }]}
+          />
+        ) : null}
       </View>
       <Text
         numberOfLines={1}
@@ -291,6 +306,20 @@ const styles = StyleSheet.create({
     flex: 1,
     overflow: 'hidden',
     borderCurve: 'continuous',
+  },
+  // A small accent dot pinned to the card's top-right, ringed in the surface
+  // colour so it reads over any cutout (a mobile-only addition — web tiles have a
+  // consistent light backing). Diameter + inset match web's GalleryTile for
+  // parity (spacing.s2 = 8px dot, itemCard.padding = 12px in); the radius equals
+  // the diameter so it renders fully round.
+  draftDot: {
+    position: 'absolute',
+    top: layout.itemCard.padding,
+    right: layout.itemCard.padding,
+    width: spacing.s2,
+    height: spacing.s2,
+    borderRadius: spacing.s2,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   image: {
     flex: 1,

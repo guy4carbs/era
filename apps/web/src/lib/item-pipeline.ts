@@ -249,7 +249,7 @@ async function classify(rawBytes: Uint8Array, mediaType: string): Promise<Classi
 }
 
 /** Persistence source for a pipeline run. Mirrors the `item_source` enum. */
-export type PipelineSource = 'photo' | 'link';
+export type PipelineSource = 'photo' | 'link' | 'email_import';
 
 /**
  * Caller-supplied fallback fields, used only when the vision stage does not

@@ -349,12 +349,155 @@ export const strings = {
     /** Brief success beat before the confirm screen when a link imports. */
     linkImported: 'Got it — take a look.',
 
+    // --- import a receipt: forward an order email, let the server read it ---
+
+    /**
+     * The third add-a-piece path (alongside photo and link): parse an order
+     * confirmation email into draft pieces. Lands the same `email_import` source
+     * {@link strings.closet.detailSource} already names. Ovi voice — warm, honest
+     * about coverage (not every store's receipts are learned yet), never blaming
+     * the user or the retailer. The count helper is boundary-hardened via
+     * {@link safeCount} (NaN/garbage → 0) so the voice-lint can probe it with any
+     * input without a throw, and so a partial/absent count never leaks "undefined".
+     */
+    importReceipt: {
+      /** Entry label for adding pieces by importing a store receipt. */
+      entryCta: 'Import a receipt',
+      /**
+       * Instruction line under the entry. Names the gesture plainly — forward an
+       * order email, paste it — and sets the honest expectation that what lands
+       * are drafts to check, not finished closet entries.
+       */
+      instruction:
+        "Forward an order confirmation from a store, then paste it here — I'll pull the pieces out and add them as drafts for you to check.",
+      /** Placeholder in the paste box, inviting the pasted email. */
+      pastePlaceholder: 'Paste your order confirmation email…',
+      /** Progress line while the server reads the receipt and pulls out pieces. */
+      parsing: 'Reading your receipt — pulling out the pieces.',
+      /**
+       * Success beat, from the count of pieces parsed. Zero is honest, not a
+       * scold: it owns that receipt layouts vary and coverage is still growing,
+       * never blaming the user's email. One and many frame the results as drafts
+       * to review before they join the closet. `added(0)` / `added(1)` / `added(4)`.
+       */
+      added: (n: number): string => {
+        const c = safeCount(n);
+        if (c <= 0)
+          return "I couldn't pick any pieces out of that email yet — stores lay their receipts out all sorts of ways, and we're still learning to read them.";
+        return c === 1
+          ? 'Added 1 piece as a draft — take a look before it joins your closet.'
+          : `Added ${c} pieces as drafts — take a look before they join your closet.`;
+      },
+      /**
+       * Shown when the sender's receipts aren't parseable yet. Warm and plain —
+       * not apologetic-corporate — and points at the two paths that always work.
+       */
+      unsupported:
+        "I haven't learned this store's receipts yet — for now, a photo or a link will get these pieces in.",
+      /** The import didn't go through. Owns the miss, no blame, invites a retry. */
+      error: 'Something snagged reading that receipt — give it another go.',
+      /**
+       * Client-side over-limit line: the pasted email is past the 1MB the server
+       * accepts. Warm and actionable — name the fix (trim to just the order email)
+       * rather than the byte count, and never blame the user.
+       */
+      tooLong: "That's a lot to take in at once — trim it down to just the order email and I'll read it.",
+    },
+
+    // --- add several at once: one photo of several pieces, split into drafts ---
+
+    /**
+     * A batch add-a-piece path: photograph several pieces laid out together and
+     * let vision segment them into separate drafts. Same Ovi voice as the single
+     * add flow, scaled to a group. The vision-segmentation credential is dormant
+     * behind `isRealCredential` (like the single-item vision path {@link
+     * strings.closet.manualTitle} falls back on), so {@link
+     * strings.closet.bulkCapture.dormant} carries the "waking up soon" beat in
+     * Ovi's voice, not an outage banner. Every count helper coerces at the
+     * boundary via {@link safeCount} (NaN/garbage → 0) — never a throw, never a
+     * leaked "undefined"/"NaN" — so the voice-lint can probe them with any input.
+     */
+    bulkCapture: {
+      /** Entry label for the batch add flow. */
+      entryCta: 'Add several at once',
+      /**
+       * Instruction under the entry — the one thing that makes segmentation work:
+       * lay pieces flat with space between them, take a single photo.
+       */
+      instruction:
+        "Lay a few pieces flat with a little space between them and take one photo — I'll pull each one out on its own.",
+      /**
+       * Progress line while vision segments the photo into pieces. Ovi voice,
+       * patient — mirrors the single-item {@link strings.closet.processing}.
+       */
+      working: "Sorting this photo into separate pieces — I'll just be a moment.",
+      /**
+       * Batch confirm-screen heading once pieces are pulled out — the group-scale
+       * counterpart to the single-item {@link strings.closet.processedTitle}.
+       */
+      confirmTitle: "Here's what I pulled out.",
+      /**
+       * The review nudge under the batch title. Trust-the-user framing — an
+       * invitation to glance, not an obligation: the web confirm-all button
+       * ({@link strings.closet.bulkCapture.confirmRestCta}) doesn't gate each
+       * piece, so this offers a fix without demanding one.
+       */
+      confirmSubtitle: 'Give these a glance — tweak anything I misread.',
+      /**
+       * The batch confirm-all affordance, shown once at least one piece has been
+       * reviewed: confirm every remaining draft as it stands, tags untouched. A
+       * short functional label, kin to the single-item {@link
+       * strings.closet.confirmCta}.
+       */
+      confirmRestCta: 'Confirm the rest',
+      /**
+       * Per-piece a11y position label for the batch review carousel — screen-reader
+       * plain: `itemPosition(2, 5)` → "Piece 2 of 5". Both numbers coerce at the
+       * boundary so a partial render never reads "undefined of undefined".
+       */
+      itemPosition: (index: number, total: number): string =>
+        `Piece ${safeCount(index)} of ${safeCount(total)}`,
+      /**
+       * Count of pieces segmented out of the photo. Zero is honest and actionable,
+       * not a scold: it names the fix (more space between pieces) rather than
+       * blaming the photo. `found(0)` / `found(1)` / `found(4)`.
+       */
+      found: (n: number): string => {
+        const c = safeCount(n);
+        if (c <= 0)
+          return "I couldn't pick out separate pieces in that photo — try laying them flat with a bit more space between them.";
+        return c === 1 ? 'Found 1 piece in your photo.' : `Found ${c} pieces in your photo.`;
+      },
+      /**
+       * Partial-failure line — most pieces processed, a few didn't. Honest about
+       * the gap, no blame, and points at the single-item path for the stragglers.
+       */
+      partialFailure:
+        "I added the ones I could read — a few wouldn't process, so they didn't make it in. Add those on their own when you're ready.",
+      /**
+       * Dormant-credential line: batch vision-segmentation isn't switched on yet.
+       * Matches the app's dormant voice — warm, a "coming soon" beat, never an
+       * error or "not configured" — and offers the single-add path that works today.
+       */
+      dormant:
+        "Reading several pieces from one photo is something I'm still switching on — it'll be here soon. For now, add them one at a time and I'll tag each one.",
+    },
+
     // --- the closet gallery: search, filter, privacy, detail, archive ---
 
     /** Placeholder in the gallery search field. */
     searchPlaceholder: 'Search your closet…',
     /** The "All" category chip that clears the filter and shows everything. */
     filterAll: 'All',
+    /**
+     * A11y label for an unconfirmed draft tile — a piece that landed in the
+     * closet with its tags unconfirmed (an add-flow the user backed out of, a
+     * receipt import). An accent dot flags it visually; this names the state and
+     * the way out for a screen reader. Mobile's tap opens the detail sheet to
+     * review and confirm, so it reads "tap to review" (web jumps straight to the
+     * confirm screen). `draftTileA11y('Blue oxford shirt')`.
+     */
+    draftTileA11y: (name: string): string => `${name} — draft, tap to review`,
 
     /** Toggle state: this piece is private (only the owner sees it). */
     privacyPrivate: 'Private',
