@@ -29,10 +29,10 @@ import { type DbClient, receiptInboxTokens } from '@era/db';
 export const INBOUND_TOKEN_PREFIX = 'u_';
 
 /**
- * Mint a fresh bare token: 16 crypto-random bytes as lowercase hex (32 chars).
- * Well within the webhook's `[a-z0-9]{24,}` shape; hex is a subset of the
- * lowercase base32 alphabet, and email local-parts are case-insensitive so the
- * token is generated, stored, and compared in lowercase.
+ * Mint a fresh bare token: 128 bits of crypto-randomness as lowercase hex (32
+ * chars). Well within the webhook's `[a-z0-9]{24,}` shape; hex digits are all
+ * lowercase, and email local-parts are case-insensitive, so the token is
+ * generated, stored, and compared in lowercase.
  */
 export function mintTokenValue(): string {
   return randomBytes(16).toString('hex');

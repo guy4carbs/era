@@ -39,14 +39,20 @@
  * event class. The catch-all subdomain means arbitrary local-parts arrive, so the
  * no-token path is expected noise and logs a class only.
  *
+ * Abuse bounds: a per-user daily-volume cap (counted off the durable
+ * `inbound_email_events` ledger) limits the draft-row flood a leaked address
+ * enables, and the second-hop body is byte-capped BEFORE buffering. Both reject
+ * as a silent 200 no-op WITHOUT claiming the event row.
+ *
  * Contract:
  *   - 503  RESEND_INBOUND_WEBHOOK_SECRET unset/placeholder — DORMANT, no work.
  *   - 401  missing/oversized/bad signature — verified over the RAW bytes.
  *   - 500  the body second-hop failed transiently — Resend retries.
  *   - 200  everything else: non-received event, no/unknown/revoked token, replay,
- *          or a successful import. Always a minimal fixed-enum body.
+ *          over the daily cap, an oversized body (permanent drop), or a successful
+ *          import. Always a minimal fixed-enum body.
  */
-import { eq } from 'drizzle-orm';
+import { and, count, eq, gte } from 'drizzle-orm';
 import { Webhook } from 'svix';
 
 import { type AuthContext } from '@era/core';
@@ -69,8 +75,38 @@ export const MAX_INBOUND_WEBHOOK_BODY_BYTES = 64 * 1024;
 const RECEIVING_BODY_URL = 'https://api.resend.com/emails/receiving';
 const SECOND_HOP_TIMEOUT_MS = 10_000;
 
+/**
+ * Byte cap on the fetched body (html + text + headers) BEFORE buffering. A real
+ * receipt is tiny; anything past this is treated as a PERMANENT failure (drop,
+ * not retry — re-fetching an oversized message never gets smaller). Checked
+ * against Content-Length when present, then enforced on the stream regardless.
+ */
+const MAX_SECOND_HOP_BYTES = 2 * 1024 * 1024;
+
+/**
+ * Per-user daily inbound-volume cap. Spend is already bounded by the AI budget,
+ * but draft-ROW count is not — anyone who learns an address could otherwise flood
+ * up to {@link MAX_ITEMS_PER_RECEIPT} junk drafts per email, unbounded. 10/day is
+ * generous for real forwarding yet hostile-proof. Counted from the durable
+ * `inbound_email_events` ledger (processed emails), so it survives restarts.
+ */
+const MAX_INBOUND_PER_DAY = 10;
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
 /** Local-part shape of an inbound receipt address: `u_<token>` (token ≥ 24 chars). */
 const TOKEN_LOCALPART_RE = /^u_([a-z0-9]{24,})$/i;
+
+/**
+ * The fetched body exceeded {@link MAX_SECOND_HOP_BYTES}. A PERMANENT condition —
+ * the handler drops it (200 no-op, no claim), never a 500 retry.
+ */
+export class InboundBodyTooLargeError extends Error {
+  constructor() {
+    super('inbound body too large');
+    this.name = 'InboundBodyTooLargeError';
+    Object.setPrototypeOf(this, InboundBodyTooLargeError.prototype);
+  }
+}
 
 /** The status + JSON body the route maps onto a NextResponse. */
 export interface InboundWebhookResult {
@@ -92,15 +128,16 @@ export interface InboundBody {
 
 /**
  * Injectable seams for testing: the env source, the signature verifier, the body
- * second-hop, the token resolver, the dedupe pre-check, the event-row claim, the
- * import core, the notification writer, and the log sink. All default to the real
- * implementations so the route adapter passes nothing.
+ * second-hop, the token resolver, the daily-volume counter, the dedupe pre-check,
+ * the event-row claim, the import core, the notification writer, and the log sink.
+ * All default to the real implementations so the route adapter passes nothing.
  */
 export interface InboundWebhookDeps {
   readonly env?: Record<string, string | undefined>;
   readonly verify?: (secret: string, rawBody: string, headers: SvixHeaders) => unknown;
   readonly fetchBody?: (emailId: string, env: Record<string, string | undefined>) => Promise<InboundBody>;
   readonly resolveToken?: (token: string) => Promise<TokenResolution>;
+  readonly countRecentInbound?: (userId: string) => Promise<number>;
   readonly isProcessed?: (emailId: string) => Promise<boolean>;
   readonly claimEvent?: (emailId: string, userId: string) => Promise<boolean>;
   readonly importItems?: (args: { userId: string; ctx: AuthContext; items: ReturnType<typeof parseReceipt> }) => Promise<ReceiptImportOutcome>;
@@ -137,11 +174,67 @@ async function fetchBodyFromResend(emailId: string, env: Record<string, string |
   if (!response.ok) {
     throw new Error(`inbound body fetch returned ${response.status}`);
   }
-  const json = (await response.json()) as { html?: unknown; text?: unknown };
+  // Byte-cap the response before buffering it into JSON (throws
+  // InboundBodyTooLargeError past the cap → the handler drops it, no retry).
+  const raw = await readCappedText(response, MAX_SECOND_HOP_BYTES);
+  const json = JSON.parse(raw) as { html?: unknown; text?: unknown };
   return {
     html: typeof json.html === 'string' ? json.html : null,
     text: typeof json.text === 'string' ? json.text : null,
   };
+}
+
+/**
+ * Read a response body to text with a hard byte cap. Rejects early on a
+ * Content-Length past the cap, and enforces the cap on the stream even when the
+ * header is absent or lies. Mirrors `readCapped` in lib/url-import.ts.
+ * @throws {InboundBodyTooLargeError} when the body exceeds `maxBytes`.
+ */
+async function readCappedText(response: Response, maxBytes: number): Promise<string> {
+  const declared = Number(response.headers.get('content-length'));
+  if (Number.isFinite(declared) && declared > maxBytes) {
+    response.body?.cancel().catch(() => {});
+    throw new InboundBodyTooLargeError();
+  }
+  const reader = response.body?.getReader();
+  if (!reader) {
+    return '';
+  }
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (value) {
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel().catch(() => {});
+        throw new InboundBodyTooLargeError();
+      }
+      chunks.push(value);
+    }
+  }
+  const merged = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(merged);
+}
+
+/**
+ * Default daily-volume counter: how many inbound emails this user has had
+ * processed in the last 24h. Counts the durable `inbound_email_events` ledger by
+ * user_id — the cap itself keeps the per-user row set small.
+ */
+async function countRecentInboundInDb(userId: string): Promise<number> {
+  const since = new Date(Date.now() - ONE_DAY_MS);
+  const [row] = await db
+    .select({ n: count() })
+    .from(inboundEmailEvents)
+    .where(and(eq(inboundEmailEvents.userId, userId), gte(inboundEmailEvents.processedAt, since)));
+  return row?.n ?? 0;
 }
 
 /** Default dedupe pre-check: has this email_id already been processed? */
@@ -295,13 +388,27 @@ export async function handleInboundWebhook(
     return OK;
   }
 
-  // Second hop: fetch the body. A transient failure → 500 so Resend retries; we
-  // have NOT claimed the event row yet, so the retry redoes it cleanly.
+  // Per-user daily-volume cap: bound the draft-row flood a leaked address enables.
+  // Checked BEFORE the second hop and BEFORE the claim — capped mail is NOT
+  // claimed (a retry tomorrow is judged against the then-current 24h count).
+  const countRecentInbound = deps.countRecentInbound ?? countRecentInboundInDb;
+  if ((await countRecentInbound(userId)) >= MAX_INBOUND_PER_DAY) {
+    log('[era-inbound] received: daily inbound cap');
+    return OK;
+  }
+
+  // Second hop: fetch the body. A transient failure → 500 so Resend retries (we
+  // have NOT claimed the event row yet, so the retry redoes it cleanly). An
+  // oversized body is PERMANENT → drop it (200, no claim); retrying never shrinks.
   let body: InboundBody;
   try {
     const fetchBody = deps.fetchBody ?? fetchBodyFromResend;
     body = await fetchBody(emailId, env);
   } catch (error) {
+    if (error instanceof InboundBodyTooLargeError) {
+      log('[era-inbound] received: body too large');
+      return OK;
+    }
     log(`[era-inbound] received: body fetch failed (${error instanceof Error ? error.name : 'unknown'})`);
     return RETRY;
   }

@@ -366,10 +366,11 @@ type RegenerateStatus = 'idle' | 'busy' | 'done' | 'error';
 
 /**
  * The personal receipt-forwarding address — the async transport upgrade of the
- * paste-based receipt import. Mirrors {@link PriceAlertsControl}: an explainer,
- * then the feature body. Dormant server-side (inbound receipts not provisioned) →
- * just the quiet "coming soon" line, no address UI. Active → the private address
- * in a selectable monospace row with a Copy button, a privacy footnote, and a
+ * paste-based receipt import. Dormant server-side (inbound receipts not
+ * provisioned, and today's default) → just the quiet "coming soon" line, no
+ * address UI and no explainer that would contradict it. Active → the explainer,
+ * then the private address in a selectable monospace row with a Copy button, a
+ * privacy footnote, and a
  * destructive-adjacent Regenerate action whose hard-kill consequence is shown
  * inline *before* the tap (no modal — restraint). Copy is Quill's
  * {@link strings.settings.receiptAddress}; the failure lines reuse the settings
@@ -455,8 +456,6 @@ function ReceiptAddressControl() {
 
   return (
     <div style={alertsGroupStyle}>
-      <p style={rowHintStyle}>{copy.explain}</p>
-
       {state.status === 'error' && (
         <div style={receiptErrorRowStyle}>
           <p role="status" style={receiptErrorTextStyle}>
@@ -472,6 +471,7 @@ function ReceiptAddressControl() {
 
       {state.status === 'active' && (
         <>
+          <p style={rowHintStyle}>{copy.explain}</p>
           <div style={addressBlockStyle}>
             <span style={rowHintStyle}>{copy.addressLabel}</span>
             <div style={addressRowStyle}>

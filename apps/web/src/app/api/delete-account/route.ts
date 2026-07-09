@@ -17,7 +17,7 @@
  *      this tears down session, account, profiles, style_profiles, items,
  *      outfits→outfit_items, eras→era_outfits, wear_logs, follows, ai_events,
  *      ai_usage, saved_products, notification_preferences, push_tokens,
- *      in_app_notifications.
+ *      in_app_notifications, receipt_inbox_tokens, inbound_email_events.
  *      Deleting the session rows server-side invalidates the caller's session;
  *      the client also calls signOut() and clears its cookie.
  *   3. Delete the non-cascading, EMAIL-keyed traces (waitlist, verification),
@@ -124,7 +124,8 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   // 5-6. Delete DB rows. Deleting the user row cascades every user_id-keyed
   //    domain table (session, account, profiles, style_profiles, items,
-  //    outfits→outfit_items, eras→era_outfits, wear_logs, follows, ai_events).
+  //    outfits→outfit_items, eras→era_outfits, wear_logs, follows, ai_events,
+  //    receipt_inbox_tokens, inbound_email_events).
   //    waitlist and verification are NOT FK-linked to user.id — they are keyed
   //    by email — so we delete them explicitly. verification is Better Auth's
   //    ephemeral email-token table (identifier = the email for magic-link);

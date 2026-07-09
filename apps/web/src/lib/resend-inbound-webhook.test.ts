@@ -23,6 +23,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  InboundBodyTooLargeError,
   MAX_INBOUND_WEBHOOK_BODY_BYTES,
   handleInboundWebhook,
   isInboundWebhookConfigured,
@@ -71,6 +72,7 @@ function spies(over: Partial<InboundWebhookDeps> = {}) {
   const calls = {
     fetchBody: [] as string[],
     resolveToken: [] as string[],
+    countRecentInbound: [] as string[],
     isProcessed: [] as string[],
     claimEvent: [] as Array<{ emailId: string; userId: string }>,
     importItems: [] as Array<{ userId: string; count: number }>,
@@ -87,6 +89,10 @@ function spies(over: Partial<InboundWebhookDeps> = {}) {
     resolveToken: (token) => {
       calls.resolveToken.push(token);
       return Promise.resolve({ status: 'active', userId: USER } as const);
+    },
+    countRecentInbound: (userId) => {
+      calls.countRecentInbound.push(userId);
+      return Promise.resolve(0); // under the cap by default
     },
     isProcessed: (emailId) => {
       calls.isProcessed.push(emailId);
@@ -255,6 +261,31 @@ test('claim raced (row already existed) → 200, no import, no notify', async ()
   assert.equal(calls.notify.length, 0);
 });
 
+// --- daily-volume cap -------------------------------------------------------
+
+test('at/over the daily cap → 200 no-op, no second hop, NO claim, no import', async () => {
+  const { deps, calls } = spies({
+    countRecentInbound: () => Promise.resolve(10), // 11th email in 24h — at the cap
+  });
+  const res = await handleInboundWebhook(delivery(receivedEvent()), deps);
+  assert.equal(res.status, 200);
+  assert.deepEqual(res.body, { received: true });
+  assert.equal(calls.fetchBody.length, 0, 'no second hop when capped');
+  assert.equal(calls.claimEvent.length, 0, 'capped mail is NOT claimed');
+  assert.equal(calls.importItems.length, 0);
+  assert.equal(calls.notify.length, 0);
+});
+
+test('just under the cap → processes normally', async () => {
+  const { deps, calls } = spies({
+    countRecentInbound: () => Promise.resolve(9), // 10th email — still allowed
+  });
+  const res = await handleInboundWebhook(delivery(receivedEvent()), deps);
+  assert.equal(res.status, 200);
+  assert.equal(calls.claimEvent.length, 1);
+  assert.equal(calls.importItems.length, 1);
+});
+
 // --- second hop -------------------------------------------------------------
 
 test('second-hop transient failure → 500, NOT claimed (Resend retries)', async () => {
@@ -265,6 +296,17 @@ test('second-hop transient failure → 500, NOT claimed (Resend retries)', async
   assert.equal(res.status, 500);
   assert.deepEqual(res.body, { error: 'retry' });
   assert.equal(calls.claimEvent.length, 0);
+  assert.equal(calls.importItems.length, 0);
+});
+
+test('second-hop OVERSIZED body → 200 no-op, NOT claimed, NOT retried', async () => {
+  const { deps, calls } = spies({
+    fetchBody: () => Promise.reject(new InboundBodyTooLargeError()),
+  });
+  const res = await handleInboundWebhook(delivery(receivedEvent()), deps);
+  assert.equal(res.status, 200); // permanent — a retry would never shrink it
+  assert.deepEqual(res.body, { received: true });
+  assert.equal(calls.claimEvent.length, 0, 'oversized mail is NOT claimed');
   assert.equal(calls.importItems.length, 0);
 });
 

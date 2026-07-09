@@ -353,9 +353,9 @@ export const receiptInboxTokens = pgTable(
     // user's receiving address is `u_<token>@in.era.style`; the `u_` prefix is a
     // routing artifact composed/stripped by app code (@era/core), so this column
     // stores ONLY the token. Mail maps to an account by this token, NEVER by
-    // matching the sender. Crypto-random, >= 24 chars, lowercase base32 — email
-    // local-parts are case-insensitive, so the token is generated, stored, and
-    // compared in lowercase, making it case-insensitively unique.
+    // matching the sender. Crypto-random 128-bit, lowercase hex (32 chars) —
+    // email local-parts are case-insensitive, so the token is generated, stored,
+    // and compared in lowercase, making it case-insensitively unique.
     //
     // Globally unique across ALL rows (active AND revoked): a token string is
     // never reused, so the webhook's `WHERE token = ?` lookup always resolves to
