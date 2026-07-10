@@ -16,6 +16,16 @@ import { MAX_SCAN_BYTES, capName, decodeEntities, firstImageUrl, firstProductUrl
 
 const MAX_GENERIC_ITEMS = 25;
 
+// Totals suppression measures its window in TEXT space, not raw HTML: strip the
+// tags from a generous raw slice, then test only the tail of the resulting text.
+// Heavy inline CSS wedged between a "Total" label and its amount blows past any
+// raw-char window, but collapses to a single space once tags are stripped — so
+// the label lands right next to the amount as it reads. RAW_SLICE is sized to
+// survive that CSS padding; the TEXT window preserves the original precision
+// intent (a totals word IMMEDIATELY preceding the amount, not paragraphs away).
+const TOTALS_RAW_SLICE = 400;
+const TOTALS_TEXT_WINDOW = 80;
+
 // A money amount that MUST carry a currency symbol or a 3-letter ISO code — this
 // is what separates a price from a stray quantity in unknown markup.
 const MONEY_RE =
@@ -60,11 +70,15 @@ function parseHtml(html: string): ReceiptItem[] {
     // only at the window BEFORE the amount — looking forward would grab the NEXT
     // item's anchor.
     const before = html.slice(Math.max(0, match.index - 600), match.index);
-    // Only suppress when the totals word sits BEFORE the amount it labels
-    // ("Shipping $5.00") — a forward window would swallow a real last item whose
-    // price is immediately followed by a "Total"/"Versand" row in compact markup.
-    const contextText = toText(html.slice(Math.max(0, match.index - 80), match.index));
-    if (TOTAL_WORDS.test(contextText)) continue;
+    // Suppress order-math amounts (subtotal/shipping/tax) only when a totals word
+    // sits BEFORE the amount it labels ("Shipping $5.00"). Backward-only is
+    // deliberate: a forward window would swallow a real last item whose price is
+    // immediately followed by a "Total"/"Versand" row in compact markup. The
+    // window is measured in TEXT space (see TOTALS_*), so style-heavy retailer
+    // markup — inline CSS between the label and the amount — cannot push the
+    // totals word out of range the way a raw-HTML window let it.
+    const precedingText = toText(html.slice(Math.max(0, match.index - TOTALS_RAW_SLICE), match.index));
+    if (TOTAL_WORDS.test(precedingText.slice(-TOTALS_TEXT_WINDOW))) continue;
 
     const { price, currency } = parsePrice(match[0]);
     if (price === undefined) continue;

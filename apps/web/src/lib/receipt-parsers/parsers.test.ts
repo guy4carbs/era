@@ -236,6 +236,62 @@ test('generic: a German "Versand" shipping row does not become a phantom draft',
   assert.equal(items[0]!.currency, 'EUR');
 });
 
+test('generic: a style-heavy Total row does not spawn a phantom draft (prod bug)', () => {
+  // The exact shape from the production E2E failure: three anchored line items in
+  // real retailer table markup, then a Total row. Inline CSS between the "Total"
+  // label and its amount pushes the word past a raw-char suppression window, so a
+  // raw-HTML window let the $214.80 total escape and be named after the previous
+  // item's link (a 4th phantom draft). A text-space window suppresses it.
+  const html = `
+    <table>
+      <tr class="order-line"><td class="product-name"><a href="https://shop.example.com/p/1">Ribbed knit polo — cream</a></td><td class="price" style="font-size:14px;text-align:right;">$35.90</td></tr>
+      <tr class="order-line"><td class="product-name"><a href="https://shop.example.com/p/2">Pleated wide-leg trouser</a></td><td class="price" style="font-size:14px;text-align:right;">$98.00</td></tr>
+      <tr class="order-line"><td class="product-name"><a href="https://shop.example.com/p/3">Leather card holder</a></td><td class="price" style="font-size:14px;text-align:right;">$80.90</td></tr>
+      <tr><td style="font-size:14px;font-weight:600;border-top:1px solid #eee;">Total</td><td style="font-size:14px;font-weight:600;text-align:right;border-top:1px solid #eee;">$214.80</td></tr>
+    </table>`;
+  const items = genericParser.parse(email('orders@shop.example.com', html));
+  assert.deepEqual(
+    items.map((i) => i.name),
+    ['Ribbed knit polo — cream', 'Pleated wide-leg trouser', 'Leather card holder'],
+  );
+  assert.equal(items.length, 3); // no 4th phantom carrying the $214.80 total
+  assert.equal(items[2]!.price, '80.90');
+  // the total's price must NOT have leaked onto the last real item
+  assert.ok(!items.some((i) => i.price === '214.80'));
+});
+
+test('generic: a real last item whose price is followed by a Total row survives', () => {
+  // Backward-only guarantee: the totals word comes AFTER the last item's price,
+  // so widening the (now text-space) window must not reach forward and suppress a
+  // legitimate final line item. Compact markup, price immediately before Total.
+  const html = `
+    <a href="https://shop.example.com/p/9">Cashmere scarf</a> <span>$120.00</span>
+    <span style="font-weight:600;border-top:1px solid #ccc;">Total</span> <span style="font-weight:600;">$120.00</span>`;
+  const items = genericParser.parse(email('orders@shop.example.com', html));
+  assert.deepEqual(
+    items.map((i) => i.name),
+    ['Cashmere scarf'],
+  );
+  assert.equal(items[0]!.price, '120.00');
+});
+
+test('generic: a style-heavy German "Versand" row is suppressed too', () => {
+  // Same padding attack, German + a currency-after-number amount: the "Versand"
+  // label is separated from €4,95 by inline CSS. Text-space suppression catches it.
+  const html = `
+    <table>
+      <tr class="order-line"><td><a href="https://shop.de/p/1">Wollmantel</a></td><td style="font-size:14px;text-align:right;padding:8px 12px;">129,00 EUR</td></tr>
+      <tr><td style="font-size:13px;color:#666;padding:8px 12px;border-top:1px solid #eee;">Versand</td><td style="font-size:13px;color:#666;text-align:right;padding:8px 12px;border-top:1px solid #eee;">4,95 EUR</td></tr>
+    </table>`;
+  const items = genericParser.parse(email('bestellung@shop.de', html));
+  assert.deepEqual(
+    items.map((i) => i.name),
+    ['Wollmantel'],
+  );
+  assert.equal(items[0]!.price, '129.00');
+  assert.ok(!items.some((i) => i.price === '4.95')); // Versand shipping suppressed
+});
+
 test('ReDoS guard: a hostile body of unclosed tags parses fast and returns an array', () => {
   // ~1.2MB of unclosed opening tags — the pathological input for the block/anchor
   // `[\s\S]*?` matchers. The 256KB scan cap keeps the quadratic scan bounded.
