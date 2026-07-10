@@ -464,6 +464,110 @@ test('the SEO / social tags are present and non-empty', () => {
   assert.ok(strings.site.meta.description.trim().length > 0, 'meta.description is empty');
 });
 
+// --- public profile pages (follow, privacy, empty, sections, share, meta) ----
+
+test('the follow control models three distinct states, none of them pushy', () => {
+  const p = strings.profile;
+  assert.equal(p.followCta, 'Follow');
+  assert.equal(p.followingState, 'Following');
+  assert.equal(p.unfollowCta, 'Unfollow');
+  // Three distinct labels so the copy carries no hover/tap platform assumption.
+  assert.equal(new Set([p.followCta, p.followingState, p.unfollowCta]).size, 3);
+});
+
+test('follower/following counts are singular at one, zero-hardened, and boundary-safe', () => {
+  const p = strings.profile;
+  assert.equal(p.followerCount(0), '0 followers');
+  assert.equal(p.followerCount(1), '1 follower');
+  assert.equal(p.followerCount(12), '12 followers');
+  assert.doesNotMatch(p.followerCount(1), /followers/, 'followerCount(1) should not pluralize');
+  // "following" is invariant — number only.
+  assert.equal(p.followingCount(0), '0 following');
+  assert.equal(p.followingCount(8), '8 following');
+  // Garbage input coerces to 0, never throws or leaks NaN/undefined.
+  const junk: unknown[] = [undefined, null, NaN, 'nope', {}];
+  for (const bad of junk) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const b = bad as any;
+    for (const out of [p.followerCount(b), p.followingCount(b)]) {
+      assert.match(out, /^0 /, `count should coerce ${String(bad)} to 0`);
+      assert.doesNotMatch(out, /undefined|NaN/);
+    }
+  }
+});
+
+test('signInToFollow names the person and falls back gracefully', () => {
+  assert.equal(strings.profile.signInToFollow('Mara'), 'Sign in to follow Mara.');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const missing = strings.profile.signInToFollow('' as any);
+  assert.ok(missing.trim().length > 0, 'signInToFollow with no name is empty');
+  assert.doesNotMatch(missing, /undefined/, 'signInToFollow should not leak undefined');
+});
+
+test('the private-profile lines are warm and name the owner, no shame', () => {
+  const heading = strings.profile.privateHeading('Mara');
+  assert.equal(heading, 'Mara keeps their closet private.');
+  assert.match(heading, /private/i, 'private heading should say it is private');
+  assert.ok(strings.profile.privateBody.trim().length > 0, 'privateBody is empty');
+  // No shame / blame / pressure language.
+  const harsh = [/\bcan't\b/i, /\bsorry\b/i, /\bdenied\b/i, /\bnot allowed\b/i, /\bmust\b/i];
+  for (const pattern of harsh) {
+    assert.doesNotMatch(strings.profile.privateBody, pattern, `privateBody should stay warm (${pattern})`);
+  }
+  // Missing name falls back rather than dangling the possessive.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const fallback = strings.profile.privateHeading(undefined as any);
+  assert.doesNotMatch(fallback, /undefined/, 'privateHeading should not leak undefined');
+  assert.match(fallback, /keeps their closet private/);
+});
+
+test('the empty-public lines stay composed — viewer names the owner, owner gets the fix', () => {
+  const viewer = strings.profile.emptyPublic('Mara');
+  assert.equal(viewer, "Mara hasn't shared any pieces yet.");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  assert.doesNotMatch(strings.profile.emptyPublic(undefined as any), /undefined/);
+  const own = strings.profile.emptyPublicOwn;
+  assert.ok(own.trim().length > 0, 'emptyPublicOwn is empty');
+  assert.match(own, /public/i, 'the owner line should point at making pieces public');
+});
+
+test('the profile section headings are plain third-person nouns', () => {
+  const s = strings.profile.sections;
+  assert.deepEqual(s, { closet: 'Closet', eras: 'Eras', outfits: 'Outfits' });
+  // Third-person page — not the owner-context "Your eras".
+  for (const heading of Object.values(s)) {
+    assert.doesNotMatch(heading, /\byour\b/i, `section heading "${heading}" should not read as owner-context`);
+  }
+});
+
+test('own-profile affordances: preview hint, copy-link CTA, and the shared copied idiom', () => {
+  const p = strings.profile;
+  assert.ok(p.ownProfileHint.trim().length > 0, 'ownProfileHint is empty');
+  assert.match(p.ownProfileHint, /others/i, 'the hint should frame it as how others see the profile');
+  assert.ok(p.copyLinkCta.trim().length > 0, 'copyLinkCta is empty');
+  // One "copied to clipboard" idiom across the app.
+  assert.equal(p.linkCopied, strings.settings.receiptAddress.copied);
+});
+
+test('metaDescription names the owner and count, caps at 155 chars, and is boundary-safe', () => {
+  const line = strings.profile.metaDescription('Mara Lin', 42);
+  assert.equal(line, "Mara Lin's closet on Era — 42 pieces, styled by Ovi.");
+  assert.match(strings.profile.metaDescription('Mara', 1), /1 piece\b/);
+  assert.doesNotMatch(strings.profile.metaDescription('Mara', 1), /1 pieces/, 'singular at one');
+  // Hard 155-char SEO cap holds even for an absurd name.
+  const long = strings.profile.metaDescription('X'.repeat(400), 3);
+  assert.ok(long.length <= 155, `metaDescription should cap at 155 chars, got ${long.length}`);
+  // Garbage input never leaks undefined/NaN and always yields a usable line.
+  const junk: unknown[] = [undefined, null, NaN, 'nope', {}];
+  for (const bad of junk) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const b = bad as any;
+    const out = strings.profile.metaDescription(b, b);
+    assert.ok(out.trim().length > 0, `metaDescription empty for ${String(bad)}`);
+    assert.doesNotMatch(out, /undefined|NaN/, `metaDescription leaked a raw value for ${String(bad)}`);
+  }
+});
+
 // --- the Shop tab (gap-driven picks, why-labels, affiliate honesty) ----------
 
 test('every shop chrome string is present and non-empty', () => {

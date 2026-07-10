@@ -1,20 +1,27 @@
 import type { MetadataRoute } from 'next';
+import { createDbClient } from '@era/db';
 import { siteUrl } from '../lib/site-url';
+import { listIndexableProfiles } from '../lib/public-profile-server';
 
 /**
- * The XML sitemap, served by Next at `/sitemap.xml`. Lists only the public,
- * indexable surfaces — the marketing landing and the two legal pages. Everything
- * behind auth (the `(tabs)` app, onboarding, settings, …) is excluded here and
- * `Disallow`ed in `robots.ts`; the two must stay in agreement.
+ * The XML sitemap, served by Next at `/sitemap.xml`. Lists the public, indexable
+ * surfaces — the marketing landing, the two legal pages, and (Layer 3) every
+ * public, non-thin profile. Everything behind auth (the `(tabs)` app, onboarding,
+ * settings, …) is excluded here and `Disallow`ed in `robots.ts`; the two must
+ * stay in agreement.
  *
  * All URLs are absolute via `siteUrl()` — Google requires fully-qualified
  * locations, and the canonical host lives in exactly one place.
  *
- * Layer-2/3 growth (the journal, `/styles/{archetype}` pages, and public
- * profiles) plugs in below: add static routes to `staticRoutes`, and add a
- * second block that maps dynamic content (e.g. published journal slugs, public
- * usernames) to entries — likely `async` + a DB read once those surfaces exist.
+ * The dynamic profile block below matches EXACTLY what the page indexes: only
+ * public accounts over the `PUBLIC_PROFILE_MIN_ITEMS` "thin" bar (private + thin
+ * profiles render but ship `noindex`, so they must NOT appear here). The query is
+ * capped and wrapped so a DB hiccup degrades to the static routes rather than
+ * failing the whole sitemap.
  */
+
+/** Upper bound on profile entries per sitemap render — keeps the file bounded. */
+const PROFILE_SITEMAP_CAP = 5000;
 const staticRoutes: MetadataRoute.Sitemap = [
   {
     url: `${siteUrl()}/`,
@@ -36,8 +43,23 @@ const staticRoutes: MetadataRoute.Sitemap = [
   },
 ];
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  // Layer 2/3: spread dynamic entries here, e.g.
-  //   ...(await journalRoutes()), ...(await publicProfileRoutes())
-  return [...staticRoutes];
+/** Public, non-thin profiles as sitemap entries. Never throws — [] on any error. */
+async function publicProfileRoutes(): Promise<MetadataRoute.Sitemap> {
+  try {
+    const db = createDbClient(process.env.DATABASE_URL!);
+    const indexable = await listIndexableProfiles(db, PROFILE_SITEMAP_CAP);
+    return indexable.map((profile) => ({
+      url: `${siteUrl()}/${profile.username}`,
+      lastModified: profile.updatedAt,
+      changeFrequency: 'weekly',
+      priority: 0.6,
+    }));
+  } catch {
+    // A DB hiccup must not fail the sitemap — ship the static routes alone.
+    return [];
+  }
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  return [...staticRoutes, ...(await publicProfileRoutes())];
 }

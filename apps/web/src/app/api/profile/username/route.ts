@@ -10,13 +10,14 @@
  * Responses:
  *   - 401 { error: 'unauthenticated' }  no session
  *   - 400 { error: 'invalid' }          malformed username
+ *   - 409 { error: 'reserved' }         username collides with an app route
  *   - 409 { error: 'taken' }            username already in use
  *   - 200 { username }                  updated
  */
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
-import { type AuthContext, AuthzError, requireUser } from '@era/core';
+import { type AuthContext, AuthzError, isReservedUsername, requireUser } from '@era/core';
 import { createDbClient, profiles } from '@era/db';
 
 import { auth } from '../../../../lib/auth.ts';
@@ -50,6 +51,12 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   if (!isValidUsername(username)) {
     return NextResponse.json({ error: 'invalid' }, { status: 400 });
+  }
+
+  // A reserved name would shadow an app route — refuse it before the write. The
+  // profile loader treats the same names as not-found, so the two paths agree.
+  if (isReservedUsername(username)) {
+    return NextResponse.json({ error: 'reserved' }, { status: 409 });
   }
 
   try {

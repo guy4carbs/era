@@ -30,6 +30,8 @@ export interface SettingsScreenProps {
   accountEmail: string;
   /** Server-seeded closet privacy, so the toggle lands with no flash. */
   initialIsPrivate: boolean;
+  /** The owner's username — powers the "view your public profile" link. Null hides it. */
+  username: string | null;
 }
 
 /**
@@ -38,7 +40,7 @@ export interface SettingsScreenProps {
  * support + legal links, sign out, and the destructive delete-account flow. All
  * dimensions and colours come from tokens; motion collapses under reduced-motion.
  */
-export function SettingsScreen({ accountEmail, initialIsPrivate }: SettingsScreenProps) {
+export function SettingsScreen({ accountEmail, initialIsPrivate, username }: SettingsScreenProps) {
   const router = useRouter();
 
   async function handleSignOut() {
@@ -103,6 +105,14 @@ export function SettingsScreen({ accountEmail, initialIsPrivate }: SettingsScree
 
         <Section title={SETTINGS_COPY.account}>
           <p style={rowHintStyle}>{SETTINGS_COPY.signedInAs(accountEmail)}</p>
+          {username ? (
+            <Link href={`/${username}`} style={navRowStyle}>
+              <span style={rowLabelStyle}>{SETTINGS_COPY.viewProfile}</span>
+              <span aria-hidden="true" style={chevronStyle}>
+                →
+              </span>
+            </Link>
+          ) : null}
           <button type="button" style={signOutStyle} onClick={handleSignOut}>
             {SETTINGS_COPY.signOut}
           </button>

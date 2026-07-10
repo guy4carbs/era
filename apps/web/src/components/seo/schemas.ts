@@ -69,6 +69,54 @@ export function faqPageSchema(entries: readonly SiteFaqEntry[]): Record<string, 
   };
 }
 
+/** The identity + social fields a {@link profilePageSchema} node is built from. */
+export interface ProfileSchemaInput {
+  readonly username: string;
+  readonly displayName: string | null;
+  readonly avatarUrl: string | null;
+  readonly followerCount: number;
+}
+
+/**
+ * ProfilePage node for a public profile — Google's rich-result type for a
+ * person's profile page. `mainEntity` is the Person: their name, `@handle`
+ * (`alternateName`), canonical profile `url`, and avatar `image` when present.
+ * Follower count is expressed as a schema.org {@link https://schema.org/FollowAction}
+ * `interactionStatistic` (an InteractionCounter), the sanctioned way to state a
+ * follower total. `dateCreated`/`dateModified` are intentionally omitted — the
+ * public read model does not expose the profile's creation time (see the report's
+ * note to forge-profiles); they are recommended, not required, so the node stays
+ * valid without them. Only emitted for indexable (public, non-thin) profiles.
+ */
+export function profilePageSchema(input: ProfileSchemaInput): Record<string, unknown> {
+  const name = input.displayName?.trim() ? input.displayName.trim() : input.username;
+  const followers = Number.isFinite(input.followerCount)
+    ? Math.max(0, Math.trunc(input.followerCount))
+    : 0;
+
+  const person: Record<string, unknown> = {
+    '@type': 'Person',
+    name,
+    alternateName: `@${input.username}`,
+    identifier: input.username,
+    url: abs(`/${input.username}`),
+    interactionStatistic: {
+      '@type': 'InteractionCounter',
+      interactionType: 'https://schema.org/FollowAction',
+      userInteractionCount: followers,
+    },
+  };
+  if (input.avatarUrl) {
+    person.image = input.avatarUrl;
+  }
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    mainEntity: person,
+  };
+}
+
 /** BreadcrumbList node — an ordered trail of {name, url}; urls resolved to absolute. */
 export function breadcrumbSchema(items: readonly { name: string; url: string }[]): Record<string, unknown> {
   return {

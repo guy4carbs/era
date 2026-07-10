@@ -36,6 +36,11 @@ export {
 } from './authz.ts';
 export type { AuthContext, AuthzErrorCode, VisibilityResource } from './authz.ts';
 
+// Reserved usernames — the one list both the username-claim path and the
+// public-profile loader consult so a profile can never shadow an app route. See
+// reserved-usernames.ts.
+export { RESERVED_USERNAMES, isReservedUsername } from './reserved-usernames.ts';
+
 // Platform-free auth API contract — the single surface both web and mobile call
 // into for sign-in / sign-out, plus the shared session shape. See auth-api.ts.
 export { createEraAuthApi } from './auth-api.ts';

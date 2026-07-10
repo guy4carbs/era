@@ -5,4 +5,6 @@ export {
   softwareApplicationSchema,
   faqPageSchema,
   breadcrumbSchema,
+  profilePageSchema,
+  type ProfileSchemaInput,
 } from './schemas';
