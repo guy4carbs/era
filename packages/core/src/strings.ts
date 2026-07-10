@@ -512,8 +512,13 @@ export const strings = {
      * ever see this". See the storage backlog before public profiles ship.
      */
     privacyHintPrivate: 'Kept off your public profile — only you see your closet here.',
-    /** One-line explanation of what public means — honest about visibility. */
-    privacyHintPublic: 'This can show up on your public profile.',
+    /**
+     * One-line explanation of what public means — honest about the full reach.
+     * Public profiles are search-indexed (canonical + sitemap + JSON-LD), so
+     * informed consent names that consequence plainly: not just "on your profile"
+     * but visible to anyone, search engines included.
+     */
+    privacyHintPublic: 'This can show up on your public profile — visible to anyone, including search engines.',
 
     /**
      * Wear-count line for the detail sheet. Zero reads as an invitation, not a

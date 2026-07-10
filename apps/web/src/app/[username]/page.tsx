@@ -18,7 +18,7 @@ import { isThinProfile, profileName, profileTitle } from '../../lib/profile-pres
 import { siteUrl } from '../../lib/site-url';
 import { isValidUsername } from '../../lib/username';
 import { Container } from '../../components';
-import { Avatar, FollowButton, ProfileView } from '../../components/profile';
+import { Avatar, CopyLinkButton, FollowButton, ProfileView } from '../../components/profile';
 import { JsonLd, profilePageSchema } from '../../components/seo';
 import { typeRamp } from '@era/tokens';
 
@@ -150,7 +150,9 @@ export default async function ProfilePage({
   const canonicalUrl = `${siteUrl()}/${username}`;
 
   if (result.state === 'private') {
-    return <PrivateCard data={result} isOwner={isOwner} signedIn={signedIn} />;
+    return (
+      <PrivateCard data={result} isOwner={isOwner} signedIn={signedIn} canonicalUrl={canonicalUrl} />
+    );
   }
 
   return (
@@ -162,6 +164,7 @@ export default async function ProfilePage({
             displayName: result.profile.displayName,
             avatarUrl: result.profile.avatarUrl,
             followerCount: result.followerCount,
+            createdAt: result.profile.createdAt,
           })}
         />
       )}
@@ -177,18 +180,21 @@ export default async function ProfilePage({
 
 /**
  * The private-account card: existence is confirmed, content withheld. A visitor
- * can still follow (bumps the count only); the owner previewing their own private
- * profile sees the quiet "how it looks to others" hint instead of a follow button
- * they'd only be told they can't use.
+ * can still follow (bumps the count only). The profile IS shareable even while
+ * private, so the owner previewing their own gets the same copy-link affordance
+ * as on a public profile (its own `ownProfileHint` leads it) rather than a follow
+ * button they'd only be told they can't use.
  */
 function PrivateCard({
   data,
   isOwner,
   signedIn,
+  canonicalUrl,
 }: {
   data: PublicProfilePrivate;
   isOwner: boolean;
   signedIn: boolean;
+  canonicalUrl: string;
 }): JSX.Element {
   const name = profileName(data.profile);
   return (
@@ -200,7 +206,7 @@ function PrivateCard({
         <p style={privateHeadingStyle}>{strings.profile.privateHeading(name)}</p>
         <p style={privateBodyStyle}>{strings.profile.privateBody}</p>
         {isOwner ? (
-          <p style={privateOwnerHintStyle}>{strings.profile.ownProfileHint}</p>
+          <CopyLinkButton url={canonicalUrl} align="center" />
         ) : (
           <FollowButton
             username={data.profile.username}
@@ -256,12 +262,4 @@ const privateBodyStyle: CSSProperties = {
   fontSize: typeRamp.subhead.rem,
   lineHeight: `${typeRamp.subhead.lineHeight}px`,
   color: 'var(--color-secondary)',
-};
-
-const privateOwnerHintStyle: CSSProperties = {
-  margin: 0,
-  marginTop: 'var(--space-2)',
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
 };

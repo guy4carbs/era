@@ -75,6 +75,8 @@ export interface ProfileSchemaInput {
   readonly displayName: string | null;
   readonly avatarUrl: string | null;
   readonly followerCount: number;
+  /** The profile's creation time, ISO 8601 — feeds `dateCreated`/`dateModified`. */
+  readonly createdAt: string;
 }
 
 /**
@@ -83,10 +85,10 @@ export interface ProfileSchemaInput {
  * (`alternateName`), canonical profile `url`, and avatar `image` when present.
  * Follower count is expressed as a schema.org {@link https://schema.org/FollowAction}
  * `interactionStatistic` (an InteractionCounter), the sanctioned way to state a
- * follower total. `dateCreated`/`dateModified` are intentionally omitted — the
- * public read model does not expose the profile's creation time (see the report's
- * note to forge-profiles); they are recommended, not required, so the node stays
- * valid without them. Only emitted for indexable (public, non-thin) profiles.
+ * follower total. `dateCreated` is the profile's creation time; `dateModified`
+ * mirrors it because Era does not track profile edits yet — an honest "last known
+ * change" rather than a fabricated recency. Only emitted for indexable (public,
+ * non-thin) profiles.
  */
 export function profilePageSchema(input: ProfileSchemaInput): Record<string, unknown> {
   const name = input.displayName?.trim() ? input.displayName.trim() : input.username;
@@ -113,6 +115,10 @@ export function profilePageSchema(input: ProfileSchemaInput): Record<string, unk
   return {
     '@context': 'https://schema.org',
     '@type': 'ProfilePage',
+    // We don't track profile edits, so dateModified mirrors dateCreated (an honest
+    // "last known change") rather than inventing a fresher timestamp.
+    dateCreated: input.createdAt,
+    dateModified: input.createdAt,
     mainEntity: person,
   };
 }

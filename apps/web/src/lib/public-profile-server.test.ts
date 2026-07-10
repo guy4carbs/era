@@ -61,6 +61,9 @@ const storage = {
 } as unknown as StorageClient;
 
 const OWNER = 'owner-1';
+/** profiles.createdAt is a Date; the loader exposes it as an ISO 8601 string. */
+const CREATED = new Date('2026-01-15T12:00:00.000Z');
+const CREATED_ISO = '2026-01-15T12:00:00.000Z';
 
 test('reserved username resolves to not_found WITHOUT any query', async () => {
   const { db, calls } = fakeDb();
@@ -77,14 +80,28 @@ test('an unknown username resolves to not_found', async () => {
 
 test('a private profile returns the minimal card with follower count, no content', async () => {
   const { db } = fakeDb([
-    [{ userId: OWNER, username: 'sara', displayName: 'Sara', avatarUrl: 'https://a/av.png', isPrivate: true }],
+    [
+      {
+        userId: OWNER,
+        username: 'sara',
+        displayName: 'Sara',
+        avatarUrl: 'https://a/av.png',
+        createdAt: CREATED,
+        isPrivate: true,
+      },
+    ],
     [{ n: 7 }], // countFollowers
     // anonymous viewer → isFollowing short-circuits, no query
   ]);
   const result = await loadPublicProfile(db, storage, 'sara', null);
   assert.equal(result.state, 'private');
   if (result.state !== 'private') return;
-  assert.deepEqual(result.profile, { username: 'sara', displayName: 'Sara', avatarUrl: 'https://a/av.png' });
+  assert.deepEqual(result.profile, {
+    username: 'sara',
+    displayName: 'Sara',
+    avatarUrl: 'https://a/av.png',
+    createdAt: CREATED_ISO,
+  });
   assert.equal(result.followerCount, 7);
   assert.equal(result.isFollowing, false);
   assert.ok(!('items' in result), 'a private card exposes no wardrobe content');
@@ -92,7 +109,7 @@ test('a private profile returns the minimal card with follower count, no content
 
 test('a private profile reflects the viewer follow edge when the viewer follows', async () => {
   const { db } = fakeDb([
-    [{ userId: OWNER, username: 'sara', displayName: 'Sara', avatarUrl: null, isPrivate: true }],
+    [{ userId: OWNER, username: 'sara', displayName: 'Sara', avatarUrl: null, createdAt: CREATED, isPrivate: true }],
     [{ n: 7 }], // countFollowers
     [{ followerId: 'viewer-2' }], // isFollowing → true
   ]);
@@ -104,7 +121,7 @@ test('a private profile reflects the viewer follow edge when the viewer follows'
 
 test('a public profile returns full content: cutout imagery, counts, eras, outfits', async () => {
   const { db, calls } = fakeDb([
-    [{ userId: OWNER, username: 'jules', displayName: 'Jules', avatarUrl: null, isPrivate: false }], // profile
+    [{ userId: OWNER, username: 'jules', displayName: 'Jules', avatarUrl: null, createdAt: CREATED, isPrivate: false }], // profile
     [{ n: 5 }], // countFollowers
     [{ followerId: 'viewer-2' }], // isFollowing → true
     [{ n: 2 }], // countFollowing
@@ -122,7 +139,12 @@ test('a public profile returns full content: cutout imagery, counts, eras, outfi
   assert.equal(result.state, 'public');
   if (result.state !== 'public') return;
 
-  assert.deepEqual(result.profile, { username: 'jules', displayName: 'Jules', avatarUrl: null });
+  assert.deepEqual(result.profile, {
+    username: 'jules',
+    displayName: 'Jules',
+    avatarUrl: null,
+    createdAt: CREATED_ISO,
+  });
   assert.equal(result.followerCount, 5);
   assert.equal(result.followingCount, 2);
   assert.equal(result.isFollowing, true);
@@ -154,7 +176,7 @@ test('a public profile returns full content: cutout imagery, counts, eras, outfi
 
 test('a public profile with no eras skips the roll-up query and returns empty grids', async () => {
   const { db } = fakeDb([
-    [{ userId: OWNER, username: 'jules', displayName: null, avatarUrl: null, isPrivate: false }], // profile
+    [{ userId: OWNER, username: 'jules', displayName: null, avatarUrl: null, createdAt: CREATED, isPrivate: false }], // profile
     [{ n: 0 }], // countFollowers
     // anonymous viewer → no isFollowing query
     [{ n: 0 }], // countFollowing

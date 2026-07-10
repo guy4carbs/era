@@ -36,6 +36,9 @@ const COLORS = {
 
 const MAX_TILES = 6;
 const FETCH_TIMEOUT_MS = 2500;
+// Tiles come only from our own public R2 base (pipeline caps uploads at 1600px),
+// but bound the buffered body anyway — an over-cap response just drops the tile.
+const MAX_TILE_BYTES = 2 * 1024 * 1024;
 
 /** Fetch an image URL into a data URL, or null on any failure/timeout/non-image. */
 async function fetchDataUrl(url: string): Promise<string | null> {
@@ -46,7 +49,10 @@ async function fetchDataUrl(url: string): Promise<string | null> {
     if (!res.ok) return null;
     const type = res.headers.get('content-type') ?? 'image/png';
     if (!type.startsWith('image/')) return null;
+    const declaredLength = Number(res.headers.get('content-length'));
+    if (Number.isFinite(declaredLength) && declaredLength > MAX_TILE_BYTES) return null;
     const buffer = Buffer.from(await res.arrayBuffer());
+    if (buffer.byteLength > MAX_TILE_BYTES) return null;
     return `data:${type};base64,${buffer.toString('base64')}`;
   } catch {
     return null;

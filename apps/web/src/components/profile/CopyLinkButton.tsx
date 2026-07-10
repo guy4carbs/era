@@ -9,6 +9,8 @@ export interface CopyLinkButtonProps {
   url: string;
   /** Show the "this is how your profile looks to others" hint above the button. */
   withHint?: boolean;
+  /** Cross-axis alignment — `start` in the left-aligned header, `center` on the private card. */
+  align?: 'start' | 'center';
 }
 
 /**
@@ -19,7 +21,7 @@ export interface CopyLinkButtonProps {
  * OS share sheet — this is the "grab my link" path. A blocked clipboard fails
  * quietly (no error surfaced): the worst case is simply no confirmation.
  */
-export function CopyLinkButton({ url, withHint = true }: CopyLinkButtonProps) {
+export function CopyLinkButton({ url, withHint = true, align = 'start' }: CopyLinkButtonProps) {
   const [copied, setCopied] = useState(false);
   const mounted = useRef(true);
 
@@ -47,8 +49,9 @@ export function CopyLinkButton({ url, withHint = true }: CopyLinkButtonProps) {
     }
   }
 
+  const crossAxis = align === 'center' ? 'center' : 'flex-start';
   return (
-    <div style={wrapStyle}>
+    <div style={{ ...wrapStyle, alignItems: crossAxis, textAlign: align === 'center' ? 'center' : 'start' }}>
       {withHint ? <p style={hintStyle}>{strings.profile.ownProfileHint}</p> : null}
       <button type="button" style={buttonStyle} onClick={() => void handleCopy()}>
         {strings.profile.copyLinkCta}
@@ -64,7 +67,6 @@ const wrapStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: 'var(--space-2)',
-  alignItems: 'flex-start',
 };
 
 const hintStyle: CSSProperties = {

@@ -50,6 +50,12 @@ export interface PublicProfileIdentity {
   readonly username: string;
   readonly displayName: string | null;
   readonly avatarUrl: string | null;
+  /**
+   * When the profile was created, as an ISO 8601 string. Exposed as a string
+   * (not a Date) so the read-model stays plainly JSON-serializable and feeds
+   * the profile page's JSON-LD `dateCreated`/`dateModified` verbatim.
+   */
+  readonly createdAt: string;
 }
 
 /** One item tile on a public profile grid. `imageUrl` is the public cutout, or null. */
@@ -126,6 +132,7 @@ export async function loadPublicProfile(
       username: profiles.username,
       displayName: profiles.displayName,
       avatarUrl: profiles.avatarUrl,
+      createdAt: profiles.createdAt,
       isPrivate: profiles.isPrivate,
     })
     .from(profiles)
@@ -141,6 +148,7 @@ export async function loadPublicProfile(
     username: row.username,
     displayName: row.displayName,
     avatarUrl: row.avatarUrl,
+    createdAt: row.createdAt.toISOString(),
   };
 
   const followerCount = await countFollowers(db, ownerId);

@@ -20,6 +20,14 @@ import { listIndexableProfiles } from '../lib/public-profile-server';
  * failing the whole sitemap.
  */
 
+/**
+ * Regenerate at most hourly (ISR). Without this, Next renders the sitemap once
+ * per deploy and serves it statically — so a profile that flips to private (or
+ * drops below the thin bar) would keep appearing in `/sitemap.xml` until the next
+ * deploy. Hourly revalidation bounds that stale-listing window to an hour.
+ */
+export const revalidate = 3600;
+
 /** Upper bound on profile entries per sitemap render — keeps the file bounded. */
 const PROFILE_SITEMAP_CAP = 5000;
 const staticRoutes: MetadataRoute.Sitemap = [
