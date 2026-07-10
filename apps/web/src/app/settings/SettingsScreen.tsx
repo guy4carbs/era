@@ -1,6 +1,13 @@
 'use client';
 
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, useReducedMotion } from 'framer-motion';
@@ -66,6 +73,10 @@ export function SettingsScreen({ accountEmail, initialIsPrivate }: SettingsScree
 
         <Section title={strings.settings.priceAlerts.title}>
           <PriceAlertsControl />
+        </Section>
+
+        <Section title={strings.settings.receiptAddress.title}>
+          <ReceiptAddressControl />
         </Section>
 
         <Section title={SETTINGS_COPY.support}>
@@ -343,6 +354,174 @@ function PriceAlertsControl() {
   );
 }
 
+/** The resolved server state of the personal receipt-forwarding address. */
+type ReceiptAddressState =
+  | { readonly status: 'loading' }
+  | { readonly status: 'error' }
+  | { readonly status: 'dormant' }
+  | { readonly status: 'active'; readonly address: string };
+
+/** Progress of the regenerate (rotate) action, driving its confirmation/error line. */
+type RegenerateStatus = 'idle' | 'busy' | 'done' | 'error';
+
+/**
+ * The personal receipt-forwarding address — the async transport upgrade of the
+ * paste-based receipt import. Dormant server-side (inbound receipts not
+ * provisioned, and today's default) → just the quiet "coming soon" line, no
+ * address UI and no explainer that would contradict it. Active → the explainer,
+ * then the private address in a selectable monospace row with a Copy button, a
+ * privacy footnote, and a
+ * destructive-adjacent Regenerate action whose hard-kill consequence is shown
+ * inline *before* the tap (no modal — restraint). Copy is Quill's
+ * {@link strings.settings.receiptAddress}; the failure lines reuse the settings
+ * error idiom. Fetch failure resolves to a quiet retry.
+ */
+function ReceiptAddressControl() {
+  const copy = strings.settings.receiptAddress;
+  const [state, setState] = useState<ReceiptAddressState>({ status: 'loading' });
+  const [copied, setCopied] = useState(false);
+  const [regen, setRegen] = useState<RegenerateStatus>('idle');
+  const mounted = useRef(true);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
+  const load = useCallback(async () => {
+    setState({ status: 'loading' });
+    try {
+      const res = await fetch('/api/settings/receipt-address', { credentials: 'same-origin' });
+      if (!res.ok) throw new Error(`receipt-address failed: ${res.status}`);
+      const body = (await res.json()) as { address: string | null; dormant: boolean };
+      if (!mounted.current) return;
+      setState(
+        body.dormant || body.address === null
+          ? { status: 'dormant' }
+          : { status: 'active', address: body.address },
+      );
+      setRegen('idle');
+    } catch {
+      if (mounted.current) setState({ status: 'error' });
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  // The copy confirmation is transient — it clears itself a beat after it shows.
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => {
+      if (mounted.current) setCopied(false);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [copied]);
+
+  async function handleCopy(address: string) {
+    try {
+      await navigator.clipboard.writeText(address);
+      if (mounted.current) setCopied(true);
+    } catch {
+      // Clipboard blocked — the address row is selectable, so no error is surfaced.
+    }
+  }
+
+  async function handleRegenerate() {
+    setRegen('busy');
+    try {
+      const res = await fetch('/api/settings/receipt-address/regenerate', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'same-origin',
+      });
+      if (!res.ok) throw new Error(`regenerate failed: ${res.status}`);
+      const body = (await res.json()) as { address: string | null; dormant: boolean };
+      if (!mounted.current) return;
+      if (body.dormant || body.address === null) {
+        setState({ status: 'dormant' });
+        setRegen('idle');
+        return;
+      }
+      setCopied(false);
+      setState({ status: 'active', address: body.address });
+      setRegen('done');
+    } catch {
+      if (mounted.current) setRegen('error');
+    }
+  }
+
+  return (
+    <div style={alertsGroupStyle}>
+      {state.status === 'error' && (
+        <div style={receiptErrorRowStyle}>
+          <p role="status" style={receiptErrorTextStyle}>
+            {SETTINGS_COPY.genericError}
+          </p>
+          <button type="button" style={receiptRetryStyle} onClick={() => void load()}>
+            {SETTINGS_COPY.retry}
+          </button>
+        </div>
+      )}
+
+      {state.status === 'dormant' && <p style={rowHintStyle}>{copy.dormant}</p>}
+
+      {state.status === 'active' && (
+        <>
+          <p style={rowHintStyle}>{copy.explain}</p>
+          <div style={addressBlockStyle}>
+            <span style={rowHintStyle}>{copy.addressLabel}</span>
+            <div style={addressRowStyle}>
+              <code style={addressCodeStyle}>{state.address}</code>
+              <button
+                type="button"
+                style={copyButtonStyle}
+                onClick={() => void handleCopy(state.address)}
+              >
+                {copy.copyCta}
+              </button>
+            </div>
+            <p aria-live="polite" style={receiptConfirmStyle}>
+              {copied ? copy.copied : ''}
+            </p>
+          </div>
+
+          <p style={rowHintStyle}>{copy.privacyNote}</p>
+
+          <div style={regenerateBlockStyle}>
+            <p style={rowHintStyle}>{copy.regenerateConsequence}</p>
+            <button
+              type="button"
+              style={{
+                ...regenerateButtonStyle,
+                opacity: regen === 'busy' ? 0.5 : 1,
+                cursor: regen === 'busy' ? 'not-allowed' : 'pointer',
+              }}
+              disabled={regen === 'busy'}
+              onClick={() => void handleRegenerate()}
+            >
+              {copy.regenerateCta}
+            </button>
+            <p
+              aria-live="polite"
+              style={regen === 'error' ? receiptErrorTextStyle : receiptConfirmStyle}
+            >
+              {regen === 'done'
+                ? copy.regenerated
+                : regen === 'error'
+                  ? SETTINGS_COPY.genericError
+                  : ''}
+            </p>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 const screenStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
@@ -526,4 +705,112 @@ const thumbStyle: CSSProperties = {
   height: 'var(--space-4)',
   borderRadius: '50%',
   background: 'var(--color-bg)',
+};
+
+// --- receipt address ---
+
+// The revealed address, its caption, and the copy confirmation stack together.
+const addressBlockStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-2)',
+};
+
+// Address left (grows, wraps), Copy button right (fixed).
+const addressRowStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 'var(--space-3)',
+};
+
+// The address itself: monospace + select-all so a single tap grabs the whole token.
+const addressCodeStyle: CSSProperties = {
+  flex: 1,
+  minWidth: 0,
+  wordBreak: 'break-all',
+  userSelect: 'all',
+  padding: 'var(--space-2) var(--space-3)',
+  borderRadius: 'var(--radius-input)',
+  border: '1px solid var(--color-hairline)',
+  background: 'color-mix(in srgb, var(--color-hairline) 40%, transparent)',
+  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+  fontSize: typeRamp.footnote.rem,
+  lineHeight: `${typeRamp.footnote.lineHeight}px`,
+  color: 'var(--color-text)',
+};
+
+// Secondary Copy button — mirrors the sign-out frame, sized to sit beside the row.
+const copyButtonStyle: CSSProperties = {
+  flexShrink: 0,
+  minHeight: 'var(--touch-target-min)',
+  paddingInline: 'var(--space-3)',
+  borderRadius: 'var(--radius-input)',
+  border: '1px solid var(--color-hairline)',
+  background: 'var(--color-surface)',
+  color: 'var(--color-text)',
+  fontSize: typeRamp.subhead.rem,
+  lineHeight: `${typeRamp.subhead.lineHeight}px`,
+  fontWeight: 600,
+  cursor: 'pointer',
+};
+
+// Transient/quiet confirmation line (copied, regenerated) — an always-present
+// live region so assistive tech announces it; empty until there's something to say.
+const receiptConfirmStyle: CSSProperties = {
+  margin: 0,
+  minHeight: `${typeRamp.footnote.lineHeight}px`,
+  fontSize: typeRamp.footnote.rem,
+  lineHeight: `${typeRamp.footnote.lineHeight}px`,
+  color: 'var(--color-secondary-strong)',
+};
+
+// The Regenerate group: the hard-kill consequence, the action, then its result line.
+const regenerateBlockStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-2)',
+  paddingTop: 'var(--space-2)',
+};
+
+// Destructive-adjacent secondary action: rust text on a quiet frame — not the full
+// danger treatment of Delete, but clearly weightier than the copy button.
+const regenerateButtonStyle: CSSProperties = {
+  alignSelf: 'flex-start',
+  minHeight: 'var(--touch-target-web)',
+  paddingInline: 'var(--space-4)',
+  borderRadius: 'var(--radius-input)',
+  border: '1px solid color-mix(in srgb, var(--color-rust) 40%, var(--color-hairline))',
+  background: 'var(--color-surface)',
+  color: 'var(--color-rust)',
+  fontSize: typeRamp.subhead.rem,
+  lineHeight: `${typeRamp.subhead.lineHeight}px`,
+  fontWeight: 600,
+};
+
+// Fetch-failure row: the reused error line, plus a quiet retry.
+const receiptErrorRowStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 'var(--space-3)',
+  minHeight: 'var(--touch-target-min)',
+};
+
+const receiptErrorTextStyle: CSSProperties = {
+  margin: 0,
+  fontSize: typeRamp.footnote.rem,
+  lineHeight: `${typeRamp.footnote.lineHeight}px`,
+  color: 'var(--color-rust)',
+};
+
+const receiptRetryStyle: CSSProperties = {
+  flexShrink: 0,
+  padding: 0,
+  minHeight: 'var(--touch-target-min)',
+  border: 'none',
+  background: 'transparent',
+  color: 'var(--color-accent)',
+  fontSize: typeRamp.footnote.rem,
+  fontWeight: 600,
+  cursor: 'pointer',
 };

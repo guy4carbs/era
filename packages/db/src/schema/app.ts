@@ -5,6 +5,7 @@
  * timestamps. Every user_id is a text column referencing the Better Auth
  * `user.id` with ON DELETE CASCADE, so deleting a user tears down their data.
  */
+import { sql } from 'drizzle-orm';
 import {
   boolean,
   date,
@@ -18,6 +19,7 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
 
@@ -338,4 +340,58 @@ export const emailSuppressions = pgTable('email_suppressions', {
   // Stored as text; the app validates the value.
   reason: text('reason').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const receiptInboxTokens = pgTable(
+  'receipt_inbox_tokens',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    // The bare token that identifies the account for inbound receipt mail. The
+    // user's receiving address is `u_<token>@in.era.style`; the `u_` prefix is a
+    // routing artifact composed/stripped by app code (@era/core), so this column
+    // stores ONLY the token. Mail maps to an account by this token, NEVER by
+    // matching the sender. Crypto-random 128-bit, lowercase hex (32 chars) —
+    // email local-parts are case-insensitive, so the token is generated, stored,
+    // and compared in lowercase, making it case-insensitively unique.
+    //
+    // Globally unique across ALL rows (active AND revoked): a token string is
+    // never reused, so the webhook's `WHERE token = ?` lookup always resolves to
+    // at most one row and one account, even after rotation.
+    token: text('token').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    // Null while the token is active. Rotation SOFT-dies the old row (stamps
+    // revoked_at) rather than deleting it, so we keep an audit trail of when an
+    // address was retired and can resolve — then explicitly reject — mail that
+    // still arrives at a just-rotated address instead of it looking unroutable.
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  },
+  (table) => [
+    // Webhook resolution + global no-reuse guarantee: one row per token string,
+    // forever, across active and revoked history.
+    unique('receipt_inbox_tokens_token_key').on(table.token),
+    // Exactly ONE active token per user. Partial unique index on user_id filtered
+    // to live rows — also serves the "what's my current address?" lookup
+    // (WHERE user_id = ? AND revoked_at IS NULL).
+    uniqueIndex('receipt_inbox_tokens_active_user_idx')
+      .on(table.userId)
+      .where(sql`${table.revokedAt} is null`),
+  ],
+);
+
+export const inboundEmailEvents = pgTable('inbound_email_events', {
+  // Resend's `data.email_id` — the stable per-inbound-message id. It IS the
+  // primary key: inbound webhooks are at-least-once (Resend retries on a
+  // 5s→10h schedule), so the import must be durably idempotent or a replay
+  // duplicates draft items. The webhook inserts this row with
+  // onConflictDoNothing and skips processing when the row already existed —
+  // that single insert is the whole dedupe gate. No extra indexes: every
+  // lookup is by the primary key.
+  emailId: text('email_id').primaryKey(),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  processedAt: timestamp('processed_at', { withTimezone: true }).notNull().defaultNow(),
 });

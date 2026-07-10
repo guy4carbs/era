@@ -11,12 +11,14 @@ import {
   eras,
   follows,
   inAppNotifications,
+  inboundEmailEvents,
   items,
   notificationPreferences,
   outfitItems,
   outfits,
   profiles,
   pushTokens,
+  receiptInboxTokens,
   savedProducts,
   styleProfiles,
   waitlist,
@@ -51,6 +53,8 @@ export {
   inAppNotifications,
   waitlist,
   emailSuppressions,
+  receiptInboxTokens,
+  inboundEmailEvents,
 };
 
 export { createDbClient } from './client.ts';
@@ -110,6 +114,12 @@ export type NewWaitlistEntry = typeof waitlist.$inferInsert;
 
 export type EmailSuppression = typeof emailSuppressions.$inferSelect;
 export type NewEmailSuppression = typeof emailSuppressions.$inferInsert;
+
+export type ReceiptInboxToken = typeof receiptInboxTokens.$inferSelect;
+export type NewReceiptInboxToken = typeof receiptInboxTokens.$inferInsert;
+
+export type InboundEmailEvent = typeof inboundEmailEvents.$inferSelect;
+export type NewInboundEmailEvent = typeof inboundEmailEvents.$inferInsert;
 
 // Enum value unions.
 export type ItemCategory = (typeof itemCategory.enumValues)[number];

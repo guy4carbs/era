@@ -38,15 +38,28 @@ export interface PriceDropPayload {
 }
 
 /**
- * One in-app notification row. `kind` discriminates the payload; today the only
- * rendered kind is `'price_drop'`. `readAt` is null until the user clicks out or
- * dismisses. Unknown future kinds carry an opaque payload and are simply skipped
- * by the price-drop surface.
+ * The payload carried by a `receipt_import` notification row — the async
+ * counterpart to the in-flow receipt paste. Fired when pieces forwarded to the
+ * user's private receipt address land in their closet as drafts. `count` is how
+ * many drafts landed; `message` is the server-rendered, already-localized line
+ * (Quill's {@link strings.settings.receiptAddress.newDrafts}) that the card
+ * renders verbatim — the client never re-derives the wording.
+ */
+export interface ReceiptImportPayload {
+  readonly count: number;
+  readonly message: string;
+}
+
+/**
+ * One in-app notification row. `kind` discriminates the payload; today the
+ * rendered kinds are `'price_drop'` and `'receipt_import'`. `readAt` is null
+ * until the user clicks out or dismisses. Unknown future kinds carry an opaque
+ * payload and are simply skipped by the notification surface.
  */
 export interface AppNotification {
   readonly id: string;
   readonly kind: string;
-  readonly payload: PriceDropPayload | Record<string, unknown>;
+  readonly payload: PriceDropPayload | ReceiptImportPayload | Record<string, unknown>;
   readonly createdAt: string;
   readonly readAt: string | null;
 }
@@ -56,6 +69,13 @@ export function isPriceDrop(
   notification: AppNotification,
 ): notification is AppNotification & { payload: PriceDropPayload } {
   return notification.kind === 'price_drop';
+}
+
+/** Narrow a row to a rendered receipt-import card. */
+export function isReceiptImport(
+  notification: AppNotification,
+): notification is AppNotification & { payload: ReceiptImportPayload } {
+  return notification.kind === 'receipt_import';
 }
 
 /** GET the user's notification preferences. Throws on non-200. */

@@ -23,16 +23,16 @@ import { Button } from '@/components/Button';
 import { formatPrice } from '@/components/shop';
 import { useTheme } from '@/lib/theme';
 
-import type { InAppNotification } from './api';
+import type { InAppNotification, PriceDropPayload } from './api';
 
 const card = strings.shop.priceAlerts.card;
 
 interface PriceDropCardProps {
-  readonly notification: InAppNotification;
+  readonly notification: InAppNotification<PriceDropPayload>;
   /** Click out to the retailer (list owns Linking + mark-read). */
-  readonly onView: (notification: InAppNotification) => void;
+  readonly onView: (notification: InAppNotification<PriceDropPayload>) => void;
   /** Clear the card without clicking out (list owns mark-read). */
-  readonly onDismiss: (notification: InAppNotification) => void;
+  readonly onDismiss: (notification: InAppNotification<PriceDropPayload>) => void;
 }
 
 export function PriceDropCard({ notification, onView, onDismiss }: PriceDropCardProps) {

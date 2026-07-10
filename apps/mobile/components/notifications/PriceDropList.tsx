@@ -21,19 +21,22 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { PriceDropCard } from './PriceDropCard';
-import { listNotifications, markRead, type InAppNotification } from './api';
-
-/** The only notification kind with an in-app surface today. */
-const PRICE_DROP = 'price_drop';
+import {
+  isPriceDrop,
+  listNotifications,
+  markRead,
+  type InAppNotification,
+  type PriceDropPayload,
+} from './api';
 
 export function PriceDropList() {
-  const [items, setItems] = useState<readonly InAppNotification[]>([]);
+  const [items, setItems] = useState<readonly InAppNotification<PriceDropPayload>[]>([]);
 
   useEffect(() => {
     let active = true;
     void listNotifications().then((all) => {
       if (!active) return;
-      setItems(all.filter((n) => n.kind === PRICE_DROP && n.readAt === null));
+      setItems(all.filter(isPriceDrop).filter((n) => n.readAt === null));
     });
     return () => {
       active = false;
@@ -44,7 +47,7 @@ export function PriceDropList() {
     setItems((prev) => prev.filter((n) => n.id !== id));
   }
 
-  function onView(notification: InAppNotification) {
+  function onView(notification: InAppNotification<PriceDropPayload>) {
     // Defense-in-depth: only open a well-formed https link (a hostile payload
     // could otherwise hand back a tel:/custom-scheme link to open natively).
     if (isHttpsUrl(notification.payload.affiliateUrl)) {
@@ -57,7 +60,7 @@ export function PriceDropList() {
     clear(notification.id);
   }
 
-  function onDismiss(notification: InAppNotification) {
+  function onDismiss(notification: InAppNotification<PriceDropPayload>) {
     markRead(notification.id);
     clear(notification.id);
   }

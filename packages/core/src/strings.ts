@@ -1254,6 +1254,86 @@ export const strings = {
       savedOnlyNote: "We only watch prices on pieces you've saved — nothing else.",
     },
 
+    /**
+     * The personal receipt-forwarding address — the transport upgrade of the
+     * paste-based {@link strings.closet.importReceipt} flow. Instead of pasting an
+     * order email, the user gets a private address (e.g. `u_k3v9…@in.era.style`),
+     * adds it to their contacts, and forwards store confirmations to it; the
+     * purchased pieces land in their closet as drafts to review. This copy lives
+     * in Settings because that's where the address is revealed, copied, and
+     * regenerated (web + mobile) — mirroring the {@link strings.settings.priceAlerts}
+     * precedent, a feature-config section with a heading, explainer, actions, and
+     * honest notes. Voice stays warm and plain: no "inbound transport" jargon,
+     * honest about what rotation costs, and the privacy note mirrors the privacy
+     * policy verbatim in spirit (mail read once for the garments, never stored).
+     * The one count helper is boundary-hardened via {@link safeCount} (NaN/garbage
+     * → 0) so the voice-lint can probe it with any input without a throw and a
+     * partial/absent count never leaks "undefined".
+     */
+    receiptAddress: {
+      /** Section heading in Settings. */
+      title: 'Your receipt address',
+      /**
+       * Explainer under the heading: what the address is and what to do with it.
+       * Names the gesture plainly (forward a store's order email) and sets the
+       * honest expectation that what lands are drafts to review, not finished
+       * closet entries — the same promise {@link strings.closet.importReceipt.instruction}
+       * makes for the paste path.
+       */
+      explain:
+        "Forward a store's order confirmation to this private address and the pieces show up in your closet as drafts to review. Add it to your contacts so it's ready when you need it.",
+      /** Caption above the revealed address (the address itself renders beside it). */
+      addressLabel: 'Your private address',
+      /** Copy-to-clipboard action label. */
+      copyCta: 'Copy',
+      /** Confirmation line after the address is copied. */
+      copied: 'Copied to your clipboard.',
+      /** Regenerate action label — rotates to a fresh address. */
+      regenerateCta: 'Regenerate address',
+      /**
+       * The honest consequence line, shown before regenerating. Rotation is a HARD
+       * kill: the old address dies the instant a new one is minted (the reason to
+       * regenerate is usually a leaked address, so the old token must stop working
+       * immediately). Mail that arrives after that — even seconds later — is
+       * dropped, not delivered. We say so plainly rather than promising delivery we
+       * won't make; drafts already pulled from earlier receipts stay in the closet.
+       */
+      regenerateConsequence:
+        "Your old address stops working the moment you regenerate — anything sent to it after that won't arrive.",
+      /** Confirmation after a new address is generated — pairs with the reveal of the new one. */
+      regenerated: "Here's your new address. The old one won't accept mail anymore.",
+      /**
+       * Privacy note under the address. Mirrors the privacy policy in spirit: mail
+       * to this address is read once for the purchased pieces, then discarded — the
+       * email itself is never stored. Honest and plain, not apologetic-corporate.
+       */
+      privacyNote:
+        'Mail sent here is read once for the pieces you bought, then discarded — we never store the email itself.',
+      /**
+       * Dormant state — shown when inbound receipts aren't switched on server-side
+       * yet (no inbound domain configured). Matches the app's dormant voice — a
+       * quiet "coming soon" beat, never an error or "not configured" — and points
+       * at the paste path that works today. Kin to {@link strings.closet.bulkCapture.dormant}.
+       */
+      dormant:
+        "Forwarding receipts to your own address is something I'm still switching on — it'll be here soon. For now, you can paste an order email under Add a piece.",
+      /**
+       * In-app notification when forwarded receipts land as drafts — the async
+       * counterpart to the in-flow {@link strings.closet.importReceipt.added} toast.
+       * Singular at one; warm, no urgency, invites a look rather than demanding one.
+       * A zero result shouldn't fire a notification at all, but the helper stays
+       * safe at 0 (and at NaN/garbage via {@link safeCount}) so a bad count never
+       * throws or leaks "undefined". `newDrafts(0)` / `newDrafts(1)` / `newDrafts(3)`.
+       */
+      newDrafts: (n: number): string => {
+        const c = safeCount(n);
+        if (c <= 0) return 'No new drafts from your receipt yet.';
+        return c === 1
+          ? '1 new draft from your receipt — take a look when you have a minute.'
+          : `${c} new drafts from your receipt — take a look when you have a minute.`;
+      },
+    },
+
     /** Account section heading + the sign-out row. */
     account: 'Account',
     signOut: 'Sign out',
