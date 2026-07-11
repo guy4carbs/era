@@ -52,6 +52,8 @@ export const SETTINGS_COPY = {
   // --- account ---
   account: 'Account',
   signedInAs: (email: string): string => `Signed in as ${email}`,
+  /** Quiet entry into the owner's own public profile page (`/{username}`). */
+  viewProfile: 'View your public profile',
   signOut: 'Sign out',
 
   // --- delete account (destructive) ---

@@ -69,6 +69,60 @@ export function faqPageSchema(entries: readonly SiteFaqEntry[]): Record<string, 
   };
 }
 
+/** The identity + social fields a {@link profilePageSchema} node is built from. */
+export interface ProfileSchemaInput {
+  readonly username: string;
+  readonly displayName: string | null;
+  readonly avatarUrl: string | null;
+  readonly followerCount: number;
+  /** The profile's creation time, ISO 8601 — feeds `dateCreated`/`dateModified`. */
+  readonly createdAt: string;
+}
+
+/**
+ * ProfilePage node for a public profile — Google's rich-result type for a
+ * person's profile page. `mainEntity` is the Person: their name, `@handle`
+ * (`alternateName`), canonical profile `url`, and avatar `image` when present.
+ * Follower count is expressed as a schema.org {@link https://schema.org/FollowAction}
+ * `interactionStatistic` (an InteractionCounter), the sanctioned way to state a
+ * follower total. `dateCreated` is the profile's creation time; `dateModified`
+ * mirrors it because Era does not track profile edits yet — an honest "last known
+ * change" rather than a fabricated recency. Only emitted for indexable (public,
+ * non-thin) profiles.
+ */
+export function profilePageSchema(input: ProfileSchemaInput): Record<string, unknown> {
+  const name = input.displayName?.trim() ? input.displayName.trim() : input.username;
+  const followers = Number.isFinite(input.followerCount)
+    ? Math.max(0, Math.trunc(input.followerCount))
+    : 0;
+
+  const person: Record<string, unknown> = {
+    '@type': 'Person',
+    name,
+    alternateName: `@${input.username}`,
+    identifier: input.username,
+    url: abs(`/${input.username}`),
+    interactionStatistic: {
+      '@type': 'InteractionCounter',
+      interactionType: 'https://schema.org/FollowAction',
+      userInteractionCount: followers,
+    },
+  };
+  if (input.avatarUrl) {
+    person.image = input.avatarUrl;
+  }
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    // We don't track profile edits, so dateModified mirrors dateCreated (an honest
+    // "last known change") rather than inventing a fresher timestamp.
+    dateCreated: input.createdAt,
+    dateModified: input.createdAt,
+    mainEntity: person,
+  };
+}
+
 /** BreadcrumbList node — an ordered trail of {name, url}; urls resolved to absolute. */
 export function breadcrumbSchema(items: readonly { name: string; url: string }[]): Record<string, unknown> {
   return {

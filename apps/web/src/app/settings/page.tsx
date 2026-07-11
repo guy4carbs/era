@@ -37,18 +37,29 @@ export default async function SettingsPage() {
 
   // Seed the closet-privacy toggle from the owner's own profile row (keyed by the
   // session user id — a caller can only ever read their own). Defaults to private
-  // if the row is momentarily unreadable, matching the GET /privacy fallback.
+  // if the row is momentarily unreadable, matching the GET /privacy fallback. The
+  // username powers the quiet "view your public profile" link; null when the row
+  // is unreadable simply hides that link.
   let initialIsPrivate = true;
+  let username: string | null = null;
   try {
     const [profile] = await db
-      .select({ isPrivate: profiles.isPrivate })
+      .select({ isPrivate: profiles.isPrivate, username: profiles.username })
       .from(profiles)
       .where(eq(profiles.userId, session.user.id))
       .limit(1);
     initialIsPrivate = profile?.isPrivate ?? true;
+    username = profile?.username ?? null;
   } catch {
     initialIsPrivate = true;
+    username = null;
   }
 
-  return <SettingsScreen accountEmail={session.user.email} initialIsPrivate={initialIsPrivate} />;
+  return (
+    <SettingsScreen
+      accountEmail={session.user.email}
+      initialIsPrivate={initialIsPrivate}
+      username={username}
+    />
+  );
 }

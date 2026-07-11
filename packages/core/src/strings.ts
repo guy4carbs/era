@@ -512,8 +512,13 @@ export const strings = {
      * ever see this". See the storage backlog before public profiles ship.
      */
     privacyHintPrivate: 'Kept off your public profile — only you see your closet here.',
-    /** One-line explanation of what public means — honest about visibility. */
-    privacyHintPublic: 'This can show up on your public profile.',
+    /**
+     * One-line explanation of what public means — honest about the full reach.
+     * Public profiles are search-indexed (canonical + sitemap + JSON-LD), so
+     * informed consent names that consequence plainly: not just "on your profile"
+     * but visible to anyone, search engines included.
+     */
+    privacyHintPublic: 'This can show up on your public profile — visible to anyone, including search engines.',
 
     /**
      * Wear-count line for the detail sheet. Zero reads as an invitation, not a
@@ -786,6 +791,140 @@ export const strings = {
   feed: {
     /** Empty feed — invitational, not a scold; no fake social pressure. */
     empty: 'Nothing in your feed yet. Follow a few people and their looks land here.',
+  },
+
+  /**
+   * Public profile pages — a user's closet, eras, and outfits as seen by someone
+   * else (or previewed by the owner). The counterpart to the private in-app tabs:
+   * where {@link strings.closet}/{@link strings.design} speak to the owner in the
+   * second person ("your closet"), this surface speaks ABOUT the owner in the
+   * third person to a viewer, and it is the one place following happens. Voice
+   * stays Era's — warm, calm, never pushy: a private closet is stated plainly
+   * with no shame, a thin profile still reads as composed, and the follow control
+   * never manufactures social pressure. Follow state is modeled as three distinct
+   * labels rather than a hover trick: `followCta` (not yet following),
+   * `followingState` (the resting label once you follow — web reveals
+   * `unfollowCta` on hover, mobile taps through to it), so the copy carries no
+   * platform assumption. Every count helper is boundary-hardened via {@link
+   * safeCount} (NaN/garbage → 0, singular at one) and every interpolated name
+   * through {@link cleanText} (a missing display name never leaves a dangling
+   * possessive), so the voice-lint can probe them with any input without a throw
+   * and a partial profile never leaks "undefined". Section headings are plain
+   * third-person nouns — the public-page counterpart to the owner-context "Your
+   * eras" ({@link strings.design.eraSectionTitle}).
+   */
+  profile: {
+    // --- following: the one social action on the page ---
+
+    /** Follow button, not-yet-following state. */
+    followCta: 'Follow',
+    /**
+     * The resting label once you follow — the state, not an action. Web reveals
+     * {@link strings.profile.unfollowCta} on hover; mobile taps through to it, so
+     * this label itself stays neutral and never has to double as "tap to unfollow".
+     */
+    followingState: 'Following',
+    /** The unfollow affordance (hover-revealed on web, confirm on mobile). Plain, no guilt. */
+    unfollowCta: 'Unfollow',
+    /**
+     * Follower count label, singular at one, zero-hardened. `followerCount(0)` →
+     * "0 followers", `followerCount(1)` → "1 follower", `followerCount(12)` →
+     * "12 followers". Coerces at the boundary so a partial render never reads
+     * "undefined followers".
+     */
+    followerCount: (n: number): string => {
+      const c = safeCount(n);
+      return `${c} ${c === 1 ? 'follower' : 'followers'}`;
+    },
+    /**
+     * Following count label — "following" is invariant (no plural), so this only
+     * needs the number. `followingCount(0)` → "0 following", `followingCount(8)` →
+     * "8 following". Zero-hardened via {@link safeCount}.
+     */
+    followingCount: (n: number): string => `${safeCount(n)} following`,
+    /**
+     * Shown to a signed-out viewer where the follow button would be — names the
+     * person so the ask is concrete, and points at sign-in without pressure. Falls
+     * back to a plain "this closet" when the profile has no display name yet.
+     * `signInToFollow('Mara')` → "Sign in to follow Mara."
+     */
+    signInToFollow: (name: string): string => `Sign in to follow ${cleanText(name, 'this closet')}.`,
+
+    // --- private profile: the closet is kept off the public page ---
+
+    /**
+     * Heading when the profile is private ({@link isPrivate} true) — honest and
+     * warm, no shame, no pressure. Names the person; falls back gracefully when
+     * there's no display name. `privateHeading('Mara')` → "Mara keeps their closet
+     * private." Pairs with {@link strings.profile.privateBody}.
+     */
+    privateHeading: (name: string): string => `${cleanText(name, 'This person')} keeps their closet private.`,
+    /** The one calm line under a private heading — states the fact, asks for nothing. */
+    privateBody: "There's nothing to see here for now, and that's completely their call.",
+
+    // --- empty / thin public profile: still composed, never a scold ---
+
+    /**
+     * Shown to a viewer when a public profile has nothing (or almost nothing)
+     * public yet. Warm and composed — the profile still feels considered, not
+     * broken. Names the person; falls back gracefully. `emptyPublic('Mara')` →
+     * "Mara hasn't shared any pieces yet."
+     */
+    emptyPublic: (name: string): string => `${cleanText(name, 'This person')} hasn't shared any pieces yet.`,
+    /**
+     * The owner previewing their own thin profile. Unlike the viewer line, this one
+     * points at the fix plainly — flip pieces to public — without nagging. Pairs
+     * with the closet privacy toggle ({@link strings.closet.privacyPublic}).
+     */
+    emptyPublicOwn:
+      "Nothing here is public yet. Set a few pieces to public and they'll show up on your profile.",
+
+    // --- section headings: plain third-person nouns for the public page ---
+
+    /**
+     * The three section headings on a public profile. Plain nouns, not the owner's
+     * "Your eras" — this page is third-person. Reuses the same concepts the app
+     * tabs own ({@link strings.closet}, {@link strings.design}) rather than coining
+     * new ones.
+     */
+    sections: {
+      closet: 'Closet',
+      eras: 'Eras',
+      outfits: 'Outfits',
+    },
+
+    // --- own-profile affordances: preview hint + share ---
+
+    /** Hint shown to the owner while viewing their own public profile. */
+    ownProfileHint: 'This is how your profile looks to others.',
+    /** Copy-the-profile-link action (distinct from the OS share sheet, {@link strings.common.share}). */
+    copyLinkCta: 'Copy profile link',
+    /**
+     * Confirmation after the profile link is copied. Shares the wording of {@link
+     * strings.settings.receiptAddress.copied} deliberately — one "copied to
+     * clipboard" idiom across the app — kept as a local sibling rather than a
+     * shared constant so each surface reads independently.
+     */
+    linkCopied: 'Copied to your clipboard.',
+
+    // --- OG / SEO meta for a shared public profile ---
+
+    /**
+     * The meta/OpenGraph description for a public profile page, from the owner's
+     * display name (or username) and their public piece count. Feeds SEO, so it is
+     * hard-capped at 155 chars — long names are truncated with an ellipsis rather
+     * than overrunning. Boundary-hardened: the name falls back via {@link
+     * cleanText} and the count coerces via {@link safeCount} (singular at one), so
+     * a partial profile never renders "undefined" or "NaN". `metaDescription('Mara
+     * Lin', 42)` → "Mara Lin's closet on Era — 42 pieces, styled by Ovi."
+     */
+    metaDescription: (name: string, itemCount: number): string => {
+      const who = cleanText(name, 'A closet');
+      const c = safeCount(itemCount);
+      const pieces = c === 1 ? '1 piece' : `${c} pieces`;
+      const line = `${who}'s closet on Era — ${pieces}, styled by Ovi.`;
+      return line.length <= 155 ? line : `${line.slice(0, 154).trimEnd()}…`;
+    },
   },
 
   /**
@@ -1516,6 +1655,9 @@ export const strings = {
 
 /** The shape of the full copy deck — for typing consumers and adapters. */
 export type OviStrings = typeof strings;
+
+/** The public-profile copy deck — the profile page's single source of truth. */
+export type ProfileStrings = OviStrings['profile'];
 
 /** The marketing/site copy deck — the landing page's single source of truth. */
 export type SiteStrings = OviStrings['site'];
