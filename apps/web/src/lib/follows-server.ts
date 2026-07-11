@@ -13,9 +13,20 @@
  *
  * Never import from a client bundle — it talks to the database.
  */
-import { and, count, eq } from 'drizzle-orm';
+import { and, count, eq, gte } from 'drizzle-orm';
 
 import { type DbClient, follows, profiles } from '@era/db';
+
+/**
+ * Per-user follow cap over a rolling 24-hour window. Bounds mass-follow spam —
+ * the abuse the `/api/follows` POST guards against — while sitting far above any
+ * plausible human follow rate. Enforced by counting the caller's recently
+ * created edges (see {@link countRecentFollows}); unfollow is never capped.
+ */
+export const MAX_FOLLOWS_PER_DAY = 100;
+
+/** The follow-cap window: one rolling day, in milliseconds. */
+const FOLLOW_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 /**
  * Resolve a username to its owning user id, or null when no such profile
@@ -41,6 +52,37 @@ export async function countFollowers(db: DbClient, userId: string): Promise<numb
 export async function countFollowing(db: DbClient, userId: string): Promise<number> {
   const [row] = await db.select({ n: count() }).from(follows).where(eq(follows.followerId, userId));
   return Number(row?.n ?? 0);
+}
+
+/** The follow rate-limit verdict — mirrors `checkDailyLimit`'s shape. */
+export interface FollowLimitCheck {
+  readonly allowed: boolean;
+  readonly used: number;
+  readonly limit: number;
+}
+
+/**
+ * Count the caller's recent follows and decide whether one more is allowed.
+ * `used` is the number of `follows` rows `followerId` CREATED since the start of
+ * the rolling 24h window (indexed `follows_follower_id_idx`, filtered by
+ * `created_at`); `limit` is {@link MAX_FOLLOWS_PER_DAY}; `allowed` is
+ * `used < limit`. Called BEFORE the insert — a false `allowed` makes POST return
+ * 429 instead of writing the edge. `now` is injectable so tests can pin the
+ * window.
+ *
+ * APPROXIMATE BOUND: an unfollow DELETEs a counted row, so follow⇄unfollow churn
+ * on a single target shrinks `used`. The cap therefore bounds NET distinct
+ * follows in the window (the mass-follow spam vector) rather than total write
+ * operations — see the note in `api/follows/route.ts`.
+ */
+export async function checkFollowLimit(db: DbClient, followerId: string, now: Date = new Date()): Promise<FollowLimitCheck> {
+  const since = new Date(now.getTime() - FOLLOW_WINDOW_MS);
+  const [row] = await db
+    .select({ n: count() })
+    .from(follows)
+    .where(and(eq(follows.followerId, followerId), gte(follows.createdAt, since)));
+  const used = Number(row?.n ?? 0);
+  return { allowed: used < MAX_FOLLOWS_PER_DAY, used, limit: MAX_FOLLOWS_PER_DAY };
 }
 
 /**

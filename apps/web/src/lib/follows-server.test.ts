@@ -17,6 +17,8 @@ import assert from 'node:assert/strict';
 import { type DbClient, follows, profiles } from '@era/db';
 
 import {
+  MAX_FOLLOWS_PER_DAY,
+  checkFollowLimit,
   countFollowers,
   countFollowing,
   followUser,
@@ -123,4 +125,40 @@ test('unfollowUser issues a scoped delete (no-op when the edge is absent)', asyn
   assert.ok(del, 'a delete is issued');
   assert.equal(del!.args[0], follows, 'delete targets follows');
   assert.ok(calls.find((c) => c.m === 'where')?.args[0] !== undefined, 'delete is scoped (follower + followee)');
+
+  // The cap gates POST only: unfollow consults no count, so it can never 429.
+  assert.equal(
+    calls.find((c) => c.m === 'select'),
+    undefined,
+    'unfollow reads no follow count — the daily cap does not apply to it',
+  );
+});
+
+test('checkFollowLimit counts the caller\'s recent follows over the follows table, coercing empty → 0', async () => {
+  const under = fakeDb([[{ n: 3 }]]);
+  const check = await checkFollowLimit(under.db, 'follower-1');
+  assert.equal(check.used, 3);
+  assert.equal(check.limit, MAX_FOLLOWS_PER_DAY);
+  assert.equal(under.calls.find((c) => c.m === 'from')?.args[0], follows, 'counts over the follows table');
+  assert.ok(under.calls.find((c) => c.m === 'where'), 'scoped by a where clause (follower + created_at window)');
+
+  // An empty aggregate coerces to 0 used, never NaN/undefined → allowed.
+  const empty = fakeDb([[]]);
+  const emptyCheck = await checkFollowLimit(empty.db, 'follower-1');
+  assert.equal(emptyCheck.used, 0);
+  assert.equal(emptyCheck.allowed, true);
+});
+
+test('checkFollowLimit allows under the cap and rejects at/over it', async () => {
+  // One below the cap → the follow proceeds (POST inserts the edge).
+  const underCap = fakeDb([[{ n: MAX_FOLLOWS_PER_DAY - 1 }]]);
+  assert.equal((await checkFollowLimit(underCap.db, 'u')).allowed, true, 'under the cap proceeds');
+
+  // Exactly at the cap → rejected before the insert (POST returns 429, no write).
+  const atCap = fakeDb([[{ n: MAX_FOLLOWS_PER_DAY }]]);
+  assert.equal((await checkFollowLimit(atCap.db, 'u')).allowed, false, 'at the cap is blocked');
+
+  // Over the cap (e.g. a tuned-down limit or a race) → also rejected.
+  const overCap = fakeDb([[{ n: MAX_FOLLOWS_PER_DAY + 5 }]]);
+  assert.equal((await checkFollowLimit(overCap.db, 'u')).allowed, false, 'over the cap is blocked');
 });

@@ -20,6 +20,10 @@
  *   - Idempotent: a repeat follow is a no-op (composite-PK `onConflictDoNothing`);
  *     an unfollow with no edge matches zero rows. Either way the response carries
  *     the current, freshly counted `followerCount`.
+ *   - Rate-limited: at most `MAX_FOLLOWS_PER_DAY` follows per caller in a rolling
+ *     24h window (a mass-follow-spam brake); at/over the cap POST returns 429
+ *     `daily_limit`. Unfollow is uncapped. The bound is approximate — see the
+ *     note at the limit check in POST.
  *
  * `followerCount` is computed live with COUNT over the indexed `follows` columns
  * (no denormalized counter this phase — see follows-server.ts).
@@ -30,6 +34,7 @@
  *   - 400 { error: 'invalid' }          body isn't { username: string }
  *   - 400 { error: 'self' }             username resolves to the caller
  *   - 400 { error: 'unknown' }          username resolves to no account
+ *   - 429 { error: 'daily_limit' }      follow cap reached (POST only)
  *   - 200 { following: boolean, followerCount: number }
  */
 import { NextResponse } from 'next/server';
@@ -38,7 +43,13 @@ import { type AuthContext, AuthzError, canInsertFollow, requireUser } from '@era
 import { createDbClient } from '@era/db';
 
 import { auth } from '../../../lib/auth.ts';
-import { countFollowers, followUser, resolveUserIdByUsername, unfollowUser } from '../../../lib/follows-server.ts';
+import {
+  checkFollowLimit,
+  countFollowers,
+  followUser,
+  resolveUserIdByUsername,
+  unfollowUser,
+} from '../../../lib/follows-server.ts';
 import { isSameOrigin } from '../../../lib/shop-query.ts';
 import { isValidUsername } from '../../../lib/username.ts';
 
@@ -133,6 +144,23 @@ export async function POST(request: Request): Promise<NextResponse> {
       return NextResponse.json({ error: 'forbidden' }, { status: 403 });
     }
     throw error;
+  }
+
+  // Per-user follow rate limit: the caller may create at most a fixed number of
+  // edges in a rolling 24h window (mass-follow-spam brake). At/over the cap we
+  // reject BEFORE the insert with the same 429 `daily_limit` idiom the metered AI
+  // routes use. Unfollow (DELETE) is deliberately uncapped.
+  //
+  // APPROXIMATE BOUND (documented, accepted): an unfollow deletes the row it
+  // counted, so follow⇄unfollow churn on one target keeps this count low while
+  // still issuing many writes. The cap thus bounds NET distinct follows per day —
+  // the spam vector — not raw write volume. Making it churn-proof would need a
+  // schema change (a durable counter or an event kind); the write-amplification
+  // residue is a generic edge concern better answered at the WAF/edge (Bastion)
+  // than by per-instance in-memory state that a restart or second replica voids.
+  const followLimit = await checkFollowLimit(db, userId);
+  if (!followLimit.allowed) {
+    return NextResponse.json({ error: 'daily_limit' }, { status: 429 });
   }
 
   await followUser(db, userId, target);
