@@ -21,12 +21,15 @@ import { listIndexableProfiles } from '../lib/public-profile-server';
  */
 
 /**
- * Regenerate at most hourly (ISR). Without this, Next renders the sitemap once
- * per deploy and serves it statically — so a profile that flips to private (or
- * drops below the thin bar) would keep appearing in `/sitemap.xml` until the next
- * deploy. Hourly revalidation bounds that stale-listing window to an hour.
+ * Render at REQUEST time, never at build time. Next otherwise bakes the sitemap
+ * during `next build`, where the profile query fails (observed in prod: the
+ * build-time render silently degraded to static-only via the catch below, and
+ * every deploy reset the ISR clock before a runtime render could correct it).
+ * A sitemap is fetched rarely (crawlers) and the query is one indexed SELECT,
+ * so per-request rendering is cheap — and it makes de-listing immediate when a
+ * profile flips private, tighter than the hourly window ISR gave us.
  */
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 /** Upper bound on profile entries per sitemap render — keeps the file bounded. */
 const PROFILE_SITEMAP_CAP = 5000;
