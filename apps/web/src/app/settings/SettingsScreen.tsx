@@ -15,6 +15,7 @@ import { motion as motionToken, boxShadows, spacing, typeRamp } from '@era/token
 import { strings } from '@era/core/strings';
 import { transitionFor } from '../../lib/motion';
 import { useTheme, type ThemeMode } from '../../lib/theme';
+import { isPlusEnabledClient } from '../../lib/plus-flags';
 import { eraAuth } from '../../lib/auth-client';
 import {
   getPreferences,
@@ -80,6 +81,26 @@ export function SettingsScreen({ accountEmail, initialIsPrivate, username }: Set
         <Section title={strings.settings.receiptAddress.title}>
           <ReceiptAddressControl />
         </Section>
+
+        {/*
+          Era+ entry point. Rendered only when the cosmetic client flag is on; the
+          /plus page still enforces the authoritative server flag, so a stale
+          client build can never expose a live paywall on its own. Always links to
+          /plus, which itself resolves to the plan cards or the manage state.
+        */}
+        {isPlusEnabledClient() ? (
+          <Section title={strings.plus.settingsRowLabel}>
+            <Link href="/plus" style={navRowStyle}>
+              <span style={privacyTextStyle}>
+                <span style={rowLabelStyle}>{strings.plus.paywallTitle}</span>
+                <span style={rowHintStyle}>{strings.plus.settingsRowHint}</span>
+              </span>
+              <span aria-hidden="true" style={chevronStyle}>
+                →
+              </span>
+            </Link>
+          </Section>
+        ) : null}
 
         <Section title={SETTINGS_COPY.support}>
           <a href={SUPPORT_MAILTO} style={linkRowStyle}>

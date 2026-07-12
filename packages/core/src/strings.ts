@@ -1501,6 +1501,108 @@ export const strings = {
   },
 
   /**
+   * Era+ — the optional paid tier. The copy holds the line the brand cares about:
+   * calm, quiet-luxury, and scrupulously honest — no fake urgency, no countdowns,
+   * no guilt if you pass. The monthly and annual plans are the SAME Era+; annual is
+   * simply billed once a year.
+   *
+   * NO PRICES LIVE HERE. Every dollar amount — and any real "savings" figure — comes
+   * from Stripe at runtime and is threaded into the paywall as data, never written
+   * into copy. That way billing and the words on screen can't drift apart: if a
+   * price changes in Stripe, nothing here goes stale. This block is words only:
+   * names, cadence, notes, CTAs, and state lines.
+   */
+  plus: {
+    /** Back affordance on the paywall — returns to Settings, where the row lives. */
+    back: 'Settings',
+
+    /** Paywall headline. The product name carries it; no exclamation, no hype. */
+    paywallTitle: 'Era+',
+    /** One calm line under the title — what it is, without overselling. */
+    paywallSubtitle: 'A few considered extras for the wardrobe you’re building.',
+
+    // The plan cards — words only; the price is Stripe/StoreKit-sourced at runtime
+    // and threaded in as data, never written into copy. Flat keys (no nested plan
+    // objects) so consumers read one leaf per label.
+    /** Monthly plan card name. */
+    monthlyLabel: 'Monthly',
+    /** Monthly plan cadence line. */
+    monthlyCadence: 'Billed monthly',
+    /** Annual plan card name (visually primary; price + any real saving come from Stripe). */
+    annualLabel: 'Annual',
+    /** Annual plan cadence line. */
+    annualCadence: 'Billed yearly',
+    /** Best-value marker — only shown once a real, Stripe-sourced saving substantiates it. */
+    bestValue: 'Best value',
+
+    /**
+     * The savings line on the annual card. The amount is computed from the two
+     * REAL Stripe prices (twelve months at the monthly rate versus one year at
+     * the annual rate) and rendered only when the difference is genuinely
+     * positive — this template supplies the words, never the number.
+     */
+    savingsPerYear: (amount: string) => `Save ${amount} a year`,
+
+    /**
+     * Honest framing shown near the plans. Number-free by design: it states the one
+     * true, price-independent fact — both plans are the same Era+ — and leaves the
+     * money to the Stripe-sourced price. A concrete saving, when known, is shown on
+     * the annual card from Stripe data, never asserted here.
+     */
+    honestAnnualNote:
+      'Both plans are the same Era+ — annual is simply billed once a year. Monthly holds nothing back.',
+
+    /**
+     * Shown ONLY when the cards render price-free (the Stripe price feed is
+     * dormant or momentarily unreachable). Without it, "Continue" asks for a
+     * blind click-through to learn the price — this line keeps that step honest
+     * (Axiom's paywall-gate note). Checkout always shows the exact price before
+     * any charge; this just says so up front.
+     */
+    pricePendingNote: 'You’ll see the exact price at checkout before you pay.',
+
+    /** Primary CTA on a plan card — advances to Stripe checkout. */
+    checkoutCta: 'Continue',
+    /** In-flight state while we hand off to checkout. Reassuring, not anxious. */
+    checkoutBusy: 'Taking you to checkout…',
+    /** Checkout couldn’t be reached — calm, retryable, no alarm. */
+    checkoutError: 'We couldn’t reach checkout just now — please try again.',
+    /** Returned from a cancelled checkout — no guilt, no pressure. */
+    checkoutCanceled: 'No rush — Era+ will be here whenever you’re ready.',
+    /** Returned from a completed checkout (may lag the webhook by a beat). */
+    justSubscribed: 'You’re on Era+. Welcome in — it may take a moment to show everywhere.',
+
+    /** Heading of the "you’re already subscribed" management state. */
+    alreadyPlus: 'You’re on Era+',
+    /** Body of that state — warm thanks, and where to manage things. */
+    alreadyPlusBody:
+      'Thank you for backing Era. Update your payment details or cancel whenever you like — your plan stays exactly as it is until you do.',
+    /** Section label above the manage/cancel actions. */
+    managePlan: 'Your plan',
+    /** Opens the Stripe customer portal (update card, invoices, cancel). */
+    portalCta: 'Manage plan',
+    /** The no-lock-in reassurance, shown under the plans and in the manage state. */
+    cancelAnytime: 'Cancel anytime. No lock-in, no fine print.',
+    /** Quiet link for someone who subscribed elsewhere — routes to the portal. */
+    restorePurchases: 'Already subscribed? Manage your plan',
+    /**
+     * The literal iOS restore affordance. Apple review expects a plainly-labeled
+     * "Restore purchases" action wherever purchases are sold — the web-flavored
+     * `restorePurchases` link above is a portal route, not a StoreKit restore,
+     * so the two must stay separate keys.
+     */
+    restoreCta: 'Restore purchases',
+    /** Restore ran (iOS) but found nothing — factual, no blame, no push to buy. */
+    restoreEmpty: 'We couldn’t find a past subscription on this account.',
+    /** Purchases can’t run right now (feature dormant / store unreachable) — calm, no error tone. */
+    unavailable: 'Era+ isn’t available just yet — check back soon.',
+
+    /** Settings-surface entry copy (row label + hint). */
+    settingsRowLabel: 'Era+',
+    settingsRowHint: 'A few considered extras.',
+  },
+
+  /**
    * The style quiz — twelve taps that seed a starter era. Honest about the ask
    * (short, skippable) and clear about what Ovi does with the answers.
    */
@@ -1651,6 +1753,7 @@ export const strings = {
       },
     ],
   },
+
 } as const;
 
 /** The shape of the full copy deck — for typing consumers and adapters. */

@@ -50,6 +50,13 @@
       "when": 1783611288488,
       "tag": "0006_icy_gressill",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1783806097316,
+      "tag": "0007_woozy_paibok",
+      "breakpoints": true
     }
   ]
 }

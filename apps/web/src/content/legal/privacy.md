@@ -15,6 +15,7 @@ This policy is provided by [ERA LEGAL ENTITY] ("Era", "we", "us", or "our"). If 
 - We use trusted service providers (for hosting, storage, email, weather, and AI) to operate the app. We don't sell your data.
 - Ovi, our AI stylist, sends your closet and style information — plus a coarse, city-level location you choose to grant — to an AI model to generate suggestions. That coarse location is used only to look up the weather, and it is not stored.
 - Era's **Shop** tab suggests products that fit your closet — ranked on our own servers by default, or (if AI ranking is on) with a text-only summary of your closet and style profile sent to our AI provider, never your photos. Shop links are affiliate links, and **commissions never affect the ranking**.
+- **Era+** is an optional paid subscription. Payments are handled by Stripe (web) or Apple (iOS) and processed for us by RevenueCat — **we never see or store your card number**. We keep only your plan and its status, and that record is deleted with your account.
 - You can delete your account and everything in it at any time from **Settings → Delete account**. We immediately and permanently remove your live data — every record and every image you've stored — and any residual copies in our encrypted backups are purged automatically shortly after.
 - Your closet is **private by default**. If you choose to make it public, your item cutout images and outfit covers become viewable at public web links (no login needed) until you switch it back to private.
 
@@ -57,6 +58,7 @@ Where the EU/UK GDPR applies, we rely on the legal bases noted below.
 | Build your style profile from the quiz | To personalize styling | Performance of a contract |
 | Generate outfit suggestions with Ovi (including coarse-location weather lookup) | To provide styling; weather makes suggestions relevant | Performance of a contract; consent for using your granted location |
 | Send you account and service emails | To operate your account | Performance of a contract |
+| Process Era+ subscriptions and payments | To provide the paid features you signed up for | Performance of a contract |
 | Waitlist emails and referral attribution | To manage the waitlist and let you know about launch | Consent, and our legitimate interest in growing Era |
 | Product analytics and improving the app | To keep Era working well and make it better | Legitimate interests (kept privacy-friendly) |
 | Prevent abuse, fraud, and security incidents | To keep Era safe | Legitimate interests; legal obligation |
@@ -85,6 +87,15 @@ Era's Shop tab suggests cross-brand products that fit the wardrobe you already h
 - **Saving products for later (your wishlist).** You can save products from Shop to a wishlist so you can find them again. When you save one, we store a snapshot of it — the item, the retailer, and its price at the moment you saved it.
 - **Price-drop alerts (off by default).** If you turn on price alerts, Era periodically re-checks the price of the pieces you've saved — by looking up the retailer's public product page — and notifies you when one drops. This is **opt-in and off by default**, it only watches pieces you've saved, and you can turn it off at any time. Alerts reach you through the channels you've enabled: your email (sent via our email provider) and/or a push notification to a device you've granted a push token for, each opt-in on its own.
 
+## Era+ subscriptions and payments
+
+Era+ is an optional paid subscription. The core app is free; Era+ unlocks additional features. You never have to subscribe, and you can cancel at any time. Here's how Era+ handles your data.
+
+- **How you pay.** On the web, your payment is processed by **Stripe**; on iOS, by **Apple** through the App Store. Era never sees or stores your card number or other full payment details — those go directly to the payment processor, which handles them under its own security standards.
+- **How we keep your subscription in sync (RevenueCat).** We use **RevenueCat**, a subscription-management processor, to track your subscription status across platforms. When you subscribe, RevenueCat receives an app user identifier (your Era account id) and the purchase details — the plan and its status — so it can tell our servers whether your Era+ access is active. RevenueCat acts on our behalf and does **not** receive your card number.
+- **What we store.** On our own servers we keep a small record of your subscription so we can grant Era+ access: the plan you chose, its status (active, renewing, expired, or in a billing-retry period), the relevant dates (when it started and when it renews or expires), which store processed it, and — for web subscriptions — the Stripe customer reference used to open your billing portal. We do **not** store your card number or full payment details.
+- **Deleting your subscription data.** The subscription record we hold is tied to your account and is **deleted when you delete your account**. The payment processors — Stripe, Apple, and RevenueCat — keep their own records of your transactions under their respective privacy policies and as the law requires (for example, for tax and accounting); that processor-side history is governed by their policies and is not deleted by Era. Deleting your Era account does **not** automatically cancel an active paid subscription — to stop future charges, cancel it first (in the app, through your Apple account, or via the web billing portal).
+
 ## Who we share data with
 
 We don't sell your personal information. We share it only with service providers ("processors") who help us run Era, and only as needed. These currently include:
@@ -96,6 +107,8 @@ We don't sell your personal information. We share it only with service providers
 - **Affiliate network** — when the Shop tab's live affiliate feed is enabled, to source shoppable products and attribute your clicks so Era can earn a commission. We pass only a standard, non-identifying affiliate sub-id — never your personal information. *(Currently dormant — today Shop runs on a built-in sample catalog.)* We will name the specific network here once the live feed is enabled.
 - **Open-Meteo** — a third-party weather API we query with your coarse location to fetch local weather. We send only the rounded location needed for the lookup.
 - **Email provider** — Resend — to send magic-link sign-in and account emails, to hold waitlist signups on a contact list for launch announcements, and to receive the receipt emails you forward to your private import address. An email you forward passes through and is stored by Resend before Era retrieves and parses it; Era itself keeps only the parsed garment details (see [Information you give us](#information-you-give-us)).
+- **Payment processors (Stripe and Apple)** — to process Era+ subscription payments. Stripe handles web payments; Apple handles in-app purchases on iOS. They receive your payment details directly; Era never sees or stores your card number. *(Era+ is dormant until enabled.)*
+- **Subscription management (RevenueCat)** — to track and reconcile your Era+ subscription status across platforms. RevenueCat receives your Era account id (as an app user identifier) and your purchase details (plan and status), never your card number. *(Era+ is dormant until enabled.)*
 - **Analytics provider (PostHog)** — for privacy-friendly product analytics. We use an EU-hosted, privacy-forward configuration: no broad autocapture, and events are tied only to identified accounts. *(Currently dormant and limited.)*
 - **Error diagnostics (Sentry)** — to capture error and crash reports so we can find and fix problems. It's configured not to capture personal data by default, so error reports don't include your closet content or other personal information.
 
@@ -119,6 +132,7 @@ We keep your information for as long as your account is active, so Era can do it
 
 - **Account, closet, outfits, eras, wear logs, and style profile** — kept until you delete the item, or until you delete your account.
 - **Saved products, notification preferences, push tokens, and in-app notifications** — kept while your account is active; they cascade off automatically when you delete your account.
+- **Era+ subscription record** — the plan, status, and dates we cache to grant Era+ access — kept while your account is active and deleted when you delete your account. The payment processors (Stripe, Apple, RevenueCat) retain their own transaction records under their policies and as the law requires; that history is not ours to delete.
 - **Images in Cloudflare R2** — kept until you delete the item or your account.
 - **Coarse location** — not stored; used only for the live weather lookup.
 - **Waitlist email and referral data** — kept until you ask us to remove it or, if you become a user, folded into your account.

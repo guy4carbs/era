@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { loadServerEnv, loadWebClientEnv } from './env.ts';
+import { loadServerEnv, loadMobileClientEnv, loadWebClientEnv } from './env.ts';
 
 /**
  * A complete, fake server environment. Values are obvious placeholders so that
@@ -38,6 +38,23 @@ test('loadServerEnv returns a typed object with optional AFFILIATE_FEED_KEY unde
   assert.equal(env.DATABASE_URL, 'postgres://user:pass@ep-fake.neon.tech/era');
   assert.equal(env.ANTHROPIC_API_KEY, 'fake-anthropic-key');
   assert.equal(env.AFFILIATE_FEED_KEY, undefined);
+  // Era+ vars are all optional — a complete-but-no-Plus env parses with them unset.
+  assert.equal(env.ERA_PLUS_ENABLED, undefined);
+  assert.equal(env.REVENUECAT_WEBHOOK_AUTH_TOKEN, undefined);
+  assert.equal(env.STRIPE_SECRET_KEY, undefined);
+});
+
+test('loadServerEnv accepts the optional Era+ vars when present', () => {
+  const env = loadServerEnv({
+    ...completeServerEnv(),
+    ERA_PLUS_ENABLED: 'true',
+    REVENUECAT_WEBHOOK_AUTH_TOKEN: 'rc-webhook-token',
+    STRIPE_SECRET_KEY: 'sk_test_fake',
+    STRIPE_PRICE_ERA_PLUS_MONTHLY: 'price_monthly',
+    STRIPE_PRICE_ERA_PLUS_ANNUAL: 'price_annual',
+  });
+  assert.equal(env.ERA_PLUS_ENABLED, 'true');
+  assert.equal(env.STRIPE_PRICE_ERA_PLUS_ANNUAL, 'price_annual');
 });
 
 test('loadServerEnv throws naming every missing var without leaking values', () => {
@@ -118,4 +135,24 @@ test('loadWebClientEnv parses a valid public env and rejects a missing one', () 
       return true;
     },
   );
+});
+
+test('loadMobileClientEnv parses the required public vars and optional Era+ ones', () => {
+  const env = loadMobileClientEnv({
+    EXPO_PUBLIC_API_URL: 'https://api.era.test',
+    EXPO_PUBLIC_R2_PUBLIC_URL: 'https://cdn.era.test',
+  });
+  assert.equal(env.EXPO_PUBLIC_API_URL, 'https://api.era.test');
+  // The Era+ flag and RC public key are optional — omitted above, so undefined.
+  assert.equal(env.EXPO_PUBLIC_ERA_PLUS_ENABLED, undefined);
+  assert.equal(env.EXPO_PUBLIC_REVENUECAT_IOS_KEY, undefined);
+
+  const enabled = loadMobileClientEnv({
+    EXPO_PUBLIC_API_URL: 'https://api.era.test',
+    EXPO_PUBLIC_R2_PUBLIC_URL: 'https://cdn.era.test',
+    EXPO_PUBLIC_ERA_PLUS_ENABLED: 'true',
+    EXPO_PUBLIC_REVENUECAT_IOS_KEY: 'appl_publishablekey',
+  });
+  assert.equal(enabled.EXPO_PUBLIC_ERA_PLUS_ENABLED, 'true');
+  assert.equal(enabled.EXPO_PUBLIC_REVENUECAT_IOS_KEY, 'appl_publishablekey');
 });

@@ -72,6 +72,25 @@ export {
 } from './ai-limits.ts';
 export type { AiRoute, UsageCheck, GlobalAiGate } from './ai-limits.ts';
 
+// Era+ subscriptions — pure entitlement logic + the RevenueCat event mapper.
+// Client-safe (no server-only deps); web/mobile client code imports isPlus +
+// isEraPlusEnabled from the `@era/core/plus` subpath to avoid this server-tainted
+// barrel. Re-exported here for server callers. See plus.ts.
+export {
+  isEraPlusEnabled,
+  isPlus,
+  parseRevenueCatEvent,
+  applyRevenueCatEvent,
+} from './plus.ts';
+export type {
+  PlusSubscriptionState,
+  SubscriptionStore,
+  SubscriptionEnvironment,
+  RevenueCatEventType,
+  RevenueCatEvent,
+  SubscriptionUpsert,
+} from './plus.ts';
+
 // Persistence type contract, re-exported type-only from @era/db.
 export type * from './db-types.ts';
 

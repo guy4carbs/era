@@ -10,6 +10,7 @@
     ".": "./src/index.ts",
     "./auth-api": "./src/auth-api.ts",
     "./strings": "./src/strings.ts",
+    "./plus": "./src/plus.ts",
     "./quiz": "./src/quiz.ts",
     "./ovi": "./src/ovi.ts",
     "./shop": "./src/shop.ts",

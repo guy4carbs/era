@@ -381,6 +381,51 @@ export const receiptInboxTokens = pgTable(
   ],
 );
 
+export const subscriptions = pgTable('subscriptions', {
+  // 1:1 with Better Auth user — the user id is the primary key. This table is a
+  // cache of RevenueCat entitlement state: rows are written ONLY by the
+  // RevenueCat webhook handler (stripeCustomerId is the one exception — written
+  // at Stripe checkout). The isPlus() read path is a single PK lookup, so no
+  // secondary indexes are needed.
+  userId: text('user_id')
+    .primaryKey()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  // The RevenueCat app user id. Equals our userId by contract, but we store what
+  // RC actually sends rather than assuming.
+  rcAppUserId: text('rc_app_user_id').notNull(),
+  // The purchased product — 'era_plus_monthly' | 'era_plus_annual'. Stored as
+  // text (not a pg enum) because the product catalog grows; the app validates it.
+  productId: text('product_id').notNull(),
+  // Purchase store — 'app_store' | 'stripe' | 'play_store' | 'promotional'.
+  // Stored as text; the app validates the value.
+  store: text('store').notNull(),
+  // RevenueCat environment — 'sandbox' | 'production'. Stored as text; the app
+  // validates the value.
+  environment: text('environment').notNull(),
+  purchasedAt: timestamp('purchased_at', { withTimezone: true }).notNull(),
+  // Null means a non-expiring entitlement (promotional/lifetime). The entitlement
+  // is active while expiresAt IS NULL OR expiresAt > now().
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+  willRenew: boolean('will_renew').notNull().default(false),
+  // Stamped when RC reports the user turned off auto-renew; null otherwise.
+  unsubscribeDetectedAt: timestamp('unsubscribe_detected_at', { withTimezone: true }),
+  // Stamped when RC reports a billing issue (grace period); null otherwise.
+  billingIssuesDetectedAt: timestamp('billing_issues_detected_at', { withTimezone: true }),
+  // Written by the web checkout route (NOT the webhook) so the Stripe customer
+  // portal can be opened later. Null for App Store / Play Store / promotional.
+  stripeCustomerId: text('stripe_customer_id'),
+  // RevenueCat event id of the last applied event — the idempotency key.
+  lastEventId: text('last_event_id').notNull(),
+  // RC event timestamp of the last applied event. The webhook ignores any event
+  // older than this, so out-of-order deliveries never regress the cached state.
+  lastEventAt: timestamp('last_event_at', { withTimezone: true }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
 export const inboundEmailEvents = pgTable('inbound_email_events', {
   // Resend's `data.email_id` — the stable per-inbound-message id. It IS the
   // primary key: inbound webhooks are at-least-once (Resend retries on a
