@@ -66,6 +66,26 @@ export const serverEnvSchema = z.object({
   // unconfigured. Never a client var — server-only.
   INBOUND_EMAIL_DOMAIN: z.string().min(1).optional(),
   RESEND_INBOUND_WEBHOOK_SECRET: z.string().min(1).optional(),
+  // Era+ subscriptions (Phase 2). The whole surface is DARK until provisioned:
+  // ERA_PLUS_ENABLED is the master feature flag ('true' to turn it on; any other
+  // value / unset → off, see isEraPlusEnabled) and the webhook + checkout routes
+  // ALSO require their own real credentials, so a flag alone unlocks nothing.
+  // RevenueCat is the single source of entitlement truth for both platforms;
+  // REVENUECAT_WEBHOOK_AUTH_TOKEN is the shared secret RC signs its webhook with
+  // (compared timing-safe at the edge). The STRIPE_* vars power web checkout only
+  // (iOS buys go through StoreKit → RC directly). All OPTIONAL and read through
+  // isRealCredential at the edges, so a committed `change-me-…` placeholder reads
+  // as unconfigured. Never client vars — server-only.
+  ERA_PLUS_ENABLED: z.string().min(1).optional(),
+  REVENUECAT_WEBHOOK_AUTH_TOKEN: z.string().min(1).optional(),
+  STRIPE_SECRET_KEY: z.string().min(1).optional(),
+  STRIPE_PRICE_ERA_PLUS_MONTHLY: z.string().min(1).optional(),
+  STRIPE_PRICE_ERA_PLUS_ANNUAL: z.string().min(1).optional(),
+  // Sandbox purchases (TestFlight/StoreKit sandbox, Stripe test mode) are FREE
+  // and must never grant production Plus. This switch ('true' only) lets sandbox
+  // rows count as entitled during the sandbox E2E window — flip it on to test,
+  // off before launch, and never again after.
+  ERA_PLUS_ALLOW_SANDBOX: z.string().min(1).optional(),
 });
 
 /** Public configuration exposed to the Next.js web client bundle. */
@@ -82,12 +102,24 @@ export const webClientEnvSchema = z.object({
   // Google Search Console verification token. Set when verifying era.style;
   // unset means no verification meta tag is emitted. Optional.
   NEXT_PUBLIC_GSC_VERIFICATION: z.string().optional(),
+  // Era+ master flag mirrored to the web bundle so the client can show/hide the
+  // paywall CTA. COSMETIC ONLY — 'true' to reveal, any other value / unset →
+  // hidden (isEraPlusEnabled). Access is always decided server-side by
+  // getPlusState; this flag never grants entitlement. Optional.
+  NEXT_PUBLIC_ERA_PLUS_ENABLED: z.string().optional(),
 });
 
 /** Public configuration exposed to the Expo mobile client bundle. */
 export const mobileClientEnvSchema = z.object({
   EXPO_PUBLIC_API_URL: z.string().url(),
   EXPO_PUBLIC_R2_PUBLIC_URL: z.string().url(),
+  // Era+ master flag mirrored to the device bundle (COSMETIC — reveals the
+  // paywall CTA only; access is decided server-side). 'true' to reveal. Optional.
+  EXPO_PUBLIC_ERA_PLUS_ENABLED: z.string().optional(),
+  // RevenueCat's PUBLIC iOS SDK key — publishable by design (it identifies the
+  // app to RC and can only READ entitlements; the webhook secret is the private
+  // half). Client-safe, still optional/dormant until the SDK is wired. Optional.
+  EXPO_PUBLIC_REVENUECAT_IOS_KEY: z.string().optional(),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

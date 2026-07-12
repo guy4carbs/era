@@ -64,6 +64,24 @@ Conventional commits: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, with a
 - Env is validated at startup by `@era/core`'s zod env module (`loadServerEnv` et al.) — boot fails loudly, naming the missing var, and never printing values.
 - `.env*` files are gitignored (only `.env.example` is committed); real values live in local `.env` files and Railway service settings.
 
+## Monetization (Era+)
+
+Era+ is the optional paid tier. **RevenueCat is the single source of entitlement
+truth for both platforms** (iOS StoreKit → RC directly; web Stripe purchases
+forwarded into RC by RC's Stripe integration). Our Neon `subscriptions` table is
+a cache the RC webhook writes; gating is **server-side only** (`getPlusState`)
+— the `*_PUBLIC_ERA_PLUS_ENABLED` flags are cosmetic, never an entitlement.
+
+- **Steer sign-ups toward web checkout where platform policy allows** — a Stripe
+  subscription costs ~3% versus the app-store 15–30% cut, and the web purchase
+  still unifies into the same RevenueCat entitlement. Where Apple's rules permit
+  it (e.g. an external-purchase link / the reader-style allowances), prefer the
+  web flow.
+- **Never dark-pattern the iOS paywall to do it.** Do not cripple, hide, or
+  guilt-trip the in-app purchase to push users off-platform. The iOS StoreKit
+  path stays first-class and honest; the web nudge is an option, not a trap. Same
+  calm, no-fake-urgency voice as the rest of the app.
+
 ## Image pipeline
 
 Item and outfit imagery lives in Cloudflare R2. Presigning is server-only — clients never hold R2 credentials.

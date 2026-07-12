@@ -24,6 +24,7 @@ import {
   ThemeControl,
 } from '@/components/settings';
 import { eraAuth, useSession } from '@/lib/auth-client';
+import { eraPlusEnabled } from '@/lib/purchases';
 import { forceError, reportingActive } from '@/lib/reporting';
 import { useTheme } from '@/lib/theme';
 
@@ -93,6 +94,17 @@ export default function SettingsScreen() {
         <Section title={strings.settings.appearance}>
           <ThemeControl />
         </Section>
+
+        {/* Era+ — only present when the feature flag is on; dormant builds hide it. */}
+        {eraPlusEnabled ? (
+          <Section title={strings.plus.paywallTitle}>
+            <SettingRow
+              label={strings.plus.settingsRowLabel}
+              accessibilityHint={strings.plus.settingsRowHint}
+              onPress={() => router.push('/paywall')}
+            />
+          </Section>
+        ) : null}
 
         <Section title={strings.settings.privacyTitle}>
           <PrivacyToggle />

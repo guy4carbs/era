@@ -6,6 +6,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { analytics } from '@/lib/analytics';
 import { useSession } from '@/lib/auth-client';
+import { logInPurchaser, logOutPurchaser } from '@/lib/purchases';
 import { wrapRoot } from '@/lib/reporting';
 import { ThemeProvider, useTheme } from '@/lib/theme';
 
@@ -17,6 +18,7 @@ function RootLayout() {
     <SafeAreaProvider>
       <ThemeProvider>
         <AnalyticsIdentity />
+        <PurchaserIdentity />
         <ThemedStack />
       </ThemeProvider>
     </SafeAreaProvider>
@@ -45,6 +47,36 @@ function AnalyticsIdentity() {
       // Session cleared — drop identity so later anonymous events aren't bound.
       analytics.reset();
       identified.current = null;
+    }
+  }, [data]);
+
+  return null;
+}
+
+/**
+ * Binds the RevenueCat purchaser to the auth session: `Purchases.logIn(userId)`
+ * once a session resolves so purchases attach to the Era account (and follow it
+ * across devices), `logOut()` when it clears on sign-out so the next user on the
+ * device never inherits the previous purchaser. Renders nothing. Both calls are
+ * no-ops while Era+ is dormant (flag off or a placeholder RC key), so this is
+ * inert in Expo Go and in the current build. Kept beside {@link AnalyticsIdentity}
+ * so the identity effects sit inside the providers without touching the navigator.
+ */
+function PurchaserIdentity() {
+  const { data } = useSession();
+  const boundUserId = useRef<string | null>(null);
+
+  useEffect(() => {
+    const userId = data?.user.userId ?? null;
+    if (userId) {
+      // Re-bind only when the user actually changes, not on every render.
+      if (boundUserId.current !== userId) {
+        void logInPurchaser(userId);
+        boundUserId.current = userId;
+      }
+    } else if (boundUserId.current !== null) {
+      void logOutPurchaser();
+      boundUserId.current = null;
     }
   }, [data]);
 
@@ -108,6 +140,7 @@ function ThemedStack() {
           <Stack.Screen name="add-item" />
           <Stack.Screen name="design-lab" />
           <Stack.Screen name="outfit-canvas" />
+          <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
           <Stack.Screen name="quiz" />
           <Stack.Screen name="settings" />
           <Stack.Screen name="worn" />

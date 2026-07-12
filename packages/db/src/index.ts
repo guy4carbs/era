@@ -21,6 +21,7 @@ import {
   receiptInboxTokens,
   savedProducts,
   styleProfiles,
+  subscriptions,
   waitlist,
   wearLogs,
 } from './schema/app.ts';
@@ -55,6 +56,7 @@ export {
   emailSuppressions,
   receiptInboxTokens,
   inboundEmailEvents,
+  subscriptions,
 };
 
 export { createDbClient } from './client.ts';
@@ -120,6 +122,9 @@ export type NewReceiptInboxToken = typeof receiptInboxTokens.$inferInsert;
 
 export type InboundEmailEvent = typeof inboundEmailEvents.$inferSelect;
 export type NewInboundEmailEvent = typeof inboundEmailEvents.$inferInsert;
+
+export type Subscription = typeof subscriptions.$inferSelect;
+export type NewSubscription = typeof subscriptions.$inferInsert;
 
 // Enum value unions.
 export type ItemCategory = (typeof itemCategory.enumValues)[number];

@@ -34,6 +34,7 @@ export default function robots(): MetadataRoute.Robots {
         '/quiz$',
         '/worn$',
         '/settings$',
+        '/plus$',
         '/onboarding$',
         '/design-lab$',
         // Routes with sub-paths — block the page AND everything beneath it.
