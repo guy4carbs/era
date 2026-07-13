@@ -9,7 +9,7 @@
     "android": "expo run:android",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "echo \"no mobile tests yet\" && exit 0"
+    "test": "node --experimental-strip-types --test \"lib/**/*.test.ts\""
   },
   "dependencies": {
     "@better-auth/expo": "^1.6.23",
