@@ -14,6 +14,15 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+/**
+ * Render at REQUEST time, never at build time (same lesson as sitemap.ts).
+ * The dormancy gate below runs BEFORE any dynamic API, so a build made while
+ * `ERA_PLUS_ENABLED` is off would otherwise bake `notFound()` into a static,
+ * long-cached 404 — and flipping the flag via env alone (no rebuild) could
+ * never bring the page up. Observed in prod on the first flag flip.
+ */
+export const dynamic = 'force-dynamic';
+
 /** The status a Stripe redirect can hand back on `/plus?status=…`. */
 type Status = 'success' | 'canceled';
 
