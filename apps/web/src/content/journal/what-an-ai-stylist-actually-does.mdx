@@ -1,23 +1,95 @@
-{/* TODO(content): replace this stub body with the full post. Meta lives in
-src/lib/journal.ts — no frontmatter or `export const post` here; BODY only. Answer
-the head keyword "ai stylist" early. Be honest about Ovi: she styles only from items
-the user OWNS and says when not to buy. No dollar amounts; CTA "join the waitlist". */}
+An AI stylist is software that learns your taste and puts outfits together for you.
+Not a search box for clothes, and not a shopping feed — a stylist reasons about what
+goes with what, for you specifically, and hands you something to wear. The useful
+kind does it from the clothes you already own, so what you get back is an outfit you
+can put on today rather than a list of things to buy.
 
-An AI stylist learns your taste and assembles outfits for you. The useful kind does
-it from the clothes you already own — so every suggestion is something you can wear
-today, not a shopping list. That is exactly how Ovi works inside Era.
+That distinction is the whole point of Ovi, Era's AI stylist. Below is an honest
+look at what an AI stylist can genuinely do, what it cannot, and why Era built Ovi to
+style what you have instead of steering you toward more.
 
-## It starts with your closet
+## What an AI stylist can actually do
 
-Ovi reads your digitized wardrobe and your style profile from the quiz, then builds
-looks from pieces you actually have.
+### Learn your taste
 
-## It suggests, you decide
+It starts by getting to know you rather than guessing. In Era, a short twelve-step
+style quiz maps you to one of eight style archetypes, each with its own palette — a
+starting read on how you like to dress. From there, the picture sharpens as you use
+the app: the outfits you keep, the ones you skip, and what you actually wear all feed
+back in. Taste is not a fixed label, and a good AI stylist treats it as something it
+keeps learning.
 
-Each day Ovi proposes an outfit you can accept, adjust, or skip. Nothing is
-automatic, and your closet stays private by default.
+### Compose outfits from your closet
 
-## It tells you when not to buy
+This is the part that feels like styling. Ovi reads your digitized wardrobe — every
+piece you have photographed or imported — and assembles complete looks from it,
+pairing by category, color, and proportion. Because it works from your real closet,
+every suggestion is something you own. Each day it offers an outfit for the day
+ahead, so the blank-morning problem is mostly solved before you wake up.
 
-The honest part: Ovi recommends buying only when nothing you own fills a real gap.
-The default is to use what you have.
+### Factor in the weather
+
+An outfit that ignores the forecast is only half useful. If you grant it a coarse,
+city-level location, Ovi checks the local weather and suggests something suited to
+it — no linen on a cold, wet morning. The location is used only to look up the
+weather; it is deliberately imprecise and is not stored.
+
+### Get better the more you use it
+
+The loop is simple and it compounds. You log what you actually wore, and that record
+sharpens the next suggestion. Over weeks, an AI stylist that pays attention to your
+wear history starts to feel less like a generator and more like someone who knows
+your closet. The pieces you reach for surface more often; the ones you always skip
+quietly recede. None of that requires you to rate or explain anything — the record of
+what you wore is enough for it to learn from.
+
+## What an AI stylist cannot do
+
+It is worth being just as clear about the limits, because a stylist that oversells
+itself is not one you can trust.
+
+It cannot feel fit or comfort. Ovi can see that a pair of trousers is charcoal and
+tailored, but not that they pull at the hip or that the collar on a shirt you own
+always itches. Those are things only you know, and the way it learns them is you
+telling it — by skipping the look, or by not logging it as worn.
+
+It cannot read the occasion in your head. It knows the weather; it does not know that
+today's meeting matters more than yesterday's, or that you want to feel a particular
+way. Context like that stays yours to supply.
+
+And it does not replace your judgment. Ovi suggests; you decide. Nothing is bought,
+posted, or changed automatically — a proposed outfit is an idea you accept, adjust,
+or wave off. The suggestions are automated style ideas, not professional advice, and
+the final call is always yours.
+
+Held to those limits, an AI stylist is genuinely useful. Sold past them, it is just
+another app promising more than it can know.
+
+## Why Ovi only styles what you own
+
+Here is where Era's [AI stylist](/ai-stylist) parts ways with a lot of what gets
+called styling. Many tools that promise to dress you are really storefronts with a
+recommendation engine attached — the "outfit" is a set of products you do not own
+yet, and the quiet goal is a purchase. That can be fun to browse, but it answers the
+wrong question. Most mornings, the problem is not that you have nothing to buy; it is
+that you cannot see what you already have.
+
+Ovi inverts that. Its first rule is to shop your closet first: build the outfit from
+pieces you own, and only when nothing you have fills a genuine gap does it say so.
+Even then it points to the gap plainly rather than pushing a haul — a single missing
+piece that would unlock several looks, not a cart. The default is always to use what
+you have.
+
+That approach rewards a considered wardrobe more than an ever-growing one. If your
+taste runs toward understated and refined, a
+[quiet luxe style guide](/styles/quiet-luxe) will show you the handful of pieces
+that quietly hold a wardrobe together; if your days are more active and casual, an
+[athleisure style guide](/styles/athleisure) does the same for how you actually
+live. In both cases the aim is the same — get more out of what you own before adding
+to it.
+
+An AI stylist, done honestly, is not a machine for buying clothes. It is a way to see
+your own closet clearly and wear more of it. That is the version Era is building.
+
+Era is in early access. [Join the waitlist at era.style](/) to meet Ovi when it
+opens.
