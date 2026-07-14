@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 import { createDbClient } from '@era/db';
 import { siteUrl } from '../lib/site-url';
 import { listIndexableProfiles } from '../lib/public-profile-server';
+import { layer2SitemapEntries } from '../lib/seo-sitemap-entries';
 
 /**
  * The XML sitemap, served by Next at `/sitemap.xml`. Lists the public, indexable
@@ -72,5 +73,9 @@ async function publicProfileRoutes(): Promise<MetadataRoute.Sitemap> {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  return [...staticRoutes, ...(await publicProfileRoutes())];
+  // Static landing/legal, then the Layer-2 editorial surfaces (journal, pillars,
+  // style guide — honest `lastModified` from their content modules), then the
+  // Layer-3 public profiles. The Layer-2 entries are a pure, DB-free helper shared
+  // with `seo-graph.test.ts`, which keeps them in lockstep with the link graph.
+  return [...staticRoutes, ...layer2SitemapEntries(), ...(await publicProfileRoutes())];
 }
