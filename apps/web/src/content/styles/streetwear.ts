@@ -12,8 +12,8 @@ export const streetwear: StylePageContent = {
   dateModified: '2026-07-14',
   intro: [
     'Streetwear is style built from the ground up — literally, since the sneakers usually come first and the outfit is assembled around them. It is bold, graphic, and relaxed in fit, drawing on skate, hip-hop, and sport culture to make clothes a form of self-expression rather than a uniform. The rules are loose on purpose: comfort and attitude outrank formality every time.',
-    'It suits people who treat getting dressed as a creative act and want their clothes to say something before they do. Wearing it feels easy and a little playful — roomy silhouettes move with you, a graphic does the talking, and there is always room to swap one loud element for another. Nothing here is precious.',
-    'Across a week it flexes with the situation: a graphic tee and relaxed denim with clean sneakers most days, a hoodie layered under a jacket when it cools, a standout pair of trainers to reset a plain fit. The palette can sit muted and let one bright piece pop, or go maximal when the mood asks. The through-line is the footwear and the fit, not any single garment — it is a wardrobe you build by feel, one favorite piece at a time.',
+    'Getting dressed here is treated as a creative act — the clothes are meant to say something before you open your mouth. Wearing it feels easy and a little playful: roomy silhouettes move with you, a graphic carries the message, and there is always room to swap one loud element for another. Nothing here is precious.',
+    'The system is loose on purpose. You start from the shoes and the fit, then set the volume: a muted base letting one bright piece pop on an ordinary day, everything turned up when the mood asks for it. Only that through-line stays fixed — footwear and silhouette lead, and any single garment is swappable. You build it by feel, one favorite piece at a time, and it never quite stops rearranging.',
   ],
   paletteNarrative:
     'Streetwear runs on a neutral base — black, mid grey, and a soft off-white — so the loud pieces have room to land. Against that, the accents go deliberately electric: a hot red-orange and a bright yellow, the kind of color meant to be seen from across the street. Keep most of a fit grounded in the neutrals and let a single accent — a sneaker, a graphic, a cap — carry the volume.',
@@ -21,7 +21,7 @@ export const streetwear: StylePageContent = {
     {
       name: 'Everyday fit',
       items: ['graphic tee', 'relaxed straight denim', 'clean chunky sneaker', 'cap'],
-      note: 'Neutral clothes, one graphic — let the print and the shoe do the talking.',
+      note: 'Neutral clothes, one graphic — let the print and the shoe lead.',
     },
     {
       name: 'Layered for cold',
@@ -51,7 +51,7 @@ export const streetwear: StylePageContent = {
   ],
   gapGuide: {
     intro:
-      'In streetwear a gap is the piece that would open up fits you keep imagining but cannot pull off yet — usually a shoe or a standout layer, rarely another basic. If it does not unlock new outfits, it is just another thing in the pile.',
+      'Watch your rotation and the gap shows itself: it is the fit you keep reaching to build and abandoning because one piece is not there yet — almost always the shoe or the standout layer, almost never another basic. If a buy would not enter the rotation and change what you can put together, it is just stock piling up.',
     gaps: [
       {
         piece: 'One statement pair of sneakers',
@@ -86,11 +86,11 @@ export const streetwear: StylePageContent = {
     },
     {
       q: 'Is streetwear still in style?',
-      a: 'Streetwear has moved from trend to a permanent part of how people dress, though its specifics shift constantly. The core — comfortable, expressive, sneaker-led fits — has stayed relevant, so building around fundamentals rather than hype ages better.',
+      a: 'It is a slightly odd question for streetwear, because the culture grew up outside the trend cycle rather than inside it — being current was never the aim. Individual hyped pieces come and go fast, but dressing from the sneakers up, for comfort and self-expression, has only spread. Chase the hype and you date yourself; build from the fundamentals and you do not.',
     },
     {
       q: 'How do I know if streetwear is my style?',
-      a: "If you build outfits around sneakers and reach for bold, comfortable, expressive pieces, it fits. Era's style quiz sorts you into one of eight archetypes and then assembles looks from what is already in your closet, which is the quickest way to be sure.",
+      a: "Start at your feet. If the sneakers are the first decision and the rest of the fit gets built up from there — if the pieces you are proudest of are the loud, comfortable, one-graphic-at-a-time kind — you are already dressing streetwear. Era's quiz names it, then assembles fits from the shoes and pieces already in your closet.",
     },
   ],
 };

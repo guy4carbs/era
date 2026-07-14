@@ -14,7 +14,7 @@ export const eclectic: StylePageContent = {
     'Eclectic style is the art of the unexpected pairing — playful, colour-forward, and unmistakably individual. Where other archetypes narrow their palette, this one widens it: prints meet prints, textures collide, and a bright that supposedly should not work becomes the whole point. It is personal by design, less a formula than a permission slip.',
     'The catch is that it only looks effortless. Behind a good eclectic outfit is usually one grounding decision — a neutral, a repeated colour, a single anchor — that gives everything else room to be loud. Take that decision away and the same pieces tip from expressive into chaotic.',
     'It suits collectors and magpies: people whose favourite items each carry a story, who would rather a wardrobe that surprises them than one that matches. If you have ever bought something purely because nothing else looked like it, this is probably your territory.',
-    'In a real week it is the most expressive of the eight archetypes, and the most forgiving of impulse buys — that vintage jacket and the odd printed skirt finally have somewhere to belong. The skill is not restraint so much as arrangement: knowing which two things to let shout and what to put quietly underneath.',
+    'Of the eight archetypes this is the most expressive, and the one that best rewards the odd things already in your closet — the vintage jacket, the one printed skirt that never had a home, finally find their place. The skill is arrangement, not restraint: knowing which two things to let shout and what to keep quiet underneath them.',
   ],
   paletteNarrative:
     'This is the one archetype whose palette is built to clash: deep teal, burnt rust, and warm mustard sit beside a rich violet, none of them backing down. Magenta and turquoise accents push the energy up rather than calming it. Wear it by letting two or three shades lead and anchoring the rest with a single neutral, so the colour reads as a choice instead of an accident.',
@@ -32,7 +32,7 @@ export const eclectic: StylePageContent = {
     {
       name: 'Loud evening',
       items: ['metallic top', 'tailored trouser', 'jewel-tone heel'],
-      note: 'One shine, one saturated colour — let them do the talking.',
+      note: 'One shine, one saturated colour — nothing else needs to happen.',
     },
     {
       name: 'Layered transition',
@@ -47,7 +47,7 @@ export const eclectic: StylePageContent = {
   ],
   gapGuide: {
     intro:
-      'The honest test for an eclectic wardrobe is counterintuitive: the piece you are missing is often the calm one. Era flags a gap only when it unlocks combinations you cannot currently pull off — and here that usually means something to anchor the colour, not add to it.',
+      'The honest test for an eclectic wardrobe is counterintuitive: the piece you are missing is usually the calm one. Not another bright — you have plenty — but the anchor that would let the brights already crowding your closet finally combine. A gap here is whatever opens up pairings you cannot currently pull off, which nearly always means something quiet to build the loud things on.',
     gaps: [
       {
         piece: 'A true neutral anchor',
@@ -86,7 +86,7 @@ export const eclectic: StylePageContent = {
     },
     {
       q: 'How can I check whether eclectic is really my style?',
-      a: 'A quick way is to look at the pieces you love but rarely know how to wear — if they are the loud, one-of-a-kind ones, eclectic is likely you. Era’s archetype quiz weighs your actual preferences across a dozen prompts and tells you whether eclectic leads or just visits.',
+      a: 'The giveaway is the pieces you love and never wear — the ones too singular to pair with anything, bought precisely because nothing else looked like them. A closet full of those, with few plain anchors between them, points straight at eclectic. Era’s quiz weighs that pattern and tells you whether eclectic leads the wardrobe or only guests in it.',
     },
   ],
 };

@@ -13,11 +13,11 @@ export const athleisure: StylePageContent = {
   intro: [
     'Athleisure is sportswear that earns a place outside the gym — comfortable, functional, and sleek enough to wear straight through the day. It borrows the fabrics and shapes of training gear, all stretch, zips, and clean technical lines, then edits out anything that looks like you are mid-workout. Done right, it reads as put-together ease rather than a compromise.',
     'The appeal is immediate the first time you wear it: nothing digs, nothing restricts, and you can move without thinking about your clothes. That comfort is the whole premise — but the archetype only holds together when the pieces are sleek and considered, not whatever was nearest the laundry basket.',
-    'It suits anyone whose day refuses to sit still — school runs, commutes, back-to-back errands, a workout wedged in between. If you value function first and want to look intentional while staying ready to move, this is your lane.',
-    'Across a week it does the quiet work of a wardrobe: a fitted tee and joggers for the everyday, a knit polo and technical trousers when the day turns smart-casual, a track jacket over leggings when it is cold. The line between sharp and sloppy is thin, and staying on the right side of it is mostly about fit and a disciplined palette.',
+    'Think of the day that never sits still — a school run folding into a commute into back-to-back errands, a workout wedged somewhere in the middle. This is the wardrobe for staying ready to move without looking like readiness is the only thing you dressed for. Function first, but intentional with it.',
+    'Everything rides on one thin line — the one between sharp and sloppy. Stay on the right side of it and a fitted tee with joggers reads as put-together, a knit polo with technical trousers passes as smart-casual, a track jacket over leggings looks chosen rather than grabbed. Which side you land on comes down almost entirely to fit and a disciplined palette.',
   ],
   paletteNarrative:
-    'The base is deliberately plain: black, white, and a warm greige that keeps the look clean and lets the cut do the talking. Colour enters through the accents only — a fresh mint or a clear cobalt, usually a single flash on a shoe or a zip. Holding the neutrals to one tonal family is what separates sleek athleisure from looking like gym kit.',
+    'The base is deliberately plain: black, white, and a warm greige that keeps the look clean and lets the cut set the tone. Colour enters through the accents only — a fresh mint or a clear cobalt, usually a single flash on a shoe or a zip. Holding the neutrals to one tonal family is what separates sleek athleisure from looking like gym kit.',
   outfitFormulas: [
     {
       name: 'Move-ready default',
@@ -47,7 +47,7 @@ export const athleisure: StylePageContent = {
   ],
   gapGuide: {
     intro:
-      'Athleisure tempts you to keep buying pieces that do the same job. Era calls something a gap only when it unlocks outfits you cannot make now — usually one item that lets the gym clothes you own read as a deliberate look.',
+      'Athleisure tempts you into variations on what you have — one more legging, one more tee. The real gap is rarely another of those; it is the single piece that lifts the gym clothes already in your drawer into something that reads as chosen. The test is not whether a buy is nice but whether it makes a look your current kit cannot.',
     gaps: [
       {
         piece: 'One clean, non-technical sneaker',

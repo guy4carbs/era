@@ -12,8 +12,8 @@ export const quietLuxe: StylePageContent = {
   dateModified: '2026-07-14',
   intro: [
     'Quiet luxe is the art of dressing so that material and construction do the talking. It is understated by design: no logos, no loud prints, no season-chasing — just refined pieces cut well and made from fabrics worth touching. The whole point is that quality reads up close, not across a room.',
-    'It tends to suit people who have stopped shopping for novelty and started shopping for keeps. Wearing it feels calm and a little private — you notice the weight of a good coat and the drape of a proper trouser before anyone else does. Nothing itches, nothing pulls, and nothing needs replacing next year, which is rather the point.',
-    'Across a normal week it shows up as a small rotation of tactile, timeless staples doing quiet work: a knit that holds its shape through back-to-back meetings, trousers that read as considered on a Tuesday and correct at dinner, a coat that makes everything under it look deliberate. You are not building outfits so much as trusting a handful of very good ones, and the result looks effortless because by then it nearly is. Skip the trends and you skip the churn; the wardrobe simply keeps working, season after season.',
+    'Novelty is exactly what it does not chase. The person who dresses this way stopped shopping for the new some time ago and started shopping for keeps. Wearing it feels calm and a little private — you register the weight of a good coat and the drape of a proper trouser before anyone else does. Nothing itches, nothing pulls, nothing needs replacing next year.',
+    'The logic is trust rather than assembly. You are not building outfits so much as relying on a handful of pieces you have already proven: a knit that holds its shape through back-to-back meetings, a trouser that reads considered on a Tuesday and correct at dinner, a coat that makes whatever is under it look deliberate. By the time it looks effortless, it very nearly is. The wardrobe just keeps working, season after season, because nothing in it was bought to be current.',
   ],
   paletteNarrative:
     'The backbone is warm — cream and camel warming into a deep taupe-brown and a near-black ink, so the whole palette feels lit from within rather than stark. The two accents, a muted mushroom and a soft sage-grey, are barely-there by design; they add depth without ever raising their voice. Wear the lights and darks together in a single tonal column and let one accent soften the seam between them.',
@@ -61,7 +61,7 @@ export const quietLuxe: StylePageContent = {
   ],
   gapGuide: {
     intro:
-      'A gap is only worth naming when closing it unlocks outfits you cannot currently make — not when it simply adds another option. These are the pieces that tend to do that in a quiet-luxe wardrobe.',
+      'The pieces below are the ones whose absence you feel every time you dress around them — the coat you keep improvising past, the shoes that would finish two half-formed looks. That is the only kind of gap worth closing: the one already shaping how you get dressed. Anything else is just another good thing you do not need.',
     gaps: [
       {
         piece: 'A well-cut neutral overcoat',
@@ -69,7 +69,7 @@ export const quietLuxe: StylePageContent = {
       },
       {
         piece: 'One pair of quality leather shoes',
-        why: 'Grounds both the tailored and the off-duty formulas, so a single purchase stretches across the week.',
+        why: 'The same pair finishes a tailored weekday and a long-weekend look — exactly what a quiet wardrobe asks of everything in it: more than one job, done without fuss.',
       },
       {
         piece: 'A fine-gauge knit in a warm neutral',

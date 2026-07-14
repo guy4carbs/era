@@ -12,9 +12,9 @@ export const romantic: StylePageContent = {
   dateModified: '2026-07-14',
   intro: [
     'Romantic style is the softest of the archetypes — a wardrobe built on flow, delicacy, and quiet prettiness. Think fabrics that drape and move, gentle floral prints, fine knits, and silhouettes that skim the body rather than cinch it. Nothing here is sharp or severe; the whole mood is tender, feminine, and a little wistful.',
-    'It suits anyone who feels most themselves in something with movement — a skirt that shifts as you walk, a blouse with a soft tie at the collar. Romantic dressing rewards small details: a scalloped edge, a covered button, a hem that floats. You need not be delicate yourself to wear it, only drawn to clothes that feel gentle against the day.',
+    'Reach instinctively for a skirt that shifts as you walk or a blouse with a soft tie at the collar and you already speak the language. Romantic dressing rewards small details: a scalloped edge, a covered button, a hem that floats. You need not be delicate yourself to wear it, only drawn to clothes that feel gentle against the day.',
     'Worn well, it feels unhurried. A romantic outfit tends to lower the volume of everything around it, which is why it reads as calm rather than costume — pretty, but never trying too hard to prove it.',
-    'Across a real week it flexes further than its reputation suggests: a floral midi and a flat for errands, a silk blouse under tailoring at a desk, a slip dress for dinner. The pieces are quiet enough to repeat and lovely enough that repeating them never feels dull.',
+    'Its reputation is narrower than the reality. These pieces go more places than the word suggests — a floral midi reads fine on errands, a silk blouse slips under tailoring at a desk, a slip dress carries dinner on its own. They are quiet enough to repeat and lovely enough that repeating them never wears thin.',
   ],
   paletteNarrative:
     'The palette rests on blush pink and warm cream, grounded by a soft sage green and a powdery blue so it never turns saccharine. Dusty rose and lilac arrive as the deeper notes, lending a touch of wistfulness. Keep the pastels close in tone and let one shade lead; the effect stays gentle instead of sugary.',
@@ -47,7 +47,7 @@ export const romantic: StylePageContent = {
   ],
   gapGuide: {
     intro:
-      'A gap is only worth naming when closing it unlocks outfits you cannot make today — not when it simply adds another pretty thing to the pile. These romantic pieces earn their place by connecting the rest of the wardrobe.',
+      'A romantic piece earns its place by what it lets you show up to, not by how it looks on the hanger. The gap is the dress or layer that finally covers an occasion you keep dressing around — dinner, the first cold week, a day that turns from desk to evening. A prettier version of something you can already wear is not a gap.',
     gaps: [
       {
         piece: 'A bias-cut slip dress',
@@ -86,7 +86,7 @@ export const romantic: StylePageContent = {
     },
     {
       q: 'How do I know if romantic is my style?',
-      a: 'Notice what you reach for when you feel most yourself: if it tends to be soft fabrics, movement, and gentle colour, romantic is likely leading. Era’s style quiz walks you through twelve quick choices and returns the archetype that fits, so you build on a real read rather than a guess.',
+      a: 'Watch what your hand goes to on an unhurried day. If it is the fabric that drapes, the hem that moves, the blush or cream over anything sharp, romantic is leading — the tell is caring how a piece feels and floats more than how structured it looks. Era’s twelve-question quiz reads that preference and returns the archetype rather than leaving you to guess.',
     },
   ],
 };

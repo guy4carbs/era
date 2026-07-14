@@ -12,8 +12,8 @@ export const classic: StylePageContent = {
   dateModified: '2026-07-14',
   intro: [
     'Classic style is dressing by the rules that have already survived every trend — tailored shapes, polished finishes, and heritage pieces that looked right decades ago and will look right decades on. It is balanced rather than bold: nothing is exaggerated, nothing is of-the-moment, and everything is proportioned to flatter without drawing a second glance for the wrong reason.',
-    'It suits people who want to look pulled-together without performing fashion, and who value a wardrobe that reads the same in any room and any year. Wearing it feels assured and low-effort — the pieces are familiar, the combinations are settled, and you spend no energy wondering whether an outfit works, because it has worked for a century.',
-    'In practice the week runs on a few well-cut anchors traded in and out: a blazer over a shirt for anything that matters, a knit and trouser when it does not, a trench when the weather turns. Denim and a crisp shirt carry the weekend without breaking character. Because each piece is a known quantity, the outfits assemble themselves — polished, proportioned, and quietly permanent, which is the whole brief. Buy well once, and each piece keeps earning its place in the rotation for years.',
+    'Where a trend-led wardrobe asks you to keep up, this one asks nothing of you — it reads the same in any room and any year. Wearing it feels assured and low-effort: the pieces are familiar, the combinations are settled, and you spend no energy wondering whether an outfit works, because it has worked for a century.',
+    'In practice the week runs on a few well-cut anchors traded in and out: a blazer over a shirt for anything that matters, a knit and trouser when it does not, a trench when the weather turns. Denim and a crisp shirt carry the weekend without breaking character. Because each piece is a known quantity, the outfits assemble themselves — polished, proportioned, and quietly permanent. Buy well once, and each piece keeps earning its place in the rotation for years.',
   ],
   paletteNarrative:
     'The classic palette is built on navy and crisp white, with camel warming the middle and a deep burgundy for depth — the colors of blazers, oxford shirts, and good leather. The accents, a forest green and a muted gold, are drawn from the same heritage world and add richness without novelty. Pair navy with white for the cleanest version, then let camel or burgundy carry the seasonal warmth.',
@@ -40,7 +40,7 @@ export const classic: StylePageContent = {
         'fine-gold jewelry',
         'pointed leather pump',
       ],
-      note: 'Let the cut and one heritage accent do everything.',
+      note: 'Let the cut and one heritage accent finish it.',
     },
     {
       name: 'Trench weather',
@@ -60,7 +60,7 @@ export const classic: StylePageContent = {
   ],
   gapGuide: {
     intro:
-      'For a classic wardrobe, a gap is the anchor piece whose absence leaves a whole category of occasions uncovered. Close it only when it genuinely unlocks outfits you cannot currently assemble — a classic wardrobe is meant to be small and complete, not large.',
+      'Run a classic wardrobe through cost-per-wear and the real gaps name themselves: the anchor pieces that would work several times a week, in several roles, for years — never the extra that would hang idle. Close a gap when the piece earns its keep that hard, not when it merely rounds out a collection meant to stay small and complete.',
     gaps: [
       {
         piece: 'A well-tailored navy blazer',
@@ -76,7 +76,7 @@ export const classic: StylePageContent = {
       },
       {
         piece: 'One pair of good leather shoes',
-        why: 'Grounds both the boardroom and weekend formulas, so a single investment reads across the week.',
+        why: 'One considered pair carries the boardroom, the weekend, and everything between; in a wardrobe kept this small, a shoe has to work that hard to belong.',
       },
     ],
   },
@@ -99,7 +99,7 @@ export const classic: StylePageContent = {
     },
     {
       q: 'How do I tell if classic is my style?',
-      a: "If you prefer tailored, balanced outfits over statement pieces and want a wardrobe that stays relevant, it likely is. Era's quiz matches you to one of eight archetypes and then styles what you already own, which makes the answer concrete.",
+      a: "Look at whether your favourite outfits are the tailored, unremarkable ones — the blazer-and-trouser you never think twice about, the shapes you have quietly re-bought for years. A closet that drifts toward navy, camel, and good leather rather than the season's colour is answering for you. Era's quiz picks up those preferences and then styles the anchors you already own.",
     },
   ],
 };

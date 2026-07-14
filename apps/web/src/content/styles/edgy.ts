@@ -12,9 +12,9 @@ export const edgy: StylePageContent = {
   dateModified: '2026-07-14',
   intro: [
     'Edgy style is dressing with an edge on purpose — dark, sharp, and built to look a little unbothered by convention. It runs on structure and contrast: hard shoulders, clean severe lines, and a palette that stays close to black. People reach for the word rebellious, but the truer one is deliberate.',
-    'The mood is moody rather than loud. An edgy outfit does not shout; it holds its ground. Leather, heavy denim, matte hardware, and a boot with real weight do the work, and the result feels controlled even when the individual pieces are aggressive.',
-    'It suits people who want their clothes to keep a firm line — who would rather a stiff collar and a heavy sole than anything floaty, and who like a wardrobe that photographs a little dangerous. You do not have to live loudly to dress this way; plenty wear it precisely because it needs no explanation.',
-    'Through a week it is more wearable than it looks. All-black separates carry a normal workday, a blazer sharpens a meeting, and the same leather jacket that anchors a night out reads perfectly at ease on a Sunday. The severity is a feature: fewer decisions, and every one of them intentional.',
+    'The mood is moody rather than loud. An edgy outfit does not shout; it holds its ground. Leather, heavy denim, matte hardware, and a boot with real weight carry it, and the result feels controlled even when the individual pieces are aggressive.',
+    'Anyone who wants their clothes to flatter quietly and disappear will hate it. It is for people who would rather a stiff collar and a heavy sole than anything floaty, who like a wardrobe that photographs a little dangerous. You do not have to live loudly to dress this way — plenty wear it precisely because it needs no explanation.',
+    'For all its severity, this is a low-maintenance way to dress. The darkness that reads as uncompromising is exactly what makes it easy — one leather jacket looks at ease over a Sunday tee and deliberate at night, and a blazer over black clears a meeting without a second thought. The severity is a feature: fewer decisions, and every one of them already made.',
   ],
   paletteNarrative:
     'Near-black ink and charcoal do the heavy lifting, so the base always reads dark and slightly severe. A deep oxblood keeps it from going flat, adding warmth without brightness. Steel grey softens the edges where you want a little breathing room, and a single hit of crimson is as loud as this palette ever needs to be.',
@@ -47,7 +47,7 @@ export const edgy: StylePageContent = {
   ],
   gapGuide: {
     intro:
-      'Era flags a gap only when the missing piece changes what you can wear — the item that turns three orphaned things into outfits. For an edgy wardrobe that is almost always one structural anchor, not more of the same dark basics.',
+      'An edgy wardrobe fails in one predictable way — a heap of dark basics with nothing to give them a spine. So the gap is almost always structural: the single hard-edged anchor that turns three orphaned pieces into outfits, never another black separate — you have a stack of those.',
     gaps: [
       {
         piece: 'A leather or faux-leather jacket',
@@ -70,7 +70,7 @@ export const edgy: StylePageContent = {
   faqs: [
     {
       q: 'What is edgy style?',
-      a: 'Edgy style is a dark, sharp, structured look with a rebellious, moody attitude. It is usually anchored in black and built from hard-edged pieces — leather, heavy denim, structured tailoring, and weighty boots — with contrast and severe lines doing most of the work.',
+      a: 'Edgy style is a dark, sharp, structured look with a rebellious, moody attitude. It is usually anchored in black and built from hard-edged pieces — leather, heavy denim, structured tailoring, and weighty boots — with contrast and severe lines carrying most of the look.',
     },
     {
       q: 'Does edgy style have to be all black?',
