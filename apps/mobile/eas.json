@@ -44,16 +44,12 @@
   "submit": {
     "preview": {
       "ios": {
-        "ascApiKeyPath": "REPLACE_WITH_PATH_TO_ASC_API_KEY.p8",
-        "ascApiKeyId": "REPLACE_WITH_ASC_API_KEY_ID",
-        "ascApiKeyIssuerId": "REPLACE_WITH_ASC_API_KEY_ISSUER_ID"
+        "ascAppId": "6787615963"
       }
     },
     "production": {
       "ios": {
-        "ascApiKeyPath": "REPLACE_WITH_PATH_TO_ASC_API_KEY.p8",
-        "ascApiKeyId": "REPLACE_WITH_ASC_API_KEY_ID",
-        "ascApiKeyIssuerId": "REPLACE_WITH_ASC_API_KEY_ISSUER_ID"
+        "ascAppId": "6787615963"
       }
     }
   }
