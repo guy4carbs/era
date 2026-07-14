@@ -4,9 +4,11 @@ import { type CSSProperties } from 'react';
 import Link from 'next/link';
 import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
+import { isEraFeedEnabled } from '@era/core/feed-flags';
 import { eraAuth, useSession } from '../../../lib/auth-client';
 import { TodayCard } from '../../../components/ovi';
 import { NotificationFeed } from '../../../components/shop';
+import { FeedList } from '../../../components/feed';
 
 const screenStyle: CSSProperties = {
   display: 'flex',
@@ -79,13 +81,18 @@ function SessionHeader() {
 }
 
 export default function FeedPage() {
+  // Cosmetic gate — the server 404s /api/feed when the real flag is off, so this
+  // only decides whether to mount the social feed below the carried-over top
+  // content. Off (prod default) leaves the tab exactly as it was.
+  const feedEnabled = isEraFeedEnabled(process.env.NEXT_PUBLIC_ERA_FEED_ENABLED);
+
   return (
     <main style={screenStyle}>
       <SessionHeader />
       <TodayCard />
       <NotificationFeed />
       <h1 style={titleStyle}>Feed</h1>
-      <p style={emptyStyle}>{strings.feed.empty}</p>
+      {feedEnabled ? <FeedList /> : <p style={emptyStyle}>{strings.feed.empty}</p>}
     </main>
   );
 }
