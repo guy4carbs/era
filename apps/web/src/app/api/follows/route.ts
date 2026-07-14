@@ -43,6 +43,7 @@ import { type AuthContext, AuthzError, canInsertFollow, requireUser } from '@era
 import { createDbClient } from '@era/db';
 
 import { auth } from '../../../lib/auth.ts';
+import { isBlockedEitherWay } from '../../../lib/blocks-server.ts';
 import {
   checkFollowLimit,
   countFollowers,
@@ -121,6 +122,13 @@ async function resolveTarget(request: Request, callerId: string): Promise<string
   }
   if (targetId === callerId) {
     return NextResponse.json({ error: 'self' }, { status: 400 });
+  }
+  // Bidirectional invisibility: a caller and target who block each other in either
+  // direction are mutually non-existent, so a follow/unfollow against a blocked
+  // account is `unknown` — the SAME response as a username that owns no account.
+  // No oracle: you can't tell "blocked me" apart from "doesn't exist".
+  if (await isBlockedEitherWay(db, callerId, targetId)) {
+    return NextResponse.json({ error: 'unknown' }, { status: 400 });
   }
   return targetId;
 }

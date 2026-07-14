@@ -36,6 +36,7 @@ import { type AuthContext, type StorageClient, getAssetUrl, isReservedUsername }
 import { type DbClient, eraOutfits, eras, items, outfits, profiles } from '@era/db';
 
 import { type AssetOwner, coverUrl } from './outfit-server.ts';
+import { isBlockedEitherWay } from './blocks-server.ts';
 import { countFollowers, countFollowing, isFollowing } from './follows-server.ts';
 import { PUBLIC_PROFILE_MIN_ITEMS } from './profile-presenter.ts';
 
@@ -144,6 +145,16 @@ export async function loadPublicProfile(
   }
 
   const ownerId = row.userId;
+
+  // Bidirectional invisibility: if the viewer and the owner block each other in
+  // EITHER direction, the profile is not_found — indistinguishable from a username
+  // that owns no account, so a block leaks nothing (not even existence). An
+  // anonymous viewer (viewerUserId null) is never blocked: isBlockedEitherWay
+  // short-circuits to false with no query, so anon reads are unaffected.
+  if (await isBlockedEitherWay(db, ownerId, viewerUserId)) {
+    return { state: 'not_found' };
+  }
+
   const identity: PublicProfileIdentity = {
     username: row.username,
     displayName: row.displayName,
