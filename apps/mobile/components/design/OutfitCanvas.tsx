@@ -30,8 +30,12 @@ import { Button } from '@/components/Button';
 import { Toast } from '@/components/closet';
 import { fetchItems, type ItemWithDisplay } from '@/components/items';
 import { trackOnce } from '@/lib/analytics';
+import { eraFeedEnabled } from '@/lib/feed-flag';
 import { useReducedMotionSafe } from '@/lib/motion';
+import { LimitReachedError } from '@/lib/rate-limit';
 import { useTheme } from '@/lib/theme';
+
+import { sharePost, unsharePost } from '@/components/feed/api';
 
 import { AssignEraSheet } from './AssignEraSheet';
 import { CanvasStage } from './CanvasStage';
@@ -93,6 +97,15 @@ export function OutfitCanvas({ outfitId: initialOutfitId }: OutfitCanvasProps) {
   const [assignBusy, setAssignBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
+  // Share-to-feed (flag-gated). The outfit detail payload carries no
+  // `sharedPostId`, so shared state can only be derived within this session:
+  // it starts unshared on reopen and is set from the sharePost response.
+  // CONTRACT GAP (flagged to Forge): add `sharedPostId` to OutfitDetail so a
+  // reopened, already-shared outfit shows "On your feed" without a re-share.
+  const [sharedPostId, setSharedPostId] = useState<string | null>(null);
+  const [hasCover, setHasCover] = useState(false);
+  const [sharing, setSharing] = useState(false);
+
   const guideX = useSharedValue(0);
   const guideY = useSharedValue(0);
   const guideXPos = useSharedValue(CENTER);
@@ -117,6 +130,7 @@ export function OutfitCanvas({ outfitId: initialOutfitId }: OutfitCanvasProps) {
           }
           setName(detail.name ?? '');
           setOccasion(detail.occasion ?? '');
+          setHasCover(detail.coverUrl !== null);
           setPlacements(
             renumber(
               detail.items.map((member) => ({
@@ -246,6 +260,10 @@ export function OutfitCanvas({ outfitId: initialOutfitId }: OutfitCanvasProps) {
       setSelectedId(null);
       await nextFrame();
       const coverImagePath = await composeCover();
+      // A freshly composed cover unlocks share-to-feed for this outfit.
+      if (coverImagePath) {
+        setHasCover(true);
+      }
 
       const itemsPayload: OutfitItemTransform[] = placements.map((p) => ({
         itemId: p.itemId,
@@ -324,6 +342,34 @@ export function OutfitCanvas({ outfitId: initialOutfitId }: OutfitCanvasProps) {
     [outfitId, assignBusy],
   );
 
+  // Share this saved outfit to the feed, or take it back down. Only reachable
+  // once the outfit has an id and a cover (a feed card needs the cover).
+  const toggleShare = useCallback(async () => {
+    if (!outfitId || sharing) {
+      return;
+    }
+    setSharing(true);
+    try {
+      if (sharedPostId) {
+        await unsharePost(sharedPostId);
+        setSharedPostId(null);
+        setToast(strings.feed.unshare);
+      } else {
+        const { post } = await sharePost({ outfitId });
+        setSharedPostId(post.id);
+        setToast(strings.feed.shared);
+      }
+    } catch (error) {
+      setToast(
+        error instanceof LimitReachedError
+          ? (error.serverMessage ?? strings.errors.generic)
+          : strings.errors.generic,
+      );
+    } finally {
+      setSharing(false);
+    }
+  }, [outfitId, sharedPostId, sharing]);
+
   if (loading) {
     return (
       <SafeAreaView style={[styles.screen, styles.centered, { backgroundColor: colors.bg }]}>
@@ -368,6 +414,20 @@ export function OutfitCanvas({ outfitId: initialOutfitId }: OutfitCanvasProps) {
           stageViewRef={stageViewRef}
         />
       </View>
+
+      {eraFeedEnabled && outfitId && hasCover ? (
+        <View style={styles.shareRow}>
+          <Button
+            label={
+              sharedPostId ? `${strings.feed.shared} · ${strings.feed.unshare}` : strings.feed.share
+            }
+            variant="secondary"
+            onPress={() => void toggleShare()}
+            disabled={sharing}
+            style={styles.bottomButton}
+          />
+        </View>
+      ) : null}
 
       <View style={styles.bottomBar}>
         <Button
@@ -442,6 +502,11 @@ const styles = StyleSheet.create({
   bottomBar: {
     flexDirection: 'row',
     gap: spacing.s3,
+    paddingHorizontal: spacing.s4,
+    paddingBottom: spacing.s2,
+  },
+  shareRow: {
+    flexDirection: 'row',
     paddingHorizontal: spacing.s4,
     paddingBottom: spacing.s2,
   },
