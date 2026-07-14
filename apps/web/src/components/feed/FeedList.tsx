@@ -293,7 +293,7 @@ export function FeedList() {
 
       {state.loading && state.posts.length > 0 ? (
         <p style={quietLineStyle} role="status">
-          Loading…
+          {strings.feed.loadingMore}
         </p>
       ) : null}
 

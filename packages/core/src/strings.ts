@@ -803,6 +803,8 @@ export const strings = {
     empty: 'Nothing in your feed yet. Follow a few people and their looks land here.',
     /** Shown at the very end of the feed — a quiet stop, not a nudge to keep scrolling. */
     feedEnd: "You're all caught up.",
+    /** Quiet inline line while the next page fetches (web list; mobile uses a spinner). */
+    loadingMore: 'Loading…',
 
     // --- the per-post action rail: like, save, shop similar, more ---
 
@@ -844,6 +846,8 @@ export const strings = {
 
     /** Report-sheet title — names the action plainly, no drama. */
     reportTitle: 'Report this post',
+    /** The submit CTA at the end of the report form — a verb, distinct from the title. */
+    reportSubmit: 'Submit report',
     /**
      * Labels for the four report reasons, keyed by the `ReportReason` union in
      * `@era/core/feed`. Plain nouns a reviewer and a reporter both read the same

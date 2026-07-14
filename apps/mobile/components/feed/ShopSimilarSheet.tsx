@@ -38,6 +38,8 @@ export function ShopSimilarSheet({ postId, onClose }: ShopSimilarSheetProps) {
   const { colors } = useTheme();
   const router = useRouter();
   const [load, setLoad] = useState<LoadState>({ kind: 'loading' });
+  // Bumped by the retry button so the fetch effect re-runs for the same post.
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (postId === null) {
@@ -58,15 +60,18 @@ export function ShopSimilarSheet({ postId, onClose }: ShopSimilarSheetProps) {
       }
     })();
     return () => controller.abort();
-  }, [postId]);
+  }, [postId, reloadKey]);
 
   const goToShop = () => {
     onClose();
     router.push('/(tabs)/shop');
   };
 
-  const empty =
-    (load.kind === 'ready' && load.matches.length === 0) || load.kind === 'error';
+  // A failed fetch must NEVER read as "your closet has nothing" — that claim
+  // steers toward Shop on information we don't have (the trust rule). Errors
+  // get their own honest branch with a retry; the empty state is reserved for
+  // a genuinely empty result.
+  const empty = load.kind === 'ready' && load.matches.length === 0;
 
   return (
     <GlassSheet open={postId !== null} onClose={onClose}>
@@ -85,6 +90,24 @@ export function ShopSimilarSheet({ postId, onClose }: ShopSimilarSheetProps) {
       {load.kind === 'loading' ? (
         <View style={styles.centered}>
           <ActivityIndicator color={colors.text} />
+        </View>
+      ) : load.kind === 'error' ? (
+        <View style={styles.empty}>
+          <Text
+            style={{
+              color: colors.secondaryStrong,
+              fontSize: typeRamp.body.pt,
+              lineHeight: typeRamp.body.lineHeight,
+              textAlign: 'center',
+            }}
+          >
+            {strings.errors.generic}
+          </Text>
+          <Button
+            label={strings.errors.retry}
+            variant="secondary"
+            onPress={() => setReloadKey((key) => key + 1)}
+          />
         </View>
       ) : empty ? (
         <View style={styles.empty}>

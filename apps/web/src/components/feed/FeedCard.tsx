@@ -336,7 +336,7 @@ function MoreMenu({
                   onClick={() => void submitReport()}
                   style={fullWidthStyle}
                 >
-                  {strings.feed.reportTitle}
+                  {strings.feed.reportSubmit}
                 </Button>
               </div>
             ) : null}

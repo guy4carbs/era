@@ -138,7 +138,7 @@ export function MoreMenuSheet({ post, onClose, onReported, onBlocked }: MoreMenu
           />
           {error ? <Text style={errorStyle(colors.danger)}>{error}</Text> : null}
           <Button
-            label={strings.feed.reportTitle}
+            label={strings.feed.reportSubmit}
             onPress={submitReport}
             disabled={reason === null || busy}
           />
