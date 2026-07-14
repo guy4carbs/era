@@ -2,13 +2,21 @@
  * @era/db — Drizzle schema, client, and inferred row types for Era.
  */
 import { account, session, user, verification } from './schema/auth.ts';
-import { aiEventKind, itemCategory, itemSource } from './schema/enums.ts';
+import {
+  aiEventKind,
+  feedReportReason,
+  feedReportStatus,
+  itemCategory,
+  itemSource,
+} from './schema/enums.ts';
 import {
   aiEvents,
   aiUsage,
   emailSuppressions,
   eraOutfits,
   eras,
+  feedPosts,
+  feedReports,
   follows,
   inAppNotifications,
   inboundEmailEvents,
@@ -16,12 +24,15 @@ import {
   notificationPreferences,
   outfitItems,
   outfits,
+  postLikes,
+  postSaves,
   profiles,
   pushTokens,
   receiptInboxTokens,
   savedProducts,
   styleProfiles,
   subscriptions,
+  userBlocks,
   waitlist,
   wearLogs,
 } from './schema/app.ts';
@@ -36,6 +47,8 @@ export {
   itemCategory,
   itemSource,
   aiEventKind,
+  feedReportReason,
+  feedReportStatus,
   // Domain tables
   profiles,
   styleProfiles,
@@ -57,6 +70,11 @@ export {
   receiptInboxTokens,
   inboundEmailEvents,
   subscriptions,
+  feedPosts,
+  postLikes,
+  postSaves,
+  userBlocks,
+  feedReports,
 };
 
 export { createDbClient } from './client.ts';
@@ -126,7 +144,24 @@ export type NewInboundEmailEvent = typeof inboundEmailEvents.$inferInsert;
 export type Subscription = typeof subscriptions.$inferSelect;
 export type NewSubscription = typeof subscriptions.$inferInsert;
 
+export type FeedPost = typeof feedPosts.$inferSelect;
+export type NewFeedPost = typeof feedPosts.$inferInsert;
+
+export type PostLike = typeof postLikes.$inferSelect;
+export type NewPostLike = typeof postLikes.$inferInsert;
+
+export type PostSave = typeof postSaves.$inferSelect;
+export type NewPostSave = typeof postSaves.$inferInsert;
+
+export type UserBlock = typeof userBlocks.$inferSelect;
+export type NewUserBlock = typeof userBlocks.$inferInsert;
+
+export type FeedReport = typeof feedReports.$inferSelect;
+export type NewFeedReport = typeof feedReports.$inferInsert;
+
 // Enum value unions.
 export type ItemCategory = (typeof itemCategory.enumValues)[number];
 export type ItemSource = (typeof itemSource.enumValues)[number];
 export type AiEventKind = (typeof aiEventKind.enumValues)[number];
+export type FeedReportReason = (typeof feedReportReason.enumValues)[number];
+export type FeedReportStatus = (typeof feedReportStatus.enumValues)[number];

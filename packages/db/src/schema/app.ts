@@ -8,6 +8,7 @@
 import { sql } from 'drizzle-orm';
 import {
   boolean,
+  check,
   date,
   index,
   integer,
@@ -23,7 +24,13 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 
-import { aiEventKind, itemCategory, itemSource } from './enums.ts';
+import {
+  aiEventKind,
+  feedReportReason,
+  feedReportStatus,
+  itemCategory,
+  itemSource,
+} from './enums.ts';
 import { user } from './auth.ts';
 
 export const profiles = pgTable('profiles', {
@@ -440,3 +447,131 @@ export const inboundEmailEvents = pgTable('inbound_email_events', {
     .references(() => user.id, { onDelete: 'cascade' }),
   processedAt: timestamp('processed_at', { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const feedPosts = pgTable(
+  'feed_posts',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    // A post shares exactly one subject — either an outfit or an era, never
+    // both and never neither (enforced by the num_nonnulls CHECK below). The
+    // subject FK cascades: deleting the outfit/era tears down its post, and the
+    // post's engagement (likes/saves) cascades from there.
+    outfitId: uuid('outfit_id').references(() => outfits.id, { onDelete: 'cascade' }),
+    eraId: uuid('era_id').references(() => eras.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    // Exactly one subject per post — outfit XOR era.
+    check('feed_posts_one_subject', sql`num_nonnulls(${table.outfitId}, ${table.eraId}) = 1`),
+    // One LIVE post per subject. Partial unique indexes (filtered to non-null)
+    // so unsharing then re-sharing an outfit/era mints a fresh post with fresh
+    // engagement, while a subject can never be double-posted at once.
+    uniqueIndex('feed_posts_outfit_id_key')
+      .on(table.outfitId)
+      .where(sql`${table.outfitId} is not null`),
+    uniqueIndex('feed_posts_era_id_key')
+      .on(table.eraId)
+      .where(sql`${table.eraId} is not null`),
+    // Keyset pagination over the global stream, ordered (created_at, id) desc.
+    index('feed_posts_created_at_id_idx').on(table.createdAt, table.id),
+    // "My posts" listing + the per-user daily post cap COUNT.
+    index('feed_posts_user_id_created_at_idx').on(table.userId, table.createdAt),
+  ],
+);
+
+export const postLikes = pgTable(
+  'post_likes',
+  {
+    postId: uuid('post_id')
+      .notNull()
+      .references(() => feedPosts.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    // The composite PK is the unique (post, liker) pair — it also IS the index
+    // that serves the per-post live COUNT(*). No denormalized counter column:
+    // counts drift without transactions (neon-http), so they stay live.
+    primaryKey({ columns: [table.postId, table.userId] }),
+    index('post_likes_user_id_created_at_idx').on(table.userId, table.createdAt),
+  ],
+);
+
+export const postSaves = pgTable(
+  'post_saves',
+  {
+    postId: uuid('post_id')
+      .notNull()
+      .references(() => feedPosts.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    // Identical shape to post_likes: composite PK is the unique (post, saver)
+    // pair and the per-post live COUNT(*) index. Counts stay live, not cached.
+    primaryKey({ columns: [table.postId, table.userId] }),
+    index('post_saves_user_id_created_at_idx').on(table.userId, table.createdAt),
+  ],
+);
+
+export const userBlocks = pgTable(
+  'user_blocks',
+  {
+    blockerId: text('blocker_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    blockedId: text('blocked_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    // Composite PK is the unique (blocker, blocked) directed edge. A block is
+    // bidirectional invisibility, so filters check BOTH directions: the PK
+    // covers the forward lookup (who I blocked); the blocked_id index covers
+    // the reverse (who blocked me).
+    primaryKey({ columns: [table.blockerId, table.blockedId] }),
+    index('user_blocks_blocked_id_idx').on(table.blockedId),
+  ],
+);
+
+export const feedReports = pgTable(
+  'feed_reports',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    reporterId: text('reporter_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    // The reported user is denormalized and NOT NULL — captured at report time
+    // so the moderation row survives the post being deleted (postId goes null
+    // via ON DELETE SET NULL, but the subject of the report is still known).
+    reportedUserId: text('reported_user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    // Nullable, ON DELETE SET NULL: a report can target a profile (no post), and
+    // deleting a reported post must not erase the report — it detaches instead.
+    postId: uuid('post_id').references(() => feedPosts.id, { onDelete: 'set null' }),
+    reason: feedReportReason('reason').notNull(),
+    // Free-text elaboration, app-capped at 500 chars. Null when the reporter
+    // gave only a reason.
+    detail: text('detail'),
+    status: feedReportStatus('status').notNull().default('pending'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    // Stamped when a moderator actions the report (reviewed/dismissed); null
+    // while pending.
+    reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+  },
+  (table) => [
+    // Moderation queue: pending reports oldest-first.
+    index('feed_reports_status_created_at_idx').on(table.status, table.createdAt),
+    // Per-reporter daily cap COUNT.
+    index('feed_reports_reporter_id_created_at_idx').on(table.reporterId, table.createdAt),
+  ],
+);
