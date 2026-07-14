@@ -100,14 +100,33 @@ export function ShareToFeedButton({ outfitId, eraId, initialSharedPostId }: Shar
     : strings.feed.share;
 
   return (
-    <button
-      type="button"
-      style={{ ...buttonStyle, opacity: busy ? 0.5 : 1, cursor: busy ? 'default' : 'pointer' }}
-      disabled={busy}
-      aria-pressed={sharedPostId !== null}
-      onClick={() => void toggle()}
-    >
-      {label}
-    </button>
+    <span style={wrapStyle}>
+      <button
+        type="button"
+        style={{ ...buttonStyle, opacity: busy ? 0.5 : 1, cursor: busy ? 'default' : 'pointer' }}
+        disabled={busy}
+        aria-pressed={sharedPostId !== null}
+        onClick={() => void toggle()}
+      >
+        {label}
+      </button>
+      {/* The consent line — sharing is public regardless of profile privacy, and
+          unshare is the retraction. Shown only while unshared (pre-consent). */}
+      {sharedPostId === null ? <span style={consentStyle}>{strings.feed.shareConsent}</span> : null}
+    </span>
   );
 }
+
+const wrapStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-1)',
+  alignSelf: 'flex-start',
+};
+
+const consentStyle: CSSProperties = {
+  fontSize: typeRamp.footnote.rem,
+  lineHeight: `${typeRamp.footnote.lineHeight}px`,
+  fontWeight: 400,
+  color: 'var(--color-secondary-strong)',
+};

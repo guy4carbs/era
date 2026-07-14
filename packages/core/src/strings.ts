@@ -818,6 +818,14 @@ export const strings = {
 
     /** Action that shares a saved outfit or era publicly to the feed. */
     share: 'Share to feed',
+    /**
+     * Rendered beside every share affordance — the consent line. Posting makes
+     * the look public REGARDLESS of profile privacy (the server deliberately
+     * overrides the privacy bit for posted covers), and flipping a profile
+     * private later does not retract posts — unshare does. Both facts live in
+     * this one calm sentence; never ship a share button without it.
+     */
+    shareConsent: 'Anyone can see shared looks, even if your profile is private. You can remove a look anytime.',
     /** Resting state once a look is shared — a fact, paired with {@link strings.feed.unshare}. */
     shared: 'On your feed',
     /** Take a shared look back down. Unshare is the retraction; it's a clean removal, no guilt. */

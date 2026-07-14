@@ -17,10 +17,10 @@
  * order; saving then PATCHes. ASSIGN-TO-ERA is offered once an outfit has an id.
  */
 import { strings } from '@era/core/strings';
-import { layout, spacing } from '@era/tokens';
+import { layout, spacing, typeRamp } from '@era/tokens';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSharedValue } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -416,15 +416,24 @@ export function OutfitCanvas({ outfitId: initialOutfitId }: OutfitCanvasProps) {
 
       {eraFeedEnabled && outfitId && hasCover ? (
         <View style={styles.shareRow}>
-          <Button
-            label={
-              sharedPostId ? `${strings.feed.shared} · ${strings.feed.unshare}` : strings.feed.share
-            }
-            variant="secondary"
-            onPress={() => void toggleShare()}
-            disabled={sharing}
-            style={styles.bottomButton}
-          />
+          <View style={styles.shareColumn}>
+            <Button
+              label={
+                sharedPostId ? `${strings.feed.shared} · ${strings.feed.unshare}` : strings.feed.share
+              }
+              variant="secondary"
+              onPress={() => void toggleShare()}
+              disabled={sharing}
+              style={styles.bottomButton}
+            />
+            {/* Consent line: sharing is public regardless of profile privacy;
+                unshare is the retraction. Shown pre-consent only. */}
+            {sharedPostId ? null : (
+              <Text style={[styles.shareConsent, { color: colors.secondaryStrong }]}>
+                {strings.feed.shareConsent}
+              </Text>
+            )}
+          </View>
         </View>
       ) : null}
 
@@ -508,6 +517,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: spacing.s4,
     paddingBottom: spacing.s2,
+  },
+  shareColumn: {
+    flex: 1,
+    gap: spacing.s1,
+  },
+  shareConsent: {
+    fontSize: typeRamp.footnote.pt,
+    lineHeight: typeRamp.footnote.lineHeight,
   },
   bottomButton: {
     flex: 1,
