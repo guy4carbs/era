@@ -38,7 +38,8 @@
         {
           "url": "https://sentry.io/"
         }
-      ]
+      ],
+      "expo-image"
     ],
     "experiments": {
       "typedRoutes": true
