@@ -1,4 +1,6 @@
 import type { NextConfig } from 'next';
+import createMDX from '@next/mdx';
+import remarkGfm from 'remark-gfm';
 import { withSentryConfig } from '@sentry/nextjs';
 
 /**
@@ -30,6 +32,16 @@ if (r2PublicUrl) {
  */
 const nextConfig: NextConfig = {
   transpilePackages: ['@era/core', '@era/db'],
+
+  /**
+   * Let the App Router treat `.mdx` as first-class modules alongside `.ts`/`.tsx`.
+   * The SEO Layer-2 journal posts live as `.mdx` under `src/content/journal` and
+   * are imported through `getPost` — this enables the `@next/mdx` loader (wired via
+   * `withMDX` below) to compile them. `.md` is intentionally NOT listed: the legal
+   * pages read raw markdown from disk at build (see `privacy/page.tsx`) rather than
+   * importing it, so keeping `.md` out avoids the loader ever touching those files.
+   */
+  pageExtensions: ['ts', 'tsx', 'mdx'],
 
   /**
    * Force blocking (in-`<head>`) metadata for every client.
@@ -82,15 +94,30 @@ const nextConfig: NextConfig = {
 };
 
 /**
+ * MDX loader. `remark-gfm` gives the journal posts GitHub-flavoured markdown
+ * (tables, strikethrough, autolinks) so they read like the legal prose. The
+ * element→component mapping lives in the root `mdx-components.tsx`, which the
+ * App Router picks up automatically. Composes with (wraps) the base config, and
+ * Sentry wraps the result below — order-independent, both are config transforms.
+ */
+const withMDX = createMDX({
+  options: {
+    remarkPlugins: [remarkGfm],
+  },
+});
+
+const mdxConfig = withMDX(nextConfig);
+
+/**
  * Sentry wrapping is dormant until a DSN is present: with no
- * `NEXT_PUBLIC_SENTRY_DSN` we export the bare config untouched, so builds carry
- * no Sentry instrumentation or source-map upload. When a DSN is set,
+ * `NEXT_PUBLIC_SENTRY_DSN` we export the bare (MDX-wrapped) config untouched, so
+ * builds carry no Sentry instrumentation or source-map upload. When a DSN is set,
  * `withSentryConfig` adds the build-time integration (source-map upload only
  * runs when `SENTRY_AUTH_TOKEN`/org/project are also configured); `silent`
  * keeps the build log quiet.
  */
 const config = process.env.NEXT_PUBLIC_SENTRY_DSN
-  ? withSentryConfig(nextConfig, { silent: true })
-  : nextConfig;
+  ? withSentryConfig(mdxConfig, { silent: true })
+  : mdxConfig;
 
 export default config;
