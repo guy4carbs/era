@@ -26,7 +26,8 @@
       "env": {
         "SENTRY_DISABLE_AUTO_UPLOAD": "true",
         "EXPO_PUBLIC_REVENUECAT_IOS_KEY": "appl_PzKpTcErvVQtYIYRqUTwDnEJvTA",
-        "EXPO_PUBLIC_ERA_PLUS_ENABLED": "true"
+        "EXPO_PUBLIC_ERA_PLUS_ENABLED": "true",
+        "EXPO_PUBLIC_API_URL": "https://era.style"
       }
     },
     "production": {
@@ -37,7 +38,8 @@
       },
       "env": {
         "SENTRY_DISABLE_AUTO_UPLOAD": "true",
-        "EXPO_PUBLIC_REVENUECAT_IOS_KEY": "appl_PzKpTcErvVQtYIYRqUTwDnEJvTA"
+        "EXPO_PUBLIC_REVENUECAT_IOS_KEY": "appl_PzKpTcErvVQtYIYRqUTwDnEJvTA",
+        "EXPO_PUBLIC_API_URL": "https://era.style"
       }
     }
   },
