@@ -6,6 +6,7 @@ import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { Pageview } from '../../components/site';
 import { siteUrl } from '../../lib/site-url';
+import { FOOTER_LINKS } from '../../lib/seo-graph';
 
 /**
  * Public marketing chrome for the `(site)` route group — the pre-launch landing
@@ -68,37 +69,68 @@ export const metadata: Metadata = {
 };
 
 /**
- * Quiet legal footer for the public surface — a hairline rule over a muted row of
- * links. Light touch by design: it lets the marketing landing (and the legal
- * pages themselves) link out to Privacy + Terms without pulling focus from the
- * hero. Tokens throughout; no motion.
+ * The Explore row's labels, keyed by the graph's {@link FOOTER_LINKS} paths.
+ * FOOTER_LINKS is the single source of truth for which pages the footer surfaces
+ * (and for the seo-graph reachability test); these are just their sentence-case
+ * anchor labels.
+ */
+const EXPLORE_LABELS: Record<(typeof FOOTER_LINKS)[number], string> = {
+  '/journal': 'Journal',
+  '/styles': 'Style guide',
+  '/virtual-wardrobe': 'Virtual wardrobe',
+  '/ai-stylist': 'AI stylist',
+  '/outfit-planner': 'Outfit planner',
+};
+
+/**
+ * Quiet footer for the public surface — a hairline rule over muted rows of links.
+ * Light touch by design: the Explore row links out to the Layer-2 SEO surfaces
+ * (journal, style guide, the three pillars) so every one of them is reachable from
+ * the front door — the footer edges the zero-orphan link graph depends on — and
+ * the Legal row keeps Privacy + Terms one tap away. Tokens throughout; no motion.
  */
 function SiteFooter() {
   return (
     <footer style={footerStyle}>
-      <span style={footerBrandStyle}>© Era</span>
-      <nav style={footerNavStyle} aria-label="Legal">
-        <Link href="/privacy" style={footerLinkStyle}>
-          Privacy
-        </Link>
-        <Link href="/terms" style={footerLinkStyle}>
-          Terms
-        </Link>
+      <nav style={footerNavStyle} aria-label="Explore">
+        {FOOTER_LINKS.map((path) => (
+          <Link key={path} href={path} style={footerLinkStyle}>
+            {EXPLORE_LABELS[path]}
+          </Link>
+        ))}
       </nav>
+      <div style={footerBottomStyle}>
+        <span style={footerBrandStyle}>© Era</span>
+        <nav style={footerNavStyle} aria-label="Legal">
+          <Link href="/privacy" style={footerLinkStyle}>
+            Privacy
+          </Link>
+          <Link href="/terms" style={footerLinkStyle}>
+            Terms
+          </Link>
+        </nav>
+      </div>
     </footer>
   );
 }
 
 const footerStyle: CSSProperties = {
   display: 'flex',
-  flexWrap: 'wrap',
+  flexDirection: 'column',
   alignItems: 'center',
-  justifyContent: 'center',
   gap: 'var(--space-4)',
   paddingBlock: 'var(--space-8)',
   paddingInline: 'var(--space-4)',
   marginTop: 'var(--space-16)',
   borderTop: '1px solid var(--color-hairline)',
+};
+
+const footerBottomStyle: CSSProperties = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 'var(--space-4)',
 };
 
 const footerBrandStyle: CSSProperties = {
@@ -109,6 +141,8 @@ const footerBrandStyle: CSSProperties = {
 
 const footerNavStyle: CSSProperties = {
   display: 'inline-flex',
+  flexWrap: 'wrap',
+  justifyContent: 'center',
   gap: 'var(--space-4)',
 };
 
