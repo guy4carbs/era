@@ -91,6 +91,28 @@ export type {
   SubscriptionUpsert,
 } from './plus.ts';
 
+// Feed — the social outfit-inspo feed. All pure and client-safe (no server-only
+// deps); web/mobile client code imports the wire contract, the ranker, closet
+// matching, and the flag from the `@era/core/feed`, `/feed-ranking`,
+// `/outfit-matching`, and `/feed-flags` subpaths to avoid this server-tainted
+// barrel. Re-exported here for server callers (feed-server assembles the payload
+// and constructs the ranker). See feed.ts, feed-ranking.ts, outfit-matching.ts,
+// feed-flags.ts.
+export { REPORT_REASONS, isReportReason, FEED_PAGE_WINDOW } from './feed.ts';
+export type {
+  FeedPostType,
+  FeedPostCreator,
+  FeedPostViewerState,
+  FeedPostPayload,
+  FeedPage,
+  ReportReason,
+} from './feed.ts';
+export { createRecencyFollowsEngagementRanker } from './feed-ranking.ts';
+export type { FeedCandidate, ViewerContext, RankedCandidate, FeedRanker } from './feed-ranking.ts';
+export { matchOutfitToCloset } from './outfit-matching.ts';
+export type { ScoredClosetMatch, SlotMatch } from './outfit-matching.ts';
+export { isEraFeedEnabled } from './feed-flags.ts';
+
 // Persistence type contract, re-exported type-only from @era/db.
 export type * from './db-types.ts';
 

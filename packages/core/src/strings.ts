@@ -787,10 +787,85 @@ export const strings = {
     deleteConfirm: "Delete this outfit? This can't be undone.",
   },
 
-  /** The Feed tab — looks from people the user follows. */
+  /**
+   * The Feed tab — a full-screen outfit-inspo feed (looks and eras people share
+   * publicly). This surface owns the social read: the per-post action rail
+   * (like/save/shop-similar/more), sharing a look TO the feed, the "shop similar
+   * from your closet" sheet (the trust rule, carried into the feed), and the UGC
+   * safety Apple requires — report and block. Voice stays Era's: calm, honest, no
+   * fake social pressure and no engagement-bait. The safety copy is plain and
+   * reassuring, never alarmist — a report is acknowledged without drama, a block
+   * is stated as a clean, reversible boundary. No exclamation marks here: the
+   * deck's single-exclamation budget is spent elsewhere.
+   */
   feed: {
     /** Empty feed — invitational, not a scold; no fake social pressure. */
     empty: 'Nothing in your feed yet. Follow a few people and their looks land here.',
+    /** Shown at the very end of the feed — a quiet stop, not a nudge to keep scrolling. */
+    feedEnd: "You're all caught up.",
+
+    // --- the per-post action rail: like, save, shop similar, more ---
+
+    /** Accessible labels for the rail actions — a bare icon doesn't say what a tap does. */
+    rail: {
+      like: 'Like',
+      save: 'Save',
+      shopSimilar: 'Shop similar',
+      more: 'More',
+    },
+
+    // --- sharing a look TO the feed, and taking it back down ---
+
+    /** Action that shares a saved outfit or era publicly to the feed. */
+    share: 'Share to feed',
+    /** Resting state once a look is shared — a fact, paired with {@link strings.feed.unshare}. */
+    shared: 'On your feed',
+    /** Take a shared look back down. Unshare is the retraction; it's a clean removal, no guilt. */
+    unshare: 'Remove from feed',
+
+    // --- shop similar from your closet: the trust rule inside the feed ---
+
+    /** Sheet title for "what of mine wears with this look". */
+    shopSimilarTitle: 'From your closet',
+    /** Empty state when the viewer owns nothing that matches — honest, never a push to buy. */
+    shopSimilarEmpty: 'Nothing in your closet matches this yet.',
+    /** Points at Shop for a real gap — plain, not pushy; the way out of the empty state. */
+    shopSimilarGapCta: 'Find the gap in Shop',
+
+    // --- report a post or profile: the UGC safety Apple requires ---
+
+    /** Report-sheet title — names the action plainly, no drama. */
+    reportTitle: 'Report this post',
+    /**
+     * Labels for the four report reasons, keyed by the `ReportReason` union in
+     * `@era/core/feed`. Plain nouns a reviewer and a reporter both read the same
+     * way; `other` pairs with the free-text detail below.
+     */
+    reportReasons: {
+      spam: 'Spam',
+      inappropriate: 'Inappropriate',
+      impersonation: 'Impersonation',
+      other: 'Something else',
+    },
+    /** Placeholder for the optional free-text detail on a report. */
+    reportDetailPlaceholder: 'Add any detail that helps (optional)…',
+    /** Confirmation after a report is filed — acknowledges it, hides the post, no drama. */
+    reportConfirm: "Post hidden. Thanks — we'll take a look.",
+
+    // --- block an account: a clean, bidirectional, reversible boundary ---
+
+    /** Block-sheet title, naming the person. `blockTitle('Mara')` → "Block Mara?" */
+    blockTitle: (name: string): string => `Block ${cleanText(name, 'this account')}?`,
+    /** The one calm line explaining what a block does — plain, reassuring, reversible. */
+    blockBody:
+      "You won't see each other's posts or profiles, and they won't be told. You can undo this anytime in Settings.",
+    /** The confirm action on the block sheet. */
+    blockCta: 'Block',
+    /** Confirmation after a block — states the result, asks for nothing further. */
+    blockedConfirm: 'Blocked. Their posts are gone from your feed.',
+
+    /** A11y label / marker for a post hidden in place after a report or block. */
+    hiddenPost: 'Post hidden',
   },
 
   /**
