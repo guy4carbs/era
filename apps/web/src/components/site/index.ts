@@ -8,3 +8,7 @@ export { PostSignupReferral, type PostSignupReferralProps } from './PostSignupRe
 export { ScrollReveal, type ScrollRevealProps } from './ScrollReveal';
 export { Pageview } from './Pageview';
 export { LegalArticle, type LegalArticleProps } from './LegalArticle';
+export { RelatedLinks, type RelatedLinksProps } from './RelatedLinks';
+export { FaqBlock, type FaqBlockProps, type FaqBlockEntry } from './FaqBlock';
+export { PaletteSwatches, type PaletteSwatchesProps } from './PaletteSwatches';
+export { PillarView, type PillarViewProps } from './PillarView';
