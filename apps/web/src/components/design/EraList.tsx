@@ -98,8 +98,9 @@ export function EraList({ eras, creating, onCreate }: EraListProps) {
               <p style={titleStyle}>{era.title}</p>
               <p style={metaStyle}>{outfitCountLabel(era.outfitCount)}</p>
               {/* Flag-gated (renders null when the feed is off) — the ONLY web
-                  era-share surface this phase. */}
-              <ShareToFeedButton eraId={era.id} />
+                  era-share surface this phase. Seeded so an already-shared era
+                  reads as shared after the list re-fetches. */}
+              <ShareToFeedButton eraId={era.id} initialSharedPostId={era.sharedPostId} />
             </div>
           ))}
         </div>

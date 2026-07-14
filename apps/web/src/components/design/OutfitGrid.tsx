@@ -86,8 +86,9 @@ export function OutfitGrid({ outfits, onOpen, onAssign }: OutfitGridProps) {
               {strings.design.assignToEra}
             </button>
             {/* Flag-gated (renders null when the feed is off) — the web outfit
-                share entry point, matching the inline "add to an era" idiom. */}
-            <ShareToFeedButton outfitId={outfit.id} />
+                share entry point, matching the inline "add to an era" idiom.
+                Seeded so an already-shared outfit reads as shared after a reload. */}
+            <ShareToFeedButton outfitId={outfit.id} initialSharedPostId={outfit.sharedPostId} />
           </div>
         );
       })}

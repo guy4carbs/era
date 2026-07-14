@@ -15,6 +15,8 @@ import { type DbClient, type FeedPost, eras, feedPosts, outfits } from '@era/db'
 import {
   MAX_POSTS_PER_DAY,
   checkPostLimit,
+  livePostIdsByEra,
+  livePostIdsByOutfit,
   ownsEra,
   ownsOutfit,
   sharePost,
@@ -123,6 +125,32 @@ test('unsharePost issues a scoped owner+id delete (idempotent, uncapped)', async
   assert.ok(del, 'a delete is issued');
   assert.equal(del!.args[0], feedPosts, 'delete targets feed_posts');
   assert.equal(calls.find((c) => c.m === 'select'), undefined, 'unshare consults no count');
+});
+
+test('livePostIdsByOutfit maps each shared outfitId → its live post id and short-circuits on empty', async () => {
+  const { db, calls } = fakeDb([[
+    { id: 'p1', outfitId: 'o1' },
+    { id: 'p2', outfitId: 'o2' },
+  ]]);
+  const map = await livePostIdsByOutfit(db, ['o1', 'o2', 'o3']);
+  assert.equal(map.get('o1'), 'p1');
+  assert.equal(map.get('o2'), 'p2');
+  assert.equal(map.get('o3'), undefined, 'an unshared outfit is absent from the map');
+  assert.equal(map.size, 2);
+  assert.equal(calls.find((c) => c.m === 'from')?.args[0], feedPosts, 'reads over feed_posts');
+
+  const empty = fakeDb();
+  const emptyMap = await livePostIdsByOutfit(empty.db, []);
+  assert.equal(emptyMap.size, 0);
+  assert.equal(empty.calls.length, 0, 'no query issued for an empty id list');
+});
+
+test('livePostIdsByEra maps each shared eraId → its live post id', async () => {
+  const { db, calls } = fakeDb([[{ id: 'p1', eraId: 'e1' }]]);
+  const map = await livePostIdsByEra(db, ['e1', 'e2']);
+  assert.equal(map.get('e1'), 'p1');
+  assert.equal(map.get('e2'), undefined, 'an unshared era is absent');
+  assert.equal(calls.find((c) => c.m === 'from')?.args[0], feedPosts, 'reads over feed_posts');
 });
 
 test('toFeedPostLite derives type from the subject column and serializes createdAt', () => {

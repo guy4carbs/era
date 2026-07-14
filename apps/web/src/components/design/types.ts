@@ -34,6 +34,8 @@ export interface OutfitSummary {
   coverUrl: string | null;
   itemCount: number;
   thumbnailUrls: string[];
+  /** The caller's live feed post for this outfit, or null when it isn't shared. */
+  sharedPostId: string | null;
 }
 
 /** An era as GET /api/eras lists it (for the Design tab era section). */
@@ -45,6 +47,8 @@ export interface EraSummary {
   coverUrl: string | null;
   outfitCount: number;
   outfitCovers: string[];
+  /** The caller's live feed post for this era, or null when it isn't shared. */
+  sharedPostId: string | null;
 }
 
 /** One member in the GET /api/outfits/[id] reopen payload. */
@@ -65,6 +69,8 @@ export interface OutfitDetail {
   occasion: string | null;
   coverUrl: string | null;
   items: OutfitDetailMember[];
+  /** The caller's live feed post for this outfit, or null when it isn't shared. */
+  sharedPostId: string | null;
 }
 
 // --- Canvas geometry — normalized math, not design tokens ---

@@ -14,6 +14,12 @@ export interface ShareToFeedButtonProps {
    * `outfitId` / `eraId`.
    */
   readonly eraId?: string;
+  /**
+   * The subject's already-live feed post id (from the outfit/era list payload),
+   * or null when it isn't shared — seeds the toggle so a reload/remount shows the
+   * true shared state instead of resetting to "Share".
+   */
+  readonly initialSharedPostId?: string | null;
 }
 
 const buttonStyle: CSSProperties = {
@@ -42,15 +48,13 @@ const buttonStyle: CSSProperties = {
  * A first tap shares via `POST /api/posts` and holds the returned post id; a
  * second tap unshares that post via `DELETE /api/posts`.
  *
- * SESSION-ONLY SHARED STATE (documented contract gap): neither `OutfitSummary`
- * nor `EraSummary` carries a `sharedPostId`, so an already-shared subject reads
- * as unshared after a reload or a remount (e.g. the Design grid re-fetches after
- * an era is created) — this toggle only knows what IT shared this session.
- * Closing the gap needs the server to add `sharedPostId` to the outfit/era list
- * payloads; that is a server change, intentionally NOT made here.
+ * SHARED STATE hydrates from `initialSharedPostId` — the subject's live post id,
+ * now carried on the outfit/era list payloads — so an already-shared subject
+ * reads as shared after a reload or a remount (e.g. the Design grid re-fetches
+ * after an era is created), not just for what this session shared.
  */
-export function ShareToFeedButton({ outfitId, eraId }: ShareToFeedButtonProps) {
-  const [sharedPostId, setSharedPostId] = useState<string | null>(null);
+export function ShareToFeedButton({ outfitId, eraId, initialSharedPostId }: ShareToFeedButtonProps) {
+  const [sharedPostId, setSharedPostId] = useState<string | null>(initialSharedPostId ?? null);
   const [busy, setBusy] = useState(false);
 
   // Cosmetic gate — the routes are the real gate. Hooks run first (above) so the

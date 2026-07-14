@@ -97,11 +97,9 @@ export function OutfitCanvas({ outfitId: initialOutfitId }: OutfitCanvasProps) {
   const [assignBusy, setAssignBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
-  // Share-to-feed (flag-gated). The outfit detail payload carries no
-  // `sharedPostId`, so shared state can only be derived within this session:
-  // it starts unshared on reopen and is set from the sharePost response.
-  // CONTRACT GAP (flagged to Forge): add `sharedPostId` to OutfitDetail so a
-  // reopened, already-shared outfit shows "On your feed" without a re-share.
+  // Share-to-feed (flag-gated). Seeded on reopen from the detail payload's
+  // `sharedPostId` (below), so an already-shared outfit shows its shared state
+  // without a re-share; the sharePost/unsharePost responses keep it in sync after.
   const [sharedPostId, setSharedPostId] = useState<string | null>(null);
   const [hasCover, setHasCover] = useState(false);
   const [sharing, setSharing] = useState(false);
@@ -131,6 +129,7 @@ export function OutfitCanvas({ outfitId: initialOutfitId }: OutfitCanvasProps) {
           setName(detail.name ?? '');
           setOccasion(detail.occasion ?? '');
           setHasCover(detail.coverUrl !== null);
+          setSharedPostId(detail.sharedPostId);
           setPlacements(
             renumber(
               detail.items.map((member) => ({

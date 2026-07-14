@@ -40,6 +40,7 @@ import {
   optionalText,
   parseOutfitItems,
 } from '../../../lib/outfit-server.ts';
+import { livePostIdsByOutfit } from '../../../lib/posts-server.ts';
 import { serverStorageClient } from '../../../lib/storage-server.ts';
 
 const db = createDbClient(process.env.DATABASE_URL!);
@@ -139,6 +140,10 @@ export async function GET(request: Request): Promise<NextResponse> {
   // One pass to fetch every member's image paths (ordered), then group per
   // outfit for itemCount + the first few thumbnails — avoids an N+1 per outfit.
   const outfitIds = rows.map((o) => o.id);
+  // Which of the caller's own outfits are live on the feed — one batched query so
+  // each card can hydrate its share toggle (unconditional: it's the caller's own
+  // data, and the partial unique index guarantees ≤1 live post per outfit).
+  const sharedPostIds = await livePostIdsByOutfit(db, outfitIds);
   const memberRows = outfitIds.length
     ? await db
         .select({
@@ -173,6 +178,7 @@ export async function GET(request: Request): Promise<NextResponse> {
         coverUrl: await coverUrl(storage, ctx, outfit.coverImagePath, owner),
         itemCount: bucket.count,
         thumbnailUrls,
+        sharedPostId: sharedPostIds.get(outfit.id) ?? null,
       };
     }),
   );

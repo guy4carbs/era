@@ -9,7 +9,7 @@
  * counted live over the caller's own rows, no denormalized state. Never import
  * from a client bundle — it talks to the database.
  */
-import { and, count, eq, gte } from 'drizzle-orm';
+import { and, count, eq, gte, inArray } from 'drizzle-orm';
 
 import { type DbClient, type FeedPost, eras, feedPosts, outfits } from '@era/db';
 
@@ -67,6 +67,49 @@ export async function ownsEra(db: DbClient, userId: string, eraId: string): Prom
     .where(and(eq(eras.id, eraId), eq(eras.userId, userId)))
     .limit(1);
   return row !== undefined;
+}
+
+/**
+ * Map each shared `outfitId` → its live feed post id, over a batched IN-query
+ * (no N+1). Only outfits with a live post appear in the map; the partial unique
+ * index (`feed_posts_outfit_id_key`) guarantees at most one live post per outfit,
+ * so a subject id never collides. Lets the outfit list/detail payloads hydrate a
+ * "share to feed" toggle's already-shared state. An empty id list short-circuits
+ * to an empty map with no query.
+ */
+export async function livePostIdsByOutfit(db: DbClient, outfitIds: readonly string[]): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  if (outfitIds.length === 0) {
+    return map;
+  }
+  const rows = await db
+    .select({ id: feedPosts.id, outfitId: feedPosts.outfitId })
+    .from(feedPosts)
+    .where(inArray(feedPosts.outfitId, outfitIds as string[]));
+  for (const row of rows) {
+    if (row.outfitId) {
+      map.set(row.outfitId, row.id);
+    }
+  }
+  return map;
+}
+
+/** Era counterpart of {@link livePostIdsByOutfit} — maps each shared `eraId` → its live post id. */
+export async function livePostIdsByEra(db: DbClient, eraIds: readonly string[]): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  if (eraIds.length === 0) {
+    return map;
+  }
+  const rows = await db
+    .select({ id: feedPosts.id, eraId: feedPosts.eraId })
+    .from(feedPosts)
+    .where(inArray(feedPosts.eraId, eraIds as string[]));
+  for (const row of rows) {
+    if (row.eraId) {
+      map.set(row.eraId, row.id);
+    }
+  }
+  return map;
 }
 
 /** The subject of a share: exactly one of outfit / era (validated by the caller). */

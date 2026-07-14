@@ -33,6 +33,7 @@ import {
   coverUrl,
   optionalText,
 } from '../../../lib/outfit-server.ts';
+import { livePostIdsByEra } from '../../../lib/posts-server.ts';
 import { serverStorageClient } from '../../../lib/storage-server.ts';
 
 const db = createDbClient(process.env.DATABASE_URL!);
@@ -112,6 +113,10 @@ export async function GET(request: Request): Promise<NextResponse> {
   // One pass to fetch every member outfit's cover (newest-first within an era),
   // then group per era for outfitCount + the first few covers.
   const eraIds = rows.map((e) => e.id);
+  // Which of the caller's own eras are live on the feed — one batched query so
+  // each card can hydrate its share toggle (unconditional: the caller's own data,
+  // and the partial unique index guarantees ≤1 live post per era).
+  const sharedPostIds = await livePostIdsByEra(db, eraIds);
   const memberRows = eraIds.length
     ? await db
         .select({ eraId: eraOutfits.eraId, coverImagePath: outfits.coverImagePath })
@@ -142,6 +147,7 @@ export async function GET(request: Request): Promise<NextResponse> {
         coverUrl: await coverUrl(storage, ctx, era.coverImagePath, owner),
         outfitCount: bucket.count,
         outfitCovers,
+        sharedPostId: sharedPostIds.get(era.id) ?? null,
       };
     }),
   );
