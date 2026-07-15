@@ -7,11 +7,13 @@
  */
 import { strings } from '@era/core/strings';
 import { radii, spacing, typeRamp } from '@era/tokens';
+import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
+import { useCollageExport } from '@/components/share';
 import { useTheme } from '@/lib/theme';
 
 import { Collage } from './Collage';
@@ -25,6 +27,7 @@ interface EraSectionProps {
 
 export function EraSection({ eras, busy, onCreate }: EraSectionProps) {
   const { colors } = useTheme();
+  const { exportEra, busy: shareBusy } = useCollageExport();
   const [title, setTitle] = useState('');
 
   return (
@@ -47,33 +50,68 @@ export function EraSection({ eras, busy, onCreate }: EraSectionProps) {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.rail}
         >
-          {eras.map((era) => (
-            <View key={era.id} style={styles.eraCard}>
-              <View style={[styles.cover, { borderRadius: radii.card }]}>
-                <Collage cover={era.coverUrl} images={era.outfitCovers} />
+          {eras.map((era) => {
+            const canShare = era.outfitCovers.length > 0 || Boolean(era.coverUrl);
+            return (
+              <View key={era.id} style={styles.eraCard}>
+                <View style={[styles.cover, { borderRadius: radii.card }]}>
+                  <Collage cover={era.coverUrl} images={era.outfitCovers} />
+                </View>
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    color: colors.text,
+                    fontSize: typeRamp.subhead.pt,
+                    lineHeight: typeRamp.subhead.lineHeight,
+                    fontWeight: '600',
+                  }}
+                >
+                  {era.title}
+                </Text>
+                <View style={styles.metaRow}>
+                  <Text
+                    style={{
+                      color: colors.secondaryStrong,
+                      fontSize: typeRamp.footnote.pt,
+                      lineHeight: typeRamp.footnote.lineHeight,
+                    }}
+                  >
+                    {strings.design.outfitItemCount(era.outfitCount)}
+                  </Text>
+                  {canShare ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={strings.share.shareEra}
+                      accessibilityState={{ disabled: shareBusy }}
+                      disabled={shareBusy}
+                      hitSlop={spacing.s2}
+                      onPress={() => {
+                        void Haptics.selectionAsync();
+                        exportEra({
+                          title: era.title,
+                          coverUrl: era.coverUrl,
+                          outfitCovers: era.outfitCovers,
+                          season: era.season,
+                        });
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: colors.accent,
+                          opacity: shareBusy ? 0.5 : 1,
+                          fontSize: typeRamp.footnote.pt,
+                          lineHeight: typeRamp.footnote.lineHeight,
+                          fontWeight: '600',
+                        }}
+                      >
+                        {shareBusy ? strings.share.preparing : strings.share.shareEra}
+                      </Text>
+                    </Pressable>
+                  ) : null}
+                </View>
               </View>
-              <Text
-                numberOfLines={1}
-                style={{
-                  color: colors.text,
-                  fontSize: typeRamp.subhead.pt,
-                  lineHeight: typeRamp.subhead.lineHeight,
-                  fontWeight: '600',
-                }}
-              >
-                {era.title}
-              </Text>
-              <Text
-                style={{
-                  color: colors.secondaryStrong,
-                  fontSize: typeRamp.footnote.pt,
-                  lineHeight: typeRamp.footnote.lineHeight,
-                }}
-              >
-                {strings.design.outfitItemCount(era.outfitCount)}
-              </Text>
-            </View>
-          ))}
+            );
+          })}
         </ScrollView>
       ) : null}
 
@@ -114,6 +152,12 @@ const styles = StyleSheet.create({
   },
   eraCard: {
     width: ERA_CARD_WIDTH,
+    gap: spacing.s2,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     gap: spacing.s2,
   },
   cover: {

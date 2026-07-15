@@ -28,6 +28,7 @@ import { captureRef } from 'react-native-view-shot';
 
 import { Button } from '@/components/Button';
 import { Toast } from '@/components/closet';
+import { useCollageExport } from '@/components/share';
 import { fetchItems, type ItemWithDisplay } from '@/components/items';
 import { trackOnce } from '@/lib/analytics';
 import { eraFeedEnabled } from '@/lib/feed-flag';
@@ -78,6 +79,7 @@ export function OutfitCanvas({ outfitId: initialOutfitId }: OutfitCanvasProps) {
   const { colors } = useTheme();
   const router = useRouter();
   const reduced = useReducedMotionSafe();
+  const { exportOutfit, busy: shareBusy } = useCollageExport();
 
   const [placements, setPlacements] = useState<readonly Placement[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -369,6 +371,22 @@ export function OutfitCanvas({ outfitId: initialOutfitId }: OutfitCanvasProps) {
     }
   }, [outfitId, sharedPostId, sharing]);
 
+  // Compose a share-ready collage of the saved look and open the native sheet.
+  // The canvas holds only the R2 key for a composed cover, not its public URL, so
+  // the share card leads with the garment cutouts (in stacking order) over cream.
+  const shareLook = useCallback(() => {
+    if (!outfitId || sorted.length === 0) {
+      return;
+    }
+    void Haptics.selectionAsync();
+    exportOutfit({
+      coverUrl: null,
+      cutoutUrls: sorted.map((p) => p.displayUrl),
+      name: name.length > 0 ? name : null,
+      occasion: occasion.length > 0 ? occasion : null,
+    });
+  }, [outfitId, sorted, name, occasion, exportOutfit]);
+
   if (loading) {
     return (
       <SafeAreaView style={[styles.screen, styles.centered, { backgroundColor: colors.bg }]}>
@@ -413,6 +431,18 @@ export function OutfitCanvas({ outfitId: initialOutfitId }: OutfitCanvasProps) {
           stageViewRef={stageViewRef}
         />
       </View>
+
+      {outfitId && placements.length > 0 ? (
+        <View style={styles.shareRow}>
+          <Button
+            label={shareBusy ? strings.share.preparing : strings.share.shareLook}
+            variant="secondary"
+            onPress={shareLook}
+            disabled={shareBusy}
+            style={styles.bottomButton}
+          />
+        </View>
+      ) : null}
 
       {eraFeedEnabled && outfitId && hasCover ? (
         <View style={styles.shareRow}>

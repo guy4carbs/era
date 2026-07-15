@@ -17,9 +17,10 @@ import type { MonthlyRecap } from '@era/core/wear-stats';
 import { strings } from '@era/core/strings';
 import { radii, rnShadow, spacing, typeRamp } from '@era/tokens';
 import { useCallback } from 'react';
-import { Image, Share, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { useCollageExport } from '@/components/share';
 import { useTheme } from '@/lib/theme';
 
 import type { WearMonthItem } from './api';
@@ -39,6 +40,7 @@ interface MonthlyRecapCardProps {
 
 export function MonthlyRecapCard({ recap, items }: MonthlyRecapCardProps) {
   const { colors } = useTheme();
+  const { exportRecap, busy: shareBusy } = useCollageExport();
 
   const byId = new Map(items.map((item) => [item.id, item]));
   const isEmpty = recap.totalWears === 0;
@@ -53,24 +55,16 @@ export function MonthlyRecapCard({ recap, items }: MonthlyRecapCardProps) {
           byId.get(best.itemId)?.name ?? strings.closet.categoryLabel(best.category),
         );
 
-  // A plain-text summary for the share sheet, composed from the same strings the
-  // card renders — the visual card is what gets screenshotted; this is the text.
+  // Compose the recap as a share-ready 1080×1920 image and open the native sheet.
+  // The offscreen host renders the same numbers this card shows — no invented
+  // fields — so the shared image reads as a sibling of the on-screen recap. An
+  // empty month has nothing honest to share, so the entry point is disabled.
   const onShare = useCallback(() => {
-    const lines = isEmpty
-      ? [strings.wear.recap.empty]
-      : [
-          strings.wear.recap.totalWears(recap.totalWears),
-          strings.wear.recap.daysDressed(recap.distinctDaysWorn, recap.daysInMonth),
-        ];
-    const message = [
-      `${strings.wear.recap.title} — ${strings.wear.recap.monthHeader(label)}`,
-      ...lines,
-      strings.wear.recap.shareTag,
-    ].join('\n');
-    void Share.share({ message }).catch(() => {
-      // A dismissed/failed share is a no-op — nothing to surface.
-    });
-  }, [isEmpty, label, recap.totalWears, recap.distinctDaysWorn, recap.daysInMonth]);
+    if (isEmpty) {
+      return;
+    }
+    exportRecap(recap, label, items);
+  }, [isEmpty, recap, label, items, exportRecap]);
 
   return (
     <View
@@ -194,7 +188,13 @@ export function MonthlyRecapCard({ recap, items }: MonthlyRecapCardProps) {
         >
           {strings.wear.recap.shareTag}
         </Text>
-        <Button label={strings.common.share} variant="secondary" haptic onPress={onShare} />
+        <Button
+          label={shareBusy ? strings.share.preparing : strings.share.shareMonth}
+          variant="secondary"
+          haptic
+          disabled={isEmpty || shareBusy}
+          onPress={onShare}
+        />
       </View>
     </View>
   );
