@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
+import { CollageExportHost } from '@/components/share';
 import { analytics } from '@/lib/analytics';
 import { useSession } from '@/lib/auth-client';
 import { logInPurchaser, logOutPurchaser } from '@/lib/purchases';
@@ -19,7 +20,9 @@ function RootLayout() {
       <ThemeProvider>
         <AnalyticsIdentity />
         <PurchaserIdentity />
-        <ThemedStack />
+        <CollageExportHost>
+          <ThemedStack />
+        </CollageExportHost>
       </ThemeProvider>
     </SafeAreaProvider>
   );
