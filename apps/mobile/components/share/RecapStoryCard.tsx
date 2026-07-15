@@ -12,7 +12,6 @@ import { palette, radii, spacing, typeRamp } from '@era/tokens';
 import type { RefObject } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { formatMoney } from '@/components/wear/format';
 import { recapThumbUrls, type RecapShareItem, type RecapShareModel } from '@/lib/share-collage';
 
 import { ShareFrame } from './ShareFrame';
@@ -32,15 +31,10 @@ export function RecapStoryCard({ model, items, viewRef, onAllImagesLoaded }: Rec
   const byId = new Map(items.map((item) => [item.id, item]));
   const markLoaded = useImageReadiness(recapThumbUrls(model.topItems, items).length, onAllImagesLoaded);
 
-  const best = model.bestCostPerWear;
-  const bestValueLine =
-    best === null
-      ? null
-      : strings.wear.recap.bestCostPerWear(
-          formatMoney(best.costPerWear),
-          byId.get(best.itemId)?.name ?? strings.closet.categoryLabel(best.category),
-        );
-
+  // Cost-per-wear stays OFF the shared image on purpose: a share is a public
+  // surface (Era convention: no dollar amounts there), and the recap month feed
+  // carries no currency so the number would render unit-less anyway. The in-app
+  // MonthlyRecapCard keeps it — that surface is private.
   return (
     <ShareFrame viewRef={viewRef}>
       <Text style={styles.header}>{strings.wear.recap.monthHeader(model.monthLabel)}</Text>
@@ -66,7 +60,6 @@ export function RecapStoryCard({ model, items, viewRef, onAllImagesLoaded }: Rec
             {strings.wear.recap.mostWornCategory(categoryLower(model.mostWornCategory))}
           </Text>
         ) : null}
-        {bestValueLine !== null ? <Text style={styles.line}>{bestValueLine}</Text> : null}
       </View>
     </ShareFrame>
   );

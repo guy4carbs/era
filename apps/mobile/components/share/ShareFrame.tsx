@@ -48,7 +48,9 @@ const styles = StyleSheet.create({
     backgroundColor: CREAM.bg,
     paddingHorizontal: spacing.s8,
     paddingTop: spacing.s12,
-    paddingBottom: spacing.s6,
+    // Bottom breathes like the sides do — the watermark footer shouldn't sit
+    // tighter than the rest of the frame (Axiom N2).
+    paddingBottom: spacing.s8,
   },
   content: {
     flex: 1,
