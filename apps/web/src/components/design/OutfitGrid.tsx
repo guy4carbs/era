@@ -9,6 +9,8 @@ import type { OutfitSummary } from './types';
 
 export interface OutfitGridProps {
   outfits: OutfitSummary[];
+  /** Server-read feed flag (request time) — gates the share-to-feed button. */
+  feedEnabled: boolean;
   onOpen: (id: string) => void;
   onAssign: (outfit: OutfitSummary) => void;
 }
@@ -66,7 +68,7 @@ const assignStyle: CSSProperties = {
  * canvas), the outfit name + occasion + piece count, and an inline "add to an
  * era" action.
  */
-export function OutfitGrid({ outfits, onOpen, onAssign }: OutfitGridProps) {
+export function OutfitGrid({ outfits, feedEnabled, onOpen, onAssign }: OutfitGridProps) {
   return (
     <div className="era-outfit-grid">
       <style>{gridCss}</style>
@@ -88,7 +90,11 @@ export function OutfitGrid({ outfits, onOpen, onAssign }: OutfitGridProps) {
             {/* Flag-gated (renders null when the feed is off) — the web outfit
                 share entry point, matching the inline "add to an era" idiom.
                 Seeded so an already-shared outfit reads as shared after a reload. */}
-            <ShareToFeedButton outfitId={outfit.id} initialSharedPostId={outfit.sharedPostId} />
+            <ShareToFeedButton
+              enabled={feedEnabled}
+              outfitId={outfit.id}
+              initialSharedPostId={outfit.sharedPostId}
+            />
           </div>
         );
       })}
