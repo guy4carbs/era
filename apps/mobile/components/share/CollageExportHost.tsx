@@ -26,10 +26,14 @@ import {
   type PropsWithChildren,
 } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { layout, spacing } from '@era/tokens';
 
+import { Toast } from '@/components/closet';
 import {
   captureAndShare,
   collageImageUrls,
+  isShareTimingEnabled,
   recapShareModel,
   recapThumbUrls,
   READINESS_TIMEOUT_MS,
@@ -61,12 +65,18 @@ type ExportRequest =
 export function CollageExportHost({ children }: PropsWithChildren) {
   const [request, setRequest] = useState<ExportRequest | null>(null);
   const [busy, setBusy] = useState(false);
+  // Root-level notice: the export failure toast (and, in timing-flagged builds,
+  // the export-duration readout). The host sits above every screen, so no
+  // screen-level toast can surface these — it renders its own.
+  const [notice, setNotice] = useState<string | null>(null);
+  const insets = useSafeAreaInsets();
 
   const viewRef = useRef<View | null>(null);
   const busyRef = useRef(false);
   const capturedRef = useRef(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const requestRef = useRef<ExportRequest | null>(null);
+  const beginAtRef = useRef(0);
 
   const clearTimer = useCallback(() => {
     if (timeoutRef.current !== null) {
@@ -90,7 +100,18 @@ export function CollageExportHost({ children }: PropsWithChildren) {
     }
     capturedRef.current = true;
     clearTimer();
-    await captureAndShare(viewRef, { dialogTitle: dialogTitleFor(requestRef.current) });
+    // Readiness wait so far — the part of the tap→PNG total captureAndShare
+    // can't see (it starts its own clock at call time).
+    const waitedMs = Math.round(performance.now() - beginAtRef.current);
+    const result = await captureAndShare(viewRef, { dialogTitle: dialogTitleFor(requestRef.current) });
+    if (result.status !== 'shared') {
+      // Never fail silently — the spec's "no silent failure" (Gauge BLOCKER-1).
+      setNotice(strings.errors.generic);
+    } else if (isShareTimingEnabled() && result.exportMs !== undefined) {
+      // Diagnostic readout for the <2s on-device proof; flag-gated (preview
+      // builds only), so this string never ships to production users.
+      setNotice(`Exported in ${waitedMs + result.exportMs}ms`);
+    }
     finish();
   }, [clearTimer, finish]);
 
@@ -102,6 +123,7 @@ export function CollageExportHost({ children }: PropsWithChildren) {
       busyRef.current = true;
       capturedRef.current = false;
       requestRef.current = next;
+      beginAtRef.current = performance.now();
       setBusy(true);
       setRequest(next);
       if (prefetch.length > 0) {
@@ -163,6 +185,11 @@ export function CollageExportHost({ children }: PropsWithChildren) {
           )}
         </View>
       ) : null}
+      <Toast
+        message={notice}
+        onHide={() => setNotice(null)}
+        bottom={layout.tabBarHeight + insets.bottom + spacing.s4}
+      />
     </CollageExportContext.Provider>
   );
 }

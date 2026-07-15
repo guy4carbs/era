@@ -174,6 +174,23 @@ export type CaptureShareStatus = 'shared' | 'unavailable' | 'error';
 
 export interface CaptureShareResult {
   readonly status: CaptureShareStatus;
+  /**
+   * Milliseconds from call to the PNG being ready on disk (BEFORE the share
+   * sheet opens — sheet time is the user's, not the export's). Present only on
+   * success; the host adds its readiness-wait on top for the tap→ready total.
+   */
+  readonly exportMs?: number;
+}
+
+/**
+ * Whether builds surface the export duration as an on-screen toast — the
+ * on-device proof of the <2s budget. Release/TestFlight builds have
+ * `__DEV__ === false`, so a console log alone is invisible there; the preview
+ * EAS profile sets this flag (production never does), mirroring the FPS-overlay
+ * pattern. EXPO_PUBLIC_* is baked per build profile by design.
+ */
+export function isShareTimingEnabled(): boolean {
+  return process.env.EXPO_PUBLIC_ERA_SHARE_TIMING === 'true';
 }
 
 export interface CaptureShareOptions {
@@ -221,6 +238,9 @@ export async function captureAndShare(
       height: SHARE_PIXEL_HEIGHT,
     });
 
+    // Export ends when the PNG exists — the sheet below runs on human time.
+    const exportMs = Math.round(performance.now() - startedAt);
+
     await Sharing.shareAsync(uri, {
       mimeType: 'image/png',
       UTI: 'public.png',
@@ -228,9 +248,9 @@ export async function captureAndShare(
     });
 
     if (__DEV__) {
-      console.log(`[era-share] exported in ${Math.round(performance.now() - startedAt)}ms`);
+      console.log(`[era-share] exported in ${exportMs}ms`);
     }
-    return { status: 'shared' };
+    return { status: 'shared', exportMs };
   } catch {
     return { status: 'error' };
   }
