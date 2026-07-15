@@ -17,7 +17,8 @@
         "EXPO_PUBLIC_ERA_PLUS_ENABLED": "true",
         "EXPO_PUBLIC_ERA_FEED_ENABLED": "true",
         "EXPO_PUBLIC_ERA_FEED_FPS": "true",
-        "EXPO_PUBLIC_ERA_SHARE_TIMING": "true"
+        "EXPO_PUBLIC_ERA_SHARE_TIMING": "true",
+        "EXPO_PUBLIC_API_URL": "https://era.style"
       }
     },
     "preview": {

@@ -4,9 +4,13 @@ import { useEffect, useRef } from 'react';
 import { ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
+import * as Linking from 'expo-linking';
+import * as SecureStore from 'expo-secure-store';
+
 import { CollageExportHost } from '@/components/share';
 import { analytics } from '@/lib/analytics';
-import { useSession } from '@/lib/auth-client';
+import { authClient, useSession } from '@/lib/auth-client';
+import { captureAuthSessionFromUrl } from '@/lib/auth-deeplink';
 import { logInPurchaser, logOutPurchaser } from '@/lib/purchases';
 import { wrapRoot } from '@/lib/reporting';
 import { ThemeProvider, useTheme } from '@/lib/theme';
@@ -18,6 +22,7 @@ function RootLayout() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
+        <MagicLinkCapture />
         <AnalyticsIdentity />
         <PurchaserIdentity />
         <CollageExportHost>
@@ -26,6 +31,47 @@ function RootLayout() {
       </ThemeProvider>
     </SafeAreaProvider>
   );
+}
+
+/**
+ * Catches magic-link deep links. The emailed link verifies in the system
+ * browser, which then opens `era://?cookie=<session>` — @better-auth/expo's
+ * client only harvests that cookie in its social-OAuth path, never from an
+ * incoming deep link, so without this the session evaporated and the user
+ * landed back on sign-in (observed on device, 2026-07-15). Handles both the
+ * warm case (app open → `url` event) and the cold start (`getInitialURL`);
+ * `captureAuthSessionFromUrl` no-ops on any URL that isn't a cookie-bearing
+ * `era://` link. After storing, it pokes the session store so `useSession`
+ * re-reads and the route guard flips to the signed-in surface.
+ */
+function MagicLinkCapture() {
+  useEffect(() => {
+    const deps = {
+      getItem: (key: string) => SecureStore.getItem(key),
+      setItem: (key: string, value: string) => SecureStore.setItem(key, value),
+      notifySession: () => {
+        // $store.notify is the plugin's own refresh signal; fall back to an
+        // explicit session fetch if a future client drops it.
+        const store = (authClient as { $store?: { notify?: (signal: string) => void } }).$store;
+        if (store?.notify) {
+          store.notify('$sessionSignal');
+        } else {
+          void authClient.getSession();
+        }
+      },
+    };
+    void Linking.getInitialURL().then((url) => {
+      if (url) {
+        captureAuthSessionFromUrl(url, deps);
+      }
+    });
+    const sub = Linking.addEventListener('url', ({ url }) => {
+      captureAuthSessionFromUrl(url, deps);
+    });
+    return () => sub.remove();
+  }, []);
+
+  return null;
 }
 
 /**
