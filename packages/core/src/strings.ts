@@ -1841,6 +1841,28 @@ export const strings = {
     ],
   },
 
+  /**
+   * Share — the one-tap collage export. Every entry point composes an on-brand
+   * 1080×1920 image (outfit, era, or the month recap) and hands it to the native
+   * share sheet. Calm and plain, no exclamations and no "post it!" push — the
+   * verbs describe the action, nothing more. A failed export reuses
+   * {@link strings.errors.generic}; there is deliberately no `failed` leaf here so
+   * the copy stays single-sourced. `watermarkDomain` is the quiet mark burned into
+   * every card, under the wordmark.
+   */
+  share: {
+    /** Action on a saved outfit — exports the look as a share card. */
+    shareLook: 'Share look',
+    /** Action on an era card — exports the era as a share card. */
+    shareEra: 'Share era',
+    /** Action on the monthly recap — exports "your month, worn" as a share card. */
+    shareMonth: 'Share your month',
+    /** Busy label while the image is composed and the sheet opens. */
+    preparing: 'Preparing…',
+    /** The footnote mark under the wordmark watermark on every share card. */
+    watermarkDomain: 'era.style',
+  },
+
 } as const;
 
 /** The shape of the full copy deck — for typing consumers and adapters. */
