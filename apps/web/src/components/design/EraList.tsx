@@ -13,6 +13,8 @@ import type { EraSummary } from './types';
 export interface EraListProps {
   eras: EraSummary[];
   creating: boolean;
+  /** Server-read feed flag (request time) — gates the share-to-feed button. */
+  feedEnabled: boolean;
   onCreate: (title: string, description: string) => void;
 }
 
@@ -73,7 +75,7 @@ function outfitCountLabel(n: number): string {
  * collage + title + outfit count), and an inline "start an era" form. Creating
  * an era refreshes the list through the parent.
  */
-export function EraList({ eras, creating, onCreate }: EraListProps) {
+export function EraList({ eras, creating, feedEnabled, onCreate }: EraListProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
 
@@ -100,7 +102,11 @@ export function EraList({ eras, creating, onCreate }: EraListProps) {
               {/* Flag-gated (renders null when the feed is off) — the ONLY web
                   era-share surface this phase. Seeded so an already-shared era
                   reads as shared after the list re-fetches. */}
-              <ShareToFeedButton eraId={era.id} initialSharedPostId={era.sharedPostId} />
+              <ShareToFeedButton
+                enabled={feedEnabled}
+                eraId={era.id}
+                initialSharedPostId={era.sharedPostId}
+              />
             </div>
           ))}
         </div>
