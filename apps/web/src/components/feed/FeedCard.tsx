@@ -3,7 +3,7 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { boxShadows, layout, motion as motionToken, typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { REPORT_REASONS, type FeedPostPayload, type ReportReason } from '@era/core/feed';
@@ -79,7 +79,19 @@ export function FeedCard({
   onBlocked,
 }: FeedCardProps) {
   const reduced = useReducedMotion();
+  // Keyed timestamp so rapid double-clicks restart the burst animation cleanly.
+  const [burstAt, setBurstAt] = useState<number | null>(null);
   const displayName = post.creator.displayName ?? post.creator.username;
+
+  function handleCoverDoubleClick() {
+    setBurstAt(Date.now());
+    // Like-only: mirrors the mobile pager's double-tap contract — a repeat
+    // double-click celebrates but never unlikes (the button is the toggle).
+    if (!post.viewer.liked) {
+      onLike(post);
+    }
+  }
+
   const isOwnPost = viewerUsername !== undefined && viewerUsername === post.creator.username;
   const coverAlt = post.title
     ? `${post.title} — shared by @${post.creator.username}`
@@ -113,12 +125,32 @@ export function FeedCard({
         </div>
       </header>
 
-      <div style={coverFrameStyle}>
+      {/* Double-click likes — the desktop cousin of the mobile pager's double-tap.
+          Like-only (a second double-click never unlikes); the heart button stays
+          the accessible/toggle path. The burst is decorative and skipped under
+          reduced motion. */}
+      <div style={coverFrameStyle} onDoubleClick={handleCoverDoubleClick}>
         {post.coverUrl ? (
           <Image src={post.coverUrl} alt={coverAlt} fill sizes={COVER_SIZES} style={coverImageStyle} />
         ) : (
           <span aria-hidden="true" style={coverPlaceholderStyle} />
         )}
+        <AnimatePresence>
+          {burstAt !== null ? (
+            <motion.span
+              key={burstAt}
+              aria-hidden="true"
+              style={heartBurstStyle}
+              initial={{ opacity: 0, scale: 0.4 }}
+              animate={{ opacity: 1, scale: 1.15 }}
+              exit={{ opacity: 0, scale: 1.3 }}
+              transition={transitionFor(motionToken.springs.snappy, reduced)}
+              onAnimationComplete={() => setBurstAt(null)}
+            >
+              ♥
+            </motion.span>
+          ) : null}
+        </AnimatePresence>
       </div>
 
       <footer style={footerStyle}>
@@ -439,6 +471,20 @@ const coverFrameStyle: CSSProperties = {
 };
 
 const coverImageStyle: CSSProperties = { objectFit: 'contain' };
+
+/** The double-click heart burst — centered over the cover, purely decorative. */
+const heartBurstStyle: CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: '4rem',
+  color: 'var(--color-text)',
+  opacity: 0.85,
+  pointerEvents: 'none',
+  userSelect: 'none',
+};
 
 const coverPlaceholderStyle: CSSProperties = {
   position: 'absolute',
