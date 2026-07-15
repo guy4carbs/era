@@ -17,10 +17,10 @@
  * order; saving then PATCHes. ASSIGN-TO-ERA is offered once an outfit has an id.
  */
 import { strings } from '@era/core/strings';
-import { layout, spacing } from '@era/tokens';
+import { layout, spacing, typeRamp } from '@era/tokens';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSharedValue } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -30,8 +30,12 @@ import { Button } from '@/components/Button';
 import { Toast } from '@/components/closet';
 import { fetchItems, type ItemWithDisplay } from '@/components/items';
 import { trackOnce } from '@/lib/analytics';
+import { eraFeedEnabled } from '@/lib/feed-flag';
 import { useReducedMotionSafe } from '@/lib/motion';
+import { LimitReachedError } from '@/lib/rate-limit';
 import { useTheme } from '@/lib/theme';
+
+import { sharePost, unsharePost } from '@/components/feed/api';
 
 import { AssignEraSheet } from './AssignEraSheet';
 import { CanvasStage } from './CanvasStage';
@@ -93,6 +97,13 @@ export function OutfitCanvas({ outfitId: initialOutfitId }: OutfitCanvasProps) {
   const [assignBusy, setAssignBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
+  // Share-to-feed (flag-gated). Seeded on reopen from the detail payload's
+  // `sharedPostId` (below), so an already-shared outfit shows its shared state
+  // without a re-share; the sharePost/unsharePost responses keep it in sync after.
+  const [sharedPostId, setSharedPostId] = useState<string | null>(null);
+  const [hasCover, setHasCover] = useState(false);
+  const [sharing, setSharing] = useState(false);
+
   const guideX = useSharedValue(0);
   const guideY = useSharedValue(0);
   const guideXPos = useSharedValue(CENTER);
@@ -117,6 +128,8 @@ export function OutfitCanvas({ outfitId: initialOutfitId }: OutfitCanvasProps) {
           }
           setName(detail.name ?? '');
           setOccasion(detail.occasion ?? '');
+          setHasCover(detail.coverUrl !== null);
+          setSharedPostId(detail.sharedPostId);
           setPlacements(
             renumber(
               detail.items.map((member) => ({
@@ -246,6 +259,10 @@ export function OutfitCanvas({ outfitId: initialOutfitId }: OutfitCanvasProps) {
       setSelectedId(null);
       await nextFrame();
       const coverImagePath = await composeCover();
+      // A freshly composed cover unlocks share-to-feed for this outfit.
+      if (coverImagePath) {
+        setHasCover(true);
+      }
 
       const itemsPayload: OutfitItemTransform[] = placements.map((p) => ({
         itemId: p.itemId,
@@ -324,6 +341,34 @@ export function OutfitCanvas({ outfitId: initialOutfitId }: OutfitCanvasProps) {
     [outfitId, assignBusy],
   );
 
+  // Share this saved outfit to the feed, or take it back down. Only reachable
+  // once the outfit has an id and a cover (a feed card needs the cover).
+  const toggleShare = useCallback(async () => {
+    if (!outfitId || sharing) {
+      return;
+    }
+    setSharing(true);
+    try {
+      if (sharedPostId) {
+        await unsharePost(sharedPostId);
+        setSharedPostId(null);
+        setToast(strings.feed.unshare);
+      } else {
+        const { post } = await sharePost({ outfitId });
+        setSharedPostId(post.id);
+        setToast(strings.feed.shared);
+      }
+    } catch (error) {
+      setToast(
+        error instanceof LimitReachedError
+          ? (error.serverMessage ?? strings.errors.generic)
+          : strings.errors.generic,
+      );
+    } finally {
+      setSharing(false);
+    }
+  }, [outfitId, sharedPostId, sharing]);
+
   if (loading) {
     return (
       <SafeAreaView style={[styles.screen, styles.centered, { backgroundColor: colors.bg }]}>
@@ -368,6 +413,29 @@ export function OutfitCanvas({ outfitId: initialOutfitId }: OutfitCanvasProps) {
           stageViewRef={stageViewRef}
         />
       </View>
+
+      {eraFeedEnabled && outfitId && hasCover ? (
+        <View style={styles.shareRow}>
+          <View style={styles.shareColumn}>
+            <Button
+              label={
+                sharedPostId ? `${strings.feed.shared} · ${strings.feed.unshare}` : strings.feed.share
+              }
+              variant="secondary"
+              onPress={() => void toggleShare()}
+              disabled={sharing}
+              style={styles.bottomButton}
+            />
+            {/* Consent line: sharing is public regardless of profile privacy;
+                unshare is the retraction. Shown pre-consent only. */}
+            {sharedPostId ? null : (
+              <Text style={[styles.shareConsent, { color: colors.secondaryStrong }]}>
+                {strings.feed.shareConsent}
+              </Text>
+            )}
+          </View>
+        </View>
+      ) : null}
 
       <View style={styles.bottomBar}>
         <Button
@@ -444,6 +512,19 @@ const styles = StyleSheet.create({
     gap: spacing.s3,
     paddingHorizontal: spacing.s4,
     paddingBottom: spacing.s2,
+  },
+  shareRow: {
+    flexDirection: 'row',
+    paddingHorizontal: spacing.s4,
+    paddingBottom: spacing.s2,
+  },
+  shareColumn: {
+    flex: 1,
+    gap: spacing.s1,
+  },
+  shareConsent: {
+    fontSize: typeRamp.footnote.pt,
+    lineHeight: typeRamp.footnote.lineHeight,
   },
   bottomButton: {
     flex: 1,

@@ -126,7 +126,9 @@ export async function POST(request: Request): Promise<NextResponse> {
   // 5-6. Delete DB rows. Deleting the user row cascades every user_id-keyed
   //    domain table (session, account, profiles, style_profiles, items,
   //    outfits→outfit_items, eras→era_outfits, wear_logs, follows, ai_events,
-  //    receipt_inbox_tokens, inbound_email_events, subscriptions).
+  //    receipt_inbox_tokens, inbound_email_events, subscriptions, feed_posts→
+  //    post_likes/post_saves, user_blocks (both directions), feed_reports
+  //    (both as reporter and as reported user)).
   //    waitlist and verification are NOT FK-linked to user.id — they are keyed
   //    by email — so we delete them explicitly. verification is Better Auth's
   //    ephemeral email-token table (identifier = the email for magic-link);

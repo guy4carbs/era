@@ -3,6 +3,7 @@
 import { type CSSProperties } from 'react';
 import { layout, typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
+import { ShareToFeedButton } from '../feed';
 import { Collage } from './Collage';
 import type { OutfitSummary } from './types';
 
@@ -84,6 +85,10 @@ export function OutfitGrid({ outfits, onOpen, onAssign }: OutfitGridProps) {
             <button type="button" style={assignStyle} onClick={() => onAssign(outfit)}>
               {strings.design.assignToEra}
             </button>
+            {/* Flag-gated (renders null when the feed is off) — the web outfit
+                share entry point, matching the inline "add to an era" idiom.
+                Seeded so an already-shared outfit reads as shared after a reload. */}
+            <ShareToFeedButton outfitId={outfit.id} initialSharedPostId={outfit.sharedPostId} />
           </div>
         );
       })}

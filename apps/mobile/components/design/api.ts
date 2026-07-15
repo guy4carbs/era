@@ -47,6 +47,8 @@ export interface OutfitSummary {
   readonly itemCount: number;
   /** Up to four member thumbnails for the fallback collage when there's no cover. */
   readonly thumbnailUrls: readonly string[];
+  /** The caller's live feed post for this outfit, or null when it isn't shared. */
+  readonly sharedPostId: string | null;
 }
 
 /** One member of the full "reopen" payload: a transform joined to its item. */
@@ -64,6 +66,8 @@ export interface OutfitDetail {
   readonly occasion: string | null;
   readonly coverUrl: string | null;
   readonly items: readonly OutfitDetailMember[];
+  /** The caller's live feed post for this outfit, or null when it isn't shared. */
+  readonly sharedPostId: string | null;
 }
 
 /** An era as the design tab lists it (its own cover, or a member-cover collage). */
@@ -75,6 +79,8 @@ export interface EraSummary {
   readonly coverUrl: string | null;
   readonly outfitCount: number;
   readonly outfitCovers: readonly string[];
+  /** The caller's live feed post for this era, or null when it isn't shared. */
+  readonly sharedPostId: string | null;
 }
 
 /** The fields written when saving (creating or updating) an outfit. */

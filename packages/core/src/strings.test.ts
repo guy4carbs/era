@@ -701,3 +701,60 @@ test('every wear helper survives garbage input without throwing or leaking NaN/u
     }
   }
 });
+
+// --- the feed surface: rail, share, shop-similar, and UGC safety copy ---------
+
+test('the feed empty state is preserved verbatim (extended, not replaced)', () => {
+  assert.equal(
+    strings.feed.empty,
+    'Nothing in your feed yet. Follow a few people and their looks land here.',
+  );
+});
+
+test('the report confirmation is the canonical copy, verbatim', () => {
+  assert.equal(strings.feed.reportConfirm, "Post hidden. Thanks — we'll take a look.");
+});
+
+test('every feed rail label and safety string is present and non-empty', () => {
+  const f = strings.feed;
+  const leaves = [
+    f.feedEnd,
+    f.rail.like,
+    f.rail.save,
+    f.rail.shopSimilar,
+    f.rail.more,
+    f.share,
+    f.shared,
+    f.unshare,
+    f.shopSimilarTitle,
+    f.shopSimilarEmpty,
+    f.shopSimilarGapCta,
+    f.reportTitle,
+    f.reportReasons.spam,
+    f.reportReasons.inappropriate,
+    f.reportReasons.impersonation,
+    f.reportReasons.other,
+    f.reportDetailPlaceholder,
+    f.blockBody,
+    f.blockCta,
+    f.blockedConfirm,
+    f.hiddenPost,
+  ];
+  for (const leaf of leaves) {
+    assert.ok(leaf.trim().length > 0, `feed leaf is empty: ${leaf}`);
+  }
+});
+
+test('blockTitle names the account, and falls back gracefully when the name is missing', () => {
+  assert.equal(strings.feed.blockTitle('Mara'), 'Block Mara?');
+  assert.equal(strings.feed.blockTitle(''), 'Block this account?');
+});
+
+test('the feed report reason labels cover exactly the four ReportReason values', () => {
+  assert.deepEqual(Object.keys(strings.feed.reportReasons).sort(), [
+    'impersonation',
+    'inappropriate',
+    'other',
+    'spam',
+  ]);
+});

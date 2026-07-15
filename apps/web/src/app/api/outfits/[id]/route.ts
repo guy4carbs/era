@@ -4,8 +4,9 @@
  * DELETE /api/outfits/[id]
  *
  * GET returns the full "reopen" payload the canvas restores from: the outfit
- * row, its coverUrl, and its ordered members joined to their items (each with a
- * resolved displayUrl).
+ * row, its coverUrl, its ordered members joined to their items (each with a
+ * resolved displayUrl), and `sharedPostId` — the caller's live feed post for this
+ * outfit (or null) so the canvas can hydrate its share-to-feed toggle.
  *
  * PATCH updates scalar fields and, when `items` is provided, REPLACES the
  * outfit's entire outfit_items set (validated for ownership + counts exactly as
@@ -44,6 +45,7 @@ import {
   replaceOutfitItems,
   shapeOutfitDetail,
 } from '../../../../lib/outfit-server.ts';
+import { livePostIdsByOutfit } from '../../../../lib/posts-server.ts';
 import { serverStorageClient } from '../../../../lib/storage-server.ts';
 
 const db = createDbClient(process.env.DATABASE_URL!);
@@ -84,6 +86,14 @@ async function ownerFor(userId: string): Promise<{ userId: string; isPrivate: bo
   return { userId, isPrivate: profile?.isPrivate ?? true };
 }
 
+/**
+ * The caller's live feed post id for this outfit, or null when it isn't shared —
+ * so the reopen payload hydrates the canvas's share toggle without a re-share.
+ */
+async function sharedPostIdFor(outfitId: string): Promise<string | null> {
+  return (await livePostIdsByOutfit(db, [outfitId])).get(outfitId) ?? null;
+}
+
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
   const authed = await authenticate(request);
   if (authed instanceof NextResponse) {
@@ -97,7 +107,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
   const owner = await ownerFor(authed.userId);
   const shaped = await shapeOutfitDetail(db, serverStorageClient(), authed.ctx, outfit, owner);
-  return NextResponse.json({ outfit: shaped });
+  return NextResponse.json({ outfit: { ...shaped, sharedPostId: await sharedPostIdFor(id) } });
 }
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
@@ -160,7 +170,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const [updated] = await db.select().from(outfits).where(eq(outfits.id, id)).limit(1);
   const owner = await ownerFor(authed.userId);
   const shaped = await shapeOutfitDetail(db, serverStorageClient(), authed.ctx, updated ?? existing, owner);
-  return NextResponse.json({ outfit: shaped });
+  return NextResponse.json({ outfit: { ...shaped, sharedPostId: await sharedPostIdFor(id) } });
 }
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {

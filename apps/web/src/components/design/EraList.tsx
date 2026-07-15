@@ -5,6 +5,7 @@ import { layout, typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { Input } from '../Input';
 import { Button } from '../Button';
+import { ShareToFeedButton } from '../feed';
 import { Collage } from './Collage';
 import { ERA_DESCRIPTION_MAX, ERA_TITLE_MAX } from './constants';
 import type { EraSummary } from './types';
@@ -96,6 +97,10 @@ export function EraList({ eras, creating, onCreate }: EraListProps) {
               <Collage cover={era.coverUrl} thumbs={era.outfitCovers} alt={era.title} />
               <p style={titleStyle}>{era.title}</p>
               <p style={metaStyle}>{outfitCountLabel(era.outfitCount)}</p>
+              {/* Flag-gated (renders null when the feed is off) — the ONLY web
+                  era-share surface this phase. Seeded so an already-shared era
+                  reads as shared after the list re-fetches. */}
+              <ShareToFeedButton eraId={era.id} initialSharedPostId={era.sharedPostId} />
             </div>
           ))}
         </div>

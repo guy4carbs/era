@@ -27,3 +27,16 @@ export const aiEventKind = pgEnum('ai_event_kind', [
   'rec_dismiss',
   'quiz',
 ]);
+
+export const feedReportReason = pgEnum('feed_report_reason', [
+  'spam',
+  'inappropriate',
+  'impersonation',
+  'other',
+]);
+
+export const feedReportStatus = pgEnum('feed_report_status', [
+  'pending',
+  'reviewed',
+  'dismissed',
+]);

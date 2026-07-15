@@ -110,6 +110,7 @@ test('a private profile returns the minimal card with follower count, no content
 test('a private profile reflects the viewer follow edge when the viewer follows', async () => {
   const { db } = fakeDb([
     [{ userId: OWNER, username: 'sara', displayName: 'Sara', avatarUrl: null, createdAt: CREATED, isPrivate: true }],
+    [], // isBlockedEitherWay → not blocked (viewer non-null → one block query)
     [{ n: 7 }], // countFollowers
     [{ followerId: 'viewer-2' }], // isFollowing → true
   ]);
@@ -122,6 +123,7 @@ test('a private profile reflects the viewer follow edge when the viewer follows'
 test('a public profile returns full content: cutout imagery, counts, eras, outfits', async () => {
   const { db, calls } = fakeDb([
     [{ userId: OWNER, username: 'jules', displayName: 'Jules', avatarUrl: null, createdAt: CREATED, isPrivate: false }], // profile
+    [], // isBlockedEitherWay → not blocked (viewer non-null → one block query)
     [{ n: 5 }], // countFollowers
     [{ followerId: 'viewer-2' }], // isFollowing → true
     [{ n: 2 }], // countFollowing
@@ -194,4 +196,28 @@ test('a public profile with no eras skips the roll-up query and returns empty gr
   assert.deepEqual(result.outfits, []);
   assert.equal(result.isFollowing, false);
   assert.equal(result.publicItemCount, 0);
+});
+
+test('a viewer blocked either direction sees not_found — indistinguishable from a missing profile', async () => {
+  // The block check (query #2) finds an edge → not_found, and NO content queries
+  // run (a blocked profile leaks nothing, not even existence).
+  const { db, calls } = fakeDb([
+    [{ userId: OWNER, username: 'jules', displayName: 'Jules', avatarUrl: null, createdAt: CREATED, isPrivate: false }],
+    [{ blockerId: 'viewer-2' }], // isBlockedEitherWay → blocked
+  ]);
+  const result = await loadPublicProfile(db, storage, 'jules', 'viewer-2');
+  assert.equal(result.state, 'not_found');
+  // Only the profile lookup + the block check ran — no followers/items/eras/outfits.
+  assert.equal(calls.filter((c) => c.m === 'from').length, 2, 'no content is loaded for a blocked pair');
+});
+
+test('an anonymous viewer runs NO block query (anon is never blocked)', async () => {
+  const { db } = fakeDb([
+    [{ userId: OWNER, username: 'jules', displayName: null, avatarUrl: null, createdAt: CREATED, isPrivate: true }],
+    [{ n: 3 }], // countFollowers (no block query precedes it for an anon viewer)
+  ]);
+  const result = await loadPublicProfile(db, storage, 'jules', null);
+  assert.equal(result.state, 'private');
+  if (result.state !== 'private') return;
+  assert.equal(result.followerCount, 3, 'the follower count reads correctly with no block query shifting the queue');
 });
