@@ -1,24 +1,42 @@
 'use client';
 
-import { useState, type CSSProperties, type ReactNode } from 'react';
-import { type PanInfo, motion } from 'framer-motion';
-import { layout, spacing, typeRamp } from '@era/tokens';
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { type PanInfo, motion, useReducedMotion } from 'framer-motion';
+import { motion as motionToken, layout, spacing, typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
+import { type TurnaroundRender, type TurnaroundState } from '@era/core/turnaround';
+import { transitionFor } from '../../lib/motion';
 import { Button } from '../Button';
 import { GlassSheet } from '../GlassSheet';
 import type { ItemEdits } from '../items';
+import { AngleViewer } from './AngleViewer';
 import { ItemEditor } from './ItemEditor';
 import { ItemWearStats } from './ItemWearStats';
+import {
+  TurnaroundLimitError,
+  TurnaroundUnavailableError,
+  fetchTurnaround,
+  generateTurnaround,
+  pollTurnaround,
+} from './turnaround-api';
 import type { GalleryItem } from './types';
 
 export interface ItemDetailSheetProps {
   item: GalleryItem;
+  /**
+   * Server-authoritative turnaround flag (request-time `ERA_TURNAROUND_ENABLED`,
+   * threaded from the closet page's server wrapper). Off → the static cutout with
+   * zero trace of the feature; on → the angle-viewer flow over the cutout.
+   */
+  turnaroundEnabled: boolean;
   /** Dismiss the sheet (backdrop, drag-down, or after an action). */
   onClose: () => void;
   /** The item was archived — remove it from the gallery. */
   onArchived: (id: string) => void;
   /** The item's tags were edited — replace it in the gallery. */
   onUpdated: (item: GalleryItem) => void;
+  /** Surface a transient toast (the daily-limit line) via the gallery's own toast. */
+  onToast: (message: string) => void;
 }
 
 // Drag-down past this distance (or fast enough) dismisses the sheet.
@@ -50,7 +68,14 @@ function formatPrice(price: string | null, currency: string | null): string | nu
  * `{ archived: true }`, removing the tile. Dismisses on backdrop click (owned by
  * the gallery) or by dragging the sheet body down.
  */
-export function ItemDetailSheet({ item, onClose, onArchived, onUpdated }: ItemDetailSheetProps) {
+export function ItemDetailSheet({
+  item,
+  turnaroundEnabled,
+  onClose,
+  onArchived,
+  onUpdated,
+  onToast,
+}: ItemDetailSheetProps) {
   const [mode, setMode] = useState<'view' | 'edit'>('view');
   const [confirmingArchive, setConfirmingArchive] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -112,9 +137,13 @@ export function ItemDetailSheet({ item, onClose, onArchived, onUpdated }: ItemDe
         dragElastic={0.35}
         onDragEnd={handleDragEnd}
       >
-        <div style={imageWrapStyle}>
-          {item.displayUrl ? <img src={item.displayUrl} alt={item.name} style={imageStyle} /> : null}
-        </div>
+        {/* Turnaround views (flag-gated): the swipe/click-through angle viewer when
+            renders exist, else the untouched static cutout as the exact fallback. */}
+        {turnaroundEnabled && item.displayUrl ? (
+          <TurnaroundHero key={item.id} item={item} onToast={onToast} />
+        ) : (
+          <StaticCutout item={item} />
+        )}
 
         <div style={headerStyle}>
           <h2 style={titleStyle}>{item.name}</h2>
@@ -170,6 +199,161 @@ export function ItemDetailSheet({ item, onClose, onArchived, onUpdated }: ItemDe
 /** Read-only pill echoing a tag on the detail sheet (not interactive). */
 function TagPill({ children }: { children: ReactNode }) {
   return <span style={tagPillStyle}>{children}</span>;
+}
+
+/**
+ * The static cutout — the exact original detail image, kept verbatim as the
+ * turnaround fallback (flag off, no cutout, or no accepted renders).
+ */
+function StaticCutout({ item }: { item: GalleryItem }) {
+  return (
+    <div style={imageWrapStyle}>
+      {item.displayUrl ? <img src={item.displayUrl} alt={item.name} style={imageStyle} /> : null}
+    </div>
+  );
+}
+
+/**
+ * SEO alt-base descriptor for the angle pages, composed from the item's tags
+ * (colour / brand / category) per the repo's alt-text convention. e.g.
+ * "Black Acme Coat". Empty when the piece carries no tags at all.
+ */
+function describeItem(item: GalleryItem): string {
+  return [item.colorPrimary, item.brand, strings.closet.categoryLabel(item.category)]
+    .filter((part): part is string => Boolean(part && part.trim()))
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+/** The turnaround surface's UI phase — drives which chrome shows over the cutout. */
+type TurnaroundPhase = 'fallback' | 'offer' | 'generating' | 'angles' | 'empty';
+
+/**
+ * The turnaround-aware hero. On open it reads the item's turnaround state (silent
+ * failure → the static cutout, nothing surfaced). Complete renders show the
+ * {@link AngleViewer}; a still-`running` run polls to completion; an eligible
+ * un-run piece offers a quiet "View angles" that kicks the slow generation and
+ * animates the viewer in. A daily cap toasts the pause line, the feature being off
+ * shows the dormant "unavailable" beat, a QA-passed-nothing run shows one calm
+ * line, and any other miss is a calm retryable notice with the button back.
+ */
+function TurnaroundHero({ item, onToast }: { item: GalleryItem; onToast: (message: string) => void }) {
+  const reduced = useReducedMotion();
+  const [phase, setPhase] = useState<TurnaroundPhase>('fallback');
+  const [renders, setRenders] = useState<readonly TurnaroundRender[]>([]);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  // A generation runs ~60–90s; guard every settle against a closed sheet so a
+  // late resolve can't set state on an unmounted piece.
+  const activeRef = useRef(true);
+
+  const finishGeneration = useCallback((state: TurnaroundState) => {
+    if (state.renders.length > 0) {
+      setRenders(state.renders);
+      setPhase('angles');
+    } else {
+      // Completed, but QA passed nothing — one calm line, offer nothing else.
+      setNotice(strings.turnaround.failed);
+      setPhase('empty');
+    }
+  }, []);
+
+  const handleGenerateError = useCallback(
+    (error: unknown) => {
+      if (error instanceof TurnaroundLimitError) {
+        onToast(strings.ovi.limitReachedProcessing);
+        setPhase('offer'); // the cap resets tomorrow — leave the affordance
+      } else if (error instanceof TurnaroundUnavailableError) {
+        setNotice(strings.turnaround.unavailable);
+        setPhase('empty');
+      } else {
+        setNotice(strings.turnaround.failed);
+        setPhase('offer'); // calm, retryable — button back
+      }
+    },
+    [onToast],
+  );
+
+  const runGeneration = useCallback(() => {
+    setNotice(null);
+    setPhase('generating');
+    void (async () => {
+      try {
+        const state = await generateTurnaround(item.id);
+        if (activeRef.current) finishGeneration(state);
+      } catch (error) {
+        if (activeRef.current) handleGenerateError(error);
+      }
+    })();
+  }, [item.id, finishGeneration, handleGenerateError]);
+
+  useEffect(() => {
+    activeRef.current = true;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const state = await fetchTurnaround(item.id);
+        if (cancelled) return;
+        if (state.status === 'complete' && state.renders.length > 0) {
+          setRenders(state.renders);
+          setPhase('angles');
+        } else if (state.status === 'running') {
+          setPhase('generating');
+          try {
+            const settled = await pollTurnaround(item.id);
+            if (!cancelled && activeRef.current) finishGeneration(settled);
+          } catch (error) {
+            if (!cancelled && activeRef.current) handleGenerateError(error);
+          }
+        } else if ((state.status === 'none' || state.status === 'failed') && state.categoryEnabled) {
+          setPhase('offer');
+        } else {
+          setPhase('fallback');
+        }
+      } catch {
+        // Silent: no turnaround for this piece (404 / flag off / not owner) — the
+        // static cutout stays exactly as it was, nothing surfaced.
+      }
+    })();
+    return () => {
+      cancelled = true;
+      activeRef.current = false;
+    };
+  }, [item.id, finishGeneration, handleGenerateError]);
+
+  const frontUrl = item.displayUrl;
+  if (!frontUrl) return <StaticCutout item={item} />;
+
+  if (phase === 'angles') {
+    return (
+      <motion.div
+        initial={reduced ? false : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={transitionFor(motionToken.springs.gentle, reduced)}
+      >
+        <AngleViewer frontUrl={frontUrl} renders={renders} frontAlt={item.name} altBase={describeItem(item)} />
+      </motion.div>
+    );
+  }
+
+  return (
+    <div style={turnaroundColumnStyle}>
+      <StaticCutout item={item} />
+      {phase === 'generating' ? (
+        <span role="status" style={turnaroundNoteStyle}>
+          {strings.turnaround.generating}
+        </span>
+      ) : null}
+      {notice ? <span style={turnaroundNoteStyle}>{notice}</span> : null}
+      {phase === 'offer' ? (
+        <div style={turnaroundActionRowStyle}>
+          <Button variant="secondary" onClick={runGeneration}>
+            {strings.turnaround.viewAngles}
+          </Button>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 const bodyStyle: CSSProperties = {
@@ -263,4 +447,23 @@ const actionsRowStyle: CSSProperties = {
   display: 'flex',
   gap: 'var(--space-2)',
   justifyContent: 'flex-end',
+};
+
+// Turnaround chrome: the cutout with a calm note/affordance stacked beneath it
+// (offer / generating / notice states — the angle viewer replaces the whole block).
+const turnaroundColumnStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-3)',
+};
+
+const turnaroundNoteStyle: CSSProperties = {
+  fontSize: typeRamp.subhead.rem,
+  lineHeight: `${typeRamp.subhead.lineHeight}px`,
+  color: 'var(--color-secondary-strong)',
+};
+
+const turnaroundActionRowStyle: CSSProperties = {
+  display: 'flex',
+  justifyContent: 'flex-start',
 };
