@@ -46,7 +46,7 @@ export async function deriveStyleProfile(answers: QuizAnswerMap): Promise<Derive
   const body = { answers: toQuizAnswers(answers) };
 
   if (typeof client.$fetch === 'function') {
-    const { data, error } = await client.$fetch<DeriveResult>(ENDPOINT, {
+    const { data, error } = await client.$fetch<DeriveResult>(`${baseURL}${ENDPOINT}`, {
       method: 'POST',
       body,
     });

@@ -96,7 +96,7 @@ async function apiFetch<T>(
   const client = authClient as unknown as AuthFetchClient;
 
   if (typeof client.$fetch === 'function') {
-    const { data, error } = await client.$fetch<T>(path, options);
+    const { data, error } = await client.$fetch<T>(`${baseURL}${path}`, options);
     if (error) {
       const limit = limitFromFetchError(error);
       if (limit) throw limit;

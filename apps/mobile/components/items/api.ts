@@ -155,7 +155,7 @@ async function apiFetch<T>(
   const client = authClient as unknown as AuthFetchClient;
 
   if (typeof client.$fetch === 'function') {
-    const { data, error } = await client.$fetch<T>(path, options);
+    const { data, error } = await client.$fetch<T>(`${baseURL}${path}`, options);
     if (error) {
       const limit = limitFromFetchError(error);
       if (limit) throw limit;
@@ -287,7 +287,7 @@ export async function processBatch(rawKey: string): Promise<BatchResult> {
   const client = authClient as unknown as AuthFetchClient;
 
   if (typeof client.$fetch === 'function') {
-    const { data, error } = await client.$fetch<BatchResult>('/api/process-batch', {
+    const { data, error } = await client.$fetch<BatchResult>(`${baseURL}/api/process-batch`, {
       method: 'POST',
       body: { rawKey },
     });
