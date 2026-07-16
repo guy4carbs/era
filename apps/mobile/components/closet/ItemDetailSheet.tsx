@@ -21,7 +21,7 @@ import { type TurnaroundRender, type TurnaroundState } from '@era/core/turnaroun
 import { layout, motion, radii, rnShadow, spacing, typeRamp } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { Button } from '@/components/Button';
@@ -34,6 +34,7 @@ import { useTheme } from '@/lib/theme';
 import { eraTurnaroundEnabled } from '@/lib/turnaround-flag';
 
 import { AngleViewer } from './AngleViewer';
+import { DimensionalHero } from './DimensionalHero';
 import { ItemEditor } from './ItemEditor';
 import {
   fetchTurnaround,
@@ -276,8 +277,11 @@ function Detail({ item, busy, onConfirm, onEdit, onArchived, onClose, onToast }:
 }
 
 /**
- * The static cutout hero — the exact original detail image, kept verbatim as the
- * turnaround fallback (flag off, no cutout, or no accepted renders).
+ * The cutout hero — the original detail image, now given depth by
+ * {@link DimensionalHero} (gyro + drag driven 2.5D tilt/parallax/sheen; a plain
+ * static image under reduced motion). Kept as the turnaround fallback (flag off,
+ * no cutout, or no accepted renders) and used for the turnaround's front/offer
+ * states, so both hero paths gain the same dimensionality.
  */
 function StaticHero({ item }: { readonly item: ItemWithDisplay }) {
   const { colors } = useTheme();
@@ -290,10 +294,9 @@ function StaticHero({ item }: { readonly item: ItemWithDisplay }) {
       ]}
     >
       {item.displayUrl ? (
-        <Image
-          source={{ uri: item.displayUrl }}
+        <DimensionalHero
+          uri={item.displayUrl}
           style={styles.heroImage}
-          resizeMode="contain"
           accessibilityLabel={item.name}
         />
       ) : (
