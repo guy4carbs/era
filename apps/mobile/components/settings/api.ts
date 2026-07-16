@@ -75,7 +75,7 @@ export async function deleteAccount(confirmEmail: string): Promise<DeleteAccount
   // Preferred path: the auth client's fetch attaches the persisted session.
   if (typeof client.$fetch === 'function') {
     try {
-      const { data, error } = await client.$fetch<DeleteSuccess>('/api/delete-account', {
+      const { data, error } = await client.$fetch<DeleteSuccess>(`${baseURL}/api/delete-account`, {
         method: 'POST',
         body,
       });
