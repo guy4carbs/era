@@ -29,7 +29,10 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { layout, spacing } from '@era/tokens';
 
-import { Toast } from '@/components/closet';
+// Direct file import (not the closet barrel): the barrel pulls in
+// ItemDetailSheet → wear barrel → MonthlyRecapCard → back to the share barrel,
+// a require cycle Metro warns on (and that can leave uninitialized values).
+import { Toast } from '@/components/closet/Toast';
 import {
   captureAndShare,
   collageImageUrls,

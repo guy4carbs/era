@@ -16,11 +16,16 @@ test('cookieParamFromUrl extracts the cookie from an era:// deep link', () => {
   assert.equal(cookieParamFromUrl(url), SESSION_COOKIE);
 });
 
-test('cookieParamFromUrl ignores non-era schemes and cookieless links', () => {
+test('cookieParamFromUrl ignores web/foreign schemes and cookieless links', () => {
   assert.equal(cookieParamFromUrl(`https://era.style/?cookie=${encodeURIComponent('x=y')}`), null);
   assert.equal(cookieParamFromUrl('era://some/path'), null);
-  assert.equal(cookieParamFromUrl('exp://127.0.0.1:8081?cookie=x%3Dy'), null);
+  assert.equal(cookieParamFromUrl(`mailto://x?cookie=${encodeURIComponent('x=y')}`), null);
   assert.equal(cookieParamFromUrl('not a url'), null);
+});
+
+test('cookieParamFromUrl accepts Expo Go exp:// links (dev sign-in path)', () => {
+  const url = `exp://192.168.1.12:8082?cookie=${encodeURIComponent(SESSION_COOKIE)}`;
+  assert.equal(cookieParamFromUrl(url), SESSION_COOKIE);
 });
 
 test('mergeSetCookie stores the plugin JSON shape with an ISO expiry', () => {

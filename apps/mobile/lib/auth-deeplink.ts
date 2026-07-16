@@ -27,8 +27,10 @@ export const AUTH_COOKIE_STORAGE_KEY = 'era_cookie';
 
 /**
  * Extract the `cookie` payload from an incoming deep link, or null when the URL
- * isn't ours / carries none. Only `era:` scheme links are honored — any web URL
- * or foreign scheme is ignored (never treat arbitrary links as session-bearing).
+ * isn't ours / carries none. Only the app's own schemes are honored — `era:` in
+ * real builds and `exp:`/`exps:` inside Expo Go (whose deep links are
+ * exp://<host>:<port>). Web URLs and foreign schemes are ignored: never treat
+ * arbitrary links as session-bearing.
  */
 export function cookieParamFromUrl(url: string): string | null {
   let parsed: URL;
@@ -37,7 +39,7 @@ export function cookieParamFromUrl(url: string): string | null {
   } catch {
     return null;
   }
-  if (parsed.protocol !== 'era:') {
+  if (parsed.protocol !== 'era:' && parsed.protocol !== 'exp:' && parsed.protocol !== 'exps:') {
     return null;
   }
   const cookie = parsed.searchParams.get('cookie');
