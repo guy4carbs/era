@@ -113,6 +113,34 @@ export { matchOutfitToCloset } from './outfit-matching.ts';
 export type { ScoredClosetMatch, SlotMatch } from './outfit-matching.ts';
 export { isEraFeedEnabled } from './feed-flags.ts';
 
+// Turnaround views — flag-gated multi-angle renders of an item cutout, generated
+// by an image API and QA'd by Claude vision. All pure and client-safe (no
+// server-only deps); web/mobile client code imports the wire contract + QA gate
+// from the `@era/core/turnaround` subpath and the flags from
+// `@era/core/turnaround-flags` to avoid this server-tainted barrel. Re-exported
+// here for server callers (the route assembles the payload, drives generation
+// from the prompts, and scores each QA verdict). See turnaround.ts,
+// turnaround-flags.ts.
+export {
+  TURNAROUND_ANGLES,
+  TURNAROUND_PROMPT_PREAMBLE,
+  TURNAROUND_ANGLE_INSTRUCTIONS,
+  anglePrompt,
+  isRenderAcceptable,
+} from './turnaround.ts';
+export type {
+  TurnaroundAngle,
+  TurnaroundRender,
+  TurnaroundStatus,
+  TurnaroundState,
+  TurnaroundVerdict,
+} from './turnaround.ts';
+export {
+  isEraTurnaroundEnabled,
+  enabledTurnaroundCategories,
+  isTurnaroundCategoryEnabled,
+} from './turnaround-flags.ts';
+
 // Persistence type contract, re-exported type-only from @era/db.
 export type * from './db-types.ts';
 

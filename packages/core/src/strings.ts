@@ -881,6 +881,51 @@ export const strings = {
   },
 
   /**
+   * Turnaround views — the flag-gated multi-angle renders of a closet piece
+   * (three-quarter, side, back) an image API generates from the item's cutout and
+   * Claude vision QAs before any render is shown. This copy lives on the closet
+   * detail surface, where the angles appear beside the straight-on cutout. Voice
+   * stays Era's: quiet and honest, no exclamation. The `generating` and `failed`
+   * lines carry the async beats — a patient wait and a calm, retryable miss — and
+   * {@link strings.turnaround.unavailable} is the dormant "not switched on yet"
+   * beat, never an error banner. {@link strings.turnaround.angleLabel} names each
+   * viewpoint plainly for screen readers, keyed by the `TurnaroundAngle` union in
+   * `@era/core/turnaround`; an unknown angle falls back to a plain "Other view" so
+   * it never renders a raw slug.
+   */
+  turnaround: {
+    /** Section / affordance label that opens the angle views on the item detail. */
+    viewAngles: 'View angles',
+    /** Progress line while the angles are being rendered and QA'd. Patient, plain. */
+    generating: 'Rendering angles…',
+    /** The render run failed — calm, no blame, retryable. */
+    failed: "Couldn't render the angles just now — give it another go.",
+    /**
+     * Dormant state — turnaround isn't switched on for this piece (or the feature
+     * is off server-side). Matches the app's dormant voice: a quiet "coming soon"
+     * beat, never an error or "not configured".
+     */
+    unavailable: "Extra angles aren't available for this piece yet.",
+    /**
+     * Accessible label for a rendered angle, keyed by the `TurnaroundAngle` union.
+     * Screen-reader plain: `angleLabel('three_quarter')` → "Three-quarter view".
+     * Unknown angles fall back to "Other view" so this never leaks a raw slug.
+     */
+    angleLabel: (angle: string): string => {
+      switch (angle) {
+        case 'three_quarter':
+          return 'Three-quarter view';
+        case 'side':
+          return 'Side view';
+        case 'back':
+          return 'Back view';
+        default:
+          return 'Other view';
+      }
+    },
+  },
+
+  /**
    * Public profile pages — a user's closet, eras, and outfits as seen by someone
    * else (or previewed by the owner). The counterpart to the private in-app tabs:
    * where {@link strings.closet}/{@link strings.design} speak to the owner in the

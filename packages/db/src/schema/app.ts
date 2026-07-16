@@ -30,6 +30,8 @@ import {
   feedReportStatus,
   itemCategory,
   itemSource,
+  turnaroundAngle,
+  turnaroundJobStatus,
 } from './enums.ts';
 import { user } from './auth.ts';
 
@@ -573,5 +575,65 @@ export const feedReports = pgTable(
     index('feed_reports_status_created_at_idx').on(table.status, table.createdAt),
     // Per-reporter daily cap COUNT.
     index('feed_reports_reporter_id_created_at_idx').on(table.reporterId, table.createdAt),
+  ],
+);
+
+export const itemTurnaroundJobs = pgTable(
+  'item_turnaround_jobs',
+  {
+    // One generation job per item — the item id IS the primary key, so the
+    // insert-onConflictDoNothing that starts a job doubles as the idempotency
+    // claim. The neon-http driver has no transactions, so a claimed row (not a
+    // transaction) is what guards against a second concurrent generation.
+    itemId: uuid('item_id')
+      .primaryKey()
+      .references(() => items.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    status: turnaroundJobStatus('status').notNull().default('running'),
+    // Failure detail for ops; null while running or on success.
+    error: text('error'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    // Per-user daily cap COUNT over the user's own jobs.
+    index('item_turnaround_jobs_user_id_created_at_idx').on(table.userId, table.createdAt),
+  ],
+);
+
+export const itemAngleRenders = pgTable(
+  'item_angle_renders',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    itemId: uuid('item_id')
+      .notNull()
+      .references(() => items.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    angle: turnaroundAngle('angle').notNull(),
+    // items-cutout bucket key, {userId}/{uuid}.png. Nullable: null = QA-rejected,
+    // and the candidate bytes are NEVER persisted because the cutout bucket is
+    // public (r2.dev) — an accepted row always has a path, a rejected row never
+    // does (qaNote carries why). So imagePath IS NOT NULL ⟺ accepted is true.
+    imagePath: text('image_path'),
+    // Claude-vision QA verdict. Only accepted rows are ever served; a rejected
+    // row is kept (accepted=false, imagePath null) for audit rather than deleted.
+    accepted: boolean('accepted').notNull(),
+    // Why the render was rejected; null when accepted.
+    qaNote: text('qa_note'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    // One render per (item, angle). A retry deletes the old row then reinserts,
+    // both single statements — no transaction needed.
+    unique('item_angle_renders_item_id_angle_key').on(table.itemId, table.angle),
+    // The render lookup for an item's turnaround set.
+    index('item_angle_renders_item_id_idx').on(table.itemId),
   ],
 );
