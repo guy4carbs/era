@@ -324,7 +324,7 @@ const arrowStyle: CSSProperties = {
   lineHeight: 1,
   cursor: 'pointer',
   zIndex: 2,
-  transition: 'opacity 150ms ease',
+  transition: `opacity ${motionToken.durations.reducedFadeMs}ms ease`,
 };
 
 const dotsStyle: CSSProperties = {

@@ -898,8 +898,19 @@ export const strings = {
     viewAngles: 'View angles',
     /** Progress line while the angles are being rendered and QA'd. Patient, plain. */
     generating: 'Rendering angles…',
-    /** The render run failed — calm, no blame, retryable. */
+    /**
+     * The render run failed — calm, no blame, retryable. Only for states that
+     * re-offer the affordance; a terminal zero-render run shows
+     * {@link strings.turnaround.noAngles} instead (never name a retry the UI
+     * doesn't offer).
+     */
     failed: "Couldn't render the angles just now — give it another go.",
+    /**
+     * Terminal state — the run completed but the quality gate accepted nothing.
+     * No retry verb on purpose: this state renders no button, so the copy must
+     * not invite an action that isn't there.
+     */
+    noAngles: 'The straight-on view is all we have for this piece.',
     /**
      * Dormant state — turnaround isn't switched on for this piece (or the feature
      * is off server-side). Matches the app's dormant voice: a quiet "coming soon"

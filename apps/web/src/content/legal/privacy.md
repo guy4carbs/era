@@ -73,7 +73,7 @@ A few things to know:
 
 - Ovi's suggestions are **automated** and are not professional styling, medical, or any other kind of professional advice.
 - Ovi's large-language-model brain is **currently dormant**; today a deterministic (rule-based) stylist generates suggestions. When the LLM is active, the data described above is sent to our AI provider (see [Who we share data with](#who-we-share-data-with)) to produce a response.
-- We do not use your data to train third-party foundation models, and we ask our AI provider not to train their general models on it. (See our provider list below.)
+- We do not use your data to train third-party foundation models, and our AI providers may not train their general models on it. (See our provider list below.)
 - You are always in control: Ovi suggests, you decide. Nothing is purchased or shared automatically.
 
 You have the right not to be subject to solely automated decisions that produce legal or similarly significant effects. Ovi's outfit suggestions do not have that kind of effect — they're style ideas — but if you have concerns, contact us and a human will help.
@@ -101,6 +101,7 @@ Era+ is an optional paid subscription. The core app is free; Era+ unlocks additi
 We don't sell your personal information. We share it only with service providers ("processors") who help us run Era, and only as needed. These currently include:
 
 - **AI model provider (Anthropic)** — to power Ovi's styling suggestions when the AI stylist is active, and to analyze the photos you add to your closet so we can extract each item's attributes (category, color, pattern, brand).
+- **AI image provider (Google)** — when the multi-angle "turnaround" view is enabled, to generate alternate-angle renders of one of your items from its cutout image. We send only that item's cutout image and a fixed rendering instruction — never your name, email, or other identifying details — and we use a paid Gemini API tier under terms that prohibit Google from using this content to train its general models. *(Currently dormant until the feature is enabled.)*
 - **Cloudflare R2** — to store your clothing images.
 - **Neon** — our PostgreSQL database host, where your account and closet records live.
 - **Railway** — our application hosting/infrastructure provider.

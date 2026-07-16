@@ -252,8 +252,9 @@ function TurnaroundHero({ item, onToast }: { item: GalleryItem; onToast: (messag
       setRenders(state.renders);
       setPhase('angles');
     } else {
-      // Completed, but QA passed nothing — one calm line, offer nothing else.
-      setNotice(strings.turnaround.failed);
+      // Completed, but QA passed nothing — one calm terminal line with no
+      // retry verb, because this state offers no button to retry with.
+      setNotice(strings.turnaround.noAngles);
       setPhase('empty');
     }
   }, []);

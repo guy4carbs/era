@@ -338,8 +338,9 @@ function TurnaroundHero({
       setRenders(state.renders);
       setPhase('angles');
     } else {
-      // Completed, but QA passed nothing — one calm line, offer nothing else.
-      setNotice(strings.turnaround.failed);
+      // Completed, but QA passed nothing — one calm terminal line with no
+      // retry verb, because this state offers no button to retry with.
+      setNotice(strings.turnaround.noAngles);
       setPhase('empty');
     }
   }, []);
@@ -347,7 +348,8 @@ function TurnaroundHero({
   const handleGenerateError = useCallback(
     (error: unknown) => {
       if (error instanceof LimitReachedError) {
-        onToast(error.serverMessage ?? strings.errors.generic);
+        // Same warm daily-cap voice as web — never drop to the cold generic line.
+        onToast(error.serverMessage ?? strings.ovi.limitReachedProcessing);
         setPhase('offer'); // the cap resets tomorrow — leave the affordance
       } else if (error instanceof TurnaroundUnavailableError) {
         setNotice(strings.turnaround.unavailable);
