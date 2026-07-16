@@ -45,6 +45,14 @@ test('tiltFromDelta is symmetric about zero', () => {
   assert.equal(neg.rotateY, -pos.rotateY);
 });
 
+test('tiltFromDelta deadzones sub-jitter deltas to flat', () => {
+  // Under the 0.01 rad deadzone → treated as rest (no shimmer at rest).
+  assert.deepEqual(tiltFromDelta(0.009, -0.009, MAX_DEG), { rotateX: 0, rotateY: 0 });
+  // At/over the deadzone → passes through untouched.
+  assert.ok(tiltFromDelta(0.01, 0, MAX_DEG).rotateX > 0);
+  assert.ok(tiltFromDelta(0, -0.02, MAX_DEG).rotateY < 0);
+});
+
 test('dragTilt maps a full-size drag to max tilt, clamped', () => {
   const size = 300;
   // Full-width drag right → +maxDeg about Y; full-height drag down → -maxDeg about X.

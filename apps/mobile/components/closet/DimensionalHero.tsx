@@ -238,7 +238,7 @@ const SHEEN_END = { x: 1, y: 1 } as const;
 
 // The sheen bleeds one base unit past every edge so a slide never uncovers a
 // corner; the card's overflow clips it back.
-const SHEEN_BLEED = spacing.s1;
+const SHEEN_BLEED = spacing.s4;
 
 const styles = StyleSheet.create({
   card: {

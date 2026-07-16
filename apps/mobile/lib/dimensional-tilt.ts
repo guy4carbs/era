@@ -57,9 +57,22 @@ export function driftBaseline(baseline: number, reading: number, alpha: number):
 export function tiltFromDelta(deltaPitch: number, deltaRoll: number, maxDeg: number): Tilt {
   'worklet';
   return {
-    rotateX: clampAbs((deltaPitch / SENSOR_RANGE_RAD) * maxDeg, maxDeg),
-    rotateY: clampAbs((deltaRoll / SENSOR_RANGE_RAD) * maxDeg, maxDeg),
+    rotateX: clampAbs((deadzoned(deltaPitch) / SENSOR_RANGE_RAD) * maxDeg, maxDeg),
+    rotateY: clampAbs((deadzoned(deltaRoll) / SENSOR_RANGE_RAD) * maxDeg, maxDeg),
   };
+}
+
+/**
+ * Sensor deadzone (radians): deltas smaller than ~0.5 deg are treated as zero so
+ * fusion jitter on weak hardware can never shimmer the card at rest. The fused
+ * ROTATION sensor sits well under this when still; an intentional tilt blows
+ * straight past it, so the hand-feel is untouched.
+ */
+const DEADZONE_RAD = 0.01;
+
+function deadzoned(delta: number): number {
+  'worklet';
+  return Math.abs(delta) < DEADZONE_RAD ? 0 : delta;
 }
 
 /**
