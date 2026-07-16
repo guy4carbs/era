@@ -18,6 +18,12 @@ import type { GalleryItem } from './types';
 
 export interface ClosetGalleryProps {
   items: GalleryItem[];
+  /**
+   * Server-authoritative turnaround flag, threaded from the closet page's server
+   * wrapper (request-time `ERA_TURNAROUND_ENABLED`, never a `NEXT_PUBLIC_*` read).
+   * Handed to the detail sheet's angle-viewer flow.
+   */
+  turnaroundEnabled: boolean;
   /** Remove an archived item from the gallery. */
   onArchived: (id: string) => void;
   /** Replace an edited item in the gallery. */
@@ -43,7 +49,7 @@ const gridCss = [
  * one category. Tapping a tile opens the detail sheet (edit / archive). Filtered
  * or archived tiles leave via AnimatePresence.
  */
-export function ClosetGallery({ items, onArchived, onUpdated }: ClosetGalleryProps) {
+export function ClosetGallery({ items, turnaroundEnabled, onArchived, onUpdated }: ClosetGalleryProps) {
   const reduced = useReducedMotion();
   const router = useRouter();
   const [query, setQuery] = useState('');
@@ -200,9 +206,11 @@ export function ClosetGallery({ items, onArchived, onUpdated }: ClosetGalleryPro
           <ItemDetailSheet
             key={selected.id}
             item={selected}
+            turnaroundEnabled={turnaroundEnabled}
             onClose={() => setSelectedId(null)}
             onArchived={handleArchived}
             onUpdated={handleUpdated}
+            onToast={setToast}
           />
         ) : null}
       </AnimatePresence>

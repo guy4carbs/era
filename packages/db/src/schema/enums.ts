@@ -40,3 +40,11 @@ export const feedReportStatus = pgEnum('feed_report_status', [
   'reviewed',
   'dismissed',
 ]);
+
+export const turnaroundAngle = pgEnum('turnaround_angle', ['three_quarter', 'side', 'back']);
+
+export const turnaroundJobStatus = pgEnum('turnaround_job_status', [
+  'running',
+  'complete',
+  'failed',
+]);

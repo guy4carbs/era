@@ -18,6 +18,8 @@
     "./feed-ranking": "./src/feed-ranking.ts",
     "./outfit-matching": "./src/outfit-matching.ts",
     "./feed-flags": "./src/feed-flags.ts",
+    "./turnaround": "./src/turnaround.ts",
+    "./turnaround-flags": "./src/turnaround-flags.ts",
     "./wardrobe-gaps": "./src/wardrobe-gaps.ts",
     "./wear-stats": "./src/wear-stats.ts",
     "./analytics": "./src/analytics.ts",

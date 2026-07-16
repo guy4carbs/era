@@ -17,18 +17,30 @@
  * live in GlassSheet.
  */
 import { strings } from '@era/core/strings';
-import { layout, radii, rnShadow, spacing, typeRamp } from '@era/tokens';
+import { type TurnaroundRender, type TurnaroundState } from '@era/core/turnaround';
+import { layout, motion, radii, rnShadow, spacing, typeRamp } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
-import { useEffect, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { Button } from '@/components/Button';
 import { GlassSheet } from '@/components/GlassSheet';
 import { archiveItem, patchItem, type ItemUpdates, type ItemWithDisplay } from '@/components/items';
 import { WearStatsBlock } from '@/components/wear';
+import { useReducedMotionSafe } from '@/lib/motion';
+import { LimitReachedError } from '@/lib/rate-limit';
 import { useTheme } from '@/lib/theme';
+import { eraTurnaroundEnabled } from '@/lib/turnaround-flag';
 
+import { AngleViewer } from './AngleViewer';
 import { ItemEditor } from './ItemEditor';
+import {
+  fetchTurnaround,
+  generateTurnaround,
+  pollTurnaround,
+  TurnaroundUnavailableError,
+} from './turnaround-api';
 
 interface ItemDetailSheetProps {
   readonly item: ItemWithDisplay | null;
@@ -179,24 +191,13 @@ function Detail({ item, busy, onConfirm, onEdit, onArchived, onClose, onToast }:
 
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <View
-        style={[
-          styles.hero,
-          rnShadow('e2'),
-          { backgroundColor: colors.surface, borderColor: colors.hairline },
-        ]}
-      >
-        {item.displayUrl ? (
-          <Image
-            source={{ uri: item.displayUrl }}
-            style={styles.heroImage}
-            resizeMode="contain"
-            accessibilityLabel={item.name}
-          />
-        ) : (
-          <View style={styles.heroImage} />
-        )}
-      </View>
+      {/* Turnaround views (flag-gated): the swipe-through angle viewer when
+          renders exist, else the untouched static hero as the exact fallback. */}
+      {eraTurnaroundEnabled && item.displayUrl ? (
+        <TurnaroundHero key={item.id} item={item} onToast={onToast} />
+      ) : (
+        <StaticHero item={item} />
+      )}
 
       <View style={styles.headings}>
         <Text
@@ -274,6 +275,172 @@ function Detail({ item, busy, onConfirm, onEdit, onArchived, onClose, onToast }:
   );
 }
 
+/**
+ * The static cutout hero — the exact original detail image, kept verbatim as the
+ * turnaround fallback (flag off, no cutout, or no accepted renders).
+ */
+function StaticHero({ item }: { readonly item: ItemWithDisplay }) {
+  const { colors } = useTheme();
+  return (
+    <View
+      style={[
+        styles.hero,
+        rnShadow('e2'),
+        { backgroundColor: colors.surface, borderColor: colors.hairline },
+      ]}
+    >
+      {item.displayUrl ? (
+        <Image
+          source={{ uri: item.displayUrl }}
+          style={styles.heroImage}
+          resizeMode="contain"
+          accessibilityLabel={item.name}
+        />
+      ) : (
+        <View style={styles.heroImage} />
+      )}
+    </View>
+  );
+}
+
+/** The turnaround surface's UI phase — drives which chrome shows over the hero. */
+type TurnaroundPhase = 'fallback' | 'offer' | 'generating' | 'angles' | 'empty';
+
+/**
+ * The turnaround-aware hero. On open it reads the item's turnaround state (silent
+ * failure → the static hero, nothing surfaced). Complete renders show the
+ * {@link AngleViewer}; a still-`running` run polls to completion; an eligible
+ * un-run piece offers a quiet "View angles" that kicks the slow generation and
+ * animates the viewer in. A daily cap toasts (Ovi's line), the feature being off
+ * shows the dormant "unavailable" beat, a QA-passed-nothing run shows one calm
+ * line, and any other miss is a calm retryable notice with the button back.
+ */
+function TurnaroundHero({
+  item,
+  onToast,
+}: {
+  readonly item: ItemWithDisplay;
+  readonly onToast: (message: string) => void;
+}) {
+  const { colors } = useTheme();
+  const reduced = useReducedMotionSafe();
+
+  const [phase, setPhase] = useState<TurnaroundPhase>('fallback');
+  const [renders, setRenders] = useState<readonly TurnaroundRender[]>([]);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  // A generation runs ~60–90s; guard every settle against a closed sheet so a
+  // late resolve can't set state on an unmounted piece.
+  const activeRef = useRef(true);
+
+  const finishGeneration = useCallback((state: TurnaroundState) => {
+    if (state.renders.length > 0) {
+      setRenders(state.renders);
+      setPhase('angles');
+    } else {
+      // Completed, but QA passed nothing — one calm terminal line with no
+      // retry verb, because this state offers no button to retry with.
+      setNotice(strings.turnaround.noAngles);
+      setPhase('empty');
+    }
+  }, []);
+
+  const handleGenerateError = useCallback(
+    (error: unknown) => {
+      if (error instanceof LimitReachedError) {
+        // Same warm daily-cap voice as web — never drop to the cold generic line.
+        onToast(error.serverMessage ?? strings.ovi.limitReachedProcessing);
+        setPhase('offer'); // the cap resets tomorrow — leave the affordance
+      } else if (error instanceof TurnaroundUnavailableError) {
+        setNotice(strings.turnaround.unavailable);
+        setPhase('empty');
+      } else {
+        setNotice(strings.turnaround.failed);
+        setPhase('offer'); // calm, retryable — button back
+      }
+    },
+    [onToast],
+  );
+
+  const runGeneration = useCallback(() => {
+    setNotice(null);
+    setPhase('generating');
+    void (async () => {
+      try {
+        const state = await generateTurnaround(item.id);
+        if (activeRef.current) finishGeneration(state);
+      } catch (error) {
+        if (activeRef.current) handleGenerateError(error);
+      }
+    })();
+  }, [item.id, finishGeneration, handleGenerateError]);
+
+  useEffect(() => {
+    activeRef.current = true;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const state = await fetchTurnaround(item.id);
+        if (cancelled) return;
+        if (state.status === 'complete' && state.renders.length > 0) {
+          setRenders(state.renders);
+          setPhase('angles');
+        } else if (state.status === 'running') {
+          setPhase('generating');
+          try {
+            const settled = await pollTurnaround(item.id);
+            if (!cancelled && activeRef.current) finishGeneration(settled);
+          } catch (error) {
+            if (!cancelled && activeRef.current) handleGenerateError(error);
+          }
+        } else if ((state.status === 'none' || state.status === 'failed') && state.categoryEnabled) {
+          setPhase('offer');
+        } else {
+          setPhase('fallback');
+        }
+      } catch {
+        // Silent: no turnaround for this piece (404 / flag off / not owner) — the
+        // static hero stays exactly as it was, nothing surfaced.
+      }
+    })();
+    return () => {
+      cancelled = true;
+      activeRef.current = false;
+    };
+  }, [item.id, finishGeneration, handleGenerateError]);
+
+  const frontUrl = item.displayUrl;
+  if (!frontUrl) return <StaticHero item={item} />;
+
+  if (phase === 'angles') {
+    return (
+      <Animated.View entering={reduced ? undefined : FadeIn.duration(motion.durations.maxMs)}>
+        <AngleViewer frontUrl={frontUrl} renders={renders} />
+      </Animated.View>
+    );
+  }
+
+  return (
+    <View style={styles.turnaround}>
+      <StaticHero item={item} />
+      {phase === 'generating' ? (
+        <View style={styles.turnaroundRow}>
+          <ActivityIndicator color={colors.secondaryStrong} />
+          <Text style={[styles.turnaroundNote, { color: colors.secondaryStrong }]}>
+            {strings.turnaround.generating}
+          </Text>
+        </View>
+      ) : null}
+      {notice ? (
+        <Text style={[styles.turnaroundNote, { color: colors.secondaryStrong }]}>{notice}</Text>
+      ) : null}
+      {phase === 'offer' ? (
+        <Button label={strings.turnaround.viewAngles} variant="secondary" onPress={runGeneration} />
+      ) : null}
+    </View>
+  );
+}
+
 function MetaLine({ text }: { readonly text: string }) {
   const { colors } = useTheme();
   return (
@@ -325,6 +492,18 @@ const styles = StyleSheet.create({
   heroImage: {
     width: '100%',
     aspectRatio: layout.itemCard.ratio,
+  },
+  turnaround: {
+    gap: spacing.s3,
+  },
+  turnaroundRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.s2,
+  },
+  turnaroundNote: {
+    fontSize: typeRamp.subhead.pt,
+    lineHeight: typeRamp.subhead.lineHeight,
   },
   headings: {
     gap: spacing.s1,

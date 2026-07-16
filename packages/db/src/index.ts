@@ -8,6 +8,8 @@ import {
   feedReportStatus,
   itemCategory,
   itemSource,
+  turnaroundAngle,
+  turnaroundJobStatus,
 } from './schema/enums.ts';
 import {
   aiEvents,
@@ -20,7 +22,9 @@ import {
   follows,
   inAppNotifications,
   inboundEmailEvents,
+  itemAngleRenders,
   items,
+  itemTurnaroundJobs,
   notificationPreferences,
   outfitItems,
   outfits,
@@ -49,6 +53,8 @@ export {
   aiEventKind,
   feedReportReason,
   feedReportStatus,
+  turnaroundAngle,
+  turnaroundJobStatus,
   // Domain tables
   profiles,
   styleProfiles,
@@ -75,6 +81,8 @@ export {
   postSaves,
   userBlocks,
   feedReports,
+  itemTurnaroundJobs,
+  itemAngleRenders,
 };
 
 export { createDbClient } from './client.ts';
@@ -159,9 +167,17 @@ export type NewUserBlock = typeof userBlocks.$inferInsert;
 export type FeedReport = typeof feedReports.$inferSelect;
 export type NewFeedReport = typeof feedReports.$inferInsert;
 
+export type ItemTurnaroundJob = typeof itemTurnaroundJobs.$inferSelect;
+export type NewItemTurnaroundJob = typeof itemTurnaroundJobs.$inferInsert;
+
+export type ItemAngleRender = typeof itemAngleRenders.$inferSelect;
+export type NewItemAngleRender = typeof itemAngleRenders.$inferInsert;
+
 // Enum value unions.
 export type ItemCategory = (typeof itemCategory.enumValues)[number];
 export type ItemSource = (typeof itemSource.enumValues)[number];
 export type AiEventKind = (typeof aiEventKind.enumValues)[number];
 export type FeedReportReason = (typeof feedReportReason.enumValues)[number];
 export type FeedReportStatus = (typeof feedReportStatus.enumValues)[number];
+export type TurnaroundAngle = (typeof turnaroundAngle.enumValues)[number];
+export type TurnaroundJobStatus = (typeof turnaroundJobStatus.enumValues)[number];

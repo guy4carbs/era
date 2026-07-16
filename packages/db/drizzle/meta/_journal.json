@@ -64,6 +64,13 @@
       "when": 1784052846812,
       "tag": "0008_minor_deadpool",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1784184658958,
+      "tag": "0009_warm_raider",
+      "breakpoints": true
     }
   ]
 }
