@@ -1,4 +1,5 @@
 import { spacing, typeRamp } from '@era/tokens';
+import * as Linking from 'expo-linking';
 import { Link } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
@@ -9,9 +10,11 @@ import { Input } from '@/components/Input';
 import { eraAuth } from '@/lib/auth-client';
 import { useTheme } from '@/lib/theme';
 
-// The deep-link target that brings the user back into the app after auth.
-// Must match app.json's `scheme` and the server's trustedOrigins.
-const callbackURL = 'era://';
+// The deep-link target that brings the user back into the app after auth —
+// environment-correct, not hardcoded: `era://` in real builds, but
+// `exp://<host>:<port>` inside Expo Go (which cannot receive era:// links).
+// Both schemes are in the server's trustedOrigins.
+const callbackURL = Linking.createURL('');
 
 type Status =
   | { readonly kind: 'idle' }

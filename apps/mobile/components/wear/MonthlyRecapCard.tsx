@@ -20,7 +20,10 @@ import { useCallback } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
-import { useCollageExport } from '@/components/share';
+// Direct file import (not the share barrel) — breaks the share↔wear require
+// cycle Metro flagged (share barrel → CollageExportHost → closet barrel →
+// ItemDetailSheet → wear barrel → this file → share barrel).
+import { useCollageExport } from '@/components/share/CollageExportHost';
 import { useTheme } from '@/lib/theme';
 
 import type { WearMonthItem } from './api';
