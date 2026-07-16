@@ -28,6 +28,8 @@ export interface DeriveResult {
 
 const ENDPOINT = '/api/derive-style-profile';
 
+const baseURL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
+
 /** The subset of the auth client we call, named structurally to stay strict. */
 interface AuthFetchClient {
   readonly $fetch?: <T>(
@@ -57,7 +59,6 @@ export async function deriveStyleProfile(answers: QuizAnswerMap): Promise<Derive
   }
 
   // Fallback: bare fetch with the plugin-stored cookie attached by hand.
-  const baseURL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
   const cookie = client.getCookie?.() ?? '';
   const response = await fetch(`${baseURL}${ENDPOINT}`, {
     method: 'POST',
