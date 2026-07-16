@@ -135,6 +135,7 @@ export function ItemDetailSheet({ item, open, onClose, onUpdated, onArchived, on
         ) : (
           <Detail
             item={item}
+            active={open}
             busy={busy}
             onConfirm={confirmDraft}
             onEdit={() => setEditing(true)}
@@ -152,6 +153,10 @@ interface DetailProps {
   readonly item: ItemWithDisplay;
   /** A confirm/edit request is in flight — guards the draft-confirm button. */
   readonly busy: boolean;
+  /** True while the sheet is actually open — GlassSheet keeps a closed sheet
+   * mounted (translated off-screen), so this is what gates the hero's tilt
+   * sensor; a dismissed sheet must never keep the gyroscope streaming. */
+  readonly active: boolean;
   /** Confirm an unconfirmed draft as it stands (PATCH `confirm: true`). */
   readonly onConfirm: () => void;
   readonly onEdit: () => void;
@@ -160,7 +165,7 @@ interface DetailProps {
   readonly onToast: (message: string) => void;
 }
 
-function Detail({ item, busy, onConfirm, onEdit, onArchived, onClose, onToast }: DetailProps) {
+function Detail({ item, active, busy, onConfirm, onEdit, onArchived, onClose, onToast }: DetailProps) {
   const { colors } = useTheme();
 
   const tags = buildTags(item);
@@ -195,9 +200,9 @@ function Detail({ item, busy, onConfirm, onEdit, onArchived, onClose, onToast }:
       {/* Turnaround views (flag-gated): the swipe-through angle viewer when
           renders exist, else the untouched static hero as the exact fallback. */}
       {eraTurnaroundEnabled && item.displayUrl ? (
-        <TurnaroundHero key={item.id} item={item} onToast={onToast} />
+        <TurnaroundHero key={item.id} item={item} active={active} onToast={onToast} />
       ) : (
-        <StaticHero item={item} />
+        <StaticHero item={item} active={active} />
       )}
 
       <View style={styles.headings}>
@@ -283,7 +288,7 @@ function Detail({ item, busy, onConfirm, onEdit, onArchived, onClose, onToast }:
  * no cutout, or no accepted renders) and used for the turnaround's front/offer
  * states, so both hero paths gain the same dimensionality.
  */
-function StaticHero({ item }: { readonly item: ItemWithDisplay }) {
+function StaticHero({ item, active }: { readonly item: ItemWithDisplay; readonly active: boolean }) {
   const { colors } = useTheme();
   return (
     <View
@@ -296,6 +301,7 @@ function StaticHero({ item }: { readonly item: ItemWithDisplay }) {
       {item.displayUrl ? (
         <DimensionalHero
           uri={item.displayUrl}
+          active={active}
           style={styles.heroImage}
           accessibilityLabel={item.name}
         />
@@ -320,9 +326,12 @@ type TurnaroundPhase = 'fallback' | 'offer' | 'generating' | 'angles' | 'empty';
  */
 function TurnaroundHero({
   item,
+  active,
   onToast,
 }: {
   readonly item: ItemWithDisplay;
+  /** Sheet-open state, threaded to the hero so the tilt sensor stops on dismiss. */
+  readonly active: boolean;
   readonly onToast: (message: string) => void;
 }) {
   const { colors } = useTheme();
@@ -413,7 +422,7 @@ function TurnaroundHero({
   }, [item.id, finishGeneration, handleGenerateError]);
 
   const frontUrl = item.displayUrl;
-  if (!frontUrl) return <StaticHero item={item} />;
+  if (!frontUrl) return <StaticHero item={item} active={active} />;
 
   if (phase === 'angles') {
     return (
@@ -425,7 +434,7 @@ function TurnaroundHero({
 
   return (
     <View style={styles.turnaround}>
-      <StaticHero item={item} />
+      <StaticHero item={item} active={active} />
       {phase === 'generating' ? (
         <View style={styles.turnaroundRow}>
           <ActivityIndicator color={colors.secondaryStrong} />

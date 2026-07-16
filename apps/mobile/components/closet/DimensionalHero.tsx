@@ -25,8 +25,8 @@
 import { motion, sheen, spacing } from '@era/tokens';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useMemo } from 'react';
-import { Image, StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { AccessibilityInfo, Image, StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
   SensorType,
   useAnimatedSensor,
@@ -73,16 +73,42 @@ const BASELINE_ALPHA = 0.02;
 export interface DimensionalHeroProps {
   readonly uri: string;
   readonly accessibilityLabel: string;
+  /**
+   * True while the hosting sheet is actually open. GlassSheet keeps a closed
+   * sheet mounted (translated off-screen), so unmount alone can't stop the
+   * rotation sensor — this prop does: inactive renders the plain static image
+   * and the sensor-bearing tilt tree leaves the tree entirely.
+   */
+  readonly active: boolean;
   /** Applied to the hero box — sizing matches the static Image it replaces. */
   readonly style?: StyleProp<ViewStyle>;
 }
 
-export function DimensionalHero({ uri, accessibilityLabel, style }: DimensionalHeroProps) {
+export function DimensionalHero({ uri, active, accessibilityLabel, style }: DimensionalHeroProps) {
   const reduced = useReducedMotionSafe();
 
-  // Reduced motion: the exact static image, flat in its hero box, and the
-  // sensor-bearing tilt tree never mounts (no subscription, no gestures, no sheen).
-  if (reduced) {
+  // Static-first: the tilt tree may only mount once the OS setting has resolved
+  // to "motion allowed". useReducedMotionSafe defaults to false while its async
+  // read is in flight, which would briefly mount the sensor tree even for
+  // reduced-motion users; this one-tick gate closes that window (the first
+  // frame is the identical static image either way, so nothing flashes).
+  const [motionKnownOk, setMotionKnownOk] = useState(false);
+  useEffect(() => {
+    let live = true;
+    void AccessibilityInfo.isReduceMotionEnabled().then((value) => {
+      if (live && !value) {
+        setMotionKnownOk(true);
+      }
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  // Reduced motion, setting unresolved, or sheet dismissed: the exact static
+  // image, flat in its hero box — the sensor-bearing tilt tree is not mounted
+  // (no subscription, no gestures, no sheen).
+  if (reduced || !motionKnownOk || !active) {
     return (
       <View style={style}>
         <Image
@@ -98,7 +124,7 @@ export function DimensionalHero({ uri, accessibilityLabel, style }: DimensionalH
   return <TiltingHero uri={uri} accessibilityLabel={accessibilityLabel} style={style} />;
 }
 
-function TiltingHero({ uri, accessibilityLabel, style }: DimensionalHeroProps) {
+function TiltingHero({ uri, accessibilityLabel, style }: Omit<DimensionalHeroProps, 'active'>) {
   const { resolved } = useTheme();
 
   // Rotation sensor at ~60Hz (interval 16ms). Deliberately under Android 12's
