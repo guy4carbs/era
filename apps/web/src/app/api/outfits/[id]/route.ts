@@ -30,8 +30,8 @@
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
-import { type AuthContext, AuthzError, ownerOnly, requireUser } from '@era/core';
-import { createDbClient, outfits, profiles } from '@era/db';
+import { type AuthContext, AuthzError, deleteObjectsUnderPrefix, ownerOnly, requireUser } from '@era/core';
+import { createDbClient, outfitTryons, outfits, profiles } from '@era/db';
 
 import { auth } from '../../../../lib/auth.ts';
 import {
@@ -182,6 +182,25 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   const outfit = await loadOwnedOutfit(id, authed.ctx);
   if (outfit instanceof NextResponse) {
     return outfit;
+  }
+
+  // Best-effort cleanup of the outfit's try-on render object BEFORE the row delete
+  // cascades away the outfit_tryons row. The DB row cascades on its own, but the R2
+  // object (in the avatars bucket, `${userId}/tryon/…`) does not, so sweep it here
+  // by its exact key. A cleanup miss must never block the outfit delete — a leftover
+  // object is later caught by the account-deletion `${userId}/` sweep.
+  try {
+    const [tryon] = await db
+      .select({ imagePath: outfitTryons.imagePath })
+      .from(outfitTryons)
+      .where(eq(outfitTryons.outfitId, id))
+      .limit(1);
+    if (tryon?.imagePath) {
+      const storage = serverStorageClient();
+      await deleteObjectsUnderPrefix(storage, storage.config.buckets.avatars, tryon.imagePath);
+    }
+  } catch (error) {
+    console.error('[era-tryon] outfit try-on render cleanup failed; continuing with delete:', error);
   }
 
   await db.delete(outfits).where(eq(outfits.id, id));

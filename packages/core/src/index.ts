@@ -55,6 +55,8 @@ export {
   requestUploadUrl,
   getAssetUrl,
   deleteUserObjects,
+  deleteObjectsUnderPrefix,
+  countObjectsUnderPrefix,
 } from './storage.ts';
 export type { AssetBucket, StorageConfig, StorageClient } from './storage.ts';
 

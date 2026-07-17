@@ -17,7 +17,7 @@
  * order; saving then PATCHes. ASSIGN-TO-ERA is offered once an outfit has an id.
  */
 import { strings } from '@era/core/strings';
-import { layout, spacing, typeRamp } from '@era/tokens';
+import { layout, radii, spacing, typeRamp } from '@era/tokens';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
@@ -32,11 +32,13 @@ import { useCollageExport } from '@/components/share';
 import { fetchItems, type ItemWithDisplay } from '@/components/items';
 import { trackOnce } from '@/lib/analytics';
 import { eraFeedEnabled } from '@/lib/feed-flag';
+import { eraTryonEnabled } from '@/lib/tryon-flag';
 import { useReducedMotionSafe } from '@/lib/motion';
 import { LimitReachedError } from '@/lib/rate-limit';
 import { useTheme } from '@/lib/theme';
 
 import { sharePost, unsharePost } from '@/components/feed/api';
+import { TryOnSheet } from '@/components/tryon/TryOnSheet';
 
 import { AssignEraSheet } from './AssignEraSheet';
 import { CanvasStage } from './CanvasStage';
@@ -105,6 +107,11 @@ export function OutfitCanvas({ outfitId: initialOutfitId }: OutfitCanvasProps) {
   const [sharedPostId, setSharedPostId] = useState<string | null>(null);
   const [hasCover, setHasCover] = useState(false);
   const [sharing, setSharing] = useState(false);
+
+  // "See it on you" — the Era+ try-on sheet (flag-gated, saved-outfit only). The
+  // sheet reads cached state on open (no spend) and bubbles the gating outcomes:
+  // not-Era+ routes to the paywall, no-avatar routes to onboarding.
+  const [tryonOpen, setTryonOpen] = useState(false);
 
   const guideX = useSharedValue(0);
   const guideY = useSharedValue(0);
@@ -444,6 +451,34 @@ export function OutfitCanvas({ outfitId: initialOutfitId }: OutfitCanvasProps) {
         </View>
       ) : null}
 
+      {/* See it on you — the Era+ try-on entry, shown to everyone once the outfit
+          is saved (the quiet Era+ badge is the honest upsell for free users). */}
+      {eraTryonEnabled && outfitId ? (
+        <View style={styles.shareRow}>
+          <View style={styles.tryonRow}>
+            <Button
+              label={strings.tryon.seeItOnYou}
+              variant="secondary"
+              onPress={() => {
+                void Haptics.selectionAsync();
+                setTryonOpen(true);
+              }}
+              style={styles.tryonButton}
+            />
+            <View
+              style={[
+                styles.plusBadge,
+                { borderColor: colors.hairline, backgroundColor: `${colors.accent}29` },
+              ]}
+            >
+              <Text style={[styles.plusBadgeText, { color: colors.accent }]}>
+                {strings.tryon.plusBadge}
+              </Text>
+            </View>
+          </View>
+        </View>
+      ) : null}
+
       {eraFeedEnabled && outfitId && hasCover ? (
         <View style={styles.shareRow}>
           <View style={styles.shareColumn}>
@@ -508,6 +543,22 @@ export function OutfitCanvas({ outfitId: initialOutfitId }: OutfitCanvasProps) {
         onCreateAndAssign={createAndAssign}
       />
 
+      {eraTryonEnabled && outfitId ? (
+        <TryOnSheet
+          open={tryonOpen}
+          onClose={() => setTryonOpen(false)}
+          outfitId={outfitId}
+          onNeedsPlus={() => {
+            setTryonOpen(false);
+            router.push('/paywall');
+          }}
+          onNeedsAvatar={() => {
+            setTryonOpen(false);
+            router.push('/avatar');
+          }}
+        />
+      ) : null}
+
       <Toast
         message={toast}
         onHide={() => setToast(null)}
@@ -558,5 +609,26 @@ const styles = StyleSheet.create({
   },
   bottomButton: {
     flex: 1,
+  },
+  tryonRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.s2,
+  },
+  tryonButton: {
+    flex: 1,
+  },
+  plusBadge: {
+    paddingHorizontal: spacing.s2,
+    paddingVertical: spacing.s1,
+    borderRadius: radii.chip,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderCurve: 'continuous',
+  },
+  plusBadgeText: {
+    fontSize: typeRamp.caption.pt,
+    lineHeight: typeRamp.caption.lineHeight,
+    fontWeight: '700',
   },
 });

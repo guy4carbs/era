@@ -21,7 +21,7 @@ Ovi gives a weather-aware daily outfit suggestion → the user logs what they ac
 - **Phase 1 — Foundation.** Closet, daily suggestion, the core loop.
 - **Phase 2 — Shop + stickiness.** Discovery and habits that bring users back.
 - **Phase 3 — Social + depth.** Sharing, richer taste modeling.
-- **Phase 4 — Avatar / checkout / models.** Try-on, buying, advanced models.
+- **Phase 4 — Avatar / checkout / models.** Try-on ("See it on you" — Era+), buying, advanced models.
 
 ## The trust rule
 

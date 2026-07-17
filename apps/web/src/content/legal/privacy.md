@@ -96,12 +96,25 @@ Era+ is an optional paid subscription. The core app is free; Era+ unlocks additi
 - **What we store.** On our own servers we keep a small record of your subscription so we can grant Era+ access: the plan you chose, its status (active, renewing, expired, or in a billing-retry period), the relevant dates (when it started and when it renews or expires), which store processed it, and — for web subscriptions — the Stripe customer reference used to open your billing portal. We do **not** store your card number or full payment details.
 - **Deleting your subscription data.** The subscription record we hold is tied to your account and is **deleted when you delete your account**. The payment processors — Stripe, Apple, and RevenueCat — keep their own records of your transactions under their respective privacy policies and as the law requires (for example, for tax and accounting); that processor-side history is governed by their policies and is not deleted by Era. Deleting your Era account does **not** automatically cancel an active paid subscription — to stop future charges, cancel it first (in the app, through your Apple account, or via the web billing portal).
 
+## Virtual try-on ("See it on you")
+
+**See it on you** is an optional **Era+** feature, **off by default**, that you turn on yourself. When you opt in, you can build a private avatar in your own likeness and preview the outfits you've saved on it. Because this uses photos of you, we're specific about how it works.
+
+- **What it is, and opting in.** The feature is available only on **Era+** and stays **off until you explicitly switch it on**. Nothing below happens unless you opt in — building an avatar is a deliberate choice, and we keep a record that you consented.
+- **What we collect.** The **one to three photos of yourself** that you choose to provide. That's all we use to build your avatar.
+- **Preprocessing on your device.** Before any photo leaves your device, Era **downscales it and strips embedded metadata** (such as EXIF and GPS location), so we never receive the location or camera details a photo can carry.
+- **How your avatar is built.** Your photos are sent to our virtual try-on provider, **FASHN**, which uses them to create an AI likeness — your avatar. **Your source photos are deleted immediately after the avatar is created**; Era does not keep them.
+- **How your avatar and renders are stored.** Your avatar and every outfit render made from it are stored **privately** — encrypted at rest, reachable only by you through short-lived, owner-only links, never served at a public web address, and never shown in the feed or on your public profile.
+- **No training.** We do not use your photos, avatar, or renders to train models, and we will not switch this feature on for real use until our try-on provider is contractually bound not to train on them either. (Our use of FASHN is subject to the provider terms — see [Who we share data with](#who-we-share-data-with).)
+- **Deleting it.** You can delete your avatar at any time from **Settings → delete avatar**. This removes the avatar, all of its outfit renders, and the consent record, and we show you the counts of what was removed. Deleting your account removes all of it too, along with everything else.
+
 ## Who we share data with
 
 We don't sell your personal information. We share it only with service providers ("processors") who help us run Era, and only as needed. These currently include:
 
 - **AI model provider (Anthropic)** — to power Ovi's styling suggestions when the AI stylist is active, and to analyze the photos you add to your closet so we can extract each item's attributes (category, color, pattern, brand).
 - **AI image provider (Google)** — when the multi-angle "turnaround" view is enabled, to generate alternate-angle renders of one of your items from its cutout image. We send only that item's cutout image and a fixed rendering instruction — never your name, email, or other identifying details — and we use a paid Gemini API tier under terms that prohibit Google from using this content to train its general models. *(Currently dormant until the feature is enabled.)*
+- **Virtual try-on provider (FASHN)** — when the "See it on you" feature is enabled, to build your avatar from the one to three photos you provide and to render your saved outfits onto it. We send only the photos you choose and the item images being rendered — never your name, email, or other identifying details — and your source photos are deleted immediately after your avatar is created. *(Currently dormant until the feature is enabled.)*
 - **Cloudflare R2** — to store your clothing images.
 - **Neon** — our PostgreSQL database host, where your account and closet records live.
 - **Railway** — our application hosting/infrastructure provider.

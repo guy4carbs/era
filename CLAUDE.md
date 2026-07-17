@@ -234,7 +234,17 @@ fails the deploy loudly, naming the offender. `.env.example` is the canonical li
 `R2_PUBLIC_URL_CUTOUTS`, `R2_PUBLIC_URL_COVERS`, `ANTHROPIC_API_KEY`,
 `VISION_API_KEY`, `BG_REMOVAL_API_KEY`.
 
-**Server-only (optional):** `AFFILIATE_FEED_KEY` (Phase 2 — Shop).
+**Server-only (optional):** `AFFILIATE_FEED_KEY` (Phase 2 — Shop). Two dormant
+feature sets ship off by default, each **deliberately kept out of the zod schema
+so a missing value never blocks boot**: the multi-angle **turnaround** views
+(`ERA_TURNAROUND_ENABLED` server gate, `GEMINI_API_KEY` for the image renders,
+`ERA_TURNAROUND_CATEGORIES` optional category narrowing) and the **avatar /
+virtual try-on** surface (`ERA_TRYON_ENABLED` server gate, `FASHN_API_KEY` for the
+try-on provider). Each server gate is true only for the exact string `'true'`;
+unset ⇒ off ⇒ that feature's API routes 404. Their client mirrors —
+`NEXT_PUBLIC_ERA_TURNAROUND_ENABLED` / `EXPO_PUBLIC_ERA_TURNAROUND_ENABLED` and
+`NEXT_PUBLIC_ERA_TRYON_ENABLED` / `EXPO_PUBLIC_ERA_TRYON_ENABLED` — are **cosmetic**
+(they decide what UI to render) and never gate access.
 
 **Client-safe (`NEXT_PUBLIC_*`, inlined into the browser bundle at build time —
 must be present at BUILD, not just runtime):** `NEXT_PUBLIC_API_URL`,
@@ -415,6 +425,8 @@ Production serves from **era.style**. To wire the domain and get indexed:
 - Before live PostHog/Sentry keys: EU cookie-consent + PII scrub. Before public legal: fill the `[BRACKETS]` + counsel-review the privacy/terms DRAFTs. User: verify era.style in Google Search Console + submit the sitemap.
 
 **Phase 2 doorway (Shop + stickiness):** shortest first move — wire the affiliate feed into the (stubbed, trust-rule-aligned) Shop tab, driven by Ovi's existing `whats_missing` gap computation ("buy only for a real gap").
+
+**Phase 4 seed — avatar / virtual try-on ("See it on you") shipped dark.** An Era+-gated try-on surface is built and merged behind `ERA_TRYON_ENABLED` (unset ⇒ every avatar/try-on route 404s, zero client trace): a consented user uploads 1–3 photos, our try-on provider **FASHN** builds an AI-likeness avatar (source photos deleted immediately after creation), and saved outfits render onto it in the private, encrypted-at-rest `avatars` bucket with owner-only presigned access. Avatar + renders are deletable from Settings with verified counts; account deletion sweeps everything. Schema is **migration 0010** (`avatars` + `outfit_tryons`); FASHN stays dormant until the operator funds credits and secures a DPA / no-training confirmation (hard launch gate). Privacy DRAFT documents the flow.
 
 - CI = lint/typecheck/test + a Lighthouse job (SEO ≥ 95 hard-gate, perf tolerant).
 - Infra: R2 (4 buckets), Neon (main+dev), Railway `era` production on era.style. Cloudflare = registrar + DNS for era.style (orange-cloud WAF + www redirect + email DNS are later hardening).
