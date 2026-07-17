@@ -22,6 +22,8 @@
     "./turnaround-flags": "./src/turnaround-flags.ts",
     "./tryon": "./src/tryon.ts",
     "./tryon-flags": "./src/tryon-flags.ts",
+    "./checkout": "./src/checkout.ts",
+    "./checkout-flags": "./src/checkout-flags.ts",
     "./wardrobe-gaps": "./src/wardrobe-gaps.ts",
     "./wear-stats": "./src/wear-stats.ts",
     "./analytics": "./src/analytics.ts",

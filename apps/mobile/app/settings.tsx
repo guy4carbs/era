@@ -16,6 +16,9 @@ import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet, Text, View }
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AvatarSection } from '@/components/settings/AvatarSection';
+import { OrdersSettings } from '@/components/settings/OrdersSettings';
+import { ShippingAddressSettings } from '@/components/settings/ShippingAddressSettings';
+import { SizesSettings } from '@/components/settings/SizesSettings';
 import { PrivacyToggle, Toast } from '@/components/closet';
 import { PriceAlertSettings } from '@/components/notifications';
 import {
@@ -24,7 +27,9 @@ import {
   SettingRow,
   ThemeControl,
 } from '@/components/settings';
+import { checkoutCopy } from '@/components/checkout';
 import { eraAuth, useSession } from '@/lib/auth-client';
+import { eraCheckoutEnabled } from '@/lib/checkout-flag';
 import { eraPlusEnabled } from '@/lib/purchases';
 import { eraTryonEnabled } from '@/lib/tryon-flag';
 import { forceError, reportingActive } from '@/lib/reporting';
@@ -123,6 +128,23 @@ export default function SettingsScreen() {
         <Section title={strings.settings.receiptAddress.title}>
           <ReceiptAddressSettings onToast={setToast} />
         </Section>
+
+        {/* In-flow checkout — sizes, shipping address, and order history. Only
+            present when the cosmetic checkout flag is on; the sections read their
+            own server state and the server re-gates every call. */}
+        {eraCheckoutEnabled ? (
+          <>
+            <Section title={checkoutCopy.sizesTitle}>
+              <SizesSettings onToast={setToast} />
+            </Section>
+            <Section title={checkoutCopy.shippingTitle}>
+              <ShippingAddressSettings onToast={setToast} />
+            </Section>
+            <Section title={strings.shop.checkout.ordersTitle}>
+              <OrdersSettings />
+            </Section>
+          </>
+        ) : null}
 
         <Section title={strings.settings.support}>
           <SettingRow

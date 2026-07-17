@@ -47,6 +47,8 @@ import {
   type ShopCardProduct,
   type ShopFilterState,
 } from '@/components/shop';
+import { CartSheet, addToCart, getCart, checkoutCopy } from '@/components/checkout';
+import { cardCheckoutSupport, eraCheckoutEnabled } from '@/lib/checkout-flag';
 import { useTheme } from '@/lib/theme';
 
 type LoadState = 'loading' | 'ready' | 'error';
@@ -84,6 +86,37 @@ export default function ShopScreen() {
   // The pick whose why-detail sheet is open (null = closed). Lifted here because a
   // per-card GlassSheet would fill only its cell, not the screen.
   const [whyProduct, setWhyProduct] = useState<RankedProduct | null>(null);
+
+  // In-flow cart state (only ever exercised when the cosmetic checkout flag is on):
+  // the badge count on the Shop header and whether the cart sheet is open. The count
+  // is seeded from the server on mount and reconciled after every add so an
+  // idempotent re-add (server no-op) never drifts the badge.
+  const [cartCount, setCartCount] = useState(0);
+  const [cartOpen, setCartOpen] = useState(false);
+
+  const reconcileCartCount = useCallback(() => {
+    void getCart()
+      .then((items) => setCartCount(items.reduce((sum, item) => sum + Math.max(0, item.quantity), 0)))
+      .catch(() => {
+        // A count read miss is invisible — the badge just keeps its last value.
+      });
+  }, []);
+
+  // Seed the badge from the live cart once, when checkout is on.
+  useEffect(() => {
+    if (!eraCheckoutEnabled) return;
+    reconcileCartCount();
+  }, [reconcileCartCount]);
+
+  // Add a pick to the cross-store cart: bump the badge optimistically, then reconcile
+  // from the server (the add is idempotent, so the reconcile is the source of truth).
+  const onAddToCart = useCallback(
+    (product: ShopCardProduct) => {
+      setCartCount((count) => count + 1);
+      void addToCart(product).then(reconcileCartCount, reconcileCartCount);
+    },
+    [reconcileCartCount],
+  );
 
   // The genuine wardrobe gaps shown atop the ranked feed. Hydrated once,
   // independently and non-blocking: `getWardrobeGaps` degrades to [] on any error,
@@ -307,6 +340,8 @@ export default function ShopScreen() {
               onToggleSave={() => toggleSaveRanked(item)}
               onDismiss={onDismiss}
               onOpenWhy={openWhy}
+              canAddToCart={cardCheckoutSupport(item) === 'in_flow'}
+              onAddToCart={onAddToCart}
             />
           ) : (
             <ShopCard
@@ -314,6 +349,8 @@ export default function ShopScreen() {
               onView={onView}
               isSaved
               onToggleSave={() => unsaveSaved(item)}
+              canAddToCart={cardCheckoutSupport(item) === 'in_flow'}
+              onAddToCart={onAddToCart}
             />
           )
         }
@@ -324,6 +361,8 @@ export default function ShopScreen() {
               onSelectView={setView}
               active={hasActiveFilters(filters)}
               onOpenFilters={() => setFiltersOpen(true)}
+              cartCount={cartCount}
+              onOpenCart={() => setCartOpen(true)}
             />
             {/* The gaps band leads the ranked feed only — it's guidance toward the
                 picks below, not part of the Saved wishlist. */}
@@ -365,6 +404,16 @@ export default function ShopScreen() {
       />
 
       <WhyDetailSheet product={whyProduct} onClose={() => setWhyProduct(null)} />
+
+      {/* In-flow cart — only mounted when the cosmetic checkout flag is on. The
+          server re-gates every call, so an off build never reaches these routes. */}
+      {eraCheckoutEnabled ? (
+        <CartSheet
+          open={cartOpen}
+          onClose={() => setCartOpen(false)}
+          onCartCountChange={setCartCount}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -384,11 +433,15 @@ function ShopHeader({
   onSelectView,
   active,
   onOpenFilters,
+  cartCount,
+  onOpenCart,
 }: {
   view: ShopView;
   onSelectView: (view: ShopView) => void;
   active: boolean;
   onOpenFilters: () => void;
+  cartCount: number;
+  onOpenCart: () => void;
 }) {
   const { colors } = useTheme();
   const saved = view === 'saved';
@@ -444,6 +497,16 @@ function ShopHeader({
           selected={saved}
           onPress={() => onSelectView(saved ? 'forYou' : 'saved')}
         />
+
+        {/* Cart entry + quiet count badge — only when in-flow checkout is on. */}
+        {eraCheckoutEnabled ? (
+          <HeaderPill
+            label={cartCount > 0 ? `${strings.shop.checkout.cartTitle} · ${cartCount}` : strings.shop.checkout.cartTitle}
+            accessibilityLabel={checkoutCopy.cartCount(cartCount)}
+            selected={cartCount > 0}
+            onPress={onOpenCart}
+          />
+        ) : null}
       </View>
     </View>
   );

@@ -1496,6 +1496,173 @@ export const strings = {
           `The ${title} you saved is now ${newPrice}.`,
       },
     },
+
+    /**
+     * In-flow checkout — the cross-store cart and single-checkout surface. This is
+     * the copy for adding pieces from different retailers and completing ONE
+     * checkout inside Era (for operator-verified retailers; everyone else keeps the
+     * affiliate tap-out). The load-bearing HONESTY RULE, enforced here in copy:
+     * this copy must NEVER claim a universal checkout. One checkout ACTION, but each
+     * store still fulfils and bills its OWN order — separate shipments, separate
+     * receipts — and {@link strings.shop.checkout.separateShipments} states that
+     * plainly wherever the cart or confirm screen appears. Voice stays Era's: calm,
+     * plain, no fake urgency, honest per-store outcomes (a store that fails falls
+     * back to its affiliate link, never a fabricated success). Progress and outcome
+     * lines take the retailer name so every beat is concrete about WHICH store it's
+     * describing. Counts/labels are interpolated through the same boundary guards the
+     * rest of the deck uses so a partial state never leaks "undefined".
+     */
+    checkout: {
+      // --- entry: the two affordances on a product card ---
+
+      /** Primary CTA on an in-flow-supported card — adds the piece to the cross-store cart. */
+      addToCart: 'Add to cart',
+      /** The single-checkout CTA that starts one checkout across every store in the cart. */
+      buyInEra: 'Check out',
+      /** Confirmation toast after a piece lands in the cart. */
+      addedToCart: 'Added to your cart.',
+
+      // --- the honesty disclosure: one checkout, separate per-store orders ---
+
+      /**
+       * THE load-bearing honesty line. One checkout action, but each store ships and
+       * bills its own order — separate shipments and receipts. Rendered wherever the
+       * cart or confirm screen appears; never ship a checkout surface without it, and
+       * never replace it with a "universal checkout" claim.
+       */
+      separateShipments: 'One checkout — each store ships and bills its own order.',
+      /**
+       * The commission disclosure AT THE POINT OF PURCHASE (Axiom/FTC: "clear and
+       * conspicuous" belongs at the transaction, not two screens back in the feed).
+       * Rendered beside the grand total on the review/confirm surface. Mirrors
+       * {@link strings.shop.affiliateDisclosure}'s promise — states the commission
+       * plainly and that it never affects what Ovi shows.
+       */
+      commissionDisclosure:
+        'Era may earn a commission on this order. It never changes what we show you — Ovi ranks on your closet, not on payouts.',
+
+      // --- the cart: items grouped by retailer, each with its own subtotal ---
+
+      /** Cart screen / sheet title. */
+      cartTitle: 'Your cart',
+      /** Empty-cart line — invitational, no pressure. */
+      cartEmpty: 'Your cart is empty. Add a piece and it lands here.',
+      /**
+       * Section heading for one retailer's items in the cart, naming the store so the
+       * per-order truth is legible. `retailerSection('SSENSE')` → "From SSENSE".
+       */
+      retailerSection: (retailer: string): string => `From ${cleanText(retailer, 'this store')}`,
+      /** Remove a piece from the cart — plain, no guilt. */
+      removeItem: 'Remove',
+      /**
+       * A store's subtotal line in the cart, taking an already-formatted price so a
+       * currency change never rewrites this copy. `retailerSubtotal('$240')` →
+       * "Subtotal: $240".
+       */
+      retailerSubtotal: (price: string): string => `Subtotal: ${cleanText(price, '—')}`,
+
+      // --- sizes + shipping address: prefilled at checkout, editable inline ---
+
+      /** Label above the saved-size prefill for a piece. */
+      sizeLabel: 'Size',
+      /** Nudge to add a missing size inline before checkout — no pressure, one tap. */
+      addSize: 'Add your size',
+      /** Label for the shipping-address summary on the checkout screen. */
+      shippingTo: 'Shipping to',
+      /** Nudge to add a shipping address before the first checkout. */
+      addAddress: 'Add a shipping address',
+
+      // --- per-state progress: honest, per-store, while an order is worked ---
+
+      /**
+       * Shown while Rye resolves the real price for a store — the `retrieving_offer`
+       * beat, named to the store. `retrievingOffer('SSENSE')` → "Getting the real
+       * price from SSENSE…".
+       */
+      retrievingOffer: (retailer: string): string =>
+        `Getting the real price from ${cleanText(retailer, 'the store')}…`,
+      /** The `placing_order` beat, named to the store. `placingOrder('SSENSE')`. */
+      placingOrder: (retailer: string): string =>
+        `Placing your order with ${cleanText(retailer, 'the store')}…`,
+
+      // --- the combined offer: real per-store + grand total, BEFORE confirm ---
+
+      /** Heading for the price breakdown shown before the buyer confirms. */
+      reviewTitle: 'Review your order',
+      /** Row label for shipping in the price breakdown. */
+      shippingLabel: 'Shipping',
+      /** Row label for tax in the price breakdown. */
+      taxLabel: 'Tax',
+      /**
+       * The grand-total line across every store, taking an already-formatted price.
+       * `grandTotal('$312')` → "Total: $312". This is the amount the buyer authorizes.
+       */
+      grandTotal: (price: string): string => `Total: ${cleanText(price, '—')}`,
+      /** The explicit, deliberate confirm action — places every in-flow order. */
+      confirmPurchase: 'Confirm purchase',
+
+      // --- outcomes: honest per-store results after confirmation ---
+
+      /**
+       * Success for one store's order, named. `orderPlaced('SSENSE')` → "Order placed
+       * at SSENSE". Sibling orders may differ — each store reports its own outcome.
+       */
+      orderPlaced: (retailer: string): string => `Order placed at ${cleanText(retailer, 'the store')}`,
+      /** Heading over the list of per-store outcomes once a checkout settles. */
+      orderConfirmedTitle: 'You’re all set',
+
+      // --- handoff + calm failure: never a fabricated success ---
+
+      /**
+       * The fallback line when a piece can't be bought in-flow (unsupported retailer)
+       * or its in-flow order failed — points at finishing on the retailer's own site,
+       * calm and plain, no blame. `handoffFallback('Zara')` → "Couldn't complete it
+       * here — finish at Zara".
+       */
+      handoffFallback: (retailer: string): string =>
+        `Couldn't complete it here — finish at ${cleanText(retailer, 'the retailer')}`,
+      /**
+       * A single store's order failed after confirmation — calm, honest, points at the
+       * affiliate handoff for that store's pieces. No alarm, no fake success.
+       * `orderFailed('Zara')` → "Zara's order didn't go through — you can finish it at
+       * their site."
+       */
+      orderFailed: (retailer: string): string =>
+        `${cleanText(retailer, 'That store')}'s order didn't go through — you can finish it at their site.`,
+      /** A calm, retryable line when the whole checkout couldn't start. No blame. */
+      checkoutError: "Couldn't start checkout just now — give it another go.",
+
+      // --- your orders: the settings-surface history list ---
+
+      /** Orders-list section title on the settings surface. */
+      ordersTitle: 'Your orders',
+      /** Empty orders list — plain, no pressure. */
+      ordersEmpty: 'No orders yet.',
+      /**
+       * Humanizes an order's status for the orders list, from its persisted status.
+       * Plain and honest per state; an unknown status falls back to a neutral line so
+       * this never renders a raw slug. `orderStatus('completed')` → "Placed".
+       */
+      orderStatus: (status: string): string => {
+        switch (status) {
+          case 'completed':
+            return 'Placed';
+          case 'failed':
+            return "Didn't go through";
+          case 'expired':
+            return 'Expired';
+          case 'awaiting_confirmation':
+          case 'requires_action':
+            return 'Awaiting confirmation';
+          case 'retrieving_offer':
+          case 'placing_order':
+          case 'creating':
+            return 'In progress';
+          default:
+            return 'In progress';
+        }
+      },
+    },
   },
 
   /**

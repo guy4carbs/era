@@ -246,6 +246,17 @@ unset ⇒ off ⇒ that feature's API routes 404. Their client mirrors —
 `NEXT_PUBLIC_ERA_TRYON_ENABLED` / `EXPO_PUBLIC_ERA_TRYON_ENABLED` — are **cosmetic**
 (they decide what UI to render) and never gate access.
 
+The **cross-store cart / in-flow checkout** surface follows the same idiom, its
+vars likewise **kept out of the zod schema** so a missing value never blocks boot:
+`ERA_CHECKOUT_ENABLED` (server gate — true only for the exact string `'true'`;
+unset ⇒ every cart/checkout route 404s), `RYE_API_KEY` + `RYE_WEBHOOK_SECRET` (the
+Rye checkout partner + its webhook-signature secret), `ERA_CHECKOUT_SANDBOX`
+(selects Rye's sandbox and test payment tokens — exact string `'true'`), and
+`ERA_CHECKOUT_RETAILERS` (optional comma-separated allowlist of operator-verified
+retailers; only these show in-flow). Its client mirror —
+`NEXT_PUBLIC_ERA_CHECKOUT_ENABLED` / `EXPO_PUBLIC_ERA_CHECKOUT_ENABLED` — is
+**cosmetic** (renders the cart/checkout UI) and never gates access.
+
 **Client-safe (`NEXT_PUBLIC_*`, inlined into the browser bundle at build time —
 must be present at BUILD, not just runtime):** `NEXT_PUBLIC_API_URL`,
 `NEXT_PUBLIC_R2_PUBLIC_URL`, `NEXT_PUBLIC_SITE_URL` (the canonical origin —
@@ -427,6 +438,8 @@ Production serves from **era.style**. To wire the domain and get indexed:
 **Phase 2 doorway (Shop + stickiness):** shortest first move — wire the affiliate feed into the (stubbed, trust-rule-aligned) Shop tab, driven by Ovi's existing `whats_missing` gap computation ("buy only for a real gap").
 
 **Phase 4 seed — avatar / virtual try-on ("See it on you") shipped dark.** An Era+-gated try-on surface is built and merged behind `ERA_TRYON_ENABLED` (unset ⇒ every avatar/try-on route 404s, zero client trace): a consented user uploads 1–3 photos, our try-on provider **FASHN** builds an AI-likeness avatar (source photos deleted immediately after creation), and saved outfits render onto it in the private, encrypted-at-rest `avatars` bucket with owner-only presigned access. Avatar + renders are deletable from Settings with verified counts; account deletion sweeps everything. Schema is **migration 0010** (`avatars` + `outfit_tryons`); FASHN stays dormant until the operator funds credits and secures a DPA / no-training confirmation (hard launch gate). Privacy DRAFT documents the flow.
+
+**Phase 4 seed — cross-store cart + in-flow checkout ("Era Checkout") shipped dark.** A cart-first checkout that spans multiple retailers is built and merged behind `ERA_CHECKOUT_ENABLED` (unset ⇒ every cart/checkout route 404s, zero client trace). **Rye** (rye.com) is the checkout partner: Era sends Rye the buyer's name, shipping address, email, phone, and the product/quantity so Rye places each order at the retailer; payment is **tokenized** (Era never sees card numbers — the sandbox uses test tokens, real payment is a later launch gate), and each store still fulfills its own order (separate shipments/receipts). Schema is **migration 0011** (cart + one saved shipping address + order records). The honesty control is an **operator-verified allowlist** — only retailers an operator has smoke-tested end-to-end in sandbox appear in-flow (`ERA_CHECKOUT_RETAILERS`); unsupported retailers keep the existing affiliate tap-out, and we never market universal checkout. Era may earn commission on eligible orders (routed by Rye through affiliate networks); commissions never affect ranking. Stays dormant until the operator provisions Rye credentials and completes the per-retailer sandbox verification (`docs/checkout-sandbox-runbook.md`). Privacy + Terms DRAFTs document the flow.
 
 - CI = lint/typecheck/test + a Lighthouse job (SEO ≥ 95 hard-gate, perf tolerant).
 - Infra: R2 (4 buckets), Neon (main+dev), Railway `era` production on era.style. Cloudflare = registrar + DNS for era.style (orange-cloud WAF + www redirect + email DNS are later hardening).

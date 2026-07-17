@@ -17,6 +17,7 @@ import type { RankedProduct } from '@era/core/shop';
 import { layout, radii, rnShadow, sheen, spacing, typeRamp } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useEffect, useRef, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
@@ -49,6 +50,16 @@ interface ShopCardProps {
   readonly onDismiss?: (product: RankedProduct) => void;
   /** Open the why-detail sheet — passed only when the pick carries a `whyDetail`. */
   readonly onOpenWhy?: (product: RankedProduct) => void;
+  /**
+   * In-flow checkout affordance. When `true` AND `onAddToCart` is set, the card
+   * shows an 'Add to cart' PRIMARY with 'View at {retailer}' demoted to secondary.
+   * Default/false keeps the card BYTE-IDENTICAL to the affiliate-only layout — the
+   * regression bar for every non-allowlisted retailer. The screen owns the add
+   * (optimistic cart write + badge bump); the card only shows the brief 'Added'.
+   */
+  readonly canAddToCart?: boolean;
+  /** Add this pick to the cross-store cart (screen owns the write + badge). */
+  readonly onAddToCart?: (product: ShopCardProduct) => void;
 }
 
 export function ShopCard({
@@ -58,9 +69,31 @@ export function ShopCard({
   onToggleSave,
   onDismiss,
   onOpenWhy,
+  canAddToCart = false,
+  onAddToCart,
 }: ShopCardProps) {
   const { colors } = useTheme();
   const viewLabel = strings.shop.viewAt(product.retailer);
+  const inFlow = canAddToCart && onAddToCart !== undefined;
+
+  // A brief post-add confirmation on the card itself (the badge bump lives on the
+  // screen). Times out on its own; cleared on unmount so a fast scroll can't fire
+  // setState on a gone card.
+  const [justAdded, setJustAdded] = useState(false);
+  const addedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (addedTimer.current) clearTimeout(addedTimer.current);
+    },
+    [],
+  );
+  const handleAdd = () => {
+    void Haptics.selectionAsync();
+    onAddToCart?.(product);
+    setJustAdded(true);
+    if (addedTimer.current) clearTimeout(addedTimer.current);
+    addedTimer.current = setTimeout(() => setJustAdded(false), 1600);
+  };
 
   // Ranked picks carry a `why`/`whyDetail`; saved picks don't. Narrow structurally
   // so the why label + detail sheet stay ranked-only, no discriminant needed.
@@ -155,17 +188,45 @@ export function ShopCard({
           />
         ) : null}
 
-        <View style={styles.actions}>
-          <Button label={viewLabel} onPress={() => onView(product)} />
-          <SaveToggle isSaved={isSaved} onToggle={onToggleSave} />
-          {ranked && onDismiss ? (
-            <Button
-              label={strings.shop.dismiss}
-              variant="ghost"
-              onPress={() => onDismiss(ranked)}
-            />
-          ) : null}
-        </View>
+        {inFlow ? (
+          <View style={styles.actions}>
+            <Button label={strings.shop.checkout.addToCart} onPress={handleAdd} />
+            {justAdded ? (
+              <Text
+                accessibilityLiveRegion="polite"
+                style={{
+                  color: colors.secondaryStrong,
+                  fontSize: typeRamp.footnote.pt,
+                  lineHeight: typeRamp.footnote.lineHeight,
+                  textAlign: 'center',
+                }}
+              >
+                {strings.shop.checkout.addedToCart}
+              </Text>
+            ) : null}
+            <Button label={viewLabel} variant="secondary" onPress={() => onView(product)} />
+            <SaveToggle isSaved={isSaved} onToggle={onToggleSave} />
+            {ranked && onDismiss ? (
+              <Button
+                label={strings.shop.dismiss}
+                variant="ghost"
+                onPress={() => onDismiss(ranked)}
+              />
+            ) : null}
+          </View>
+        ) : (
+          <View style={styles.actions}>
+            <Button label={viewLabel} onPress={() => onView(product)} />
+            <SaveToggle isSaved={isSaved} onToggle={onToggleSave} />
+            {ranked && onDismiss ? (
+              <Button
+                label={strings.shop.dismiss}
+                variant="ghost"
+                onPress={() => onDismiss(ranked)}
+              />
+            ) : null}
+          </View>
+        )}
       </View>
     </View>
   );
