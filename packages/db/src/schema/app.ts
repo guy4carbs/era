@@ -26,10 +26,12 @@ import {
 
 import {
   aiEventKind,
+  avatarStatus,
   feedReportReason,
   feedReportStatus,
   itemCategory,
   itemSource,
+  tryonStatus,
   turnaroundAngle,
   turnaroundJobStatus,
 } from './enums.ts';
@@ -603,6 +605,86 @@ export const itemTurnaroundJobs = pgTable(
   (table) => [
     // Per-user daily cap COUNT over the user's own jobs.
     index('item_turnaround_jobs_user_id_created_at_idx').on(table.userId, table.createdAt),
+  ],
+);
+
+export const avatars = pgTable('avatars', {
+  // One avatar per user — the user id IS the primary key, so the
+  // insert-onConflictDoNothing that starts avatar creation doubles as the
+  // idempotency claim. The neon-http driver has no transactions, so a claimed
+  // row (not a transaction) is what guards against a second concurrent
+  // creation — same idiom as item_turnaround_jobs.
+  userId: text('user_id')
+    .primaryKey()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  status: avatarStatus('status').notNull().default('creating'),
+  // Explicit opt-in consent. The row's mere existence ⟹ the user consented;
+  // this is the server-side timestamp of that consent, stamped when the claim
+  // row is inserted (never from client input). Deleting the avatar deletes
+  // this consent record along with it — consent lives and dies with the row.
+  consentAt: timestamp('consent_at', { withTimezone: true }).notNull(),
+  // The try-on person image: avatars-bucket key `${userId}/avatar/{uuid}.png`.
+  // Null until Model Creation finishes and the base image lands. This is the
+  // ONLY avatar image the try-on pipeline consumes.
+  baseImagePath: text('base_image_path'),
+  // Transient source-photo keys (`${userId}/avatar-src/…`) used ONCE to build
+  // the likeness. The objects are deleted AND this column is NULLED immediately
+  // after the base image is ready — the raw user photos are transient by
+  // design and are never retained past creation. Null in steady state.
+  sourcePhotoPaths: jsonb('source_photo_paths'),
+  // The try-on vendor. Text (not a pg enum) — the catalog can grow; the app
+  // validates the value.
+  vendor: text('vendor').notNull().default('fashn'),
+  // Vendor-side model/avatar id — the deletion seam. Passed to the vendor's
+  // delete endpoint on avatar deletion (if the DPA confirms one exists).
+  vendorModelId: text('vendor_model_id'),
+  // Failure detail for ops; null while creating or on success.
+  error: text('error'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+export const outfitTryons = pgTable(
+  'outfit_tryons',
+  {
+    // One live render per outfit — the outfit id IS the primary key, so the
+    // insert-onConflictDoNothing that claims a render doubles as the idempotency
+    // claim, and the row is both the claim and the cache. No transactions on
+    // neon-http; the claimed row guards against a second concurrent render.
+    outfitId: uuid('outfit_id')
+      .primaryKey()
+      .references(() => outfits.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    status: tryonStatus('status').notNull().default('running'),
+    // The staleness key: the rendered garments' item uuids, sorted and
+    // ':'-joined. A render is stale when this no longer matches the outfit's
+    // current garment set. outfits has NO updated_at, and canvas transforms
+    // (position/scale/rotation) must NOT invalidate a render — only a change to
+    // the actual set of garments does — so the signature keys off the item set,
+    // never the outfit row's mtime.
+    itemsSignature: text('items_signature').notNull(),
+    // Rendered image: `${userId}/tryon/{uuid}.png`. Null unless status complete.
+    imagePath: text('image_path'),
+    // Chain progress for the in-flight render — garments rendered so far out of
+    // the total planned. Both 0 until the chain starts.
+    garmentsRendered: integer('garments_rendered').notNull().default(0),
+    garmentsTotal: integer('garments_total').notNull().default(0),
+    // Failure detail for ops; null while running or on success.
+    error: text('error'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    // The user's own renders (listing + any per-user rollup).
+    index('outfit_tryons_user_id_idx').on(table.userId),
   ],
 );
 

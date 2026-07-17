@@ -15,6 +15,7 @@ import { useCallback, useState, type PropsWithChildren } from 'react';
 import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AvatarSection } from '@/components/settings/AvatarSection';
 import { PrivacyToggle, Toast } from '@/components/closet';
 import { PriceAlertSettings } from '@/components/notifications';
 import {
@@ -25,6 +26,7 @@ import {
 } from '@/components/settings';
 import { eraAuth, useSession } from '@/lib/auth-client';
 import { eraPlusEnabled } from '@/lib/purchases';
+import { eraTryonEnabled } from '@/lib/tryon-flag';
 import { forceError, reportingActive } from '@/lib/reporting';
 import { useTheme } from '@/lib/theme';
 
@@ -105,6 +107,10 @@ export default function SettingsScreen() {
             />
           </Section>
         ) : null}
+
+        {/* Try-on avatar — only when the cosmetic flag is on; the section hides
+            itself when the surface is off server-side or has no avatar to manage. */}
+        {eraTryonEnabled ? <AvatarSection onToast={setToast} /> : null}
 
         <Section title={strings.settings.privacyTitle}>
           <PrivacyToggle />

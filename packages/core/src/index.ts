@@ -55,6 +55,8 @@ export {
   requestUploadUrl,
   getAssetUrl,
   deleteUserObjects,
+  deleteObjectsUnderPrefix,
+  countObjectsUnderPrefix,
 } from './storage.ts';
 export type { AssetBucket, StorageConfig, StorageClient } from './storage.ts';
 
@@ -140,6 +142,25 @@ export {
   enabledTurnaroundCategories,
   isTurnaroundCategoryEnabled,
 } from './turnaround-flags.ts';
+
+// Virtual try-on — the flag-gated Era+ avatar surface. A user builds a consented
+// avatar from their own photos and renders a saved outfit onto it. All pure and
+// client-safe (no server-only deps); web/mobile client code imports the wire
+// contract + chain planner from the `@era/core/tryon` subpath and the flag from
+// `@era/core/tryon-flags` to avoid this server-tainted barrel. Re-exported here for
+// server callers (the routes drive chain execution from planTryonChain and key
+// render staleness off itemsSignature). See tryon.ts, tryon-flags.ts.
+export { TRYON_CATEGORIES, planTryonChain, itemsSignature } from './tryon.ts';
+export type {
+  TryonCategory,
+  TryonInputItem,
+  GarmentStep,
+  AvatarStatus,
+  AvatarState,
+  TryonStatus,
+  TryonState,
+} from './tryon.ts';
+export { isEraTryonEnabled } from './tryon-flags.ts';
 
 // Persistence type contract, re-exported type-only from @era/db.
 export type * from './db-types.ts';

@@ -187,6 +187,7 @@ function ThemedStack() {
         <Stack.Protected guard={isSignedIn}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="add-item" />
+          <Stack.Screen name="avatar" options={{ presentation: 'modal' }} />
           <Stack.Screen name="design-lab" />
           <Stack.Screen name="outfit-canvas" />
           <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />

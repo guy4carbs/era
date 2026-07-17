@@ -67,6 +67,17 @@ const PRESIGN_EXPIRES_IN = 300;
 /** File extensions permitted for asset keys (lowercased). */
 const EXT_ALLOWLIST: ReadonlySet<string> = new Set(['jpg', 'jpeg', 'png', 'webp', 'avif']);
 
+/**
+ * Permitted shape for an optional key subdirectory (e.g. `avatar`, `avatar-src`,
+ * `tryon`). Deliberately tight: a lowercase letter, then up to 15 more lowercase
+ * letters / digits / hyphens (1–16 chars total). This is a path-traversal guard —
+ * it admits only a flat, single-segment slug and rejects anything with a slash, a
+ * dot, whitespace, an uppercase letter, or a leading digit/hyphen, so a caller can
+ * never inject `..`, escape the `{userId}/` prefix, or nest a second path segment
+ * under it.
+ */
+const SUBDIR_PATTERN = /^[a-z][a-z0-9-]{0,15}$/;
+
 /** Content types permitted for uploads. */
 const CONTENT_TYPE_ALLOWLIST: ReadonlySet<string> = new Set([
   'image/jpeg',
@@ -114,14 +125,21 @@ export function createStorageClient(config: StorageConfig): StorageClient {
 }
 
 /**
- * Produce an object key of the form `{userId}/{uuid}.{ext}`.
+ * Produce an object key of the form `{userId}/{uuid}.{ext}`, or
+ * `{userId}/{subdir}/{uuid}.{ext}` when an optional `subdir` is given (used to
+ * segregate avatar buckets into `avatar` / `avatar-src` / `tryon` prefixes under
+ * the owner's namespace).
  *
  * Path-traversal guard: `userId` must not be empty and must not contain `/`,
- * `..`, or whitespace — otherwise a caller could escape their own prefix.
- * `ext` is lowercased and checked against {@link EXT_ALLOWLIST}.
- * @throws {Error} when `userId` is unsafe or `ext` is not an allowed image ext.
+ * `..`, or whitespace — otherwise a caller could escape their own prefix. When
+ * present, `subdir` must match {@link SUBDIR_PATTERN} (a flat lowercase slug) —
+ * anything else (a slash, a dot, whitespace, `..`) is rejected, so the sub-prefix
+ * can never break out of `{userId}/`. `ext` is lowercased and checked against
+ * {@link EXT_ALLOWLIST}. Note the key still begins with `{userId}/`, so the
+ * owner-prefix check in {@link getAssetUrl} passes a sub-prefixed key unchanged.
+ * @throws {Error} when `userId` or `subdir` is unsafe, or `ext` is not an allowed image ext.
  */
-export function assetKey(userId: string, ext: string): string {
+export function assetKey(userId: string, ext: string, subdir?: string): string {
   if (userId.length === 0 || /[/\s]|\.\./.test(userId)) {
     throw new Error('Invalid userId for asset key.');
   }
@@ -129,26 +147,34 @@ export function assetKey(userId: string, ext: string): string {
   if (!EXT_ALLOWLIST.has(normalized)) {
     throw new Error('Unsupported asset file extension.');
   }
+  if (subdir !== undefined) {
+    if (!SUBDIR_PATTERN.test(subdir)) {
+      throw new Error('Invalid subdir for asset key.');
+    }
+    return `${userId}/${subdir}/${randomUUID()}.${normalized}`;
+  }
   return `${userId}/${randomUUID()}.${normalized}`;
 }
 
 /**
  * Authorize an upload and return a short-lived presigned PUT plus the key the
  * client must PUT to. Uploads are ALWAYS owner-scoped (including avatars), so
- * the caller must be the owner.
+ * the caller must be the owner. An optional `subdir` segregates the key under a
+ * sub-prefix (e.g. `avatar-src` for the transient source photos) — it is
+ * validated inside {@link assetKey} against {@link SUBDIR_PATTERN}.
  * @throws {AuthzError} `UNAUTHENTICATED`/`FORBIDDEN` via {@link ownerOnly}.
- * @throws {Error} when `contentType` or `ext` is not an allowed image type.
+ * @throws {Error} when `contentType`, `ext`, or `subdir` is not allowed.
  */
 export async function requestUploadUrl(
   client: StorageClient,
   ctx: AuthContext,
-  opts: { bucket: AssetBucket; ownerId: string; ext: string; contentType: string },
+  opts: { bucket: AssetBucket; ownerId: string; ext: string; contentType: string; subdir?: string },
 ): Promise<{ url: string; key: string; expiresIn: number }> {
   ownerOnly(ctx, opts.ownerId);
   if (!CONTENT_TYPE_ALLOWLIST.has(opts.contentType)) {
     throw new Error('Unsupported upload content type.');
   }
-  const key = assetKey(opts.ownerId, opts.ext);
+  const key = assetKey(opts.ownerId, opts.ext, opts.subdir);
   const command = new PutObjectCommand({
     Bucket: client.config.buckets[opts.bucket],
     Key: key,
@@ -200,14 +226,128 @@ export async function getAssetUrl(
 const DELETE_BATCH_MAX = 1000;
 
 /**
+ * Count every object under `prefix` in one bucket — the read-only counterpart to
+ * {@link deleteObjectsUnderPrefix}, and the verification seam for avatar deletion:
+ * after a delete the route re-counts the prefix and asserts it reached zero before
+ * reporting success. Paginates {@link ListObjectsV2Command} to the very end,
+ * following `ContinuationToken` past the 1000-key page cap, and never mutates.
+ *
+ * PREFIX SAFETY: the prefix is refused if empty or whitespace, so a blank prefix
+ * can never trigger a bucket-wide scan.
+ * @throws {Error} when `prefix` is empty/whitespace, or on any AWS failure.
+ */
+export async function countObjectsUnderPrefix(
+  client: StorageClient,
+  bucket: string,
+  prefix: string,
+): Promise<number> {
+  if (prefix.trim().length === 0) {
+    throw new Error('Refusing to count objects under an empty prefix.');
+  }
+  let count = 0;
+  let continuationToken: string | undefined;
+
+  do {
+    const listed = await client.s3.send(
+      new ListObjectsV2Command({
+        Bucket: bucket,
+        Prefix: prefix,
+        ContinuationToken: continuationToken,
+      }),
+    );
+    count += (listed.Contents ?? []).filter((object) => typeof object.Key === 'string').length;
+    continuationToken = listed.IsTruncated ? listed.NextContinuationToken : undefined;
+  } while (continuationToken);
+
+  return count;
+}
+
+/**
+ * Irreversibly delete every object under `prefix` in one bucket, returning the
+ * count removed. This is the per-bucket engine of {@link deleteUserObjects},
+ * extracted so a single-bucket delete (the avatar DELETE route sweeps only the
+ * `avatars` bucket under `${userId}/`) can reuse the exact same paginate-and-batch
+ * behavior instead of re-implementing it.
+ *
+ * It paginates {@link ListObjectsV2Command} under `prefix`, following
+ * `ContinuationToken` to the very end (never stopping at the 1000-key page cap),
+ * then removes the collected keys with {@link DeleteObjectsCommand} in batches of
+ * ≤1000 ({@link DELETE_BATCH_MAX}).
+ *
+ * PREFIX SAFETY: the prefix is refused if empty or whitespace, so a blank prefix
+ * can never trigger a bucket-wide delete. Callers pass an exact `${userId}/`
+ * (trailing slash) so a user `"abc"` can never match `"abcd/…"`.
+ *
+ * There is NO silent partial delete: DeleteObjects returns HTTP 200 even when
+ * individual keys fail, reporting them in `Errors` — for an erasure whose
+ * done-criterion is "zero objects", a swallowed partial failure is a correctness
+ * bug, so any `Errors` entry throws and the caller (which runs this BEFORE
+ * touching the database) safely retries rather than being told deletion completed.
+ * @throws {Error} when `prefix` is empty/whitespace, or on any AWS failure.
+ */
+export async function deleteObjectsUnderPrefix(
+  client: StorageClient,
+  bucket: string,
+  prefix: string,
+): Promise<number> {
+  if (prefix.trim().length === 0) {
+    throw new Error('Refusing to delete objects under an empty prefix.');
+  }
+  let deleted = 0;
+  let continuationToken: string | undefined;
+
+  do {
+    const listed = await client.s3.send(
+      new ListObjectsV2Command({
+        Bucket: bucket,
+        Prefix: prefix,
+        ContinuationToken: continuationToken,
+      }),
+    );
+
+    const keys = (listed.Contents ?? [])
+      .map((object) => object.Key)
+      .filter((key): key is string => typeof key === 'string');
+
+    // Delete in batches of ≤1000 (a page can hold up to 1000 keys, and
+    // DeleteObjects refuses more than that per request).
+    for (let i = 0; i < keys.length; i += DELETE_BATCH_MAX) {
+      const batch = keys.slice(i, i + DELETE_BATCH_MAX);
+      const result = await client.s3.send(
+        new DeleteObjectsCommand({
+          Bucket: bucket,
+          Delete: { Objects: batch.map((Key) => ({ Key })), Quiet: true },
+        }),
+      );
+      // DeleteObjects returns HTTP 200 even when individual keys fail to
+      // delete — those failures come back in `Errors` and do NOT throw. For an
+      // erasure whose done-criterion is "zero objects", a silently-swallowed
+      // partial failure is a correctness bug, so surface it: the delete-account
+      // route catches this, returns 500, and the caller safely retries rather
+      // than being told (falsely) that deletion completed.
+      if (result.Errors && result.Errors.length > 0) {
+        throw new Error(`DeleteObjects left ${result.Errors.length} object(s) undeleted.`);
+      }
+      deleted += batch.length;
+    }
+
+    // Only follow the cursor while the listing is truncated.
+    continuationToken = listed.IsTruncated ? listed.NextContinuationToken : undefined;
+  } while (continuationToken);
+
+  return deleted;
+}
+
+/**
  * Irreversibly delete EVERY object a user owns across ALL asset buckets — the
  * storage half of full-account deletion (GDPR right-to-erasure + the App Store
  * account-deletion requirement). The done-criterion is "zero storage objects".
  *
- * For each bucket in the config it paginates {@link ListObjectsV2Command} under
- * the prefix `${userId}/`, following `ContinuationToken` to the very end — it
- * never stops at the 1000-key page cap — then removes the collected keys with
- * {@link DeleteObjectsCommand} in batches of ≤1000 ({@link DELETE_BATCH_MAX}).
+ * For each bucket in the config it delegates to {@link deleteObjectsUnderPrefix}
+ * with the prefix `${userId}/`, which paginates {@link ListObjectsV2Command} to
+ * the very end (never stopping at the 1000-key page cap) and removes the collected
+ * keys with {@link DeleteObjectsCommand} in batches of ≤1000 ({@link
+ * DELETE_BATCH_MAX}).
  *
  * PREFIX SAFETY: the prefix is EXACTLY `${userId}/` with a trailing slash, so a
  * user `"abc"` can never match objects under `"abcd/…"`. `userId` must be a
@@ -236,48 +376,7 @@ export async function deleteUserObjects(
   let deleted = 0;
 
   for (const bucket of Object.values(client.config.buckets)) {
-    let bucketDeleted = 0;
-    let continuationToken: string | undefined;
-
-    do {
-      const listed = await client.s3.send(
-        new ListObjectsV2Command({
-          Bucket: bucket,
-          Prefix: prefix,
-          ContinuationToken: continuationToken,
-        }),
-      );
-
-      const keys = (listed.Contents ?? [])
-        .map((object) => object.Key)
-        .filter((key): key is string => typeof key === 'string');
-
-      // Delete in batches of ≤1000 (a page can hold up to 1000 keys, and
-      // DeleteObjects refuses more than that per request).
-      for (let i = 0; i < keys.length; i += DELETE_BATCH_MAX) {
-        const batch = keys.slice(i, i + DELETE_BATCH_MAX);
-        const result = await client.s3.send(
-          new DeleteObjectsCommand({
-            Bucket: bucket,
-            Delete: { Objects: batch.map((Key) => ({ Key })), Quiet: true },
-          }),
-        );
-        // DeleteObjects returns HTTP 200 even when individual keys fail to
-        // delete — those failures come back in `Errors` and do NOT throw. For an
-        // erasure whose done-criterion is "zero objects", a silently-swallowed
-        // partial failure is a correctness bug, so surface it: the delete-account
-        // route catches this, returns 500, and the caller safely retries rather
-        // than being told (falsely) that deletion completed.
-        if (result.Errors && result.Errors.length > 0) {
-          throw new Error(`DeleteObjects left ${result.Errors.length} object(s) undeleted.`);
-        }
-        bucketDeleted += batch.length;
-      }
-
-      // Only follow the cursor while the listing is truncated.
-      continuationToken = listed.IsTruncated ? listed.NextContinuationToken : undefined;
-    } while (continuationToken);
-
+    const bucketDeleted = await deleteObjectsUnderPrefix(client, bucket, prefix);
     byBucket[bucket] = bucketDeleted;
     deleted += bucketDeleted;
   }

@@ -34,6 +34,18 @@ export function utcDayStart(now: Date = new Date()): Date {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 }
 
+/**
+ * Midnight (00:00:00.000) UTC of the FIRST day of the given instant's month — the
+ * window boundary for the monthly FASHN spend caps (try-on renders and avatar
+ * creations), the sibling of {@link utcDayStart}. Those caps are per-calendar-
+ * month (bounding worst-case vendor spend per subscriber), so the boundary is
+ * computed once here and reused by the count queries that enforce them. Pure and
+ * side-effect free.
+ */
+export function utcMonthStart(now: Date = new Date()): Date {
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+}
+
 /** One UTC day in milliseconds — the upper bound of a day window. */
 const DAY_MS = 24 * 60 * 60 * 1000;
 

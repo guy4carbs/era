@@ -71,6 +71,13 @@
       "when": 1784184658958,
       "tag": "0009_warm_raider",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1784304498478,
+      "tag": "0010_soft_cannonball",
+      "breakpoints": true
     }
   ]
 }
