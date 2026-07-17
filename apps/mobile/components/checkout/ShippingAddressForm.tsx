@@ -126,6 +126,9 @@ export function ShippingAddressForm({ initial, busy, onSubmit, onCancel }: Shipp
       </View>
       {field('phone', { keyboardType: 'phone-pad' })}
 
+      {/* Point-of-capture privacy note — the address leaves Era to place orders. */}
+      <Text style={caption(colors.secondary)}>{checkoutCopy.shippingPrivacyNote}</Text>
+
       <Button label={checkoutCopy.saveAddress} onPress={handleSubmit} disabled={busy} />
       {onCancel ? (
         <Button label={strings.common.cancel} variant="ghost" onPress={onCancel} disabled={busy} />

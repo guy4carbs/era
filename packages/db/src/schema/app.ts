@@ -716,7 +716,9 @@ export const shippingAddresses = pgTable('shipping_addresses', {
     .references(() => user.id, { onDelete: 'cascade' }),
   firstName: text('first_name').notNull(),
   lastName: text('last_name').notNull(),
-  phone: text('phone').notNull(),
+  // Nullable: phone is optional at the form and the checkout vendor, so we never
+  // force it (data minimization). Included in the buyer payload only when present.
+  phone: text('phone'),
   address1: text('address1').notNull(),
   // The only optional line — apartment/suite/etc.
   address2: text('address2'),

@@ -51,7 +51,7 @@ CREATE TABLE "shipping_addresses" (
 	"user_id" text PRIMARY KEY NOT NULL,
 	"first_name" text NOT NULL,
 	"last_name" text NOT NULL,
-	"phone" text NOT NULL,
+	"phone" text,
 	"address1" text NOT NULL,
 	"address2" text,
 	"city" text NOT NULL,

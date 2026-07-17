@@ -51,6 +51,12 @@ export const checkoutCopy = {
   shippingTitle: 'Shipping address',
   /** Plain explainer under the heading. */
   shippingExplain: 'Where your in-flow orders ship. Saved for checkout; you can edit or remove it any time.',
+  /**
+   * Point-of-capture privacy note at the address form (Shield A1): the address
+   * leaves Era to place orders. Informed consent for cross-border PII egress,
+   * rendered right where the address is entered — not only in the policy.
+   */
+  shippingPrivacyNote: 'Used only to place your orders with the store, through our checkout partner.',
   /** Edit affordance on the address summary row. */
   editAddress: 'Edit',
   /** Save action in the address form. */

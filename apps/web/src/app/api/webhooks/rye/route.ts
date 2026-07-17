@@ -39,6 +39,32 @@ const db = createDbClient(process.env.DATABASE_URL!);
 /** Cap the raw webhook body — a Rye event is a small JSON object. */
 const MAX_WEBHOOK_BODY_BYTES = 64 * 1024;
 
+/**
+ * Replay window (ms). Rye signs the raw body only, so a captured valid delivery
+ * could be replayed with its signature intact; rejecting stale timestamps closes
+ * that window (Sentinel A1). Enforced only when the `x-rye-timestamp` header is
+ * present — a missing header is logged and allowed through, since the downstream
+ * write is an idempotent re-fetch of the true current state (no forgery, no money
+ * effect). LAUNCH NOTE: confirm the exact header name during sandbox verification
+ * and tighten to fail-closed before the live secret is provisioned.
+ */
+const WEBHOOK_FRESHNESS_MS = 5 * 60 * 1000;
+
+/** True if the event is fresh enough (or unstamped). `nowMs` is the receipt time. */
+function isWebhookFresh(timestampHeader: string | null, nowMs: number): boolean {
+  if (timestampHeader === null || timestampHeader.length === 0) {
+    console.error('[era-checkout] Rye webhook: no timestamp header — replay window not enforced');
+    return true;
+  }
+  // Accept seconds or milliseconds epoch; a 10-digit value is seconds.
+  const raw = Number(timestampHeader);
+  if (!Number.isFinite(raw)) {
+    return false;
+  }
+  const stampMs = timestampHeader.trim().length <= 10 ? raw * 1000 : raw;
+  return Math.abs(nowMs - stampMs) <= WEBHOOK_FRESHNESS_MS;
+}
+
 export async function POST(request: Request): Promise<NextResponse> {
   // Dormant until provisioned — short-circuit before touching the body.
   if (!isRyeWebhookConfigured()) {
@@ -83,6 +109,12 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   // A checkout-intent state change — re-fetch the authoritative intent and persist it.
   if (type.startsWith('checkout_intent.') && sourceId.length > 0) {
+    // Replay guard: a stale (re-sent) delivery is dropped. Signed-but-old bodies
+    // keep a valid signature, so freshness is the second half of the defense.
+    if (!isWebhookFresh(request.headers.get('x-rye-timestamp'), Date.now())) {
+      console.error('[era-checkout] Rye webhook: stale timestamp — dropped as possible replay');
+      return NextResponse.json({ received: true }, { status: 200 });
+    }
     try {
       const intent = await getCheckoutProvider().getIntent(sourceId);
       const applied = await persistIntentByIntentId(db, sourceId, intent);

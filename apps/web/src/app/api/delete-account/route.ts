@@ -128,7 +128,9 @@ export async function POST(request: Request): Promise<NextResponse> {
   //    outfits→outfit_items, eras→era_outfits, wear_logs, follows, ai_events,
   //    receipt_inbox_tokens, inbound_email_events, subscriptions, feed_posts→
   //    post_likes/post_saves, user_blocks (both directions), feed_reports
-  //    (both as reporter and as reported user)).
+  //    (both as reporter and as reported user), avatars, outfit_tryons,
+  //    user_sizes, shipping_addresses, cart_items, orders — every FK is
+  //    ON DELETE CASCADE, so this list must grow with each new user-keyed table).
   //    waitlist and verification are NOT FK-linked to user.id — they are keyed
   //    by email — so we delete them explicitly. verification is Better Auth's
   //    ephemeral email-token table (identifier = the email for magic-link);

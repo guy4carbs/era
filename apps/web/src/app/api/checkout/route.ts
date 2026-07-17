@@ -74,7 +74,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     firstName: address.firstName,
     lastName: address.lastName,
     email: session.user.email ?? '',
-    phone: address.phone,
+    phone: address.phone ?? undefined,
     address1: address.address1,
     address2: address.address2 ?? undefined,
     city: address.city,

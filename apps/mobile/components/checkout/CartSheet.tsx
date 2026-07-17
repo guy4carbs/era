@@ -621,6 +621,10 @@ function ReviewView({
         {copy.grandTotal(formatCents(batch.combined.grandTotalCents, batch.combined.currency))}
       </Text>
 
+      {/* Commission disclosure AT the transaction (Axiom/FTC), beside the amount
+          being authorized — not only in the Shop feed two screens back. */}
+      <Text style={disclosure(colors.secondary)}>{copy.commissionDisclosure}</Text>
+
       {confirmable ? (
         <Button label={copy.confirmPurchase} onPress={onConfirm} disabled={busy} haptic />
       ) : null}

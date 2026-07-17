@@ -369,19 +369,22 @@ export async function getCart(): Promise<readonly CartItem[]> {
 
 /**
  * Add a piece to the cross-store cart — idempotent server-side (re-adding the same
- * product is a no-op via `onConflictDoNothing`). THROWS {@link CheckoutFailedError}
- * on failure so the card can revert its optimistic "Added" feedback and badge bump.
- * The body carries the full product so the server persists a renderable snapshot.
+ * product is a no-op via `onConflictDoNothing`). Resolves `true` when a new row was
+ * created, `false` when the product was already in the cart. THROWS
+ * {@link CheckoutFailedError} on failure so the card can revert its optimistic
+ * "Added" feedback and badge bump. The body carries the full product so the server
+ * persists a renderable snapshot. Callers reconcile the badge from {@link getCart}
+ * rather than the return, since the idempotent no-op path returns no row to echo.
  */
 export async function addToCart(
   product: CartAddProduct,
   options: { size?: string; quantity?: number } = {},
-): Promise<CartItem> {
+): Promise<boolean> {
   const body: Record<string, unknown> = { product };
   if (options.size !== undefined) body.size = options.size;
   if (options.quantity !== undefined) body.quantity = options.quantity;
-  const result = await request<{ item: CartItem }>('/api/cart', { method: 'POST', body });
-  if (result.ok) return result.data.item;
+  const result = await request<{ added: boolean }>('/api/cart', { method: 'POST', body });
+  if (result.ok) return result.data.added;
   throw new CheckoutFailedError();
 }
 
@@ -391,7 +394,7 @@ export async function addToCart(
  * removal (put the line back) rather than lose a piece the server still holds.
  */
 export async function removeFromCart(cartItemId: string): Promise<void> {
-  const result = await request<{ removed: boolean }>('/api/cart', {
+  const result = await request<{ deleted: boolean }>('/api/cart', {
     method: 'DELETE',
     body: { cartItemId },
   });

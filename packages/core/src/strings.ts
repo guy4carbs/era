@@ -1531,6 +1531,15 @@ export const strings = {
        * never replace it with a "universal checkout" claim.
        */
       separateShipments: 'One checkout — each store ships and bills its own order.',
+      /**
+       * The commission disclosure AT THE POINT OF PURCHASE (Axiom/FTC: "clear and
+       * conspicuous" belongs at the transaction, not two screens back in the feed).
+       * Rendered beside the grand total on the review/confirm surface. Mirrors
+       * {@link strings.shop.affiliateDisclosure}'s promise — states the commission
+       * plainly and that it never affects what Ovi shows.
+       */
+      commissionDisclosure:
+        'Era may earn a commission on this order. It never changes what we show you — Ovi ranks on your closet, not on payouts.',
 
       // --- the cart: items grouped by retailer, each with its own subtotal ---
 

@@ -38,7 +38,11 @@ const MAX_FIELD_CHARS = 200;
 interface ParsedAddress {
   readonly firstName: string;
   readonly lastName: string;
-  readonly phone: string;
+  // Optional end to end — the form marks it "(optional)", the vendor treats it
+  // optional, and the column is nullable. Only included in the buyer payload when
+  // present. (A specific retailer that requires phone would surface as a Rye offer
+  // error at sandbox time — a launch consideration, not a stored-data requirement.)
+  readonly phone: string | null;
   readonly address1: string;
   readonly address2: string | null;
   readonly city: string;
@@ -104,7 +108,6 @@ function boundedNonEmpty(value: unknown): string | null {
 function parseAddress(body: Record<string, unknown>): ParsedAddress | null {
   const firstName = boundedNonEmpty(body.firstName);
   const lastName = boundedNonEmpty(body.lastName);
-  const phone = boundedNonEmpty(body.phone);
   const address1 = boundedNonEmpty(body.address1);
   const city = boundedNonEmpty(body.city);
   const province = boundedNonEmpty(body.province);
@@ -112,13 +115,23 @@ function parseAddress(body: Record<string, unknown>): ParsedAddress | null {
   if (
     firstName === null ||
     lastName === null ||
-    phone === null ||
     address1 === null ||
     city === null ||
     province === null ||
     postalCode === null
   ) {
     return null;
+  }
+
+  // Phone is optional (nullable column, optional at the vendor). Reject a present
+  // but malformed value; a blank/absent value is a legitimate null.
+  let phone: string | null = null;
+  if (body.phone !== undefined && body.phone !== null) {
+    if (typeof body.phone !== 'string' || body.phone.length > MAX_FIELD_CHARS) {
+      return null;
+    }
+    const trimmed = body.phone.trim();
+    phone = trimmed.length > 0 ? trimmed : null;
   }
 
   const countryRaw = boundedNonEmpty(body.country);

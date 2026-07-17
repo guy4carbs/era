@@ -108,7 +108,10 @@ export async function GET(request: Request): Promise<NextResponse> {
   const provider = getCheckoutProvider();
 
   const items = rows.map((row) => ({
-    id: row.id,
+    // The row handle the client keys on and passes back to DELETE — named
+    // `cartItemId` end to end (GET emits it, DELETE consumes it) so the cart
+    // contract is self-consistent across the client/server boundary.
+    cartItemId: row.id,
     productId: row.productId,
     retailer: row.retailer,
     title: row.title,
