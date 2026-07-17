@@ -197,6 +197,45 @@ export type {
 } from './checkout.ts';
 export { isEraCheckoutEnabled } from './checkout-flags.ts';
 
+// Model harness — the reusable, ships-DARK scaffolding for a future custom-ML phase.
+// Three swappable seams behind stable interfaces (the tagger, the outfit ranker, and
+// A/B variant selection) plus an OFFLINE EVAL HARNESS that encodes "promote only on
+// measured wins" as testable code. All pure and client-safe (no server-only deps); the
+// network-bound baseline providers (Claude-vision tagger) live server-side against these
+// same interfaces. Web/mobile client code imports from the `@era/core/tagging`,
+// `/outfit-ranking`, `/model-flags`, and `/model-eval` subpaths to avoid this
+// server-tainted barrel. Re-exported here for server callers (routes construct the
+// selected provider at the seam's one construction site and run the eval over the
+// `ai_events` corpus). Baseline behavior is unchanged — no seam is wired live yet. See
+// tagging.ts, outfit-ranking.ts, model-flags.ts, model-eval.ts.
+export { createDeterministicTaggingProvider } from './tagging.ts';
+export type { TagPrediction, TaggingInput, TaggingProvider } from './tagging.ts';
+export { createHeuristicOutfitRanker } from './outfit-ranking.ts';
+export type { OutfitCandidate, OutfitRankContext, RankedOutfit, OutfitRanker } from './outfit-ranking.ts';
+export { parseModelVariant } from './model-flags.ts';
+export type { ModelVariant } from './model-flags.ts';
+export {
+  splitHeldOut,
+  runTagger,
+  evaluateTagger,
+  evaluateRanker,
+  promotionVerdict,
+  DEFAULT_MIN_MARGIN,
+  DEFAULT_MIN_TEST_COUNT,
+} from './model-eval.ts';
+export type {
+  TagCorrectionExample,
+  AcceptRejectExample,
+  HeldOutSplit,
+  TaggerMetrics,
+  TagScoredPair,
+  RankerMetrics,
+  VerdictMetric,
+  PromotionOptions,
+  PromotionReason,
+  PromotionVerdict,
+} from './model-eval.ts';
+
 // Persistence type contract, re-exported type-only from @era/db.
 export type * from './db-types.ts';
 

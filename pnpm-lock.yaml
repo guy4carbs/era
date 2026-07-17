@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      '@era/core':
+        specifier: workspace:*
+        version: link:packages/core
       prettier:
         specifier: ^3.4.0
         version: 3.9.4
