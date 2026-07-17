@@ -20,6 +20,8 @@
     "./feed-flags": "./src/feed-flags.ts",
     "./turnaround": "./src/turnaround.ts",
     "./turnaround-flags": "./src/turnaround-flags.ts",
+    "./tryon": "./src/tryon.ts",
+    "./tryon-flags": "./src/tryon-flags.ts",
     "./wardrobe-gaps": "./src/wardrobe-gaps.ts",
     "./wear-stats": "./src/wear-stats.ts",
     "./analytics": "./src/analytics.ts",

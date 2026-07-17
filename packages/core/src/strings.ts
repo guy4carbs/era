@@ -937,6 +937,123 @@ export const strings = {
   },
 
   /**
+   * Virtual try-on — the flag-gated Era+ surface where a user builds a consented
+   * avatar from their own photos and renders a saved outfit onto it ("See it on
+   * you"). This copy spans the consent screen, the avatar build, the render
+   * progress, the staleness re-render prompt, the dormant/failed beats, and the
+   * deletion confirmation. Voice stays Era's: quiet and honest, no exclamation, no
+   * pressure. The consent copy is load-bearing and deliberately plain — it names
+   * exactly what happens to the photos (used once, sent to a try-on provider,
+   * originals deleted right after) and where the avatar lives (private, encrypted
+   * at rest, only the user, deletable anytime), because informed consent is the
+   * whole point of the surface; never ship the avatar build without it. The
+   * dormant {@link strings.tryon.unavailable} is a "not switched on yet" beat, not
+   * an error banner, and {@link strings.tryon.monthlyLimit} frames the render cap
+   * as a calm pause, never a scold or a nudge to pay more. The count helpers are
+   * boundary-hardened via {@link safeCount} (NaN/garbage → 0) so a partial render
+   * or delete never leaks "undefined"/"NaN".
+   */
+  tryon: {
+    // --- the consent screen: the informed opt-in before any photo is sent ---
+
+    /**
+     * The consent screen. `heading` opens it; `body` is the plain, itemized truth
+     * about the photo flow and where the avatar lives — each line stands on its own
+     * so it can render as a checklist. This is the informed-consent contract: the
+     * avatar build must not proceed without the user agreeing to exactly these
+     * facts. {@link strings.tryon.consentAgree} is the single affirmative action.
+     */
+    consent: {
+      /** Consent-screen heading — names the payoff plainly, no hype. */
+      heading: 'See your outfits on you',
+      /**
+       * The itemized consent facts, each a standalone line: what the photos are for,
+       * who processes them, that the originals are deleted right after creation, how
+       * the avatar is stored, and that it's deletable anytime. Kept as an array so
+       * the UI can render them as distinct, scannable points.
+       */
+      body: [
+        'Your photos are used once, to build your avatar.',
+        'They’re processed by our try-on provider to create it.',
+        'The originals are deleted right after your avatar is made.',
+        'Your avatar is stored privately and encrypted at rest — only you can see it.',
+        'You can delete it anytime in Settings.',
+      ] as const,
+    },
+    /** The affirmative consent action — one clear, unhedged agreement to build the avatar. */
+    consentAgree: 'I agree — create my avatar',
+
+    // --- the entry point + premium badge ---
+
+    /** The action that renders a saved outfit onto the avatar, on the outfit surface. */
+    seeItOnYou: 'See it on you',
+    /** The Era+ badge shown beside {@link strings.tryon.seeItOnYou} for a gated user. */
+    plusBadge: 'Era+',
+
+    // --- building the avatar, then dressing it: the two async progress beats ---
+
+    /** Progress line while the avatar likeness is being created from the photos. Patient, plain. */
+    creating: 'Building your avatar…',
+    /** Progress line while a saved outfit is rendered onto the avatar, garment by garment. */
+    rendering: 'Dressing your avatar…',
+    /**
+     * Partial-progress line during a multi-garment render — how many pieces have
+     * landed so far. `partial(2, 4)` → "2 of 4 pieces rendered". Both numbers
+     * coerce at the boundary so a mid-render frame never reads "undefined".
+     */
+    partial: (n: number, total: number): string =>
+      `${safeCount(n)} of ${safeCount(total)} pieces rendered`,
+
+    // --- staleness: the outfit changed since it was last rendered ---
+
+    /**
+     * Shown when the stored render no longer matches the outfit's current pieces
+     * (see {@link itemsSignature}). Honest and low-key — a render costs a credit, so
+     * this offers the update rather than auto-spending, with no pressure to take it.
+     */
+    stale: 'This look changed — update the render?',
+    /** The explicit re-render action for a stale render — a visible, deliberate credit spend. */
+    updateRender: 'Update render',
+
+    // --- the calm edge states: nothing to render, dormant, failed ---
+
+    /**
+     * Terminal calm state — the outfit holds nothing try-on can render (only skipped
+     * pieces like bags or accessories). No retry verb: there's nothing to try, so the
+     * copy states the fact without inviting an action that isn't there.
+     */
+    noGarments: "There's nothing here I can render on you yet — add a top, a dress, or shoes to this look.",
+    /**
+     * Dormant state — try-on isn't switched on (the feature is off server-side).
+     * Matches the app's dormant voice: a quiet "coming soon" beat, never an error or
+     * "not configured".
+     */
+    unavailable: "Seeing outfits on you isn't available just yet — it's coming soon.",
+    /** The render run failed — calm, no blame, retryable. */
+    failed: "Couldn't dress your avatar just now — give it another go.",
+
+    // --- deletion + the monthly render cap ---
+
+    /**
+     * Confirmation after the avatar (and any renders) are permanently deleted, from
+     * the count of images removed. States the plain result — this is a permanent
+     * delete, honestly named. `deleted(0)` → "Your avatar and 0 images were
+     * permanently deleted."; `deleted(3)` → "…and 3 images were…". Coerces at the
+     * boundary so a partial delete never renders "undefined".
+     */
+    deleted: (count: number): string => {
+      const c = safeCount(count);
+      return `Your avatar and ${c} ${c === 1 ? 'image was' : 'images were'} permanently deleted.`;
+    },
+    /**
+     * Shown when the user hits their monthly render cap. A calm pause, not a scold
+     * and not an upsell: the cap is a cost guardrail, so this owns the wait for the
+     * month to roll over without hinting there's more to buy.
+     */
+    monthlyLimit: "You've styled your avatar plenty this month — the render count resets next month, and everything you've made is saved.",
+  },
+
+  /**
    * Public profile pages — a user's closet, eras, and outfits as seen by someone
    * else (or previewed by the owner). The counterpart to the private in-app tabs:
    * where {@link strings.closet}/{@link strings.design} speak to the owner in the

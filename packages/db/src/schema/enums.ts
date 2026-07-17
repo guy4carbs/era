@@ -48,3 +48,7 @@ export const turnaroundJobStatus = pgEnum('turnaround_job_status', [
   'complete',
   'failed',
 ]);
+
+export const avatarStatus = pgEnum('avatar_status', ['creating', 'ready', 'failed']);
+
+export const tryonStatus = pgEnum('tryon_status', ['running', 'complete', 'failed']);

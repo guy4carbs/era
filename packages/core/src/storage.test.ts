@@ -6,7 +6,9 @@ import { DeleteObjectsCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { AuthzError, type AuthContext } from './authz.ts';
 import {
   assetKey,
+  countObjectsUnderPrefix,
   createStorageClient,
+  deleteObjectsUnderPrefix,
   deleteUserObjects,
   getAssetUrl,
   requestUploadUrl,
@@ -258,4 +260,165 @@ test('deleteUserObjects issues no delete for a user with no objects', async () =
   // One list call per bucket (all four), each with the safe prefix.
   assert.equal(listCalls.length, 4);
   assert.ok(listCalls.every((c) => c.Prefix === `${A}/`));
+});
+
+// --- assetKey with a subdir -------------------------------------------------
+//
+// The avatar buckets segregate objects into sub-prefixes (`avatar`, `avatar-src`,
+// `tryon`) under the owner's namespace. The subdir is a flat, validated slug so a
+// caller can never break out of `{userId}/`.
+
+test('assetKey nests a subdir as {userId}/{subdir}/{uuid}.{ext}', () => {
+  const key = assetKey(A, 'PNG', 'avatar-src');
+  assert.match(key, /^user_A\/avatar-src\/[0-9a-f-]{36}\.png$/);
+});
+
+test('assetKey with an omitted subdir is unchanged (no extra segment)', () => {
+  const key = assetKey(A, 'png');
+  assert.match(key, /^user_A\/[0-9a-f-]{36}\.png$/);
+});
+
+test('assetKey accepts the avatar sub-prefixes the routes use', () => {
+  for (const subdir of ['avatar', 'avatar-src', 'tryon']) {
+    assert.match(assetKey(A, 'png', subdir), new RegExp(`^user_A/${subdir}/[0-9a-f-]{36}\\.png$`));
+  }
+});
+
+test('assetKey rejects a path-traversal or malformed subdir', () => {
+  assert.throws(() => assetKey(A, 'png', '../etc'), /subdir/i);
+  assert.throws(() => assetKey(A, 'png', 'a/b'), /subdir/i);
+  assert.throws(() => assetKey(A, 'png', 'a b'), /subdir/i);
+  assert.throws(() => assetKey(A, 'png', 'Avatar'), /subdir/i); // uppercase
+  assert.throws(() => assetKey(A, 'png', '1avatar'), /subdir/i); // leading digit
+  assert.throws(() => assetKey(A, 'png', '-avatar'), /subdir/i); // leading hyphen
+  assert.throws(() => assetKey(A, 'png', ''), /subdir/i); // empty
+  assert.throws(() => assetKey(A, 'png', 'a'.repeat(17)), /subdir/i); // too long (>16)
+});
+
+test('assetKey allows a 16-char subdir but not 17', () => {
+  assert.match(assetKey(A, 'png', 'a'.repeat(16)), /\/a{16}\//);
+  assert.throws(() => assetKey(A, 'png', 'a'.repeat(17)), /subdir/i);
+});
+
+// --- getAssetUrl passes a sub-prefixed key unchanged ------------------------
+//
+// The owner-prefix guard is `key.startsWith(userId + '/')`, which a
+// `{userId}/{subdir}/…` key satisfies exactly as a flat `{userId}/…` key does —
+// so segregating avatar objects under a sub-prefix needs no change to the guard.
+
+test('getAssetUrl presigns a sub-prefixed avatar key for its owner', async () => {
+  const key = assetKey(A, 'png', 'avatar'); // {A}/avatar/{uuid}.png
+  const url = await getAssetUrl(client, ctxA, {
+    bucket: 'avatars',
+    key,
+    owner: { userId: A, isPrivate: true },
+  });
+  assert.match(url, /X-Amz-Signature=/);
+  assert.ok(url.includes('era-avatars'), 'URL should target the avatars bucket');
+});
+
+test('getAssetUrl still rejects a sub-prefixed key claimed under the wrong owner', () =>
+  assertAuthz(
+    () =>
+      getAssetUrl(client, ctxA, {
+        bucket: 'avatars',
+        key: `${B}/avatar/x.png`,
+        owner: { userId: A, isPrivate: true },
+      }),
+    'FORBIDDEN',
+  ));
+
+// --- requestUploadUrl threads the subdir ------------------------------------
+
+test('requestUploadUrl presigns a PUT into a sub-prefix for the owner', async () => {
+  const result = await requestUploadUrl(client, ctxA, {
+    bucket: 'avatars',
+    ownerId: A,
+    ext: 'png',
+    contentType: 'image/png',
+    subdir: 'avatar-src',
+  });
+  assert.match(result.key, /^user_A\/avatar-src\/[0-9a-f-]{36}\.png$/);
+  assert.ok(result.url.includes('era-avatars'), 'URL should target the avatars bucket');
+});
+
+test('requestUploadUrl rejects a malformed subdir', () =>
+  assert.rejects(
+    () =>
+      requestUploadUrl(client, ctxA, {
+        bucket: 'avatars',
+        ownerId: A,
+        ext: 'png',
+        contentType: 'image/png',
+        subdir: '../escape',
+      }),
+    /subdir/i,
+  ));
+
+// --- deleteObjectsUnderPrefix / countObjectsUnderPrefix ---------------------
+//
+// The per-bucket engine deleteUserObjects delegates to, plus the read-only count
+// that verifies an avatar delete reached zero. Both paginate to the very end and
+// refuse an empty prefix. Reuses the same scripted S3 double as the erasure tests.
+
+test('deleteObjectsUnderPrefix paginates one bucket and deletes every key', async () => {
+  const listCalls: { Bucket: string; Prefix: string; ContinuationToken?: string }[] = [];
+  const deletes: Record<string, string[]> = {};
+  const pages: Record<string, ListPage[]> = {
+    'era-avatars': [
+      { Contents: [{ Key: `${A}/avatar/1.png` }], IsTruncated: true, NextContinuationToken: 'tokA' },
+      { Contents: [{ Key: `${A}/tryon/2.png` }, { Key: `${A}/tryon/3.png` }], IsTruncated: false },
+    ],
+  };
+
+  const deleted = await deleteObjectsUnderPrefix(
+    fakeClient(pages, listCalls, deletes),
+    'era-avatars',
+    `${A}/`,
+  );
+
+  assert.equal(deleted, 3);
+  // Followed the truncation cursor to the second page.
+  assert.ok(listCalls.some((c) => c.Bucket === 'era-avatars' && c.ContinuationToken === 'tokA'));
+  assert.ok(listCalls.every((c) => c.Prefix === `${A}/`));
+  assert.deepEqual(
+    [...(deletes['era-avatars'] ?? [])].sort(),
+    [`${A}/avatar/1.png`, `${A}/tryon/2.png`, `${A}/tryon/3.png`],
+  );
+});
+
+test('deleteObjectsUnderPrefix refuses an empty or whitespace prefix', async () => {
+  await assert.rejects(() => deleteObjectsUnderPrefix(client, 'era-avatars', ''), /empty prefix/i);
+  await assert.rejects(() => deleteObjectsUnderPrefix(client, 'era-avatars', '   '), /empty prefix/i);
+});
+
+test('countObjectsUnderPrefix sums every page without deleting', async () => {
+  const listCalls: { Bucket: string; Prefix: string; ContinuationToken?: string }[] = [];
+  const deletes: Record<string, string[]> = {};
+  const pages: Record<string, ListPage[]> = {
+    'era-avatars': [
+      { Contents: [{ Key: `${A}/avatar/1.png` }, { Key: `${A}/avatar/2.png` }], IsTruncated: true, NextContinuationToken: 'tokA' },
+      { Contents: [{ Key: `${A}/tryon/3.png` }], IsTruncated: false },
+    ],
+  };
+
+  const count = await countObjectsUnderPrefix(
+    fakeClient(pages, listCalls, deletes),
+    'era-avatars',
+    `${A}/`,
+  );
+
+  assert.equal(count, 3);
+  assert.deepEqual(deletes, {}, 'count must never delete');
+});
+
+test('countObjectsUnderPrefix returns zero for an empty prefix listing', async () => {
+  const listCalls: { Bucket: string; Prefix: string; ContinuationToken?: string }[] = [];
+  const count = await countObjectsUnderPrefix(fakeClient({}, listCalls, {}), 'era-avatars', `${A}/`);
+  assert.equal(count, 0);
+});
+
+test('countObjectsUnderPrefix refuses an empty or whitespace prefix', async () => {
+  await assert.rejects(() => countObjectsUnderPrefix(client, 'era-avatars', ''), /empty prefix/i);
+  await assert.rejects(() => countObjectsUnderPrefix(client, 'era-avatars', '   '), /empty prefix/i);
 });
