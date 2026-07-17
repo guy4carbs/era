@@ -32,6 +32,7 @@ import { type AuthContext, AuthzError, ownerOnly, requireUser } from '@era/core'
 import { type Item, type ItemCategory, aiEvents, createDbClient, itemCategory, items } from '@era/db';
 
 import { auth } from '../../../../lib/auth.ts';
+import { getTaggingProvider } from '../../../../lib/tagging-provider.ts';
 
 const db = createDbClient(process.env.DATABASE_URL!);
 
@@ -200,10 +201,22 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const setClause: Record<string, unknown> = {};
   const events: { userId: string; kind: 'tag_correction'; payload: unknown }[] = [];
 
+  // The baseline tagger that produced the tags the user is now correcting. A
+  // correction is only a TRAINING example if we know WHAT it corrected — the before
+  // (AI guess, `from`), the after (user truth, `to`), AND which model made the guess,
+  // so a future eval scores the candidate against the right baseline (model-eval.ts
+  // TagCorrectionExample). This is the provider name only (no key, no I/O); it is
+  // payload-only enrichment on the existing JSONB event — no schema/migration.
+  const taggerName = getTaggingProvider().name;
+
   for (const [field, value] of Object.entries(updates)) {
     if (differs(field, current[field], value)) {
       setClause[field] = value;
-      events.push({ userId: item.userId, kind: 'tag_correction', payload: { itemId: id, field, from: current[field] ?? null, to: value } });
+      events.push({
+        userId: item.userId,
+        kind: 'tag_correction',
+        payload: { itemId: id, field, from: current[field] ?? null, to: value, taggerName },
+      });
     }
   }
   if (confirm && item.tagsConfirmed !== true) {

@@ -30,9 +30,11 @@
 import Anthropic from '@anthropic-ai/sdk';
 
 import { type AuthContext, getAssetUrl, requestUploadUrl } from '@era/core';
+import type { TagPrediction } from '@era/core/tagging';
 import { type Item, type ItemCategory, createDbClient, itemCategory, items } from '@era/db';
 
 import { serverStorageClient } from './storage-server.ts';
+import { getTaggingProvider } from './tagging-provider.ts';
 
 const db = createDbClient(process.env.DATABASE_URL!);
 
@@ -45,15 +47,11 @@ const VISION_TIMEOUT_MS = 10_000;
 const VISION_MEDIA_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
 type VisionMediaType = 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';
 
-// Garment classification, mapped onto the camelCase items columns at insert.
-interface Classification {
-  readonly category: ItemCategory;
-  readonly name: string | null;
-  readonly brand: string | null;
-  readonly colorPrimary: string | null;
-  readonly colors: string[] | null;
-  readonly pattern: string | null;
-}
+// Garment classification, mapped onto the camelCase items columns at insert. This is
+// the pipeline's private view of the shared `@era/core/tagging` TagPrediction contract
+// (same fields; the swappable tagger seam speaks this shape). `TagPrediction.colors` is
+// `readonly string[] | null`, so a mutable `[...colors]` copy is taken at insert.
+type Classification = TagPrediction;
 
 const CLASSIFY_PROMPT = [
   'Classify this single garment or accessory from the image using the classify_garment tool.',
@@ -197,8 +195,15 @@ async function removeBackground(ctx: AuthContext, userId: string, rawBytes: Uint
  * types Claude cannot read). Uses a forced tool call for structured output.
  * Returns the parsed classification, or null on any failure so the item saves
  * with placeholder tags for manual review.
+ *
+ * Exported as the BASELINE tagger's implementation: `tagging-provider.ts`'s
+ * `createClaudeVisionTaggingProvider()` wraps this verbatim behind the
+ * `@era/core/tagging` `TaggingProvider` contract, so the pipeline runs it through the
+ * swappable seam (`getTaggingProvider().classify`) without changing what it does. The
+ * signature stays `(rawBytes, mediaType)` — the provider decodes the contract's base64
+ * bytes and calls this; behavior is byte-identical to the pre-seam pipeline.
  */
-async function classify(rawBytes: Uint8Array, mediaType: string): Promise<Classification | null> {
+export async function classifyGarment(rawBytes: Uint8Array, mediaType: string): Promise<TagPrediction | null> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!isRealCredential(apiKey) || !VISION_MEDIA_TYPES.has(mediaType)) {
     return null;
@@ -341,10 +346,18 @@ export async function processItemPipeline(deps: PipelineDeps, input: PipelineInp
   }
 
   // Both enrichment stages need the raw bytes and are independent — run them
-  // concurrently to keep total wall time within budget.
+  // concurrently to keep total wall time within budget. Vision runs through the
+  // swappable `@era/core/tagging` seam: `getTaggingProvider()` returns the
+  // Claude-vision baseline (the extracted `classifyGarment` logic) by default, so this
+  // is byte-identical to the pre-seam call — the base64 round-trip re-derives the same
+  // bytes the baseline classified before, and a future trained tagger drops in at that
+  // one construction site with no change here.
   const [cutoutPath, classification] = await Promise.all([
     removeBackground(ctx, userId, rawBytes, mediaType),
-    classify(rawBytes, mediaType),
+    getTaggingProvider().classify({
+      imageBytesBase64: Buffer.from(rawBytes).toString('base64'),
+      mediaType,
+    }),
   ]);
 
   try {
@@ -360,7 +373,8 @@ export async function processItemPipeline(deps: PipelineDeps, input: PipelineInp
         name: classification?.name ?? prefill?.name ?? 'New item',
         brand: classification?.brand ?? prefill?.brand ?? null,
         colorPrimary: classification?.colorPrimary ?? null,
-        colors: classification?.colors ?? null,
+        // TagPrediction.colors is readonly; the column wants a mutable array — copy it.
+        colors: classification?.colors ? [...classification.colors] : null,
         pattern: classification?.pattern ?? null,
         imageRawPath: rawKey,
         imageCutoutPath: cutoutPath,
