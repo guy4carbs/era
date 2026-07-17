@@ -20,6 +20,7 @@
         "EXPO_PUBLIC_ERA_SHARE_TIMING": "true",
         "EXPO_PUBLIC_ERA_TURNAROUND_ENABLED": "true",
         "EXPO_PUBLIC_ERA_TRYON_ENABLED": "true",
+        "EXPO_PUBLIC_ERA_CHECKOUT_ENABLED": "true",
         "EXPO_PUBLIC_API_URL": "https://era.style"
       }
     },
@@ -38,7 +39,8 @@
         "EXPO_PUBLIC_ERA_FEED_FPS": "true",
         "EXPO_PUBLIC_ERA_SHARE_TIMING": "true",
         "EXPO_PUBLIC_ERA_TURNAROUND_ENABLED": "true",
-        "EXPO_PUBLIC_ERA_TRYON_ENABLED": "true"
+        "EXPO_PUBLIC_ERA_TRYON_ENABLED": "true",
+        "EXPO_PUBLIC_ERA_CHECKOUT_ENABLED": "true"
       }
     },
     "production": {
