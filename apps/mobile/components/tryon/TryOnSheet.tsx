@@ -104,10 +104,21 @@ export function TryOnSheet({ open, onClose, outfitId, onNeedsPlus, onNeedsAvatar
 
   // Spend a credit: POST the render (with poll fallback) and settle. Used for the
   // first view, an explicit stale "Update render", and a failure retry.
+  //
+  // Honesty gate (Axiom): the "Dressing your avatar…" copy only appears once the
+  // request has survived the server's gate checks — a 403 plus_required / 409
+  // no_avatar rejects near-instantly (before any vendor call), so we hold the
+  // neutral checking spinner through a short grace window. A free user sees
+  // spinner → paywall with no false progress; a real render flips to the patient
+  // copy ~2.5s in and keeps it for the long haul.
   const startRender = useCallback(async () => {
-    if (alive()) setPhase('running');
+    if (alive()) setPhase('checking');
+    const promoteToRunning = setTimeout(() => {
+      if (alive()) setPhase('running');
+    }, 2_500);
     try {
       const state = await generateTryon(outfitId);
+      clearTimeout(promoteToRunning);
       if (!alive()) return;
       if (state.status === 'complete') {
         setResult(state);
@@ -116,6 +127,7 @@ export function TryOnSheet({ open, onClose, outfitId, onNeedsPlus, onNeedsAvatar
         setPhase('failed');
       }
     } catch (error) {
+      clearTimeout(promoteToRunning);
       settleError(error);
     }
   }, [alive, outfitId, settleError]);

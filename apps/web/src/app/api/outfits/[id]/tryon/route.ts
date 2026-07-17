@@ -121,8 +121,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   const chainItems = await loadTryonChainItems(db, userId, id);
   const signature = currentTryonSignature(chainItems);
-  const plannedCalls = planTryonExecution(chainItems).length;
-  if (plannedCalls === 0) {
+  const plannedSteps = planTryonExecution(chainItems);
+  const plannedCalls = plannedSteps.length;
+  // Empty chain OR a chain with no base layer both reject BEFORE the claim and
+  // before any vendor spend: completion requires a rendered base (dress/top/
+  // bottom), so a shoes-only outfit would burn credits on a run that is failed
+  // by rule. Gauge gate: never spend on a doomed chain.
+  if (plannedCalls === 0 || !plannedSteps.some((step) => step.isBase)) {
     return NextResponse.json({ error: 'no_garments' }, { status: 400 });
   }
 

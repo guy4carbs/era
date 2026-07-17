@@ -29,8 +29,6 @@ export const avatarCopy = {
   settingsTitle: 'Your avatar',
   /** Settings row for a user with no avatar yet — routes into onboarding. */
   createRow: 'Create your avatar',
-  /** Settings status line while the avatar is being built. */
-  statusCreating: 'Building your avatar…',
   /** Settings status line once the avatar is ready, from its creation date. */
   statusReady: (createdAt: string): string => `Avatar ready · created ${formatDate(createdAt)}`,
   /** Settings status line when the last creation failed — routes back into onboarding to retry. */

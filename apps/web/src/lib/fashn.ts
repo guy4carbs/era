@@ -182,15 +182,58 @@ async function runPrediction(apiKey: string, body: unknown, budgetMs: number): P
   return { id, outputUrls };
 }
 
-/** Download a finished image from a FASHN CDN URL to raw bytes, or null on failure. Never throws. */
+// SSRF gate on vendor-supplied output URLs (Sentinel): we only ever download
+// from FASHN's own hosts, over https, and only image bytes of sane size. A
+// compromised API response can therefore never make this server fetch an
+// internal endpoint (metadata service, Railway internals) and store the reply
+// as a user's "render". Mirrors the posture of lib/url-import.ts.
+const FASHN_DOWNLOAD_HOST_SUFFIX = '.fashn.ai';
+const IMAGE_MAX_BYTES = 20 * 1024 * 1024; // 20MB — far above any real render
+
+function isAllowedFashnUrl(raw: string): boolean {
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== 'https:') {
+      return false;
+    }
+    return url.hostname === 'fashn.ai' || url.hostname.endsWith(FASHN_DOWNLOAD_HOST_SUFFIX);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Download a finished image from a FASHN URL to raw bytes, or null on failure.
+ * Never throws. Refuses non-FASHN hosts, non-image content, and oversized
+ * bodies (see the SSRF gate above).
+ */
 async function fetchImageBytes(url: string): Promise<Uint8Array | null> {
+  if (!isAllowedFashnUrl(url)) {
+    console.error('[era-tryon] FASHN output URL refused by host allowlist');
+    return null;
+  }
   try {
     const response = await fetch(url, { signal: AbortSignal.timeout(IMAGE_FETCH_TIMEOUT_MS) });
     if (!response.ok) {
       console.error(`[era-tryon] FASHN image download returned ${response.status}`);
       return null;
     }
-    return new Uint8Array(await response.arrayBuffer());
+    const contentType = response.headers.get('content-type') ?? '';
+    if (!contentType.startsWith('image/')) {
+      console.error(`[era-tryon] FASHN image download refused content-type ${contentType || '(none)'}`);
+      return null;
+    }
+    const declared = Number(response.headers.get('content-length') ?? '0');
+    if (declared > IMAGE_MAX_BYTES) {
+      console.error('[era-tryon] FASHN image download refused: declared size over cap');
+      return null;
+    }
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    if (bytes.byteLength > IMAGE_MAX_BYTES) {
+      console.error('[era-tryon] FASHN image download refused: body over cap');
+      return null;
+    }
+    return bytes;
   } catch (error) {
     console.error('[era-tryon] FASHN image download failed:', error);
     return null;

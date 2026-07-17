@@ -1051,6 +1051,12 @@ export const strings = {
      * month to roll over without hinting there's more to buy.
      */
     monthlyLimit: "You've styled your avatar plenty this month — the render count resets next month, and everything you've made is saved.",
+    /**
+     * A DELETE of the avatar failed — its own line, never the render-failure
+     * copy (telling someone we couldn't "dress" the avatar they tried to
+     * delete is wrong twice over).
+     */
+    deleteFailed: "Couldn't delete your avatar just now — give it another go.",
   },
 
   /**

@@ -53,7 +53,9 @@ function mockFashn(opts: { run: CannedHttp; status: CannedHttp; image?: Uint8Arr
       return { ok: opts.status.ok, status: opts.status.status, json: async () => opts.status.body };
     }
     const bytes = opts.image ?? new Uint8Array([1, 2, 3]);
-    return { ok: true, status: 200, arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) };
+    // The SSRF-gated downloader reads content-type/content-length headers.
+    const headers = { get: (name: string) => (name === 'content-type' ? 'image/png' : name === 'content-length' ? String(bytes.byteLength) : null) };
+    return { ok: true, status: 200, headers, arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) };
   }) as unknown as typeof globalThis.fetch;
 }
 

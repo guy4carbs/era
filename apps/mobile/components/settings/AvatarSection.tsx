@@ -95,7 +95,7 @@ export function AvatarSection({ onToast }: AvatarSectionProps) {
       {view === 'none' ? (
         <SettingRow label={avatarCopy.createRow} onPress={() => router.push('/avatar')} />
       ) : view === 'creating' ? (
-        <StatusLine color={colors.secondaryStrong}>{avatarCopy.statusCreating}</StatusLine>
+        <StatusLine color={colors.secondaryStrong}>{strings.tryon.creating}</StatusLine>
       ) : view === 'failed' ? (
         <SettingRow label={avatarCopy.statusFailed} onPress={() => router.push('/avatar')} />
       ) : (
@@ -116,7 +116,7 @@ export function AvatarSection({ onToast }: AvatarSectionProps) {
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}
         onDeleted={handleDeleted}
-        onFailed={() => onToast(strings.tryon.failed)}
+        onFailed={() => onToast(strings.tryon.deleteFailed)}
       />
     </View>
   );

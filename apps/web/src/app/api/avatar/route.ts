@@ -124,6 +124,14 @@ export async function DELETE(request: Request): Promise<NextResponse> {
 
   try {
     const { storageObjectsDeleted, remaining } = await deleteAvatar(userId, db);
+    if (remaining > 0) {
+      // A nonzero recount means objects survived the sweep (e.g. a render
+      // landed mid-delete). Present it as the retryable failure it is rather
+      // than a "success" with fine print — the DB rows are already gone, and a
+      // retry re-sweeps the prefix.
+      console.error(`[era-tryon] avatar deletion left ${remaining} objects; reporting failure`);
+      return NextResponse.json({ error: 'deletion_failed' }, { status: 500 });
+    }
     return NextResponse.json({ deleted: true, storageObjectsDeleted, remaining });
   } catch (error) {
     // Storage is swept BEFORE any DB write, so a failure here leaves the account

@@ -153,6 +153,21 @@ async function failAvatar(db: DbClient, userId: string, error: string): Promise<
   await db.update(avatars).set({ status: 'failed', error }).where(eq(avatars.userId, userId));
 }
 
+/**
+ * Fetch one of our own presigned R2 GETs and re-encode as a base64 data URL.
+ * Used for every image handed to the try-on vendor so no URL with the internal
+ * userId in its path leaves our infrastructure. Throws on any failure.
+ */
+async function fetchAsDataUrl(presignedUrl: string): Promise<string> {
+  const response = await fetch(presignedUrl, { signal: AbortSignal.timeout(10_000) });
+  if (!response.ok) {
+    throw new Error(`source fetch returned ${response.status}`);
+  }
+  const mime = response.headers.get('content-type') ?? 'image/png';
+  const bytes = Buffer.from(await response.arrayBuffer());
+  return `data:${mime};base64,${bytes.toString('base64')}`;
+}
+
 /** PUT raw bytes to a presigned URL; throws on a non-2xx or a network/timeout error. */
 async function putBytes(url: string, bytes: Uint8Array, contentType: string, timeoutMs: number): Promise<void> {
   const put = await fetch(url, {
@@ -217,21 +232,24 @@ export async function createAvatar(
 
   const client = serverStorageClient();
 
-  // 2) Presign owner-scoped GETs for the source photos → FASHN model creation.
-  let sourceUrls: string[];
+  // 2) Load the source photos ourselves (owner-presigned GETs) and hand FASHN
+  // base64 data URLs — never our R2 URLs, whose paths embed the internal
+  // userId (Shield: data minimization; the vendor sees pixels, not identifiers).
+  let sourceInputs: string[];
   try {
-    sourceUrls = await Promise.all(
-      photoKeys.map((key) =>
-        getAssetUrl(client, ctx, { bucket: 'avatars', key, owner: { userId, isPrivate: true } }),
-      ),
+    sourceInputs = await Promise.all(
+      photoKeys.map(async (key) => {
+        const url = await getAssetUrl(client, ctx, { bucket: 'avatars', key, owner: { userId, isPrivate: true } });
+        return fetchAsDataUrl(url);
+      }),
     );
   } catch (error) {
-    console.error('[era-tryon] avatar source presign failed:', error);
+    console.error('[era-tryon] avatar source load failed:', error);
     await failAvatar(db, userId, 'source_presign_failed');
     return { ok: false, code: 'creation_failed' };
   }
 
-  const model = await createFashnModel(sourceUrls);
+  const model = await createFashnModel(sourceInputs);
   // The FASHN call is billable whether or not it yields a usable image; record it.
   await recordAvatarUsage(db, userId);
   if (!model) {

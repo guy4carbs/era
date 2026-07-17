@@ -250,6 +250,21 @@ async function bestEffortDeleteObject(key: string): Promise<void> {
   }
 }
 
+/**
+ * Fetch one of our own presigned R2 GETs and re-encode as a base64 data URL.
+ * Used for every image handed to the try-on vendor so no URL with the internal
+ * userId in its path leaves our infrastructure. Throws on any failure.
+ */
+async function fetchAsDataUrl(presignedUrl: string): Promise<string> {
+  const response = await fetch(presignedUrl, { signal: AbortSignal.timeout(10_000) });
+  if (!response.ok) {
+    throw new Error(`source fetch returned ${response.status}`);
+  }
+  const mime = response.headers.get('content-type') ?? 'image/png';
+  const bytes = Buffer.from(await response.arrayBuffer());
+  return `data:${mime};base64,${bytes.toString('base64')}`;
+}
+
 /** PUT raw bytes to a presigned URL; throws on a non-2xx or a network/timeout error. */
 async function putBytes(url: string, bytes: Uint8Array, contentType: string, timeoutMs: number): Promise<void> {
   const put = await fetch(url, {
@@ -343,16 +358,19 @@ export async function runTryon(
 
   const client = serverStorageClient();
 
-  // 2) Person input starts as the avatar base image (owner-presigned GET).
+  // 2) Person input starts as the avatar base image — fetched via our own
+  // owner-presigned GET and handed to FASHN as a base64 data URL, never as an
+  // R2 URL whose path embeds the internal userId (Shield: data minimization).
   let personInput: string;
   try {
-    personInput = await getAssetUrl(client, ctx, {
+    const baseUrl = await getAssetUrl(client, ctx, {
       bucket: 'avatars',
       key: avatarBaseImagePath,
       owner: { userId, isPrivate: true },
     });
+    personInput = await fetchAsDataUrl(baseUrl);
   } catch (error) {
-    console.error('[era-tryon] avatar base presign failed:', error);
+    console.error('[era-tryon] avatar base load failed:', error);
     await failTryon(db, outfitId, 'avatar_presign_failed', 0, garmentsTotal);
     return { ok: false, code: 'generation_failed' };
   }
@@ -368,19 +386,20 @@ export async function runTryon(
       console.error('[era-tryon] wall budget exhausted mid-chain; finalizing with what rendered');
       break;
     }
-    let garmentUrl: string;
+    let garmentInput: string;
     try {
-      garmentUrl = await getAssetUrl(client, ctx, {
+      const garmentUrl = await getAssetUrl(client, ctx, {
         bucket: 'items-cutout',
         key: step.cutoutPath,
         owner: { userId, isPrivate: true },
       });
+      garmentInput = await fetchAsDataUrl(garmentUrl);
     } catch (error) {
-      console.error('[era-tryon] garment presign failed; skipping step:', error);
+      console.error('[era-tryon] garment load failed; skipping step:', error);
       continue;
     }
 
-    const outBytes = await runFashnTryon(personInput, garmentUrl, step.category);
+    const outBytes = await runFashnTryon(personInput, garmentInput, step.category);
     // The FASHN call is billable whether or not it yields usable bytes; record it.
     await recordTryonUsage(db, userId);
     if (!outBytes) {

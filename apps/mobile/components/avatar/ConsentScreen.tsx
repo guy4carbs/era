@@ -73,7 +73,7 @@ export function ConsentScreen({ onAgree, onCancel }: ConsentScreenProps) {
 
       <View style={styles.actions}>
         <Button label={strings.tryon.consentAgree} variant="primary" haptic onPress={onAgree} />
-        <Button label={strings.common.notNow} variant="ghost" onPress={onCancel} />
+        <Button label={strings.common.notNow} variant="secondary" onPress={onCancel} />
       </View>
     </View>
   );
