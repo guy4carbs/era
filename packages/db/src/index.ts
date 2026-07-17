@@ -17,6 +17,7 @@ import {
   aiEvents,
   aiUsage,
   avatars,
+  cartItems,
   emailSuppressions,
   eraOutfits,
   eras,
@@ -29,6 +30,7 @@ import {
   items,
   itemTurnaroundJobs,
   notificationPreferences,
+  orders,
   outfitItems,
   outfits,
   outfitTryons,
@@ -38,9 +40,11 @@ import {
   pushTokens,
   receiptInboxTokens,
   savedProducts,
+  shippingAddresses,
   styleProfiles,
   subscriptions,
   userBlocks,
+  userSizes,
   waitlist,
   wearLogs,
 } from './schema/app.ts';
@@ -91,6 +95,10 @@ export {
   itemAngleRenders,
   avatars,
   outfitTryons,
+  userSizes,
+  shippingAddresses,
+  cartItems,
+  orders,
 };
 
 export { createDbClient } from './client.ts';
@@ -186,6 +194,18 @@ export type NewAvatar = typeof avatars.$inferInsert;
 
 export type OutfitTryon = typeof outfitTryons.$inferSelect;
 export type NewOutfitTryon = typeof outfitTryons.$inferInsert;
+
+export type UserSizes = typeof userSizes.$inferSelect;
+export type NewUserSizes = typeof userSizes.$inferInsert;
+
+export type ShippingAddress = typeof shippingAddresses.$inferSelect;
+export type NewShippingAddress = typeof shippingAddresses.$inferInsert;
+
+export type CartItem = typeof cartItems.$inferSelect;
+export type NewCartItem = typeof cartItems.$inferInsert;
+
+export type Order = typeof orders.$inferSelect;
+export type NewOrder = typeof orders.$inferInsert;
 
 // Enum value unions.
 export type ItemCategory = (typeof itemCategory.enumValues)[number];

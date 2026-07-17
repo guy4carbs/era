@@ -688,6 +688,172 @@ export const outfitTryons = pgTable(
   ],
 );
 
+export const userSizes = pgTable('user_sizes', {
+  // 1:1 with Better Auth user — the user id is the primary key (like profiles /
+  // notification_preferences). One sizes row per user, upserted at first checkout.
+  userId: text('user_id')
+    .primaryKey()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  // Sizes are stored as text and validated app-side against SIZE_OPTIONS (the
+  // catalog grows; no pg enum). Each is null until the user fills it in — a size
+  // is only prefilled at checkout for categories the user has actually set.
+  apparelSize: text('apparel_size'),
+  denimSize: text('denim_size'),
+  shoeSize: text('shoe_size'),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+export const shippingAddresses = pgTable('shipping_addresses', {
+  // 1:1 with Better Auth user for v1 — the user id is the primary key. The table
+  // name is plural because supporting multiple addresses later is an additive
+  // change (add an id PK + drop this one), not a rename. PII: owner-only reads,
+  // the DELETE route wipes the row, and account deletion cascades it away.
+  userId: text('user_id')
+    .primaryKey()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  firstName: text('first_name').notNull(),
+  lastName: text('last_name').notNull(),
+  phone: text('phone').notNull(),
+  address1: text('address1').notNull(),
+  // The only optional line — apartment/suite/etc.
+  address2: text('address2'),
+  city: text('city').notNull(),
+  province: text('province').notNull(),
+  postalCode: text('postal_code').notNull(),
+  // ISO-2 country code, validated app-side.
+  country: text('country').notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+export const cartItems = pgTable(
+  'cart_items',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    // Cart products come from the external affiliate feed with no table to FK to,
+    // so a cart row is a denormalized snapshot of the ShopProduct at add time —
+    // the saved_products precedent.
+    productId: text('product_id').notNull(), // external ShopProduct.id (stable feed key)
+    retailer: text('retailer').notNull(),
+    title: text('title').notNull(),
+    brand: text('brand'),
+    imageUrl: text('image_url'),
+    productUrl: text('product_url').notNull(),
+    affiliateUrl: text('affiliate_url').notNull(),
+    category: itemCategory('category'), // ShopProduct.category IS an ItemCategory
+    // Price captured at add time. Stored as integer cents (not numeric like
+    // saved_products.priceSnapshot) so checkout's price-ceiling math is exact
+    // integer arithmetic — the lastPriceCents precedent.
+    priceSnapshotCents: integer('price_snapshot_cents').notNull(),
+    currency: text('currency').notNull(),
+    // Selected size (null until picked); validated app-side against SIZE_OPTIONS.
+    size: text('size'),
+    quantity: integer('quantity').notNull().default(1),
+    addedAt: timestamp('added_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    // Idempotent add: one cart row per (user, external product). Re-adding the
+    // same product is onConflictDoNothing.
+    unique('cart_items_user_id_product_id_key').on(table.userId, table.productId),
+    index('cart_items_user_id_idx').on(table.userId),
+  ],
+);
+
+export const orders = pgTable(
+  'orders',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    // One batch = one user checkout action. The N sibling orders minted by a
+    // single "check out" click share this id; batch status is DERIVED by folding
+    // the members (there is no batch table and no cross-order atomicity — the
+    // neon-http driver has no transactions, so nothing to fake). notNull: a row
+    // is never created outside a batch.
+    checkoutBatchId: uuid('checkout_batch_id').notNull(),
+    // The checkout vendor. Text (not a pg enum) — the catalog can grow; the app
+    // validates the value. Same idiom as avatars.vendor.
+    provider: text('provider').notNull().default('rye'),
+    // Which Rye environment placed the order — 'sandbox' | 'production'. Text,
+    // validated app-side (subscriptions.environment precedent).
+    environment: text('environment').notNull(),
+    // Rye checkout-intent id (ci_…). Null between the claim-row insert and the
+    // createIntent call; set once Rye returns an intent. The partial-unique index
+    // below is the webhook's lookup key.
+    intentId: text('intent_id'),
+    // Denormalized ShopProduct snapshot at order time — same fields as cart_items
+    // (the feed has no table to FK to).
+    productId: text('product_id').notNull(),
+    retailer: text('retailer').notNull(),
+    title: text('title').notNull(),
+    brand: text('brand'),
+    imageUrl: text('image_url'),
+    productUrl: text('product_url').notNull(),
+    affiliateUrl: text('affiliate_url').notNull(),
+    category: itemCategory('category'),
+    // Per-unit price snapshot in integer cents — the basis for the createIntent
+    // maxTotalCents ceiling (snapshot × quantity × 1.5).
+    priceSnapshotCents: integer('price_snapshot_cents').notNull(),
+    size: text('size'),
+    quantity: integer('quantity').notNull().default(1),
+    // Order lifecycle. Text (not a pg enum) because the Rye vocabulary can grow —
+    // the subscriptions.store precedent. Values:
+    //   creating | retrieving_offer | awaiting_confirmation | requires_action |
+    //   placing_order | completed | failed | expired
+    // The first five are the ACTIVE states covered by the double-submit index
+    // below; the last three are terminal.
+    status: text('status').notNull().default('creating'),
+    // Offer amounts in integer cents, filled once Rye resolves the offer; null
+    // while the order is still 'creating'.
+    subtotalCents: integer('subtotal_cents'),
+    shippingCents: integer('shipping_cents'),
+    taxCents: integer('tax_cents'),
+    totalCents: integer('total_cents'),
+    currency: text('currency').notNull(),
+    // Rye's order id once placed; null until then.
+    vendorOrderId: text('vendor_order_id'),
+    // Failure detail for ops; null unless status is 'failed'.
+    failureReason: text('failure_reason'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    // Webhook resolution: a thin Rye event carries only the intent id, so this is
+    // the lookup key. Partial-unique (filtered to non-null) so the many rows that
+    // have not yet been assigned an intent don't collide on NULL.
+    uniqueIndex('orders_intent_id_key')
+      .on(table.intentId)
+      .where(sql`${table.intentId} is not null`),
+    // THE no-transaction double-submit claim. With no transactions on neon-http,
+    // this partial-unique index (not a transaction) is what guarantees a user
+    // cannot have two LIVE orders for the same product at once: the checkout route
+    // inserts the claim row and a conflict here means "already running" → skip.
+    // Filtered to the five ACTIVE states so that once an order reaches a terminal
+    // state (completed/failed/expired) the user can order that product again.
+    uniqueIndex('orders_user_id_product_id_active_key')
+      .on(table.userId, table.productId)
+      .where(
+        sql`${table.status} in ('creating', 'retrieving_offer', 'awaiting_confirmation', 'requires_action', 'placing_order')`,
+      ),
+    // Order history listing (newest-first) + the per-user daily cap COUNT.
+    index('orders_user_id_created_at_idx').on(table.userId, table.createdAt),
+    // Batch fold: all members of one checkout action.
+    index('orders_checkout_batch_id_idx').on(table.checkoutBatchId),
+  ],
+);
+
 export const itemAngleRenders = pgTable(
   'item_angle_renders',
   {

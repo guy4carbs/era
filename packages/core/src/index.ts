@@ -162,6 +162,41 @@ export type {
 } from './tryon.ts';
 export { isEraTryonEnabled } from './tryon-flags.ts';
 
+// In-flow checkout — the flag-gated cross-store cart + single-checkout surface,
+// powered by Rye for operator-sandbox-verified retailers (everyone else keeps the
+// affiliate tap-out). All pure and client-safe (no server-only deps); web/mobile
+// client code imports the contract + cart math from the `@era/core/checkout` subpath
+// and the flag from `@era/core/checkout-flags` to avoid this server-tainted barrel.
+// Re-exported here for server callers (the routes drive createIntent/confirmIntent
+// and persist per-store outcomes). The allowlist is the honesty control and the copy
+// never claims a universal checkout. See checkout.ts, checkout-flags.ts.
+export {
+  parseCheckoutRetailers,
+  checkoutSupportFor,
+  subunitsToCents,
+  groupCartByRetailer,
+  combineOffers,
+  sizeKindForCategory,
+  createFixtureCheckoutProvider,
+} from './checkout.ts';
+export type {
+  CheckoutSupport,
+  CheckoutIntentState,
+  CheckoutBuyer,
+  CheckoutOffer,
+  CheckoutIntent,
+  CreateCheckoutIntentInput,
+  CheckoutPayment,
+  CheckoutProvider,
+  CheckoutCartItem,
+  CartRetailerGroup,
+  RetailerOffer,
+  CombinedOfferLine,
+  CombinedOffer,
+  SizeKind,
+} from './checkout.ts';
+export { isEraCheckoutEnabled } from './checkout-flags.ts';
+
 // Persistence type contract, re-exported type-only from @era/db.
 export type * from './db-types.ts';
 
