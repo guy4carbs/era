@@ -18,9 +18,10 @@ import { layout, radii, rnShadow, sheen, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { strings } from '@era/core/strings';
 import { useTheme } from '@/lib/theme';
@@ -115,7 +116,7 @@ export function ShopCard({
       ]}
     >
       {/* Tapping the image is a click-out, same as the primary button. */}
-      <Pressable
+      <Press
         accessibilityRole="button"
         accessibilityLabel={viewLabel}
         onPress={() => onView(product)}
@@ -142,7 +143,7 @@ export function ShopCard({
           pointerEvents="none"
           style={StyleSheet.absoluteFill}
         />
-      </Pressable>
+      </Press>
 
       <View style={styles.info}>
         <Text
@@ -228,7 +229,7 @@ function SaveToggle({ isSaved, onToggle }: { isSaved: boolean; onToggle: () => v
   const { colors } = useTheme();
   const copy = strings.shop.saved;
   return (
-    <Pressable
+    <Press
       accessibilityRole="button"
       accessibilityState={{ selected: isSaved }}
       accessibilityLabel={isSaved ? copy.removeA11y : copy.saveA11y}
@@ -253,7 +254,7 @@ function SaveToggle({ isSaved, onToggle }: { isSaved: boolean; onToggle: () => v
       <Text variant="ui" size="body" weight={600} color={colors.text}>
         {isSaved ? copy.savedState : copy.save}
       </Text>
-    </Pressable>
+    </Press>
   );
 }
 

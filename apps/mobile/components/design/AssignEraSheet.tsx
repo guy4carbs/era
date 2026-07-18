@@ -8,9 +8,10 @@
 import { strings } from '@era/core/strings';
 import { radii, spacing } from '@era/tokens';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { GlassSheet } from '@/components/GlassSheet';
 import { Input } from '@/components/Input';
@@ -57,7 +58,7 @@ export function AssignEraSheet({
         keyboardShouldPersistTaps="handled"
       >
         {eras.map((era) => (
-          <Pressable
+          <Press
             key={era.id}
             accessibilityRole="button"
             accessibilityLabel={era.title}
@@ -71,7 +72,7 @@ export function AssignEraSheet({
             <Text variant="caption" size="footnote" color={colors.secondaryStrong}>
               {strings.design.outfitItemCount(era.outfitCount)}
             </Text>
-          </Pressable>
+          </Press>
         ))}
       </ScrollView>
 

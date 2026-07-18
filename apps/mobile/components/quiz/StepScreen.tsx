@@ -8,13 +8,14 @@
  * motion it cross-fades with no translation.
  */
 import { radii, spacing } from '@era/tokens';
-import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { useEffect } from 'react';
 
 import { strings } from '@era/core/strings';
 
 import { Button } from '@/components/Button';
+import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { animate, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
@@ -78,7 +79,7 @@ export function StepScreen({
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Pressable
+        <Press
           accessibilityRole="button"
           accessibilityLabel="Back"
           accessibilityState={{ disabled: !canGoBack }}
@@ -90,8 +91,8 @@ export function StepScreen({
           <Text variant="ui" size="title2" weight={400} color={canGoBack ? colors.text : 'transparent'}>
             ‹
           </Text>
-        </Pressable>
-        <Pressable
+        </Press>
+        <Press
           accessibilityRole="button"
           accessibilityLabel={strings.quiz.skip}
           hitSlop={spacing.s3}
@@ -101,7 +102,7 @@ export function StepScreen({
           <Text variant="ui" weight={400} color={colors.secondaryStrong}>
             {strings.quiz.skip}
           </Text>
-        </Pressable>
+        </Press>
       </View>
 
       <View style={styles.dots}>

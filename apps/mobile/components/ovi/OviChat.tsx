@@ -22,17 +22,17 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 
 import { Text } from '@/components/Text';
 import { analytics, trackOnce } from '@/lib/analytics';
 import { Chip } from '@/components/Chip';
 import { GlassSheet } from '@/components/GlassSheet';
+import { Press } from '@/components/Press';
 import { Input } from '@/components/Input';
 import { Toast } from '@/components/closet/Toast';
 import { fetchItems } from '@/components/items/api';
@@ -293,7 +293,7 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
             editable={!thinking}
             onSubmitEditing={() => send(draft, pendingIntent ?? 'chat')}
           />
-          <Pressable
+          <Press
             accessibilityRole="button"
             accessibilityLabel="Send"
             disabled={thinking || draft.trim().length === 0}
@@ -310,7 +310,7 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
             <Text variant="ui" size="title3" weight={600} color={colors.bg}>
               ↑
             </Text>
-          </Pressable>
+          </Press>
         </View>
       </KeyboardAvoidingView>
 
@@ -338,7 +338,9 @@ function Bubble({
 
   return (
     <Animated.View
-      entering={reduced ? undefined : FadeIn.duration(motionTokens.durations.minMs)}
+      // A new bubble rises + fades in (§3 stagger, per-message). The rise begins
+      // one riseYPx below and settles as it fades; reduced motion skips it entirely.
+      entering={reduced ? undefined : FadeInDown.duration(motionTokens.durations.minMs)}
       style={styles.turn}
     >
       <View

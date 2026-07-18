@@ -11,8 +11,9 @@
  * never composed — so it is the one piece of runtime data here, never copy.
  */
 import { layout, radii, spacing } from '@era/tokens';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
@@ -31,7 +32,7 @@ export function PlanCard({ label, priceString, selected, primary = false, onSele
   const { colors } = useTheme();
 
   return (
-    <Pressable
+    <Press
       accessibilityRole="radio"
       accessibilityState={{ selected }}
       accessibilityLabel={`${label}, ${priceString}`}
@@ -59,7 +60,7 @@ export function PlanCard({ label, priceString, selected, primary = false, onSele
       <Text variant="ui" size="title3" weight={700} color={colors.text}>
         {priceString}
       </Text>
-    </Pressable>
+    </Press>
   );
 }
 

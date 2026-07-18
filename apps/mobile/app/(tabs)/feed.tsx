@@ -16,6 +16,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
+import { ScreenEntrance } from '@/components/ScreenEntrance';
 import { Text } from '@/components/Text';
 import { FeedPager, FeedProvider, FpsOverlay } from '@/components/feed';
 import { PriceDropList, ReceiptImportList } from '@/components/notifications';
@@ -56,49 +57,51 @@ function FeedStub() {
   const greetingName = user ? (user.name ?? user.email.split('@')[0] ?? user.email) : null;
 
   return (
-    <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text variant="largeTitle" size="title1" color={colors.text}>
-            Feed
-          </Text>
-          {greetingName ? (
-            <Text variant="body" color={colors.secondary}>
-              Hello, {greetingName}
+    <ScreenEntrance>
+      <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.header}>
+            <Text variant="largeTitle" size="title1" color={colors.text}>
+              Feed
             </Text>
-          ) : null}
-        </View>
+            {greetingName ? (
+              <Text variant="body" color={colors.secondary}>
+                Hello, {greetingName}
+              </Text>
+            ) : null}
+          </View>
 
-        {/* Ovi's daily suggestion. Renders nothing until it has a look to show. */}
-        <TodayCard />
+          {/* Ovi's daily suggestion. Renders nothing until it has a look to show. */}
+          <TodayCard />
 
-        {/* Price-drop cards for saved pieces. Quiet — renders nothing when empty. */}
-        <PriceDropList />
+          {/* Price-drop cards for saved pieces. Quiet — renders nothing when empty. */}
+          <PriceDropList />
 
-        {/* Forwarded-receipt drafts landed. Quiet — renders nothing when empty. */}
-        <ReceiptImportList />
+          {/* Forwarded-receipt drafts landed. Quiet — renders nothing when empty. */}
+          <ReceiptImportList />
 
-        <Text variant="body" color={colors.secondary} style={{ textAlign: 'center' }}>
-          {FEED_EMPTY}
-        </Text>
+          <Text variant="body" color={colors.secondary} style={{ textAlign: 'center' }}>
+            {FEED_EMPTY}
+          </Text>
 
-        <View style={styles.footer}>
-          <Button
-            label="Sign out"
-            variant="secondary"
-            onPress={() => {
-              void eraAuth.signOut();
-            }}
-          />
-          <Link
-            href="/design-lab"
-            style={{ color: colors.secondary, fontSize: typeRamp.footnote.pt }}
-          >
-            Design lab
-          </Link>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+          <View style={styles.footer}>
+            <Button
+              label="Sign out"
+              variant="secondary"
+              onPress={() => {
+                void eraAuth.signOut();
+              }}
+            />
+            <Link
+              href="/design-lab"
+              style={{ color: colors.secondary, fontSize: typeRamp.footnote.pt }}
+            >
+              Design lab
+            </Link>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </ScreenEntrance>
   );
 }
 

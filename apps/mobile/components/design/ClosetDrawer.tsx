@@ -10,11 +10,12 @@ import { strings } from '@era/core/strings';
 import { layout, radii, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { useMemo, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { Chip } from '@/components/Chip';
 import { Input } from '@/components/Input';
 import { GlassSheet } from '@/components/GlassSheet';
+import { Press } from '@/components/Press';
 import type { ItemWithDisplay } from '@/components/items';
 import { CATEGORIES, type ItemCategory } from '@/components/items/constants';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
@@ -96,7 +97,7 @@ export function ClosetDrawer({ open, onClose, items, placedIds, onAdd }: ClosetD
         {visible.map((item) => {
           const placed = placedIds.has(item.id);
           return (
-            <Pressable
+            <Press
               key={item.id}
               accessibilityRole="button"
               accessibilityLabel={item.name}
@@ -127,7 +128,7 @@ export function ClosetDrawer({ open, onClose, items, placedIds, onAdd }: ClosetD
               ) : (
                 <View style={styles.image} />
               )}
-            </Pressable>
+            </Press>
           );
         })}
       </ScrollView>

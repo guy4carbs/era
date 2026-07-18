@@ -15,10 +15,11 @@ import { strings } from '@era/core/strings';
 import { spacing } from '@era/tokens';
 import { Redirect, Stack } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
+import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { useSession } from '@/lib/auth-client';
 import { useTheme } from '@/lib/theme';
@@ -160,7 +161,7 @@ function MonthChevron({
 }) {
   const { colors } = useTheme();
   return (
-    <Pressable
+    <Press
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
@@ -172,7 +173,7 @@ function MonthChevron({
       <Text variant="ui" size="title1" color={disabled ? colors.secondary : colors.text}>
         {glyph}
       </Text>
-    </Pressable>
+    </Press>
   );
 }
 

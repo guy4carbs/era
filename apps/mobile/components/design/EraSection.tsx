@@ -9,9 +9,10 @@ import { strings } from '@era/core/strings';
 import { radii, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { Input } from '@/components/Input';
 import { useCollageExport } from '@/components/share';
@@ -64,7 +65,7 @@ export function EraSection({ eras, busy, onCreate }: EraSectionProps) {
                     {strings.design.outfitItemCount(era.outfitCount)}
                   </Text>
                   {canShare ? (
-                    <Pressable
+                    <Press
                       accessibilityRole="button"
                       accessibilityLabel={strings.share.shareEra}
                       accessibilityState={{ disabled: shareBusy }}
@@ -89,7 +90,7 @@ export function EraSection({ eras, busy, onCreate }: EraSectionProps) {
                       >
                         {shareBusy ? strings.share.preparing : strings.share.shareEra}
                       </Text>
-                    </Pressable>
+                    </Press>
                   ) : null}
                 </View>
               </View>

@@ -25,8 +25,9 @@ import { strings } from '@era/core/strings';
 import { layout, radii, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
@@ -75,7 +76,7 @@ export function ReceiptAddressSettings({ onToast }: ReceiptAddressSettingsProps)
 
   if (state === 'error') {
     return (
-      <Pressable
+      <Press
         accessibilityRole="button"
         accessibilityLabel={strings.errors.retry}
         onPress={() => {
@@ -87,7 +88,7 @@ export function ReceiptAddressSettings({ onToast }: ReceiptAddressSettingsProps)
         <Text variant="caption" size="footnote" color={colors.secondaryStrong}>
           {strings.errors.retry}
         </Text>
-      </Pressable>
+      </Press>
     );
   }
 
@@ -134,7 +135,7 @@ export function ReceiptAddressSettings({ onToast }: ReceiptAddressSettingsProps)
       <Text variant="caption" size="footnote" color={colors.secondary}>
         {copy.regenerateConsequence}
       </Text>
-      <Pressable
+      <Press
         accessibilityRole="button"
         accessibilityLabel={copy.regenerateCta}
         accessibilityState={{ disabled: regenerating, busy: regenerating }}
@@ -154,7 +155,7 @@ export function ReceiptAddressSettings({ onToast }: ReceiptAddressSettingsProps)
           {copy.regenerateCta}
         </Text>
         {regenerating ? <ActivityIndicator color={colors.secondary} /> : null}
-      </Pressable>
+      </Press>
     </View>
   );
 }

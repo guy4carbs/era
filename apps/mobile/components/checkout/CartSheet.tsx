@@ -26,13 +26,13 @@ import {
   ActivityIndicator,
   Image,
   Linking,
-  Pressable,
   ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { GlassSheet } from '@/components/GlassSheet';
 import { prefillSizeForCategory, type UserSizes } from '@/lib/checkout-logic';
@@ -467,7 +467,7 @@ function CartView({
             <Text variant="body" color={colors.text}>
               {summarizeAddress(address)}
             </Text>
-            <Pressable
+            <Press
               accessibilityRole="button"
               accessibilityLabel={checkoutCopy.editAddress}
               onPress={onOpenAddressForm}
@@ -476,7 +476,7 @@ function CartView({
               <Text variant="ui" size="footnote" weight={600} color={colors.accent}>
                 {checkoutCopy.editAddress}
               </Text>
-            </Pressable>
+            </Press>
           </>
         ) : (
           <Button label={copy.addAddress} variant="secondary" onPress={onOpenAddressForm} />
@@ -528,7 +528,7 @@ function CartLine({
             {formatCents(item.priceSnapshotCents * Math.max(1, item.quantity), item.currency)}
           </Text>
           {sized ? (
-            <Pressable
+            <Press
               accessibilityRole="button"
               accessibilityLabel={currentSize ? `${copy.sizeLabel} ${currentSize}` : copy.addSize}
               onPress={onEditSize}
@@ -540,10 +540,10 @@ function CartLine({
               <Text variant="caption" size="footnote" color={colors.secondary}>
                 {`  ${checkoutCopy.changeSize}`}
               </Text>
-            </Pressable>
+            </Press>
           ) : null}
         </View>
-        <Pressable
+        <Press
           accessibilityRole="button"
           accessibilityLabel={copy.removeItem}
           hitSlop={spacing.s2}
@@ -553,7 +553,7 @@ function CartLine({
           <Text variant="ui" size="footnote" weight={600} color={colors.secondaryStrong}>
             {copy.removeItem}
           </Text>
-        </Pressable>
+        </Press>
       </View>
 
       {sized && editing ? (
@@ -590,7 +590,7 @@ function HandoffLine({ item, onRemove }: { readonly item: CartItem; readonly onR
           <Text variant="body" color={colors.text} numberOfLines={2}>
             {item.title}
           </Text>
-          <Pressable
+          <Press
             accessibilityRole="button"
             accessibilityLabel={checkoutCopy.finishAt(item.retailer)}
             onPress={open}
@@ -599,9 +599,9 @@ function HandoffLine({ item, onRemove }: { readonly item: CartItem; readonly onR
             <Text variant="ui" size="footnote" weight={600} color={colors.accent}>
               {checkoutCopy.finishAt(item.retailer)}
             </Text>
-          </Pressable>
+          </Press>
         </View>
-        <Pressable
+        <Press
           accessibilityRole="button"
           accessibilityLabel={copy.removeItem}
           hitSlop={spacing.s2}
@@ -611,7 +611,7 @@ function HandoffLine({ item, onRemove }: { readonly item: CartItem; readonly onR
           <Text variant="ui" size="footnote" weight={600} color={colors.secondaryStrong}>
             {copy.removeItem}
           </Text>
-        </Pressable>
+        </Press>
       </View>
     </View>
   );

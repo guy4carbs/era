@@ -14,8 +14,9 @@ import type { WearLogLike } from '@era/core/wear-stats';
 import { strings } from '@era/core/strings';
 import { radii, spacing } from '@era/tokens';
 import { useMemo, useState } from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 
+import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
@@ -82,7 +83,7 @@ export function WearCalendar({ month, daysInMonth, byDay, items }: WearCalendarP
           const isSelected = date === selectedDay;
           return (
             <View key={date} style={styles.cell}>
-              <Pressable
+              <Press
                 accessibilityRole="button"
                 accessibilityState={{ selected: isSelected }}
                 accessibilityLabel={`${day}, ${strings.wear.calendar.dayA11y(count)}`}
@@ -107,7 +108,7 @@ export function WearCalendar({ month, daysInMonth, byDay, items }: WearCalendarP
                     { backgroundColor: count > 0 ? colors.accent : 'transparent' },
                   ]}
                 />
-              </Pressable>
+              </Press>
             </View>
           );
         })}

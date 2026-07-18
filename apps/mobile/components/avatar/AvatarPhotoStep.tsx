@@ -15,9 +15,10 @@ import * as Haptics from 'expo-haptics';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useState } from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 import {
@@ -83,7 +84,7 @@ export function AvatarPhotoStep({ onContinue }: AvatarPhotoStepProps) {
           {photos.map((photo, index) => (
             <View key={photo.uri} style={[styles.thumb, { borderColor: colors.hairline }]}>
               <Image source={{ uri: photo.uri }} style={styles.thumbImage} resizeMode="cover" />
-              <Pressable
+              <Press
                 accessibilityRole="button"
                 accessibilityLabel={avatarCopy.removePhoto}
                 onPress={() => remove(index)}
@@ -92,11 +93,11 @@ export function AvatarPhotoStep({ onContinue }: AvatarPhotoStepProps) {
                 <Text variant="ui" size="footnote" weight={700} color={colors.bg}>
                   {'×'}
                 </Text>
-              </Pressable>
+              </Press>
             </View>
           ))}
           {canAddAvatarPhoto(photos) ? (
-            <Pressable
+            <Press
               accessibilityRole="button"
               accessibilityLabel={avatarCopy.addPhoto}
               onPress={() => {
@@ -108,7 +109,7 @@ export function AvatarPhotoStep({ onContinue }: AvatarPhotoStepProps) {
               <Text variant="ui" size="title1" weight={300} color={colors.secondary}>
                 {'+'}
               </Text>
-            </Pressable>
+            </Press>
           ) : null}
         </View>
       </View>

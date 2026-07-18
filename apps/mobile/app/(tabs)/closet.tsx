@@ -17,6 +17,8 @@ import { ActivityIndicator, SectionList, StyleSheet, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
+import { ScreenEntrance } from '@/components/ScreenEntrance';
+import { StaggerItem } from '@/components/StaggerItem';
 import { Text } from '@/components/Text';
 import { ClosetHeader, CutoutTile, ItemDetailSheet, SettingsGear, Toast } from '@/components/closet';
 import { fetchItems, type ItemWithDisplay } from '@/components/items';
@@ -164,61 +166,65 @@ export default function ClosetScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
-      <SectionList
-        sections={sections}
-        keyExtractor={(row, index) => `${row[0]?.id ?? 'row'}-${index}`}
-        renderItem={({ item: row }) => (
-          <View style={styles.row}>
-            {row.map((tile) => (
-              <View key={tile.id} style={styles.cell}>
-                <CutoutTile item={tile} onPress={openDetail} />
+    <ScreenEntrance>
+      <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
+        <SectionList
+          sections={sections}
+          keyExtractor={(row, index) => `${row[0]?.id ?? 'row'}-${index}`}
+          renderItem={({ item: row, index }) => (
+            <StaggerItem index={index}>
+              <View style={styles.row}>
+                {row.map((tile) => (
+                  <View key={tile.id} style={styles.cell}>
+                    <CutoutTile item={tile} onPress={openDetail} />
+                  </View>
+                ))}
+                {row.length === 1 ? <View style={styles.cell} /> : null}
               </View>
-            ))}
-            {row.length === 1 ? <View style={styles.cell} /> : null}
-          </View>
-        )}
-        renderSectionHeader={({ section }) => (
-          <Text
-            variant="title"
-            size="title3"
-            color={colors.text}
-            style={[styles.sectionHeader, { backgroundColor: colors.bg }]}
-          >
-            {section.title}
-          </Text>
-        )}
-        ListHeaderComponent={
-          <ClosetHeader
-            search={search}
-            onSearch={setSearch}
-            categories={categories}
-            selected={category}
-            onSelect={setCategory}
-            onOpenSettings={() => router.push('/settings')}
-            onOpenWorn={() => router.push('/worn')}
-          />
-        }
-        stickySectionHeadersEnabled={false}
-        contentContainerStyle={[
-          styles.list,
-          { paddingBottom: toastBottom + layout.touchTarget.ios },
-        ]}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      />
+            </StaggerItem>
+          )}
+          renderSectionHeader={({ section }) => (
+            <Text
+              variant="title"
+              size="title3"
+              color={colors.text}
+              style={[styles.sectionHeader, { backgroundColor: colors.bg }]}
+            >
+              {section.title}
+            </Text>
+          )}
+          ListHeaderComponent={
+            <ClosetHeader
+              search={search}
+              onSearch={setSearch}
+              categories={categories}
+              selected={category}
+              onSelect={setCategory}
+              onOpenSettings={() => router.push('/settings')}
+              onOpenWorn={() => router.push('/worn')}
+            />
+          }
+          stickySectionHeadersEnabled={false}
+          contentContainerStyle={[
+            styles.list,
+            { paddingBottom: toastBottom + layout.touchTarget.ios },
+          ]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        />
 
-      <ItemDetailSheet
-        item={selected}
-        open={sheetOpen}
-        onClose={() => setSheetOpen(false)}
-        onUpdated={onUpdated}
-        onArchived={onArchived}
-        onToast={setToast}
-      />
+        <ItemDetailSheet
+          item={selected}
+          open={sheetOpen}
+          onClose={() => setSheetOpen(false)}
+          onUpdated={onUpdated}
+          onArchived={onArchived}
+          onToast={setToast}
+        />
 
-      <Toast message={toast} onHide={() => setToast(null)} bottom={toastBottom} />
-    </SafeAreaView>
+        <Toast message={toast} onHide={() => setToast(null)} bottom={toastBottom} />
+      </SafeAreaView>
+    </ScreenEntrance>
   );
 }
 

@@ -11,11 +11,12 @@
 import { motion as motionTokens, radii, spacing } from '@era/tokens';
 import type { ProposedOutfit } from '@era/core/ovi';
 import { strings } from '@era/core/strings';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { Text } from '@/components/Text';
 import { Button } from '@/components/Button';
+import { Press } from '@/components/Press';
 import { Collage } from '@/components/design/Collage';
 import { useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
@@ -129,14 +130,14 @@ export function OutfitProposalCard({
       ]}
     >
       {tappable ? (
-        <Pressable
+        <Press
           accessibilityRole="button"
           accessibilityLabel={outfit.name}
           onPress={onOpen}
           style={styles.tapArea}
         >
           {body}
-        </Pressable>
+        </Press>
       ) : (
         body
       )}

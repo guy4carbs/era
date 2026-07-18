@@ -24,7 +24,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { springFromToken, useReducedMotionSafe } from '@/lib/motion';
+import { Press } from '@/components/Press';
+import { springFromToken, tokenEasing, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
 
 interface GlassSheetProps {
@@ -56,6 +57,7 @@ export function GlassSheet({ open, onClose, children }: PropsWithChildren<GlassS
     translateY.value = slide(target);
     scrim.value = withTiming(open ? 1 : 0, {
       duration: motion.durations.reducedFadeMs,
+      easing: tokenEasing,
     });
     if (!open) {
       setExpanded(false);
@@ -107,14 +109,14 @@ export function GlassSheet({ open, onClose, children }: PropsWithChildren<GlassS
           pointerEvents="none"
         />
 
-        <Pressable
+        <Press
           accessibilityRole="button"
           accessibilityLabel={expanded ? 'Collapse sheet' : 'Expand sheet'}
           onPress={() => setExpanded((value) => !value)}
           style={styles.handleTap}
         >
           <View style={[styles.handle, { backgroundColor: colors.secondary }]} />
-        </Pressable>
+        </Press>
 
         <View style={styles.body}>{children}</View>
       </Animated.View>

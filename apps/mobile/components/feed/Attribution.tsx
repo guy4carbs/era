@@ -10,8 +10,9 @@
 import { spacing, palette } from '@era/tokens';
 import { Image } from 'expo-image';
 import * as Linking from 'expo-linking';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 
 import type { FeedPostCreator } from '@era/core/feed';
@@ -34,7 +35,7 @@ export function Attribution({ creator, title }: AttributionProps) {
   };
 
   return (
-    <Pressable
+    <Press
       accessibilityRole="link"
       accessibilityLabel={`@${creator.username}${title ? `, ${title}` : ''}`}
       onPress={open}
@@ -65,7 +66,7 @@ export function Attribution({ creator, title }: AttributionProps) {
           </Text>
         ) : null}
       </View>
-    </Pressable>
+    </Press>
   );
 }
 

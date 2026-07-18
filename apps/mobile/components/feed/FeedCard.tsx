@@ -16,8 +16,9 @@ import { strings } from '@era/core/strings';
 import { layout, radii, spacing, palette } from '@era/tokens';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 import { isHidden, type FeedSlot } from '@/lib/feed-store';
@@ -92,7 +93,7 @@ interface FollowPillProps {
 
 function FollowPill({ following, onPress }: FollowPillProps) {
   return (
-    <Pressable
+    <Press
       accessibilityRole="button"
       accessibilityLabel={following ? strings.profile.followingState : strings.profile.followCta}
       accessibilityState={{ selected: following }}
@@ -102,7 +103,7 @@ function FollowPill({ following, onPress }: FollowPillProps) {
       <Text variant="ui" weight={following ? 400 : 600} color={ON_IMAGE}>
         {following ? strings.profile.followingState : strings.profile.followCta}
       </Text>
-    </Pressable>
+    </Press>
   );
 }
 

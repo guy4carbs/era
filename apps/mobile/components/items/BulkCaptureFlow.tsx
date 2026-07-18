@@ -27,9 +27,10 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { LimitReachedError } from '@/lib/rate-limit';
 import { useTheme } from '@/lib/theme';
@@ -343,7 +344,7 @@ function BatchConfirm({ items, failed, onDone }: BatchConfirmProps) {
 function SourceCard({ label, onPress }: { readonly label: string; readonly onPress: () => void }) {
   const { colors, resolved } = useTheme();
   return (
-    <Pressable
+    <Press
       accessibilityRole="button"
       accessibilityLabel={label}
       onPress={() => {
@@ -359,7 +360,7 @@ function SourceCard({ label, onPress }: { readonly label: string; readonly onPre
       <Text variant="ui" size="title3" weight={600} color={colors.text}>
         {label}
       </Text>
-    </Pressable>
+    </Press>
   );
 }
 
