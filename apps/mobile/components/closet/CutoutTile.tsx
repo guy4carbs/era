@@ -44,7 +44,7 @@ import Animated, {
 
 import { Text } from '@/components/Text';
 import type { ItemWithDisplay } from '@/components/items';
-import { springFromToken, useReducedMotionSafe } from '@/lib/motion';
+import { PRESS_SCALE, springFromToken, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
 
 const { maxDeg, parallaxPx } = motion.tilt;
@@ -52,7 +52,6 @@ const { maxDeg, parallaxPx } = motion.tilt;
 // match the web tile — a mid-depth field where the 7° tilt reads as a lean, not
 // a fold. A unitless multiple of a token, never a raw px literal.
 const PERSPECTIVE = spacing.s16 * 12;
-const PRESS_SCALE = 0.98;
 const REST_SCALE = 1;
 // Horizontal travel (px) past which a drag is treated as an intentional tilt and
 // the responder is claimed from the scroll list.

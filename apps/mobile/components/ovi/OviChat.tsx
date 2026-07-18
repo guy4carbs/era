@@ -26,8 +26,9 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
+import { StaggerItem } from '@/components/StaggerItem';
 import { Text } from '@/components/Text';
 import { analytics, trackOnce } from '@/lib/analytics';
 import { Chip } from '@/components/Chip';
@@ -332,17 +333,16 @@ function Bubble({
   readonly onOpen: (outfitId: string) => void;
 }) {
   const { colors } = useTheme();
-  const reduced = useReducedMotionSafe();
   const mine = entry.role === 'user';
   const showCard = entry.outfit && !entry.dismissed;
 
   return (
-    <Animated.View
-      // A new bubble rises + fades in (§3 stagger, per-message). The rise begins
-      // one riseYPx below and settles as it fades; reduced motion skips it entirely.
-      entering={reduced ? undefined : FadeInDown.duration(motionTokens.durations.minMs)}
-      style={styles.turn}
-    >
+    // A new bubble rises + fades in via the token stagger entrance (§3: y 12→0 +
+    // opacity on the gentle spring). Index 0 — chat appends one message at a
+    // time, so a cascade delay would only lag the conversation; the entrance
+    // choreography itself is the treatment. Reduced motion → 150ms fade.
+    <StaggerItem index={0}>
+      <Animated.View style={styles.turn}>
       <View
         style={[
           styles.bubble,
@@ -369,7 +369,8 @@ function Bubble({
           onOpen={entry.savedId ? () => onOpen(entry.savedId!) : undefined}
         />
       ) : null}
-    </Animated.View>
+      </Animated.View>
+    </StaggerItem>
   );
 }
 
