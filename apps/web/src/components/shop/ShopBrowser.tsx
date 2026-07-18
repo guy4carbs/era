@@ -223,29 +223,50 @@ interface ViewToggleProps {
  * Two-segment control switching the grid between ranked picks and the wishlist.
  * Real buttons with `aria-pressed` (not a tab widget) — each is a toggle whose
  * pressed state is the current view, which is the honest semantic here.
+ *
+ * The accent pill is a shared-layout element (`layoutId`): on switch it GLIDES
+ * between segments on the snappy spring instead of snapping. Under reduced
+ * motion `transitionFor` collapses the glide to the 150ms fade.
  */
 function ViewToggle({ view, onChange }: ViewToggleProps) {
   const reduced = useReducedMotion();
+  const segments = [
+    { key: 'browse', label: strings.shop.title },
+    { key: 'saved', label: strings.shop.saved.tab },
+  ] as const;
   return (
     <div style={toggleWrapStyle}>
-      <motion.button
-        type="button"
-        style={view === 'browse' ? toggleActiveStyle : toggleStyle}
-        aria-pressed={view === 'browse'}
-        onClick={() => onChange('browse')}
-        {...pressProps(reduced)}
-      >
-        <Text variant="ui" as="span" size="footnote" weight={600}>{strings.shop.title}</Text>
-      </motion.button>
-      <motion.button
-        type="button"
-        style={view === 'saved' ? toggleActiveStyle : toggleStyle}
-        aria-pressed={view === 'saved'}
-        onClick={() => onChange('saved')}
-        {...pressProps(reduced)}
-      >
-        <Text variant="ui" as="span" size="footnote" weight={600}>{strings.shop.saved.tab}</Text>
-      </motion.button>
+      {segments.map((segment) => {
+        const active = view === segment.key;
+        return (
+          <motion.button
+            key={segment.key}
+            type="button"
+            style={active ? toggleActiveStyle : toggleStyle}
+            aria-pressed={active}
+            onClick={() => onChange(segment.key)}
+            {...pressProps(reduced)}
+          >
+            {active ? (
+              <motion.span
+                layoutId="shop-view-pill"
+                style={togglePillStyle}
+                transition={transitionFor(motionToken.springs.snappy, reduced)}
+                aria-hidden="true"
+              />
+            ) : null}
+            <Text
+              variant="ui"
+              as="span"
+              size="footnote"
+              weight={600}
+              style={{ position: 'relative', zIndex: 1 }}
+            >
+              {segment.label}
+            </Text>
+          </motion.button>
+        );
+      })}
     </div>
   );
 }
@@ -452,16 +473,28 @@ const toggleBase: CSSProperties = {
 
 const toggleStyle: CSSProperties = {
   ...toggleBase,
+  position: 'relative',
   background: 'transparent',
   color: 'var(--color-secondary-strong)',
 };
 
 const toggleActiveStyle: CSSProperties = {
   ...toggleBase,
-  // Ink label on the accent fill — the highest-contrast pairing, matching the
-  // primary Button (part of the audited 15/15 contrast set).
-  background: 'var(--color-accent)',
+  position: 'relative',
+  // The accent fill lives on the shared-layout pill (togglePillStyle) so it can
+  // glide between segments; the button itself stays transparent. Ink label on
+  // the accent fill — the highest-contrast pairing, matching the primary
+  // Button (part of the audited 15/15 contrast set).
+  background: 'transparent',
   color: 'var(--color-ink)',
+};
+
+/** The gliding accent fill behind the active segment (shared layoutId). */
+const togglePillStyle: CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  borderRadius: 'var(--radius-hero)',
+  background: 'var(--color-accent)',
 };
 
 
