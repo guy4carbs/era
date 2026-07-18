@@ -34,3 +34,19 @@ Ovi gives a weather-aware daily outfit suggestion → the user logs what they ac
 - Glow, not color.
 - Spring motion.
 - Garment color always leads.
+
+## The silence rule
+
+**Era is silent by design. Quiet luxury does not chime.** Haptics carry the
+feel on iOS — a light impact on outfit save, selection ticks in the quiz and on
+toggles — and that is the entire sensory channel beyond motion.
+
+- **No UI sound, ever.** No taps, no chimes, no confirmation dings, no
+  notification sounds inside the app. No audio API, no bundled audio asset.
+  A PR that adds one is wrong regardless of how tasteful it seems.
+- **The one standing exception, deliberately unbuilt:** an optional soft sound
+  for the daily reveal (Ovi's morning look) may be REVISITED post-launch —
+  off by default, a Settings opt-in, never autoplayed. Until that decision is
+  explicitly made, it does not exist in the codebase.
+- Haptics stay restrained: selection ticks for choices, light impact for a
+  meaningful save. Never on scroll, never on passive events, never stacked.
