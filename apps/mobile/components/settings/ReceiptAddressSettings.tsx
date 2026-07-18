@@ -25,8 +25,16 @@ import { strings } from '@era/core/strings';
 import { layout, radii, spacing, typeRamp } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text as RNText,
+  View,
+} from 'react-native';
 
+import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
 import { getReceiptAddress, regenerateReceiptAddress, type ReceiptAddress } from './receipt-address-api';
@@ -86,23 +94,39 @@ export function ReceiptAddressSettings({ onToast }: ReceiptAddressSettingsProps)
         }}
         style={styles.row}
       >
-        <Text style={caption(colors.secondaryStrong)}>{strings.errors.retry}</Text>
+        <Text variant="caption" size="footnote" color={colors.secondaryStrong}>
+          {strings.errors.retry}
+        </Text>
       </Pressable>
     );
   }
 
   // Dormant, or an unexpected empty address — show the quiet "coming soon" line.
   if (state.dormant || !state.address) {
-    return <Text style={caption(colors.secondaryStrong)}>{copy.dormant}</Text>;
+    return (
+      <Text variant="caption" size="footnote" color={colors.secondaryStrong}>
+        {copy.dormant}
+      </Text>
+    );
   }
 
   return (
     <View style={styles.container}>
-      <Text style={caption(colors.secondaryStrong)}>{copy.explain}</Text>
+      <Text variant="caption" size="footnote" color={colors.secondaryStrong}>
+        {copy.explain}
+      </Text>
 
-      <Text style={label(colors.secondaryStrong)}>{copy.addressLabel}</Text>
+      <Text
+        variant="caption"
+        size="footnote"
+        weight={600}
+        color={colors.secondaryStrong}
+        style={styles.eyebrow}
+      >
+        {copy.addressLabel}
+      </Text>
       <View style={[styles.addressRow, { backgroundColor: colors.surface, borderColor: colors.hairline }]}>
-        <Text
+        <RNText
           selectable
           accessibilityLabel={state.address}
           style={{
@@ -113,12 +137,16 @@ export function ReceiptAddressSettings({ onToast }: ReceiptAddressSettingsProps)
           }}
         >
           {state.address}
-        </Text>
+        </RNText>
       </View>
 
-      <Text style={caption(colors.secondary)}>{copy.privacyNote}</Text>
+      <Text variant="caption" size="footnote" color={colors.secondary}>
+        {copy.privacyNote}
+      </Text>
 
-      <Text style={caption(colors.secondary)}>{copy.regenerateConsequence}</Text>
+      <Text variant="caption" size="footnote" color={colors.secondary}>
+        {copy.regenerateConsequence}
+      </Text>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={copy.regenerateCta}
@@ -130,13 +158,11 @@ export function ReceiptAddressSettings({ onToast }: ReceiptAddressSettingsProps)
         style={styles.row}
       >
         <Text
-          style={{
-            color: colors.danger,
-            fontSize: typeRamp.body.pt,
-            lineHeight: typeRamp.body.lineHeight,
-            fontWeight: '500',
-            opacity: regenerating ? 0.5 : 1,
-          }}
+          variant="ui"
+          size="body"
+          weight={500}
+          color={colors.danger}
+          style={{ opacity: regenerating ? 0.5 : 1 }}
         >
           {copy.regenerateCta}
         </Text>
@@ -156,29 +182,12 @@ async function load(active: boolean, setState: (s: LoadState) => void): Promise<
   }
 }
 
-/** Footnote body — the section's explainer/note voice, matching PriceAlertSettings. */
-function caption(color: string) {
-  return {
-    color,
-    fontSize: typeRamp.footnote.pt,
-    lineHeight: typeRamp.footnote.lineHeight,
-  } as const;
-}
-
-/** Small uppercase caption above the revealed address. */
-function label(color: string) {
-  return {
-    color,
-    fontSize: typeRamp.footnote.pt,
-    lineHeight: typeRamp.footnote.lineHeight,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  } as const;
-}
-
 const styles = StyleSheet.create({
   container: {
     gap: spacing.s3,
+  },
+  eyebrow: {
+    textTransform: 'uppercase',
   },
   addressRow: {
     borderRadius: radii.input,

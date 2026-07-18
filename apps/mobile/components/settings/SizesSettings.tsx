@@ -8,11 +8,12 @@
  * {@link ReceiptAddressSettings} section shape (explainer + controls + honest
  * failure), reading its copy from the mobile-local checkout copy gap.
  */
-import { spacing, typeRamp } from '@era/tokens';
+import { spacing } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
 import { SizeChoiceRow } from '@/components/checkout/SizeChoiceRow';
@@ -54,10 +55,20 @@ export function SizesSettings({ onToast }: SizesSettingsProps) {
 
   return (
     <View style={styles.container}>
-      <Text style={caption(colors.secondaryStrong)}>{checkoutCopy.sizesExplain}</Text>
+      <Text variant="caption" size="footnote" color={colors.secondaryStrong}>
+        {checkoutCopy.sizesExplain}
+      </Text>
 
       <View style={styles.dimension}>
-        <Text style={label(colors.secondaryStrong)}>{checkoutCopy.apparelLabel}</Text>
+        <Text
+          variant="caption"
+          size="footnote"
+          weight={600}
+          color={colors.secondaryStrong}
+          style={styles.eyebrow}
+        >
+          {checkoutCopy.apparelLabel}
+        </Text>
         <SizeChoiceRow
           kind="apparel"
           selected={sizes.apparelSize}
@@ -66,7 +77,15 @@ export function SizesSettings({ onToast }: SizesSettingsProps) {
       </View>
 
       <View style={styles.dimension}>
-        <Text style={label(colors.secondaryStrong)}>{checkoutCopy.denimLabel}</Text>
+        <Text
+          variant="caption"
+          size="footnote"
+          weight={600}
+          color={colors.secondaryStrong}
+          style={styles.eyebrow}
+        >
+          {checkoutCopy.denimLabel}
+        </Text>
         <SizeChoiceRow
           kind="denim"
           selected={sizes.denimSize}
@@ -75,7 +94,15 @@ export function SizesSettings({ onToast }: SizesSettingsProps) {
       </View>
 
       <View style={styles.dimension}>
-        <Text style={label(colors.secondaryStrong)}>{checkoutCopy.shoeLabel}</Text>
+        <Text
+          variant="caption"
+          size="footnote"
+          weight={600}
+          color={colors.secondaryStrong}
+          style={styles.eyebrow}
+        >
+          {checkoutCopy.shoeLabel}
+        </Text>
         <SizeChoiceRow
           kind="shoe"
           selected={sizes.shoeSize}
@@ -86,29 +113,14 @@ export function SizesSettings({ onToast }: SizesSettingsProps) {
   );
 }
 
-function caption(color: string) {
-  return {
-    color,
-    fontSize: typeRamp.footnote.pt,
-    lineHeight: typeRamp.footnote.lineHeight,
-  } as const;
-}
-
-function label(color: string) {
-  return {
-    color,
-    fontSize: typeRamp.footnote.pt,
-    lineHeight: typeRamp.footnote.lineHeight,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  } as const;
-}
-
 const styles = StyleSheet.create({
   container: {
     gap: spacing.s4,
   },
   dimension: {
     gap: spacing.s2,
+  },
+  eyebrow: {
+    textTransform: 'uppercase',
   },
 });

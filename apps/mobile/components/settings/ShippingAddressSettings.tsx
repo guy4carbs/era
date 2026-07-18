@@ -9,12 +9,13 @@
  * Settings screen when the cosmetic checkout flag is on. Mirrors the
  * {@link ReceiptAddressSettings} section shape.
  */
-import { layout, spacing, typeRamp } from '@era/tokens';
+import { layout, spacing } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { Text } from '@/components/Text';
 import { SettingRow } from '@/components/settings/SettingRow';
 import { useTheme } from '@/lib/theme';
 
@@ -93,7 +94,9 @@ export function ShippingAddressSettings({ onToast }: ShippingAddressSettingsProp
         }}
         style={styles.retryRow}
       >
-        <Text style={caption(colors.secondaryStrong)}>{strings.errors.retry}</Text>
+        <Text variant="caption" size="footnote" color={colors.secondaryStrong}>
+          {strings.errors.retry}
+        </Text>
       </Pressable>
     );
   }
@@ -101,7 +104,9 @@ export function ShippingAddressSettings({ onToast }: ShippingAddressSettingsProp
   if (view === 'editing') {
     return (
       <View style={styles.container}>
-        <Text style={caption(colors.secondaryStrong)}>{checkoutCopy.shippingExplain}</Text>
+        <Text variant="caption" size="footnote" color={colors.secondaryStrong}>
+          {checkoutCopy.shippingExplain}
+        </Text>
         <ShippingAddressForm
           initial={saved}
           busy={busy}
@@ -116,7 +121,9 @@ export function ShippingAddressSettings({ onToast }: ShippingAddressSettingsProp
   if (!saved) {
     return (
       <View style={styles.container}>
-        <Text style={caption(colors.secondaryStrong)}>{checkoutCopy.shippingExplain}</Text>
+        <Text variant="caption" size="footnote" color={colors.secondaryStrong}>
+          {checkoutCopy.shippingExplain}
+        </Text>
         <Button
           label={copy.addAddress}
           variant="secondary"
@@ -128,8 +135,18 @@ export function ShippingAddressSettings({ onToast }: ShippingAddressSettingsProp
 
   return (
     <View style={styles.container}>
-      <Text style={label(colors.secondaryStrong)}>{copy.shippingTo}</Text>
-      <Text style={body(colors.text)}>{formatAddress(saved)}</Text>
+      <Text
+        variant="caption"
+        size="footnote"
+        weight={600}
+        color={colors.secondaryStrong}
+        style={styles.eyebrow}
+      >
+        {copy.shippingTo}
+      </Text>
+      <Text variant="body" color={colors.text}>
+        {formatAddress(saved)}
+      </Text>
       <SettingRow label={checkoutCopy.editAddress} onPress={() => setView('editing')} />
       <SettingRow
         label={checkoutCopy.deleteAddress}
@@ -162,32 +179,6 @@ async function load(active: boolean, setView: (v: AddressView) => void): Promise
   }
 }
 
-function caption(color: string) {
-  return {
-    color,
-    fontSize: typeRamp.footnote.pt,
-    lineHeight: typeRamp.footnote.lineHeight,
-  } as const;
-}
-
-function label(color: string) {
-  return {
-    color,
-    fontSize: typeRamp.footnote.pt,
-    lineHeight: typeRamp.footnote.lineHeight,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  } as const;
-}
-
-function body(color: string) {
-  return {
-    color,
-    fontSize: typeRamp.body.pt,
-    lineHeight: typeRamp.body.lineHeight,
-  } as const;
-}
-
 const styles = StyleSheet.create({
   container: {
     gap: spacing.s3,
@@ -199,5 +190,8 @@ const styles = StyleSheet.create({
   retryRow: {
     minHeight: layout.touchTarget.ios,
     justifyContent: 'center',
+  },
+  eyebrow: {
+    textTransform: 'uppercase',
   },
 });

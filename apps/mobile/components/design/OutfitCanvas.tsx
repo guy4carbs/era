@@ -17,16 +17,17 @@
  * order; saving then PATCHes. ASSIGN-TO-ERA is offered once an outfit has an id.
  */
 import { strings } from '@era/core/strings';
-import { layout, radii, spacing, typeRamp } from '@era/tokens';
+import { layout, radii, spacing } from '@era/tokens';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { ActivityIndicator, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSharedValue } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { captureRef } from 'react-native-view-shot';
 
 import { Button } from '@/components/Button';
+import { Text } from '@/components/Text';
 import { Toast } from '@/components/closet';
 import { useCollageExport } from '@/components/share';
 import { fetchItems, type ItemWithDisplay } from '@/components/items';
@@ -471,7 +472,7 @@ export function OutfitCanvas({ outfitId: initialOutfitId }: OutfitCanvasProps) {
                 { borderColor: colors.hairline, backgroundColor: `${colors.accent}29` },
               ]}
             >
-              <Text style={[styles.plusBadgeText, { color: colors.accent }]}>
+              <Text variant="ui" size="caption" weight={700} color={colors.accent}>
                 {strings.tryon.plusBadge}
               </Text>
             </View>
@@ -494,7 +495,7 @@ export function OutfitCanvas({ outfitId: initialOutfitId }: OutfitCanvasProps) {
             {/* Consent line: sharing is public regardless of profile privacy;
                 unshare is the retraction. Shown pre-consent only. */}
             {sharedPostId ? null : (
-              <Text style={[styles.shareConsent, { color: colors.secondaryStrong }]}>
+              <Text variant="caption" size="footnote" color={colors.secondaryStrong}>
                 {strings.feed.shareConsent}
               </Text>
             )}
@@ -603,10 +604,6 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: spacing.s1,
   },
-  shareConsent: {
-    fontSize: typeRamp.footnote.pt,
-    lineHeight: typeRamp.footnote.lineHeight,
-  },
   bottomButton: {
     flex: 1,
   },
@@ -625,10 +622,5 @@ const styles = StyleSheet.create({
     borderRadius: radii.chip,
     borderWidth: StyleSheet.hairlineWidth,
     borderCurve: 'continuous',
-  },
-  plusBadgeText: {
-    fontSize: typeRamp.caption.pt,
-    lineHeight: typeRamp.caption.lineHeight,
-    fontWeight: '700',
   },
 });

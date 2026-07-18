@@ -21,15 +21,16 @@
  * pieces that did land.
  */
 import { strings } from '@era/core/strings';
-import { radii, rnShadow, spacing, typeRamp } from '@era/tokens';
+import { radii, rnShadow, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { Text } from '@/components/Text';
 import { LimitReachedError } from '@/lib/rate-limit';
 import { useTheme } from '@/lib/theme';
 
@@ -214,14 +215,7 @@ function Instruction({ onPick }: InstructionProps) {
   const { colors } = useTheme();
   return (
     <View style={styles.instruction}>
-      <Text
-        style={{
-          color: colors.secondaryStrong,
-          fontSize: typeRamp.body.pt,
-          lineHeight: typeRamp.body.lineHeight,
-          textAlign: 'center',
-        }}
-      >
+      <Text variant="body" color={colors.secondaryStrong} style={{ textAlign: 'center' }}>
         {strings.closet.bulkCapture.instruction}
       </Text>
       <SourceCard label={strings.closet.takePhoto} onPress={() => onPick('camera')} />
@@ -299,44 +293,21 @@ function BatchConfirm({ items, failed, onDone }: BatchConfirmProps) {
   return (
     <View style={styles.batch}>
       <View style={styles.batchHeader}>
-        <Text
-          accessibilityRole="header"
-          style={{
-            color: colors.text,
-            fontSize: typeRamp.title3.pt,
-            lineHeight: typeRamp.title3.lineHeight,
-            fontWeight: '600',
-          }}
-        >
+        <Text accessibilityRole="header" variant="title" size="title3" color={colors.text}>
           {strings.closet.bulkCapture.confirmTitle}
         </Text>
-        <Text
-          style={{
-            color: colors.secondaryStrong,
-            fontSize: typeRamp.body.pt,
-            lineHeight: typeRamp.body.lineHeight,
-          }}
-        >
+        <Text variant="body" color={colors.secondaryStrong}>
           {strings.closet.bulkCapture.confirmSubtitle}
         </Text>
         <Text
+          variant="caption"
           accessibilityLabel={strings.closet.bulkCapture.itemPosition(position, total)}
-          style={{
-            color: colors.secondaryStrong,
-            fontSize: typeRamp.caption.pt,
-            lineHeight: typeRamp.caption.lineHeight,
-          }}
+          color={colors.secondaryStrong}
         >
           {strings.closet.bulkCapture.itemPosition(position, total)}
         </Text>
         {failed > 0 ? (
-          <Text
-            style={{
-              color: colors.secondaryStrong,
-              fontSize: typeRamp.caption.pt,
-              lineHeight: typeRamp.caption.lineHeight,
-            }}
-          >
+          <Text variant="caption" color={colors.secondaryStrong}>
             {strings.closet.bulkCapture.partialFailure}
           </Text>
         ) : null}
@@ -385,14 +356,7 @@ function SourceCard({ label, onPress }: { readonly label: string; readonly onPre
         { backgroundColor: colors.surface, borderColor: colors.hairline },
       ]}
     >
-      <Text
-        style={{
-          color: colors.text,
-          fontSize: typeRamp.title3.pt,
-          lineHeight: typeRamp.title3.lineHeight,
-          fontWeight: '600',
-        }}
-      >
+      <Text variant="ui" size="title3" weight={600} color={colors.text}>
         {label}
       </Text>
     </Pressable>
@@ -405,14 +369,7 @@ function Progress({ line }: { readonly line: string }) {
   return (
     <View style={styles.centered}>
       <ActivityIndicator color={colors.text} />
-      <Text
-        style={{
-          color: colors.secondaryStrong,
-          fontSize: typeRamp.body.pt,
-          lineHeight: typeRamp.body.lineHeight,
-          textAlign: 'center',
-        }}
-      >
+      <Text variant="body" color={colors.secondaryStrong} style={{ textAlign: 'center' }}>
         {line}
       </Text>
     </View>
@@ -424,14 +381,7 @@ function Notice({ line, children }: { readonly line: string; readonly children: 
   const { colors } = useTheme();
   return (
     <View style={styles.centered}>
-      <Text
-        style={{
-          color: colors.text,
-          fontSize: typeRamp.body.pt,
-          lineHeight: typeRamp.body.lineHeight,
-          textAlign: 'center',
-        }}
-      >
+      <Text variant="body" color={colors.text} style={{ textAlign: 'center' }}>
         {line}
       </Text>
       {children}

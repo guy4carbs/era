@@ -19,14 +19,13 @@
  * normal flow, so that height already excludes it (no OviFab/tab-bar math here).
  */
 import { strings } from '@era/core/strings';
-import { motion, palette, spacing, typeRamp } from '@era/tokens';
+import { motion, palette, spacing } from '@era/tokens';
 import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   StyleSheet,
-  Text,
   View,
   type AccessibilityActionEvent,
   type LayoutChangeEvent,
@@ -41,6 +40,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { Text } from '@/components/Text';
 import { Button } from '@/components/Button';
 import { springFromToken, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
@@ -240,13 +240,15 @@ export function FeedPager() {
       <View style={[styles.fill, styles.centered, { backgroundColor: colors.bg }]} onLayout={onLayout}>
         {feed.status === 'error' ? (
           <View style={styles.errorBox}>
-            <Text style={[styles.stateText, { color: colors.secondaryStrong }]}>
+            <Text variant="body" color={colors.secondaryStrong} style={styles.stateText}>
               {strings.errors.generic}
             </Text>
             <Button label={strings.errors.retry} variant="secondary" onPress={feed.loadMore} />
           </View>
         ) : feed.status === 'end' ? (
-          <Text style={[styles.stateText, { color: colors.secondaryStrong }]}>{strings.feed.empty}</Text>
+          <Text variant="body" color={colors.secondaryStrong} style={styles.stateText}>
+            {strings.feed.empty}
+          </Text>
         ) : (
           <ActivityIndicator color={colors.text} />
         )}
@@ -282,7 +284,9 @@ export function FeedPager() {
             {/* Double-tap heart burst — a single centered overlay (double-tap is
                 always on the current page). Held invisible until triggered. */}
             <Animated.View pointerEvents="none" style={[styles.burst, burstStyle]}>
-              <Text style={styles.burstHeart}>♥</Text>
+              <Text variant="ui" size={96} color={ON_IMAGE} style={styles.burstHeart}>
+                ♥
+              </Text>
             </Animated.View>
           </Animated.View>
         </GestureDetector>
@@ -308,8 +312,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.s8,
   },
   stateText: {
-    fontSize: typeRamp.body.pt,
-    lineHeight: typeRamp.body.lineHeight,
     textAlign: 'center',
   },
   pageSlot: {
@@ -327,8 +329,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   burstHeart: {
-    color: ON_IMAGE,
-    fontSize: 96,
     textShadowColor: 'rgba(28, 27, 25, 0.35)',
     textShadowRadius: 12,
   },

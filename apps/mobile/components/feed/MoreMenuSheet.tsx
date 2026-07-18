@@ -12,10 +12,11 @@
  */
 import { REPORT_REASONS, type ReportReason } from '@era/core/feed';
 import { strings } from '@era/core/strings';
-import { spacing, typeRamp } from '@era/tokens';
+import { spacing } from '@era/tokens';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Text } from '@/components/Text';
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
 import { GlassSheet } from '@/components/GlassSheet';
@@ -114,7 +115,7 @@ export function MoreMenuSheet({ post, onClose, onReported, onBlocked }: MoreMenu
 
       {view === 'report' ? (
         <View style={styles.section}>
-          <Text accessibilityRole="header" style={header(colors.text)}>
+          <Text variant="ui" size="title3" weight={600} accessibilityRole="header">
             {strings.feed.reportTitle}
           </Text>
           <View style={styles.chips}>
@@ -136,7 +137,11 @@ export function MoreMenuSheet({ post, onClose, onReported, onBlocked }: MoreMenu
             multiline
             editable={!busy}
           />
-          {error ? <Text style={errorStyle(colors.danger)}>{error}</Text> : null}
+          {error ? (
+            <Text variant="caption" size="footnote" color={colors.danger}>
+              {error}
+            </Text>
+          ) : null}
           <Button
             label={strings.feed.reportSubmit}
             onPress={submitReport}
@@ -147,41 +152,22 @@ export function MoreMenuSheet({ post, onClose, onReported, onBlocked }: MoreMenu
 
       {view === 'block' ? (
         <View style={styles.section}>
-          <Text accessibilityRole="header" style={header(colors.text)}>
+          <Text variant="ui" size="title3" weight={600} accessibilityRole="header">
             {strings.feed.blockTitle(creatorName)}
           </Text>
-          <Text
-            style={{
-              color: colors.secondaryStrong,
-              fontSize: typeRamp.body.pt,
-              lineHeight: typeRamp.body.lineHeight,
-            }}
-          >
+          <Text variant="body" color={colors.secondaryStrong}>
             {strings.feed.blockBody}
           </Text>
-          {error ? <Text style={errorStyle(colors.danger)}>{error}</Text> : null}
+          {error ? (
+            <Text variant="caption" size="footnote" color={colors.danger}>
+              {error}
+            </Text>
+          ) : null}
           <Button label={strings.feed.blockCta} variant="danger" onPress={confirmBlock} disabled={busy} />
         </View>
       ) : null}
     </GlassSheet>
   );
-}
-
-function header(color: string) {
-  return {
-    color,
-    fontSize: typeRamp.title3.pt,
-    lineHeight: typeRamp.title3.lineHeight,
-    fontWeight: '600' as const,
-  };
-}
-
-function errorStyle(color: string) {
-  return {
-    color,
-    fontSize: typeRamp.footnote.pt,
-    lineHeight: typeRamp.footnote.lineHeight,
-  };
 }
 
 const styles = StyleSheet.create({

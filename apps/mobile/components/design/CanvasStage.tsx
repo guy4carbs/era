@@ -11,12 +11,13 @@
  * guideY values a dragging {@link PlacedItem} raises; they need no re-render.
  */
 import { strings } from '@era/core/strings';
-import { glass, radii, spacing, typeRamp } from '@era/tokens';
+import { glass, radii, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { type RefObject } from 'react';
-import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 
+import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
 import { PlacedItem, type Placement } from './PlacedItem';
@@ -91,12 +92,9 @@ export function CanvasStage({
         {placements.length === 0 ? (
           <View style={styles.emptyHint}>
             <Text
-              style={{
-                color: colors.secondaryStrong,
-                fontSize: typeRamp.body.pt,
-                lineHeight: typeRamp.body.lineHeight,
-                textAlign: 'center',
-              }}
+              variant="body"
+              color={colors.secondaryStrong}
+              style={{ textAlign: 'center' }}
             >
               {strings.design.canvasEmptyHint}
             </Text>
@@ -170,12 +168,10 @@ function ControlButton({ label, onPress, colors, danger = false }: ControlButton
       style={styles.control}
     >
       <Text
-        style={{
-          color: danger ? colors.danger : colors.text,
-          fontSize: typeRamp.footnote.pt,
-          lineHeight: typeRamp.footnote.lineHeight,
-          fontWeight: '600',
-        }}
+        variant="ui"
+        size="footnote"
+        weight={600}
+        color={danger ? colors.danger : colors.text}
       >
         {label}
       </Text>

@@ -14,10 +14,11 @@
  */
 import type { WardrobeGap } from '@era/core/shop';
 import { strings } from '@era/core/strings';
-import { radii, spacing, typeRamp } from '@era/tokens';
-import { StyleSheet, Text, View } from 'react-native';
+import { radii, spacing } from '@era/tokens';
+import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
 interface GapsHeroProps {
@@ -33,13 +34,7 @@ export function GapsHero({ gaps, onFill }: GapsHeroProps) {
   if (gaps.length === 0) {
     return (
       <View style={styles.container}>
-        <Text
-          style={{
-            color: colors.secondaryStrong,
-            fontSize: typeRamp.body.pt,
-            lineHeight: typeRamp.body.lineHeight,
-          }}
-        >
+        <Text variant="body" color={colors.secondaryStrong}>
           {strings.shop.gaps.empty}
         </Text>
       </View>
@@ -50,23 +45,15 @@ export function GapsHero({ gaps, onFill }: GapsHeroProps) {
     <View style={styles.container}>
       <Text
         accessibilityRole="header"
-        style={{
-          color: colors.text,
-          fontSize: typeRamp.title3.pt,
-          lineHeight: typeRamp.title3.lineHeight,
-          fontWeight: '700',
-        }}
+        variant="ui"
+        size="title3"
+        weight={700}
+        color={colors.text}
       >
         {strings.shop.gaps.title}
       </Text>
 
-      <Text
-        style={{
-          color: colors.secondaryStrong,
-          fontSize: typeRamp.subhead.pt,
-          lineHeight: typeRamp.subhead.lineHeight,
-        }}
-      >
+      <Text variant="body" size="subhead" color={colors.secondaryStrong}>
         {strings.shop.gaps.intro}
       </Text>
 
@@ -90,24 +77,11 @@ function GapCard({ gap, onFill }: { gap: WardrobeGap; onFill: (gap: WardrobeGap)
         { backgroundColor: colors.surface, borderColor: colors.hairline, borderRadius: radii.card },
       ]}
     >
-      <Text
-        style={{
-          color: colors.text,
-          fontSize: typeRamp.body.pt,
-          lineHeight: typeRamp.body.lineHeight,
-        }}
-      >
+      <Text variant="body" color={colors.text}>
         {strings.shop.gaps.reason(gap)}
       </Text>
 
-      <Text
-        style={{
-          color: colors.secondary,
-          fontSize: typeRamp.footnote.pt,
-          lineHeight: typeRamp.footnote.lineHeight,
-          fontWeight: '600',
-        }}
-      >
+      <Text variant="ui" size="footnote" weight={600} color={colors.secondary}>
         {strings.shop.gaps.unlocksLabel(gap.unlocksOutfits)}
       </Text>
 

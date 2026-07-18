@@ -9,12 +9,13 @@
  * haptic and lifts the card with a snappy press scale (a short fade under
  * reduced motion).
  */
-import { layout, radii, rnShadow, spacing, typeRamp } from '@era/tokens';
+import { layout, radii, rnShadow, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
+import { Text } from '@/components/Text';
 import { animate, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
 
@@ -93,15 +94,11 @@ export function ItemCard({ item, onResume }: ItemCardProps) {
         ) : null}
       </AnimatedPressable>
       <Text
+        variant="caption"
+        size="footnote"
         numberOfLines={1}
-        style={[
-          styles.caption,
-          {
-            color: colors.text,
-            fontSize: typeRamp.footnote.pt,
-            lineHeight: typeRamp.footnote.lineHeight,
-          },
-        ]}
+        color={colors.text}
+        style={styles.caption}
       >
         {item.name}
       </Text>

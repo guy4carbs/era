@@ -5,16 +5,17 @@
  * via Reanimated (a short fade under reduced motion). Pass `haptic` to fire a
  * light impact on press (used for outfit-save per spec).
  */
-import { layout, radii, sheen, spacing, typeRamp } from '@era/tokens';
+import { layout, radii, sheen, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, Text, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated';
 import { Pressable } from 'react-native';
 
+import { Text, TextControlBoundary } from '@/components/Text';
 import { animate, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
 
@@ -100,19 +101,11 @@ export function Button({
           style={[StyleSheet.absoluteFill, { borderRadius: radii.input, zIndex: 1 }]}
         />
       ) : null}
-      <Text
-        style={[
-          styles.label,
-          { zIndex: 2 },
-          {
-            color: skin.foreground,
-            fontSize: typeRamp.body.pt,
-            lineHeight: typeRamp.body.lineHeight,
-          },
-        ]}
-      >
-        {label}
-      </Text>
+      <TextControlBoundary>
+        <Text variant="ui" size="body" color={skin.foreground} style={{ zIndex: 2 }}>
+          {label}
+        </Text>
+      </TextControlBoundary>
     </AnimatedPressable>
   );
 }
@@ -159,9 +152,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     // iOS squircle per spec — applied to every rounded surface.
     borderCurve: 'continuous',
-  },
-  label: {
-    fontWeight: '600',
   },
   disabled: {
     opacity: 0.5,

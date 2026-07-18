@@ -6,11 +6,12 @@
  * as a controlled component so it can live in the design lab now and be wired
  * into expo-router later (icons are labels-only until an icon set lands).
  */
-import { glass, layout, typeRamp } from '@era/tokens';
+import { glass, layout } from '@era/tokens';
 import { BlurView } from 'expo-blur';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
 export type TabKey = 'feed' | 'closet' | 'design' | 'shop';
@@ -59,12 +60,10 @@ export function TabBar({ active, onChange }: TabBarProps) {
               onPress={() => onChange(tab.key)}
             >
               <Text
-                style={{
-                  color: isActive ? colors.accent : colors.secondaryStrong,
-                  fontSize: typeRamp.footnote.pt,
-                  lineHeight: typeRamp.footnote.lineHeight,
-                  fontWeight: isActive ? '600' : '400',
-                }}
+                variant="ui"
+                size="footnote"
+                weight={isActive ? 600 : 400}
+                color={isActive ? colors.accent : colors.secondaryStrong}
               >
                 {tab.label}
               </Text>

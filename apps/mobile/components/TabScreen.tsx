@@ -5,10 +5,11 @@
  * safe-area inset; the bottom is handled by the tab bar, which insets the scene.
  * Colour comes from theme tokens only.
  */
-import { spacing, typeRamp } from '@era/tokens';
-import { StyleSheet, Text, View } from 'react-native';
+import { spacing } from '@era/tokens';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
 interface TabScreenProps {
@@ -20,25 +21,11 @@ export function TabScreen({ title, empty }: TabScreenProps) {
   const { colors } = useTheme();
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
-      <Text
-        style={{
-          color: colors.text,
-          fontSize: typeRamp.title1.pt,
-          lineHeight: typeRamp.title1.lineHeight,
-          fontWeight: '600',
-        }}
-      >
+      <Text variant="largeTitle" color={colors.text}>
         {title}
       </Text>
       <View style={styles.body}>
-        <Text
-          style={{
-            color: colors.secondary,
-            fontSize: typeRamp.body.pt,
-            lineHeight: typeRamp.body.lineHeight,
-            textAlign: 'center',
-          }}
-        >
+        <Text variant="body" color={colors.secondary} style={{ textAlign: 'center' }}>
           {empty}
         </Text>
       </View>

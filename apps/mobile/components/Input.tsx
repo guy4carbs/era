@@ -4,11 +4,10 @@
  * Hairline border that shifts to the accent colour on focus; error state uses
  * the semantic danger (rust) colour. Min height honours the iOS touch target.
  */
-import { layout, radii, spacing, typeRamp } from '@era/tokens';
+import { layout, mobileSansFamily, radii, roleSizePx, typeRoles, spacing } from '@era/tokens';
 import { useState } from 'react';
 import {
   StyleSheet,
-  Text,
   TextInput,
   View,
   type StyleProp,
@@ -16,6 +15,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 
+import { Text, TextControlBoundary } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
 interface InputProps extends Omit<TextInputProps, 'style' | 'placeholderTextColor'> {
@@ -55,23 +55,19 @@ export function Input({ error, containerStyle, onFocus, onBlur, ...rest }: Input
             borderColor,
             backgroundColor: colors.surface,
             color: colors.text,
-            fontSize: typeRamp.body.pt,
+            // The field text is body-sized sans; TextInput isn't a <Text> node so
+            // it can't route through the primitive — mirror the role by hand.
+            fontFamily: mobileSansFamily(typeRoles.body.weight),
+            fontSize: roleSizePx('body'),
           },
         ]}
       />
       {error ? (
-        <Text
-          style={[
-            styles.error,
-            {
-              color: colors.danger,
-              fontSize: typeRamp.footnote.pt,
-              lineHeight: typeRamp.footnote.lineHeight,
-            },
-          ]}
-        >
-          {error}
-        </Text>
+        <TextControlBoundary>
+          <Text variant="ui" size="footnote" color={colors.danger} style={styles.error}>
+            {error}
+          </Text>
+        </TextControlBoundary>
       ) : null}
     </View>
   );

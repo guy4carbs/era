@@ -6,11 +6,12 @@
  * once an outfit has an id (i.e. after its first save). Copy is strings.design.*.
  */
 import { strings } from '@era/core/strings';
-import { radii, spacing, typeRamp } from '@era/tokens';
+import { radii, spacing } from '@era/tokens';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { Text } from '@/components/Text';
 import { GlassSheet } from '@/components/GlassSheet';
 import { Input } from '@/components/Input';
 import { useTheme } from '@/lib/theme';
@@ -41,12 +42,10 @@ export function AssignEraSheet({
     <GlassSheet open={open} onClose={onClose}>
       <Text
         accessibilityRole="header"
-        style={{
-          color: colors.text,
-          fontSize: typeRamp.title3.pt,
-          lineHeight: typeRamp.title3.lineHeight,
-          fontWeight: '600',
-        }}
+        variant="ui"
+        size="title3"
+        weight={600}
+        color={colors.text}
       >
         {strings.design.assignToEra}
       </Text>
@@ -66,22 +65,10 @@ export function AssignEraSheet({
             onPress={() => onAssign(era.id)}
             style={[styles.row, { borderColor: colors.hairline, borderRadius: radii.input }]}
           >
-            <Text
-              style={{
-                color: colors.text,
-                fontSize: typeRamp.body.pt,
-                lineHeight: typeRamp.body.lineHeight,
-              }}
-            >
+            <Text variant="body" color={colors.text}>
               {era.title}
             </Text>
-            <Text
-              style={{
-                color: colors.secondaryStrong,
-                fontSize: typeRamp.footnote.pt,
-                lineHeight: typeRamp.footnote.lineHeight,
-              }}
-            >
+            <Text variant="caption" size="footnote" color={colors.secondaryStrong}>
               {strings.design.outfitItemCount(era.outfitCount)}
             </Text>
           </Pressable>

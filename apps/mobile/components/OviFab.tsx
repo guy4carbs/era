@@ -6,11 +6,11 @@
  * ±`glow.pulse.amount`). Reduced motion pins it static — no pulse. Press gives
  * a snappy scale and a light haptic.
  */
-import { glow, layout, typeRamp } from '@era/tokens';
+import { glow, layout } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import * as Haptics from 'expo-haptics';
 import { useEffect } from 'react';
-import { Pressable, StyleSheet, Text, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
   interpolate,
   useAnimatedStyle,
@@ -19,6 +19,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { Text } from '@/components/Text';
 import { animate, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
 
@@ -94,7 +95,9 @@ export function OviFab({ onPress, style }: OviFabProps) {
         style,
       ]}
     >
-      <Text style={[styles.glyph, { color: colors.bg }]}>✦</Text>
+      <Text variant="ui" size="title3" weight={600} color={colors.bg}>
+        ✦
+      </Text>
     </AnimatedPressable>
   );
 }
@@ -105,9 +108,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     // iOS glow: a coloured, centred shadow. Android shows no tinted glow.
     shadowOffset: { width: 0, height: 0 },
-  },
-  glyph: {
-    fontSize: typeRamp.title3.px,
-    fontWeight: '600',
   },
 });

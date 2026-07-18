@@ -7,10 +7,12 @@
  * (`{API_URL}/{username}`) — there is no native profile screen yet, so this is the
  * deliberate handoff to the web page (a native creator screen is a fast-follow).
  */
-import { spacing, typeRamp, palette } from '@era/tokens';
+import { spacing, palette } from '@era/tokens';
 import { Image } from 'expo-image';
 import * as Linking from 'expo-linking';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+
+import { Text } from '@/components/Text';
 
 import type { FeedPostCreator } from '@era/core/feed';
 
@@ -48,15 +50,17 @@ export function Attribution({ creator, title }: AttributionProps) {
         />
       ) : (
         <View style={[styles.avatar, styles.avatarFallback]}>
-          <Text style={styles.avatarInitial}>{creator.username.charAt(0).toUpperCase()}</Text>
+          <Text variant="ui" size="footnote" weight={600} color={ON_IMAGE}>
+            {creator.username.charAt(0).toUpperCase()}
+          </Text>
         </View>
       )}
       <View style={styles.text}>
-        <Text numberOfLines={1} style={styles.username}>
+        <Text variant="ui" weight={600} color={ON_IMAGE} numberOfLines={1}>
           @{creator.username}
         </Text>
         {title ? (
-          <Text numberOfLines={1} style={styles.title}>
+          <Text variant="caption" size="footnote" color={ON_IMAGE_DIM} numberOfLines={1}>
             {title}
           </Text>
         ) : null}
@@ -83,24 +87,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.22)',
   },
-  avatarInitial: {
-    color: ON_IMAGE,
-    fontSize: typeRamp.footnote.pt,
-    fontWeight: '600',
-  },
   text: {
     flexShrink: 1,
     gap: spacing.s1 / 2,
-  },
-  username: {
-    color: ON_IMAGE,
-    fontSize: typeRamp.subhead.pt,
-    lineHeight: typeRamp.subhead.lineHeight,
-    fontWeight: '600',
-  },
-  title: {
-    color: ON_IMAGE_DIM,
-    fontSize: typeRamp.footnote.pt,
-    lineHeight: typeRamp.footnote.lineHeight,
   },
 });

@@ -5,14 +5,15 @@
  * and a selection haptic tick on tap. Reduced motion swaps the spring for a
  * short fade.
  */
-import { radii, spacing, typeRamp } from '@era/tokens';
+import { radii, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
-import { Pressable, StyleSheet, Text, type AccessibilityRole } from 'react-native';
+import { Pressable, StyleSheet, type AccessibilityRole } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated';
 
+import { Text, TextControlBoundary } from '@/components/Text';
 import { animate, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
 
@@ -82,15 +83,11 @@ export function Chip({
         animatedStyle,
       ]}
     >
-      <Text
-        style={{
-          color: colors.text,
-          fontSize: typeRamp.footnote.pt,
-          lineHeight: typeRamp.footnote.lineHeight,
-        }}
-      >
-        {label}
-      </Text>
+      <TextControlBoundary>
+        <Text variant="ui" size="footnote" color={colors.text}>
+          {label}
+        </Text>
+      </TextControlBoundary>
     </AnimatedPressable>
   );
 }

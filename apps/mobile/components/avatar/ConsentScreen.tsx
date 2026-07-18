@@ -12,10 +12,11 @@
  * "agree" and "not now" mean.
  */
 import { strings } from '@era/core/strings';
-import { spacing, typeRamp } from '@era/tokens';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { spacing } from '@era/tokens';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
 interface ConsentScreenProps {
@@ -31,39 +32,17 @@ export function ConsentScreen({ onAgree, onCancel }: ConsentScreenProps) {
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text
-          accessibilityRole="header"
-          style={{
-            color: colors.text,
-            fontSize: typeRamp.title1.pt,
-            lineHeight: typeRamp.title1.lineHeight,
-            fontWeight: '700',
-          }}
-        >
+        <Text accessibilityRole="header" variant="ui" size="title1" weight={700}>
           {strings.tryon.consent.heading}
         </Text>
 
         <View style={styles.facts}>
           {strings.tryon.consent.body.map((line) => (
             <View key={line} style={styles.factRow}>
-              <Text
-                aria-hidden
-                style={{
-                  color: colors.accent,
-                  fontSize: typeRamp.body.pt,
-                  lineHeight: typeRamp.body.lineHeight,
-                }}
-              >
+              <Text aria-hidden variant="body" color={colors.accent}>
                 {'•'}
               </Text>
-              <Text
-                style={{
-                  color: colors.secondaryStrong,
-                  fontSize: typeRamp.body.pt,
-                  lineHeight: typeRamp.body.lineHeight,
-                  flex: 1,
-                }}
-              >
+              <Text variant="body" color={colors.secondaryStrong} style={{ flex: 1 }}>
                 {line}
               </Text>
             </View>

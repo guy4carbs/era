@@ -21,11 +21,12 @@
  */
 import { strings } from '@era/core/strings';
 import type { TryonState } from '@era/core/tryon';
-import { spacing, typeRamp } from '@era/tokens';
+import { spacing } from '@era/tokens';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { Text } from '@/components/Text';
 import { DimensionalHero } from '@/components/closet/DimensionalHero';
 import { GlassSheet } from '@/components/GlassSheet';
 import { useTheme } from '@/lib/theme';
@@ -273,15 +274,7 @@ function Centered({ children }: { readonly children: ReactNode }) {
 
 function Line({ color, children }: { readonly color: string; readonly children: string }) {
   return (
-    <Text
-      accessibilityLiveRegion="polite"
-      style={{
-        color,
-        fontSize: typeRamp.body.pt,
-        lineHeight: typeRamp.body.lineHeight,
-        textAlign: 'center',
-      }}
-    >
+    <Text accessibilityLiveRegion="polite" variant="body" color={color} style={{ textAlign: 'center' }}>
       {children}
     </Text>
   );

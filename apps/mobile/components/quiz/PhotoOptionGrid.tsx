@@ -6,12 +6,13 @@
  * after the motion settles. When an option's image key is missing, the card
  * degrades to a token gradient placeholder rather than a broken image.
  */
-import { layout, radii, rnShadow, spacing, typeRamp } from '@era/tokens';
+import { layout, radii, rnShadow, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
+import { Text } from '@/components/Text';
 import { animate, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
 
@@ -97,10 +98,7 @@ function PhotoOption({ option, selected, onSelect }: PhotoOptionProps) {
         />
       )}
       <View style={[styles.labelBar, { backgroundColor: colors.surface }]}>
-        <Text
-          numberOfLines={1}
-          style={{ color: colors.text, fontSize: typeRamp.footnote.pt, lineHeight: typeRamp.footnote.lineHeight }}
-        >
+        <Text numberOfLines={1} variant="ui" size="footnote" color={colors.text}>
           {option.label}
         </Text>
       </View>

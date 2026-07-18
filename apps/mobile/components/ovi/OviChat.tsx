@@ -13,7 +13,7 @@
  * greets fresh. Bubbles and cards ease in gently and pin static under reduced
  * motion; sending, saving, and passing each carry the expected haptic.
  */
-import { layout, motion as motionTokens, radii, spacing, typeRamp } from '@era/tokens';
+import { layout, motion as motionTokens, radii, spacing } from '@era/tokens';
 import type { OviIntent, ProposedOutfit } from '@era/core/ovi';
 import { strings } from '@era/core/strings';
 import * as Haptics from 'expo-haptics';
@@ -25,11 +25,11 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
+import { Text } from '@/components/Text';
 import { analytics, trackOnce } from '@/lib/analytics';
 import { Chip } from '@/components/Chip';
 import { GlassSheet } from '@/components/GlassSheet';
@@ -262,19 +262,14 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
             <Bubble key={entry.id} entry={entry} onSave={onSave} onReject={onReject} onOpen={openSaved} />
           ))}
           {thinking ? (
-            <Animated.Text
+            <Animated.View
               entering={reduced ? undefined : FadeIn.duration(motionTokens.durations.minMs)}
-              style={[
-                styles.thinking,
-                {
-                  color: colors.secondary,
-                  fontSize: typeRamp.subhead.pt,
-                  lineHeight: typeRamp.subhead.lineHeight,
-                },
-              ]}
+              style={styles.thinking}
             >
-              {strings.ovi.thinking}
-            </Animated.Text>
+              <Text variant="oviAccent" size="subhead" color={colors.secondary}>
+                {strings.ovi.thinking}
+              </Text>
+            </Animated.View>
           ) : null}
         </ScrollView>
 
@@ -312,7 +307,9 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
               },
             ]}
           >
-            <Text style={[styles.sendGlyph, { color: colors.bg }]}>↑</Text>
+            <Text variant="ui" size="title3" weight={600} color={colors.bg}>
+              ↑
+            </Text>
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -355,13 +352,7 @@ function Bubble({
           },
         ]}
       >
-        <Text
-          style={{
-            color: mine ? colors.bg : colors.text,
-            fontSize: typeRamp.body.pt,
-            lineHeight: typeRamp.body.lineHeight,
-          }}
-        >
+        <Text variant="body" color={mine ? colors.bg : colors.text}>
           {entry.content}
         </Text>
       </View>
@@ -410,7 +401,6 @@ const styles = StyleSheet.create({
   },
   thinking: {
     alignSelf: 'flex-start',
-    fontStyle: 'italic',
   },
   chips: {
     flexDirection: 'row',
@@ -431,9 +421,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderCurve: 'continuous',
-  },
-  sendGlyph: {
-    fontSize: typeRamp.title3.pt,
-    fontWeight: '600',
   },
 });

@@ -7,9 +7,10 @@
  * Settings is: a glyph in the closet header's title row.
  */
 import { strings } from '@era/core/strings';
-import { layout, spacing, typeRamp } from '@era/tokens';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { layout, spacing } from '@era/tokens';
+import { Pressable, StyleSheet } from 'react-native';
 
+import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
 interface WearHistoryButtonProps {
@@ -26,7 +27,7 @@ export function WearHistoryButton({ onPress }: WearHistoryButtonProps) {
       onPress={onPress}
       style={styles.button}
     >
-      <Text style={{ color: colors.text, fontSize: typeRamp.title2.pt }}>▦</Text>
+      <Text variant="ui" size="title2" color={colors.text}>▦</Text>
     </Pressable>
   );
 }

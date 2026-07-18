@@ -1,14 +1,15 @@
 /**
  * EraStoryCard — a style era as a share card.
  *
- * The era title leads in Georgia serif; beneath it, up to four member-outfit
+ * The era title leads in the editorial serif; beneath it, up to four member-outfit
  * covers tile into a 2×2 grid, with the season as a footnote caption. Rendered at
  * the 360×640 logical size inside {@link ShareFrame} and captured to 1080×1920.
  */
-import { palette, typeRamp } from '@era/tokens';
+import { palette } from '@era/tokens';
 import type { RefObject } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Text } from '@/components/Text';
 import { collageImageUrls, type EraShareInput } from '@/lib/share-collage';
 
 import { ShareFrame } from './ShareFrame';
@@ -29,7 +30,7 @@ export function EraStoryCard({ input, viewRef, onAllImagesLoaded }: EraStoryCard
 
   return (
     <ShareFrame viewRef={viewRef}>
-      <Text style={styles.title} numberOfLines={3}>
+      <Text variant="largeTitle" color={CREAM.text} style={styles.title} numberOfLines={3}>
         {input.title}
       </Text>
 
@@ -38,7 +39,7 @@ export function EraStoryCard({ input, viewRef, onAllImagesLoaded }: EraStoryCard
       </View>
 
       {input.season ? (
-        <Text style={styles.season} numberOfLines={1}>
+        <Text variant="caption" size="footnote" color={CREAM.secondaryStrong} style={styles.season} numberOfLines={1}>
           {input.season}
         </Text>
       ) : null}
@@ -48,11 +49,6 @@ export function EraStoryCard({ input, viewRef, onAllImagesLoaded }: EraStoryCard
 
 const styles = StyleSheet.create({
   title: {
-    color: CREAM.text,
-    fontFamily: 'Georgia',
-    fontSize: typeRamp.largeTitle.pt,
-    lineHeight: typeRamp.largeTitle.lineHeight,
-    fontWeight: '600',
     textAlign: 'center',
   },
   imagery: {
@@ -60,9 +56,6 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
   },
   season: {
-    color: CREAM.secondaryStrong,
-    fontSize: typeRamp.footnote.pt,
-    lineHeight: typeRamp.footnote.lineHeight,
     letterSpacing: 0.5,
     textAlign: 'center',
     textTransform: 'uppercase',

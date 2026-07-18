@@ -17,11 +17,12 @@
  * body: the plain opt-in explanation, the three rows, and the saved-only note.
  */
 import { strings } from '@era/core/strings';
-import { layout, spacing, typeRamp } from '@era/tokens';
+import { layout, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { StyleSheet, Switch, View } from 'react-native';
 
+import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
 import { getPreferences, updatePreferences, type NotificationPreferences } from './api';
@@ -109,13 +110,7 @@ export function PriceAlertSettings() {
 
   return (
     <View style={styles.container}>
-      <Text
-        style={{
-          color: colors.secondaryStrong,
-          fontSize: typeRamp.footnote.pt,
-          lineHeight: typeRamp.footnote.lineHeight,
-        }}
-      >
+      <Text variant="caption" size="footnote" color={colors.secondaryStrong}>
         {copy.explain}
       </Text>
 
@@ -141,13 +136,7 @@ export function PriceAlertSettings() {
         onValueChange={onTogglePush}
       />
 
-      <Text
-        style={{
-          color: colors.secondaryStrong,
-          fontSize: typeRamp.footnote.pt,
-          lineHeight: typeRamp.footnote.lineHeight,
-        }}
-      >
+      <Text variant="caption" size="footnote" color={colors.secondaryStrong}>
         {copy.savedOnlyNote}
       </Text>
     </View>
@@ -173,12 +162,10 @@ function ToggleRow({
   return (
     <View style={styles.row}>
       <Text
-        style={{
-          color: disabled ? colors.secondary : colors.text,
-          fontSize: typeRamp.body.pt,
-          lineHeight: typeRamp.body.lineHeight,
-          fontWeight: '500',
-        }}
+        variant="ui"
+        size="body"
+        weight={500}
+        color={disabled ? colors.secondary : colors.text}
       >
         {label}
       </Text>

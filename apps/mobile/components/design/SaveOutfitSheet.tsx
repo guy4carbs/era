@@ -6,11 +6,12 @@
  * disables the button. Copy is strings.design.* throughout.
  */
 import { strings } from '@era/core/strings';
-import { spacing, typeRamp } from '@era/tokens';
+import { spacing } from '@era/tokens';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { Text } from '@/components/Text';
 import { GlassSheet } from '@/components/GlassSheet';
 import { Input } from '@/components/Input';
 import { useTheme } from '@/lib/theme';
@@ -63,13 +64,7 @@ export function SaveOutfitSheet({
         />
 
         {saving ? (
-          <Text
-            style={{
-              color: colors.secondaryStrong,
-              fontSize: typeRamp.subhead.pt,
-              lineHeight: typeRamp.subhead.lineHeight,
-            }}
-          >
+          <Text variant="body" size="subhead" color={colors.secondaryStrong}>
             {strings.design.saving}
           </Text>
         ) : null}

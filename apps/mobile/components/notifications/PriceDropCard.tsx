@@ -15,12 +15,13 @@
  * reads as premium whether or not the photo resolves.
  */
 import { strings } from '@era/core/strings';
-import { layout, radii, rnShadow, sheen, spacing, typeRamp } from '@era/tokens';
+import { layout, radii, rnShadow, sheen, spacing } from '@era/tokens';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
 import { formatPrice } from '@/components/shop';
+import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
 import type { InAppNotification, PriceDropPayload } from './api';
@@ -80,26 +81,17 @@ export function PriceDropCard({ notification, onView, onDismiss }: PriceDropCard
 
       <View style={styles.info}>
         <Text
+          variant="caption"
+          size="footnote"
+          weight={600}
+          color={colors.secondaryStrong}
           accessibilityRole="header"
-          style={{
-            color: colors.secondaryStrong,
-            fontSize: typeRamp.footnote.pt,
-            lineHeight: typeRamp.footnote.lineHeight,
-            fontWeight: '600',
-            letterSpacing: 0.4,
-            textTransform: 'uppercase',
-          }}
+          style={{ letterSpacing: 0.4, textTransform: 'uppercase' }}
         >
           {card.title}
         </Text>
 
-        <Text
-          style={{
-            color: colors.text,
-            fontSize: typeRamp.body.pt,
-            lineHeight: typeRamp.body.lineHeight,
-          }}
-        >
+        <Text variant="body" color={colors.text}>
           {card.body(payload.title, oldPrice, newPrice)}
         </Text>
 

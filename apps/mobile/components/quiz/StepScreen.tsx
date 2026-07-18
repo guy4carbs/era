@@ -7,14 +7,15 @@
  * button. Content slides in horizontally with a fluid spring; under reduced
  * motion it cross-fades with no translation.
  */
-import { radii, spacing, typeRamp } from '@era/tokens';
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { radii, spacing } from '@era/tokens';
+import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { useEffect } from 'react';
 
 import { strings } from '@era/core/strings';
 
 import { Button } from '@/components/Button';
+import { Text } from '@/components/Text';
 import { animate, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
 
@@ -86,7 +87,9 @@ export function StepScreen({
           onPress={onBack}
           style={styles.backButton}
         >
-          <Text style={{ color: canGoBack ? colors.text : 'transparent', fontSize: typeRamp.title2.pt }}>‹</Text>
+          <Text variant="ui" size="title2" weight={400} color={canGoBack ? colors.text : 'transparent'}>
+            ‹
+          </Text>
         </Pressable>
         <Pressable
           accessibilityRole="button"
@@ -95,7 +98,7 @@ export function StepScreen({
           onPress={onSkip}
           style={styles.skipButton}
         >
-          <Text style={{ color: colors.secondaryStrong, fontSize: typeRamp.subhead.pt, lineHeight: typeRamp.subhead.lineHeight }}>
+          <Text variant="ui" weight={400} color={colors.secondaryStrong}>
             {strings.quiz.skip}
           </Text>
         </Pressable>
@@ -112,13 +115,10 @@ export function StepScreen({
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.prompt}>
-            <Text
-              accessibilityRole="header"
-              style={{ color: colors.text, fontSize: typeRamp.title2.pt, lineHeight: typeRamp.title2.lineHeight, fontWeight: '700' }}
-            >
+            <Text accessibilityRole="header" variant="ui" size="title2" weight={700} color={colors.text}>
               {step.title}
             </Text>
-            <Text style={{ color: colors.secondaryStrong, fontSize: typeRamp.body.pt, lineHeight: typeRamp.body.lineHeight }}>
+            <Text variant="body" color={colors.secondaryStrong}>
               {step.prompt}
             </Text>
           </View>

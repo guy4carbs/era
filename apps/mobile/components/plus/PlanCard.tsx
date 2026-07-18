@@ -10,9 +10,10 @@
  * The price string is RevenueCat's already-localized value — rendered verbatim,
  * never composed — so it is the one piece of runtime data here, never copy.
  */
-import { layout, radii, spacing, typeRamp } from '@era/tokens';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { layout, radii, spacing } from '@era/tokens';
+import { Pressable, StyleSheet, View } from 'react-native';
 
+import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
 interface PlanCardProps {
@@ -50,26 +51,12 @@ export function PlanCard({ label, priceString, selected, primary = false, onSele
           {selected ? <View style={[styles.radioDot, { backgroundColor: colors.accent }]} /> : null}
         </View>
 
-        <Text
-          style={{
-            color: colors.text,
-            fontSize: typeRamp.body.pt,
-            lineHeight: typeRamp.body.lineHeight,
-            fontWeight: primary ? '700' : '600',
-          }}
-        >
+        <Text variant="ui" size="body" weight={primary ? 700 : 600} color={colors.text}>
           {label}
         </Text>
       </View>
 
-      <Text
-        style={{
-          color: colors.text,
-          fontSize: typeRamp.title3.pt,
-          lineHeight: typeRamp.title3.lineHeight,
-          fontWeight: '700',
-        }}
-      >
+      <Text variant="ui" size="title3" weight={700} color={colors.text}>
         {priceString}
       </Text>
     </Pressable>

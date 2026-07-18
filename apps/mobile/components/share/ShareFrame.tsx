@@ -12,7 +12,9 @@
 import { strings } from '@era/core/strings';
 import { palette, spacing, typeRamp } from '@era/tokens';
 import type { ReactNode, RefObject } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+
+import { Text } from '@/components/Text';
 
 /** Logical authoring size; captured and resized to the Story pixel size. */
 export const SHARE_LOGICAL_WIDTH = 360;
@@ -34,8 +36,12 @@ export function ShareFrame({ viewRef, children }: ShareFrameProps) {
     <View ref={viewRef} collapsable={false} style={styles.frame}>
       <View style={styles.content}>{children}</View>
       <View style={styles.watermark}>
-        <Text style={styles.wordmark}>ERA</Text>
-        <Text style={styles.domain}>{strings.share.watermarkDomain}</Text>
+        <Text variant="ui" weight={700} color={CREAM.text} style={styles.wordmark}>
+          ERA
+        </Text>
+        <Text variant="caption" color={CREAM.secondaryStrong} style={styles.domain}>
+          {strings.share.watermarkDomain}
+        </Text>
       </View>
     </View>
   );
@@ -62,19 +68,12 @@ const styles = StyleSheet.create({
     gap: spacing.s1,
   },
   wordmark: {
-    color: CREAM.text,
     opacity: 0.45,
-    fontSize: typeRamp.subhead.pt,
-    lineHeight: typeRamp.subhead.lineHeight,
-    fontWeight: '700',
     letterSpacing: WORDMARK_LETTERSPACE,
     textTransform: 'uppercase',
   },
   domain: {
-    color: CREAM.secondaryStrong,
     opacity: 0.7,
-    fontSize: typeRamp.caption.pt,
-    lineHeight: typeRamp.caption.lineHeight,
     letterSpacing: 0.5,
   },
 });

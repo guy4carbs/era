@@ -12,11 +12,13 @@
  * since a store `preview` build is Release (so `__DEV__` is false). The outer
  * component is hook-free so the gate can early-return before any hooks run.
  */
-import { spacing, typeRamp, palette } from '@era/tokens';
+import { spacing, palette } from '@era/tokens';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { runOnJS, useFrameCallback, useSharedValue } from 'react-native-reanimated';
+
+import { Text } from '@/components/Text';
 
 /** Show for dev builds, or any build given EXPO_PUBLIC_ERA_FEED_FPS=true (preview). */
 const SHOW = __DEV__ || process.env.EXPO_PUBLIC_ERA_FEED_FPS === 'true';
@@ -93,8 +95,12 @@ function FpsMeter() {
       importantForAccessibility="no-hide-descendants"
       style={[styles.overlay, { top: insets.top + spacing.s2 }]}
     >
-      <Text style={styles.line}>UI {ui.last} (min {ui.min})</Text>
-      <Text style={styles.line}>JS {js.last} (min {js.min})</Text>
+      <Text variant="caption" weight={600} color={ON_IMAGE} style={styles.line}>
+        UI {ui.last} (min {ui.min})
+      </Text>
+      <Text variant="caption" weight={600} color={ON_IMAGE} style={styles.line}>
+        JS {js.last} (min {js.min})
+      </Text>
     </View>
   );
 }
@@ -110,10 +116,6 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   line: {
-    color: ON_IMAGE,
-    fontSize: typeRamp.caption.pt,
-    lineHeight: typeRamp.caption.lineHeight,
     fontVariant: ['tabular-nums'],
-    fontWeight: '600',
   },
 });

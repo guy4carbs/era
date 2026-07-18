@@ -17,9 +17,10 @@ import type { MonthlyRecap } from '@era/core/wear-stats';
 import { strings } from '@era/core/strings';
 import { radii, rnShadow, spacing, typeRamp } from '@era/tokens';
 import { useCallback } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { Text } from '@/components/Text';
 // Direct file import (not the share barrel) — breaks the share↔wear require
 // cycle Metro flagged (share barrel → CollageExportHost → closet barrel →
 // ItemDetailSheet → wear barrel → this file → share barrel).
@@ -82,71 +83,37 @@ export function MonthlyRecapCard({ recap, items }: MonthlyRecapCardProps) {
             so a shared screenshot reads as a sibling of the web recap. */}
         <Text
           accessibilityRole="text"
+          variant="ui"
+          size="subhead"
+          weight={700}
+          color={colors.accent}
           style={{
-            color: colors.accent,
-            fontSize: typeRamp.subhead.pt,
-            lineHeight: typeRamp.subhead.lineHeight,
-            fontWeight: '700',
             letterSpacing: LETTERSPACE,
             textTransform: 'uppercase',
           }}
         >
           {WORDMARK}
         </Text>
-        <Text
-          style={{
-            color: colors.secondaryStrong,
-            fontSize: typeRamp.footnote.pt,
-            lineHeight: typeRamp.footnote.lineHeight,
-            fontWeight: '600',
-          }}
-        >
+        <Text variant="caption" size="footnote" weight={600} color={colors.secondaryStrong}>
           {strings.wear.recap.monthHeader(label)}
         </Text>
       </View>
 
-      <Text
-        accessibilityRole="header"
-        style={{
-          color: colors.text,
-          fontSize: typeRamp.title1.pt,
-          lineHeight: typeRamp.title1.lineHeight,
-          fontWeight: '700',
-        }}
-      >
+      <Text accessibilityRole="header" variant="title" size="title1" color={colors.text}>
         {strings.wear.recap.title}
       </Text>
 
       {isEmpty ? (
-        <Text
-          style={{
-            color: colors.secondaryStrong,
-            fontSize: typeRamp.body.pt,
-            lineHeight: typeRamp.body.lineHeight,
-          }}
-        >
+        <Text variant="body" color={colors.secondaryStrong}>
           {strings.wear.recap.empty}
         </Text>
       ) : (
         <>
           <View style={styles.metrics}>
-            <Text
-              style={{
-                color: colors.text,
-                fontSize: typeRamp.title3.pt,
-                lineHeight: typeRamp.title3.lineHeight,
-                fontWeight: '600',
-              }}
-            >
+            <Text variant="ui" size="title3" weight={600} color={colors.text}>
               {strings.wear.recap.totalWears(recap.totalWears)}
             </Text>
-            <Text
-              style={{
-                color: colors.secondaryStrong,
-                fontSize: typeRamp.subhead.pt,
-                lineHeight: typeRamp.subhead.lineHeight,
-              }}
-            >
+            <Text variant="caption" size="subhead" color={colors.secondaryStrong}>
               {strings.wear.recap.daysDressed(recap.distinctDaysWorn, recap.daysInMonth)}
             </Text>
           </View>
@@ -154,13 +121,11 @@ export function MonthlyRecapCard({ recap, items }: MonthlyRecapCardProps) {
           {recap.topItems.length > 0 ? (
             <View style={styles.topBlock}>
               <Text
-                style={{
-                  color: colors.secondaryStrong,
-                  fontSize: typeRamp.footnote.pt,
-                  lineHeight: typeRamp.footnote.lineHeight,
-                  fontWeight: '600',
-                  textTransform: 'uppercase',
-                }}
+                variant="caption"
+                size="footnote"
+                weight={600}
+                color={colors.secondaryStrong}
+                style={{ textTransform: 'uppercase' }}
               >
                 {strings.wear.recap.topPieces}
               </Text>
@@ -181,14 +146,7 @@ export function MonthlyRecapCard({ recap, items }: MonthlyRecapCardProps) {
       )}
 
       <View style={styles.footer}>
-        <Text
-          style={{
-            color: colors.secondary,
-            fontSize: typeRamp.caption.pt,
-            lineHeight: typeRamp.caption.lineHeight,
-            letterSpacing: 0.5,
-          }}
-        >
+        <Text variant="caption" color={colors.secondary} style={{ letterSpacing: 0.5 }}>
           {strings.wear.recap.shareTag}
         </Text>
         <Button
@@ -218,14 +176,7 @@ function TopThumb({ item, wearCount }: { readonly item: WearMonthItem | undefine
           />
         ) : null}
       </View>
-      <Text
-        style={{
-          color: colors.secondaryStrong,
-          fontSize: typeRamp.caption.pt,
-          lineHeight: typeRamp.caption.lineHeight,
-          fontWeight: '600',
-        }}
-      >
+      <Text variant="ui" size="caption" weight={600} color={colors.secondaryStrong}>
         {`×${wearCount}`}
       </Text>
     </View>
@@ -236,13 +187,7 @@ function TopThumb({ item, wearCount }: { readonly item: WearMonthItem | undefine
 function RecapLine({ text }: { readonly text: string }) {
   const { colors } = useTheme();
   return (
-    <Text
-      style={{
-        color: colors.secondaryStrong,
-        fontSize: typeRamp.subhead.pt,
-        lineHeight: typeRamp.subhead.lineHeight,
-      }}
-    >
+    <Text variant="caption" size="subhead" color={colors.secondaryStrong}>
       {text}
     </Text>
   );

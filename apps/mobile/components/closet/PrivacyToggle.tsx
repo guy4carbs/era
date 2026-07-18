@@ -7,12 +7,13 @@
  * spells out who can see the closet either way. A selection haptic fires on tap.
  */
 import { strings } from '@era/core/strings';
-import { spacing, typeRamp } from '@era/tokens';
+import { spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { StyleSheet, Switch, View } from 'react-native';
 
 import { getPrivacy, setPrivacy } from '@/components/items';
+import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
 export function PrivacyToggle() {
@@ -54,14 +55,7 @@ export function PrivacyToggle() {
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        <Text
-          style={{
-            color: colors.text,
-            fontSize: typeRamp.subhead.pt,
-            lineHeight: typeRamp.subhead.lineHeight,
-            fontWeight: '600',
-          }}
-        >
+        <Text variant="ui" size="subhead" weight={600} color={colors.text}>
           {isPublic ? strings.closet.privacyPublic : strings.closet.privacyPrivate}
         </Text>
         <Switch
@@ -75,13 +69,7 @@ export function PrivacyToggle() {
           accessibilityLabel={isPublic ? strings.closet.privacyPublic : strings.closet.privacyPrivate}
         />
       </View>
-      <Text
-        style={{
-          color: colors.secondaryStrong,
-          fontSize: typeRamp.footnote.pt,
-          lineHeight: typeRamp.footnote.lineHeight,
-        }}
-      >
+      <Text variant="caption" size="footnote" color={colors.secondaryStrong}>
         {hint}
       </Text>
     </View>

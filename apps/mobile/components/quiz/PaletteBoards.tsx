@@ -9,11 +9,12 @@
  * light and dark mode).
  */
 import { ARCHETYPES } from '@era/core/quiz';
-import { radii, rnShadow, spacing, typeRamp } from '@era/tokens';
+import { radii, rnShadow, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
+import { Text } from '@/components/Text';
 import { animate, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
 
@@ -127,7 +128,7 @@ function PaletteBoard({ option, selected, onSelect }: PaletteBoardProps) {
           />
         ))}
       </View>
-      <Text style={{ color: colors.text, fontSize: typeRamp.body.pt, lineHeight: typeRamp.body.lineHeight }}>
+      <Text variant="body" color={colors.text}>
         {option.label}
       </Text>
     </AnimatedPressable>

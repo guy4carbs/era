@@ -10,14 +10,15 @@
  * gated "create" hand-off. Nothing leaves the device here — the parent
  * (`app/avatar.tsx`) does the upload + create once the user continues.
  */
-import { spacing, radii, typeRamp } from '@era/tokens';
+import { spacing, radii } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 import {
   addAvatarPhoto,
@@ -71,24 +72,10 @@ export function AvatarPhotoStep({ onContinue }: AvatarPhotoStepProps) {
   return (
     <View style={styles.screen}>
       <View style={styles.content}>
-        <Text
-          accessibilityRole="header"
-          style={{
-            color: colors.text,
-            fontSize: typeRamp.title2.pt,
-            lineHeight: typeRamp.title2.lineHeight,
-            fontWeight: '700',
-          }}
-        >
+        <Text accessibilityRole="header" variant="ui" size="title2" weight={700}>
           {avatarCopy.photoHeading}
         </Text>
-        <Text
-          style={{
-            color: colors.secondaryStrong,
-            fontSize: typeRamp.body.pt,
-            lineHeight: typeRamp.body.lineHeight,
-          }}
-        >
+        <Text variant="body" color={colors.secondaryStrong}>
           {avatarCopy.photoHelp}
         </Text>
 
@@ -102,7 +89,9 @@ export function AvatarPhotoStep({ onContinue }: AvatarPhotoStepProps) {
                 onPress={() => remove(index)}
                 style={[styles.removeBadge, { backgroundColor: colors.ink }]}
               >
-                <Text style={[styles.removeGlyph, { color: colors.bg }]}>{'×'}</Text>
+                <Text variant="ui" size="footnote" weight={700} color={colors.bg}>
+                  {'×'}
+                </Text>
               </Pressable>
             </View>
           ))}
@@ -116,7 +105,9 @@ export function AvatarPhotoStep({ onContinue }: AvatarPhotoStepProps) {
               }}
               style={[styles.thumb, styles.addTile, { borderColor: colors.hairline, backgroundColor: colors.surface }]}
             >
-              <Text style={[styles.addGlyph, { color: colors.secondary }]}>{'+'}</Text>
+              <Text variant="ui" size="title1" weight={300} color={colors.secondary}>
+                {'+'}
+              </Text>
             </Pressable>
           ) : null}
         </View>
@@ -170,10 +161,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  addGlyph: {
-    fontSize: typeRamp.title1.pt,
-    fontWeight: '300',
-  },
   removeBadge: {
     position: 'absolute',
     top: spacing.s1,
@@ -183,11 +170,6 @@ const styles = StyleSheet.create({
     borderRadius: radii.chip,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  removeGlyph: {
-    fontSize: typeRamp.footnote.pt,
-    fontWeight: '700',
-    lineHeight: typeRamp.body.lineHeight,
   },
   actions: {
     paddingHorizontal: spacing.s6,

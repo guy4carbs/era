@@ -7,12 +7,13 @@
  * every toggle. A missing image degrades to a token gradient swatch. The parent
  * supplies a Continue button; toggling never auto-advances.
  */
-import { layout, radii, spacing, typeRamp } from '@era/tokens';
+import { layout, radii, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
+import { Text } from '@/components/Text';
 import { animate, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
 
@@ -96,7 +97,7 @@ function OccasionChip({ option, selected, onToggle }: OccasionChipProps) {
           style={styles.thumb}
         />
       )}
-      <Text style={{ color: colors.text, fontSize: typeRamp.footnote.pt, lineHeight: typeRamp.footnote.lineHeight }}>
+      <Text variant="ui" size="footnote" color={colors.text}>
         {option.label}
       </Text>
     </AnimatedPressable>

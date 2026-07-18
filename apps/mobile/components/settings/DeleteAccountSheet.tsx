@@ -14,13 +14,14 @@
  * sheet owns only the confirmation UX and the request.
  */
 import { strings } from '@era/core/strings';
-import { spacing, typeRamp } from '@era/tokens';
+import { spacing } from '@era/tokens';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
 import { GlassSheet } from '@/components/GlassSheet';
 import { Input } from '@/components/Input';
+import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
 import { deleteAccount } from './api';
@@ -89,12 +90,10 @@ export function DeleteAccountSheet({
         <View style={styles.body}>
           <Text
             accessibilityLiveRegion="polite"
-            style={{
-              color: colors.text,
-              fontSize: typeRamp.title3.pt,
-              lineHeight: typeRamp.title3.lineHeight,
-              fontWeight: '600',
-            }}
+            variant="ui"
+            size="title3"
+            weight={600}
+            color={colors.text}
           >
             {strings.settings.deleted}
           </Text>
@@ -103,33 +102,19 @@ export function DeleteAccountSheet({
         <View style={styles.body}>
           <Text
             accessibilityRole="header"
-            style={{
-              color: colors.text,
-              fontSize: typeRamp.title3.pt,
-              lineHeight: typeRamp.title3.lineHeight,
-              fontWeight: '600',
-            }}
+            variant="ui"
+            size="title3"
+            weight={600}
+            color={colors.text}
           >
             {strings.settings.deleteTitle}
           </Text>
 
-          <Text
-            style={{
-              color: colors.secondaryStrong,
-              fontSize: typeRamp.body.pt,
-              lineHeight: typeRamp.body.lineHeight,
-            }}
-          >
+          <Text variant="body" color={colors.secondaryStrong}>
             {strings.settings.deleteBody}
           </Text>
 
-          <Text
-            style={{
-              color: colors.secondary,
-              fontSize: typeRamp.footnote.pt,
-              lineHeight: typeRamp.footnote.lineHeight,
-            }}
-          >
+          <Text variant="caption" size="footnote" color={colors.secondary}>
             {strings.settings.deleteConfirmPrompt(accountEmail)}
           </Text>
 
@@ -159,11 +144,9 @@ export function DeleteAccountSheet({
           {errorKind === 'failed' ? (
             <Text
               accessibilityLiveRegion="polite"
-              style={{
-                color: colors.danger,
-                fontSize: typeRamp.footnote.pt,
-                lineHeight: typeRamp.footnote.lineHeight,
-              }}
+              variant="caption"
+              size="footnote"
+              color={colors.danger}
             >
               {strings.settings.deleteFailed}
             </Text>

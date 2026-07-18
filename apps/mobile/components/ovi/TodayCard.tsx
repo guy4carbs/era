@@ -11,12 +11,13 @@
  * dependency), so the suggestion is weatherless — still grounded in the closet.
  * Wiring a coarse, rounded coordinate here later turns the weather lead on.
  */
-import { spacing, typeRamp } from '@era/tokens';
+import { spacing } from '@era/tokens';
 import type { ProposedOutfit } from '@era/core/ovi';
 import { strings } from '@era/core/strings';
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Text } from '@/components/Text';
 import { Toast } from '@/components/closet/Toast';
 import { fetchItems } from '@/components/items/api';
 import { useTheme } from '@/lib/theme';
@@ -110,25 +111,12 @@ export function TodayCard() {
 
   return (
     <View style={styles.card}>
-      <Text
-        style={{
-          color: colors.text,
-          fontSize: typeRamp.title3.pt,
-          lineHeight: typeRamp.title3.lineHeight,
-          fontWeight: '600',
-        }}
-      >
+      <Text variant="ui" size="title3" weight={600} color={colors.text}>
         {strings.ovi.todayTitle}
       </Text>
 
       {outfit && weather ? (
-        <Text
-          style={{
-            color: colors.secondary,
-            fontSize: typeRamp.subhead.pt,
-            lineHeight: typeRamp.subhead.lineHeight,
-          }}
-        >
+        <Text variant="body" size="subhead" color={colors.secondary}>
           {strings.ovi.weatherLine(weather.tempC, weather.condition)}
         </Text>
       ) : null}
@@ -145,13 +133,7 @@ export function TodayCard() {
           <WoreItButton itemIds={outfit.itemIds} via="today_card" onToast={setToast} />
         </>
       ) : (
-        <Text
-          style={{
-            color: colors.secondary,
-            fontSize: typeRamp.subhead.pt,
-            lineHeight: typeRamp.subhead.lineHeight,
-          }}
-        >
+        <Text variant="body" size="subhead" color={colors.secondary}>
           {strings.ovi.todayEmpty}
         </Text>
       )}
