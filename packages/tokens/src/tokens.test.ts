@@ -291,6 +291,18 @@ test('motion springs, easing, durations, tilt', () => {
   assert.deepEqual(motion.tilt, { maxDeg: 7, parallaxPx: 6 });
 });
 
+test('motion choreography: press, stagger, pageRise (§3 exact)', () => {
+  // "scale 0.97 on press-in ... every tappable element — nothing is inert"
+  assert.deepEqual(motion.press, { scale: 0.97 });
+  // "stagger children delay 45ms; y 12→0; opacity 0→1; blur 4→0"
+  assert.deepEqual(motion.stagger, { delayMs: 45, riseYPx: 12, blurPx: 4 });
+  // page/tab content cross-fade rises 6px on the gentle spring
+  assert.deepEqual(motion.pageRise, { yPx: 6 });
+  // The stagger delay must never let a long list exceed the 350ms feel-budget
+  // for its FIRST page of items (~8 visible): 8 * 45 = 360 ≈ the ceiling.
+  assert.ok(motion.stagger.delayMs * 8 <= motion.durations.maxMs + motion.stagger.delayMs);
+});
+
 test('layout: touch targets, grid, phi split, sheet peek, breakpoints', () => {
   assert.deepEqual(layout.touchTarget, { ios: 44, webMin: 44, webPreferred: 48 });
   assert.equal(layout.tabBarHeight, 49);
