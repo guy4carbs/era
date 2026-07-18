@@ -52,7 +52,7 @@ interface PhotoOptionProps {
 }
 
 function PhotoOption({ option, selected, onSelect }: PhotoOptionProps) {
-  const { colors } = useTheme();
+  const { colors, resolved } = useTheme();
   const reduced = useReducedMotionSafe();
   const scale = useSharedValue(REST_SCALE);
 
@@ -76,7 +76,7 @@ function PhotoOption({ option, selected, onSelect }: PhotoOptionProps) {
       }}
       style={[
         styles.card,
-        selected ? rnShadow('e3') : rnShadow('e2'),
+        selected ? rnShadow('e3', resolved) : rnShadow('e2', resolved),
         {
           aspectRatio: layout.itemCard.ratio,
           borderRadius: radii.card,

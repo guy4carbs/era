@@ -43,7 +43,7 @@ interface MonthlyRecapCardProps {
 }
 
 export function MonthlyRecapCard({ recap, items }: MonthlyRecapCardProps) {
-  const { colors } = useTheme();
+  const { colors, resolved } = useTheme();
   const { exportRecap, busy: shareBusy } = useCollageExport();
 
   const byId = new Map(items.map((item) => [item.id, item]));
@@ -74,7 +74,7 @@ export function MonthlyRecapCard({ recap, items }: MonthlyRecapCardProps) {
     <View
       style={[
         styles.card,
-        rnShadow('e2'),
+        rnShadow('e2', resolved),
         { backgroundColor: colors.surface, borderColor: colors.hairline },
       ]}
     >

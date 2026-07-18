@@ -24,13 +24,13 @@ export function Card({
   style,
   children,
 }: PropsWithChildren<CardProps>) {
-  const { colors } = useTheme();
+  const { colors, resolved } = useTheme();
 
   return (
     <View
       style={[
         styles.base,
-        rnShadow('e2'),
+        rnShadow('e2', resolved),
         {
           backgroundColor: colors.surface,
           borderRadius: radii.card,
@@ -46,7 +46,8 @@ export function Card({
       {aspect === 'item' ? (
         // Diagonal specular sheen (135°), item-card + primary only per spec.
         <LinearGradient
-          colors={[sheen.from, sheen.to]}
+          colors={[sheen.from[resolved], sheen.to]}
+          locations={[0, 0.6]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           pointerEvents="none"

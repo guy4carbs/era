@@ -49,7 +49,7 @@ interface TextBandProps {
 }
 
 function TextBand({ option, selected, onSelect }: TextBandProps) {
-  const { colors } = useTheme();
+  const { colors, resolved } = useTheme();
   const reduced = useReducedMotionSafe();
   const scale = useSharedValue(REST_SCALE);
   const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
@@ -71,7 +71,7 @@ function TextBand({ option, selected, onSelect }: TextBandProps) {
       }}
       style={[
         styles.band,
-        selected ? rnShadow('e3') : rnShadow('e2'),
+        selected ? rnShadow('e3', resolved) : rnShadow('e2', resolved),
         {
           borderRadius: radii.card,
           backgroundColor: colors.surface,

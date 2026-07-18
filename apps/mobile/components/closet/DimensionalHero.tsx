@@ -61,8 +61,8 @@ const PERSPECTIVE = spacing.s16 * 12;
 const SHEEN_SHIFT = parallaxPx * 1.5;
 
 // Peak sheen-band opacity at full tilt, multiplying the already-faint white
-// gradient (`sheen.from` = 5% white). Dimmer in dark mode, where a bright wash
-// would read as glare on a charcoal card. At rest the opacity is 0 regardless.
+// gradient (`sheen.from[resolved]` = 5%/4% white). Dimmer in dark mode, where a
+// bright wash would read as glare on a charcoal card. At rest opacity is 0.
 const SHEEN_PEAK = { light: 1, dark: 0.6 } as const;
 
 // Low-pass factor for the rolling baseline: ~2% per frame drifts the neutral
@@ -247,7 +247,8 @@ function TiltingHero({ uri, accessibilityLabel, style }: Omit<DimensionalHeroPro
           style={[styles.sheen, sheenStyle]}
         >
           <LinearGradient
-            colors={[sheen.from, sheen.to]}
+            colors={[sheen.from[resolved], sheen.to]}
+            locations={[0, 0.6]}
             start={SHEEN_START}
             end={SHEEN_END}
             style={StyleSheet.absoluteFill}

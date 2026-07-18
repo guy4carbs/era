@@ -83,7 +83,7 @@ export function QuizReveal({ profile, onStepIn }: QuizRevealProps) {
         </View>
       ) : null}
 
-      <View style={[styles.eraCard, rnShadow('e2'), { backgroundColor: colors.surface, borderColor: colors.hairline }]}>
+      <View style={[styles.eraCard, rnShadow('e2', resolved), { backgroundColor: colors.surface, borderColor: colors.hairline }]}>
         <Text variant="oviAccent" color={colors.text}>
           {profile.eraTitle}
         </Text>

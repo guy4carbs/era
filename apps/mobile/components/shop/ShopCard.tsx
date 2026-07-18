@@ -73,7 +73,7 @@ export function ShopCard({
   canAddToCart = false,
   onAddToCart,
 }: ShopCardProps) {
-  const { colors } = useTheme();
+  const { colors, resolved } = useTheme();
   const viewLabel = strings.shop.viewAt(product.retailer);
   const inFlow = canAddToCart && onAddToCart !== undefined;
 
@@ -106,7 +106,7 @@ export function ShopCard({
     <View
       style={[
         styles.card,
-        rnShadow('e2'),
+        rnShadow('e2', resolved),
         {
           backgroundColor: colors.surface,
           borderColor: colors.hairline,
@@ -135,7 +135,8 @@ export function ShopCard({
         />
         {/* 135° specular sheen — the premium cue shared with the closet tiles. */}
         <LinearGradient
-          colors={[sheen.from, sheen.to]}
+          colors={[sheen.from[resolved], sheen.to]}
+          locations={[0, 0.6]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           pointerEvents="none"

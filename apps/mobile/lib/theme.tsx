@@ -98,6 +98,29 @@ export function useTheme(): ThemeContextValue {
   return ctx;
 }
 
+/**
+ * ThemeScope — a theme island. Pins every `useTheme()` consumer inside it to a
+ * fixed resolved mode, regardless of the ambient ThemeProvider. Used by the
+ * design lab to render light and dark palettes side by side; `setMode` is a
+ * no-op since a pinned island has no preference to change. Additive — it does
+ * not touch ThemeProvider.
+ */
+export function ThemeScope({
+  mode,
+  children,
+}: PropsWithChildren<{ mode: ResolvedMode }>) {
+  const value = useMemo<ThemeContextValue>(
+    () => ({
+      mode,
+      resolved: mode,
+      colors: resolveColors(mode),
+      setMode: () => {},
+    }),
+    [mode],
+  );
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+}
+
 function isThemePreference(value: string | null): value is ThemePreference {
   return value === 'light' || value === 'dark' || value === 'system';
 }

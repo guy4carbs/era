@@ -23,7 +23,7 @@
  * holds a static e3 with no glow.
  */
 import { strings } from '@era/core/strings';
-import { elevation, glow, layout, motion, radii, rnShadow, sheen, spacing } from '@era/tokens';
+import { elevation, elevationDark, glow, layout, motion, radii, rnShadow, sheen, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRef } from 'react';
@@ -59,8 +59,9 @@ const REST_SCALE = 1;
 const CLAIM_SLOP = 4;
 
 // The ink shadow deepens from e3's ambient layer toward e4 as the tile activates.
-const REST_SHADOW = elevation.e3.ambient;
-const ACTIVE_SHADOW = elevation.e4;
+// Per-mode: dark carries the heavier opacities (e4-dark is near-black at 0.45).
+const REST_SHADOW = { light: elevation.e3.ambient, dark: elevationDark.e3.ambient } as const;
+const ACTIVE_SHADOW = { light: elevation.e4, dark: elevationDark.e4 } as const;
 
 interface CutoutTileProps {
   readonly item: ItemWithDisplay;
@@ -126,6 +127,8 @@ export function CutoutTile({ item, onPress }: CutoutTileProps) {
     active.value = withSpring(0, springFromToken('snappy'));
   }
 
+  const rest = REST_SHADOW[resolved];
+  const activeShadow = ACTIVE_SHADOW[resolved];
   const tileStyle = useAnimatedStyle(() => ({
     transform: [
       { perspective: PERSPECTIVE },
@@ -134,13 +137,9 @@ export function CutoutTile({ item, onPress }: CutoutTileProps) {
       { scale: pressScale.value },
     ],
     // Deepen the ink shadow e3 → e4 as the tile activates (base props come from
-    // rnShadow('e3') below; these two override toward the e4 values).
-    shadowRadius: interpolate(active.value, [0, 1], [REST_SHADOW.blur, ACTIVE_SHADOW.blur]),
-    shadowOpacity: interpolate(
-      active.value,
-      [0, 1],
-      [REST_SHADOW.opacity, ACTIVE_SHADOW.opacity],
-    ),
+    // rnShadow('e3', resolved) below; these two override toward the e4 values).
+    shadowRadius: interpolate(active.value, [0, 1], [rest.blur, activeShadow.blur]),
+    shadowOpacity: interpolate(active.value, [0, 1], [rest.opacity, activeShadow.opacity]),
   }));
 
   // The accent glow lives on its own underlay (RN casts one shadow per view); its
@@ -187,7 +186,7 @@ export function CutoutTile({ item, onPress }: CutoutTileProps) {
           {...responder.panHandlers}
           style={[
             styles.card,
-            rnShadow('e3'),
+            rnShadow('e3', resolved),
             {
               backgroundColor: colors.surface,
               borderColor: colors.hairline,
@@ -233,7 +232,8 @@ export function CutoutTile({ item, onPress }: CutoutTileProps) {
             )}
             {/* 135° specular sheen — item-card + primary button only, per spec. */}
             <LinearGradient
-              colors={[sheen.from, sheen.to]}
+              colors={[sheen.from[resolved], sheen.to]}
+              locations={[0, 0.6]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               pointerEvents="none"

@@ -87,7 +87,7 @@ export function GlassSheet({ open, onClose, children }: PropsWithChildren<GlassS
             height: expandedHeight,
             borderTopLeftRadius: radii.sheet,
             borderTopRightRadius: radii.sheet,
-            borderColor: colors.hairline,
+            borderColor: glass.border[resolved],
             borderWidth: glass.borderWidth,
           },
           sheetStyle,
@@ -102,7 +102,7 @@ export function GlassSheet({ open, onClose, children }: PropsWithChildren<GlassS
           style={[StyleSheet.absoluteFill, { backgroundColor: colors.surface, opacity: glass.tintOpacity[resolved] }]}
         />
         <LinearGradient
-          colors={[glass.innerHighlightColor, 'transparent']}
+          colors={[glass.innerHighlightColor[resolved], 'transparent']}
           style={styles.innerHighlight}
           pointerEvents="none"
         />
