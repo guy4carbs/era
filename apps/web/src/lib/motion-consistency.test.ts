@@ -51,6 +51,14 @@ const RULES: readonly { name: string; re: RegExp; exclude?: RegExp }[] = [
     re: /whileTap[^\n]*scale:\s*0\.9\d?\b(?![\d])/,
     exclude: /press\.scale/,
   },
+  {
+    // A component defining its own press-scale const (the RN pattern the first
+    // guard revision missed — caught by the integrator audit 2026-07-18). The
+    // ONE sanctioned definition is lib/motion.ts's `PRESS_SCALE = motion.press.scale`.
+    name: 'local-press-scale-const',
+    re: /const\s+PRESS_SCALE\s*=\s*0?\.?\d/,
+    exclude: /motion\.press\.scale/,
+  },
 ];
 
 function walk(dir: string, out: string[] = []): string[] {

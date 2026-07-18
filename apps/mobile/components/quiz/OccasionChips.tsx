@@ -14,14 +14,13 @@ import { Image, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
 import { Text } from '@/components/Text';
-import { animate, useReducedMotionSafe } from '@/lib/motion';
+import { PRESS_SCALE, animate, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
 
 import { imageFor } from './imageFor';
 import { imageKeyOf, type QuizOption, type QuizStep } from './contract';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-const PRESS_SCALE = 0.95;
 const REST_SCALE = 1;
 const THUMB_SIZE = spacing.s8; // 32pt thumbnail
 

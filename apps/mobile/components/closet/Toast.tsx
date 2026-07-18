@@ -15,7 +15,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { Text } from '@/components/Text';
-import { useReducedMotionSafe } from '@/lib/motion';
+import { tokenEasing, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
 
 const VISIBLE_MS = 2200;
@@ -35,7 +35,7 @@ export function Toast({ message, onHide, bottom }: ToastProps) {
   useEffect(() => {
     if (!message) return;
     const fade = (to: number) =>
-      reduced ? withTiming(to, { duration: 0 }) : withTiming(to, { duration: motion.durations.reducedFadeMs });
+      reduced ? withTiming(to, { duration: 0 }) : withTiming(to, { duration: motion.durations.reducedFadeMs, easing: tokenEasing });
     opacity.value = fade(1);
     const timer = setTimeout(() => {
       opacity.value = fade(0);

@@ -17,7 +17,7 @@
  * commits back to the parent on gesture end — so parent state stays the source of
  * truth for saving and never fights an in-flight gesture.
  */
-import { glass, radii } from '@era/tokens';
+import { glass, motion, radii } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo } from 'react';
 import { StyleSheet } from 'react-native';
@@ -46,7 +46,6 @@ import {
 import type { OutfitItemTransform } from './api';
 
 const RAD_TO_DEG = 180 / Math.PI;
-const REDUCED_FADE_MS = 150;
 
 /** A snap target: another piece's normalized center, or the stage center-line. */
 interface SnapTarget {
@@ -179,7 +178,7 @@ export function PlacedItem({
     const settle = (to: number) => {
       'worklet';
       return reduced
-        ? withTiming(to, { duration: REDUCED_FADE_MS })
+        ? withTiming(to, { duration: motion.durations.reducedFadeMs })
         : withSpring(to, springFromToken('fluid'));
     };
 
