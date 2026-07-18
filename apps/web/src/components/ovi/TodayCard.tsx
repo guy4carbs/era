@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, type CSSProperties } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { strings } from '@era/core/strings';
 import type { ProposedOutfit } from '@era/core/ovi';

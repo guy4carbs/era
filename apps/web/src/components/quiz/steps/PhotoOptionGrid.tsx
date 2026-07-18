@@ -1,7 +1,7 @@
 'use client';
 
 import { type CSSProperties } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken, layout } from '@era/tokens';
 import { transitionFor } from '../../../lib/motion';
 import { Text, TextControlBoundary } from '../../../components';
@@ -75,7 +75,7 @@ export function PhotoOptionGrid({ step, selectedId, onSelect }: PhotoOptionGridP
               boxShadow: selected ? `var(--shadow-e3), ${SELECTION_RING}` : 'var(--shadow-e2)',
             }}
             whileHover={reduced ? undefined : { y: layout.hover.liftPx, boxShadow: 'var(--shadow-e3)' }}
-            whileTap={reduced ? undefined : { scale: 0.97 }}
+            whileTap={reduced ? undefined : { scale: motionToken.press.scale }}
             transition={transitionFor(motionToken.springs.snappy, reduced)}
           >
             <QuizImage imageKey={'imageKey' in option ? option.imageKey : undefined} />

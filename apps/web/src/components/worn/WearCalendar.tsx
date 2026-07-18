@@ -1,11 +1,11 @@
 'use client';
 
 import { useMemo, useState, type CSSProperties } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken, typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { groupWearsByDay, type WearLogLike } from '@era/core/wear-stats';
-import { transitionFor } from '../../lib/motion';
+import { pressProps, transitionFor } from '../../lib/motion';
 import { localToday } from '../../lib/local-date';
 import { Text } from '../Text';
 import type { WornItem, WornLog } from './types';
@@ -140,7 +140,7 @@ export function WearCalendar({ month, logs, itemsById }: WearCalendarProps) {
             .slice(0, MAX_DAY_THUMBS);
 
           return (
-            <button
+            <motion.button
               key={dateStr}
               type="button"
               onClick={() => setSelectedDay((prev) => (prev === dateStr ? null : dateStr))}
@@ -151,6 +151,7 @@ export function WearCalendar({ month, logs, itemsById }: WearCalendarProps) {
                 ...(isToday ? todayRingStyle : null),
                 ...(isSelected ? selectedCellStyle : null),
               }}
+              {...pressProps(reduced)}
             >
               <Text variant="caption" weight={600} as="span" style={dayNumberStyle}>
                 {day}
@@ -168,7 +169,7 @@ export function WearCalendar({ month, logs, itemsById }: WearCalendarProps) {
               ) : (
                 <span style={plainDotStyle} aria-hidden="true" />
               )}
-            </button>
+            </motion.button>
           );
         })}
       </div>

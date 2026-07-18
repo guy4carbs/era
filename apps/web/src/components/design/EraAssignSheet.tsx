@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, type CSSProperties } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken } from '@era/tokens';
 import { Text } from '../Text';
 import { strings } from '@era/core/strings';
-import { transitionFor } from '../../lib/motion';
+import { pressProps, transitionFor } from '../../lib/motion';
 import { GlassSheet } from '../GlassSheet';
 import { Input } from '../Input';
 import { Button } from '../Button';
@@ -82,12 +82,13 @@ export function EraAssignSheet({ eras, busy, onAssignExisting, onCreateAndAssign
           </Text>
 
           {eras.map((era) => (
-            <button
+            <motion.button
               key={era.id}
               type="button"
               style={eraRowStyle}
               disabled={busy}
               onClick={() => onAssignExisting(era.id)}
+              {...pressProps(reduced, !busy)}
             >
               {/* An era name, but this is a control (list-row button) — serif is
                   barred inside controls, so it reads in Geist (ui), not oviAccent. */}
@@ -95,7 +96,7 @@ export function EraAssignSheet({ eras, busy, onAssignExisting, onCreateAndAssign
               <Text variant="caption" size="footnote" as="span" aria-hidden="true" style={{ color: 'var(--color-secondary-strong)' }}>
                 {era.outfitCount}
               </Text>
-            </button>
+            </motion.button>
           ))}
 
           <div style={createStyle}>

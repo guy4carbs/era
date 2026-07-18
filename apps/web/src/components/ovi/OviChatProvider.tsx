@@ -9,7 +9,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'motion/react';
 import { useSession } from '../../lib/auth-client';
 import { OviChat } from './OviChat';
 import type { CutoutInfo, ItemsById } from './types';

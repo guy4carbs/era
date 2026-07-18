@@ -1,11 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useReducer, useRef, useState, type CSSProperties } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { layout, motion as motionToken } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import type { FeedPage, FeedPostPayload } from '@era/core/feed';
-import { transitionFor } from '../../lib/motion';
+import { pressProps, transitionFor, useStagger } from '../../lib/motion';
 import { useSession } from '../../lib/auth-client';
 import { Text } from '../Text';
 import { FeedCard } from './FeedCard';
@@ -263,21 +263,32 @@ export function FeedList() {
   }, []);
 
   const isEmpty = state.initialLoaded && state.posts.length === 0;
+  const stagger = useStagger(reduced);
 
   return (
     <section style={columnStyle} aria-label="Feed">
-      {state.posts.map((post) => (
-        <FeedCard
-          key={post.id}
-          post={post}
-          viewerUsername={viewerUsername}
-          onLike={handleLike}
-          onSave={handleSave}
-          onFollow={handleFollow}
-          onReported={handleReported}
-          onBlocked={handleBlocked}
-        />
-      ))}
+      {/* Entrance-only stagger: the container orchestrates the first paint; cards
+          appended by pagination mount and play their own item variant. */}
+      <motion.div
+        style={listStyle}
+        variants={stagger.container}
+        initial="hidden"
+        animate="visible"
+      >
+        {state.posts.map((post) => (
+          <motion.div key={post.id} variants={stagger.item}>
+            <FeedCard
+              post={post}
+              viewerUsername={viewerUsername}
+              onLike={handleLike}
+              onSave={handleSave}
+              onFollow={handleFollow}
+              onReported={handleReported}
+              onBlocked={handleBlocked}
+            />
+          </motion.div>
+        ))}
+      </motion.div>
 
       {isEmpty && !state.errored ? (
         <Text variant="caption" size="footnote" as="p" style={quietLineStyle}>
@@ -290,11 +301,11 @@ export function FeedList() {
           <Text variant="caption" size="footnote" as="p" style={quietLineStyle}>
             {strings.errors.generic}
           </Text>
-          <button type="button" style={retryButtonStyle} onClick={() => void loadPage(null)}>
+          <motion.button type="button" style={retryButtonStyle} onClick={() => void loadPage(null)} {...pressProps(reduced)}>
             <Text variant="caption" size="footnote" weight={600} as="span" style={{ color: 'var(--color-accent)' }}>
               {strings.errors.retry}
             </Text>
-          </button>
+          </motion.button>
         </div>
       ) : null}
 
@@ -342,6 +353,15 @@ const columnStyle: CSSProperties = {
   // fluid grid — below 480 it simply fills the width.
   maxWidth: layout.feedColumnWidth,
   marginInline: 'auto',
+};
+
+// The staggered card list wrapper — carries the same column gap so the entrance
+// container doesn't collapse the spacing between cards.
+const listStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-4)',
+  width: '100%',
 };
 
 const quietLineStyle: CSSProperties = {

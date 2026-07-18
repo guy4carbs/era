@@ -1,9 +1,9 @@
 'use client';
 
 import { type CSSProperties, type ReactNode } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, typeRamp } from '@era/tokens';
-import { transitionFor } from '../lib/motion';
+import { motion, useReducedMotion } from 'motion/react';
+import { typeRamp } from '@era/tokens';
+import { pressProps } from '../lib/motion';
 import { Text, TextControlBoundary } from './Text';
 
 type NativeButtonProps = Omit<
@@ -59,8 +59,7 @@ export function Chip({ selected = false, children, style, ...rest }: ChipProps) 
       type="button"
       aria-pressed={selected}
       style={{ ...chipStyle, ...selectedStyle, ...style }}
-      whileTap={reduced ? undefined : { scale: 0.97 }}
-      transition={transitionFor(motionToken.springs.snappy, reduced)}
+      {...pressProps(reduced)}
       {...rest}
     >
       <TextControlBoundary>

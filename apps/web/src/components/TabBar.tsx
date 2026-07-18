@@ -1,6 +1,8 @@
 'use client';
 
 import { type CSSProperties } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
+import { pressProps } from '../lib/motion';
 import { Text } from './Text';
 
 export type TabId = 'feed' | 'closet' | 'design' | 'shop';
@@ -61,21 +63,23 @@ const tabStyle: CSSProperties = {
  * rail takes over as primary navigation.
  */
 export function TabBar({ active, onChange }: TabBarProps) {
+  const reduced = useReducedMotion();
   return (
     <nav className="era-tabbar" style={barStyle} aria-label="Primary">
       {TAB_ITEMS.map((tab) => {
         const isActive = tab.id === active;
         return (
-          <button
+          <motion.button
             key={tab.id}
             type="button"
             style={{ ...tabStyle, color: isActive ? 'var(--color-accent)' : 'var(--color-secondary-strong)' }}
             aria-label={tab.label}
             aria-current={isActive ? 'page' : undefined}
             onClick={() => onChange(tab.id)}
+            {...pressProps(reduced)}
           >
             <Text variant="ui">{tab.label}</Text>
-          </button>
+          </motion.button>
         );
       })}
     </nav>

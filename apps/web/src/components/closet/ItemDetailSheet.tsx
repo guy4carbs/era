@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { type PanInfo, motion, useReducedMotion } from 'framer-motion';
+import { type PanInfo, motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken, layout, spacing } from '@era/tokens';
 import { Text } from '../Text';
 import { strings } from '@era/core/strings';

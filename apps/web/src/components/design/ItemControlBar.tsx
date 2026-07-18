@@ -1,10 +1,10 @@
 'use client';
 
 import { type CSSProperties } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken } from '@era/tokens';
 import { Text } from '../Text';
-import { transitionFor } from '../../lib/motion';
+import { pressProps, transitionFor } from '../../lib/motion';
 import {
   clamp,
   ROTATION_MAX,
@@ -90,33 +90,33 @@ export function ItemControlBar({
       exit={reduced ? { opacity: 0 } : { opacity: 0, y: 8 }}
       transition={transitionFor(motionToken.springs.gentle, reduced)}
     >
-      <button type="button" aria-label="Smaller" style={btnStyle} onClick={() => onScale(clamp(piece.scale - SCALE_STEP, SCALE_MIN, SCALE_MAX))}>
+      <motion.button type="button" aria-label="Smaller" style={btnStyle} onClick={() => onScale(clamp(piece.scale - SCALE_STEP, SCALE_MIN, SCALE_MAX))} {...pressProps(reduced)}>
         −
-      </button>
+      </motion.button>
       <Text variant="ui" size="footnote" as="span" aria-hidden="true" style={{ color: 'var(--color-secondary-strong)', minWidth: 'var(--space-8)', textAlign: 'center' }}>
         {`${Math.round(piece.scale * 100)}%`}
       </Text>
-      <button type="button" aria-label="Larger" style={btnStyle} onClick={() => onScale(clamp(piece.scale + SCALE_STEP, SCALE_MIN, SCALE_MAX))}>
+      <motion.button type="button" aria-label="Larger" style={btnStyle} onClick={() => onScale(clamp(piece.scale + SCALE_STEP, SCALE_MIN, SCALE_MAX))} {...pressProps(reduced)}>
         +
-      </button>
+      </motion.button>
 
-      <button type="button" aria-label="Rotate left" style={btnStyle} onClick={() => onRotate(clamp(piece.rotation - ROTATION_STEP, ROTATION_MIN, ROTATION_MAX))}>
+      <motion.button type="button" aria-label="Rotate left" style={btnStyle} onClick={() => onRotate(clamp(piece.rotation - ROTATION_STEP, ROTATION_MIN, ROTATION_MAX))} {...pressProps(reduced)}>
         ↺
-      </button>
-      <button type="button" aria-label="Rotate right" style={btnStyle} onClick={() => onRotate(clamp(piece.rotation + ROTATION_STEP, ROTATION_MIN, ROTATION_MAX))}>
+      </motion.button>
+      <motion.button type="button" aria-label="Rotate right" style={btnStyle} onClick={() => onRotate(clamp(piece.rotation + ROTATION_STEP, ROTATION_MIN, ROTATION_MAX))} {...pressProps(reduced)}>
         ↻
-      </button>
+      </motion.button>
 
-      <button type="button" aria-label="Send backward" style={btnStyle} disabled={atBack} onClick={onBackward}>
+      <motion.button type="button" aria-label="Send backward" style={btnStyle} disabled={atBack} onClick={onBackward} {...pressProps(reduced, !atBack)}>
         ⤓
-      </button>
-      <button type="button" aria-label="Bring forward" style={btnStyle} disabled={atFront} onClick={onForward}>
+      </motion.button>
+      <motion.button type="button" aria-label="Bring forward" style={btnStyle} disabled={atFront} onClick={onForward} {...pressProps(reduced, !atFront)}>
         ⤒
-      </button>
+      </motion.button>
 
-      <button type="button" style={removeStyle} onClick={onRemove}>
+      <motion.button type="button" style={removeStyle} onClick={onRemove} {...pressProps(reduced)}>
         Remove
-      </button>
+      </motion.button>
     </motion.div>
   );
 }

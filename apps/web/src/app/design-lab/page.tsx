@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type CSSProperties, type ReactNode } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'motion/react';
 import {
   typeRamp,
   spacing,
@@ -451,7 +451,7 @@ function GlowIsland({ mode }: { mode: PaletteMode }) {
     <div style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'center' }}>
       <motion.div
         animate={{ boxShadow: [glowShadow, `0 0 var(--glow-blur) color-mix(in srgb, var(--color-accent) ${Math.round(glow.opacity[mode] * (1 + glow.pulse.amount) * 100)}%, transparent)`, glowShadow] }}
-        transition={{ duration: glow.pulse.durationMs / 1000, repeat: Infinity, ease: 'easeInOut' }}
+        transition={{ duration: glow.pulse.durationMs / 1000, repeat: Infinity, ease: motionToken.easing.bezier }}
         style={{ width: 'var(--space-16)', height: 'var(--space-16)', borderRadius: 'var(--radius-card)', background: 'var(--color-accent)', display: 'grid', placeItems: 'center', color: 'var(--color-ink)' }}
       >
         <Text variant="caption" as="span" size="footnote" style={{ color: 'var(--color-ink)' }}>

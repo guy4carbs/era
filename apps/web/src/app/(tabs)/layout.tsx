@@ -3,10 +3,25 @@
 import { type CSSProperties, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { motion, useReducedMotion } from 'motion/react';
+import { motion as motionToken } from '@era/tokens';
 import { Container, OviFab, TabBar, TAB_ITEMS, type TabId } from '../../components';
 import { OviChatProvider, useOviChat } from '../../components/ovi';
 import { AnalyticsIdentity } from '../../components/system/AnalyticsIdentity';
 import { Text } from '../../components/Text';
+import { pressProps, transitionFor, viewTransition } from '../../lib/motion';
+
+/** Press-enabled rail link — Link with the token tap affordance. */
+const MotionLink = motion.create(Link);
+
+/**
+ * True when the browser lacks the View Transitions API, so the keyed page-
+ * enter fallback should run. When VT *is* available, the CSS in globals.css
+ * owns the cross-fade and this fallback stays off (never double-animate).
+ */
+function needsPageEnterFallback(): boolean {
+  return typeof document !== 'undefined' && document.startViewTransition === undefined;
+}
 
 /** Resolve the active tab from the first path segment; default to feed. */
 function activeTabFrom(pathname: string): TabId {
@@ -51,8 +66,16 @@ const railItemStyle: CSSProperties = {
 function TabsShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const reduced = useReducedMotion();
   const active = activeTabFrom(pathname);
   const { openChat, isOpen } = useOviChat();
+
+  // Tab switches route through the View Transitions API for a cross-fade + rise
+  // (styled in globals.css). It degrades to a plain push where VT / motion is
+  // unavailable — see viewTransition.
+  const navigate = (id: TabId) => viewTransition(() => router.push(`/${id}`));
+
+  const content = <Container>{children}</Container>;
 
   return (
     <div className="era-tabs-shell">
@@ -62,24 +85,42 @@ function TabsShell({ children }: { children: ReactNode }) {
         {TAB_ITEMS.map((tab) => {
           const isActive = tab.id === active;
           return (
-            <Link
+            <MotionLink
               key={tab.id}
               href={`/${tab.id}`}
               aria-current={isActive ? 'page' : undefined}
+              onClick={(e) => {
+                // Intercept so the route change runs through the view transition
+                // rather than Link's default (untransitioned) navigation.
+                e.preventDefault();
+                navigate(tab.id);
+              }}
               style={{
                 ...railItemStyle,
                 color: isActive ? 'var(--color-accent)' : 'var(--color-secondary-strong)',
               }}
+              {...pressProps(reduced)}
             >
               <Text variant="ui">{tab.label}</Text>
-            </Link>
+            </MotionLink>
           );
         })}
       </nav>
 
-      <Container>{children}</Container>
+      {needsPageEnterFallback() ? (
+        <motion.div
+          key={pathname}
+          initial={reduced ? { opacity: 0 } : { opacity: 0, y: motionToken.pageRise.yPx }}
+          animate={reduced ? { opacity: 1 } : { opacity: 1, y: 0 }}
+          transition={transitionFor(motionToken.springs.gentle, reduced)}
+        >
+          {content}
+        </motion.div>
+      ) : (
+        content
+      )}
 
-      <TabBar active={active} onChange={(id) => router.push(`/${id}`)} />
+      <TabBar active={active} onChange={navigate} />
       {isOpen ? null : <OviFab onClick={() => openChat()} />}
     </div>
   );

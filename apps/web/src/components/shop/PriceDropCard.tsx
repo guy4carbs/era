@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, type CSSProperties } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken } from '@era/tokens';
 import { Text } from '../Text';
 import { strings } from '@era/core/strings';
-import { transitionFor } from '../../lib/motion';
+import { pressProps, transitionFor } from '../../lib/motion';
 import { markRead, type PriceDropPayload } from '../../lib/notifications-client';
 
 export interface PriceDropCardProps {
@@ -107,16 +107,17 @@ export function PriceDropCard({ id, payload, onResolve }: PriceDropCardProps) {
       transition={transitionFor(motionToken.springs.gentle, reduced)}
     >
       {href ? (
-        <a
+        <motion.a
           href={href}
           target="_blank"
           rel={AFFILIATE_REL}
           onClick={resolve}
           style={thumbLinkStyle}
           aria-label={copy.view}
+          {...pressProps(reduced)}
         >
           {thumb}
-        </a>
+        </motion.a>
       ) : (
         <div style={thumbLinkStyle}>{thumb}</div>
       )}
@@ -126,15 +127,15 @@ export function PriceDropCard({ id, payload, onResolve }: PriceDropCardProps) {
         <Text variant="ui" as="p" size="subhead" weight={500} style={{ margin: 0, color: 'var(--color-text)' }}>{copy.body(payload.title, oldPrice, newPrice)}</Text>
         <div style={actionsStyle}>
           {href ? (
-            <a href={href} target="_blank" rel={AFFILIATE_REL} onClick={resolve} style={viewStyle}>
+            <motion.a href={href} target="_blank" rel={AFFILIATE_REL} onClick={resolve} style={viewStyle} {...pressProps(reduced)}>
               <Text variant="ui" as="span" size="footnote" weight={600} style={{ color: 'var(--color-accent)', textDecoration: 'none' }}>{copy.view}</Text>
-            </a>
+            </motion.a>
           ) : (
             <span />
           )}
-          <button type="button" onClick={resolve} style={dismissStyle}>
+          <motion.button type="button" onClick={resolve} style={dismissStyle} {...pressProps(reduced)}>
             <Text variant="ui" as="span" size="footnote" weight={500} style={{ color: 'var(--color-secondary-strong)' }}>{copy.dismiss}</Text>
-          </button>
+          </motion.button>
         </div>
       </div>
     </motion.article>

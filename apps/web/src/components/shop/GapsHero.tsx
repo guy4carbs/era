@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState, type CSSProperties } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { Text } from '../Text';
 import type { WardrobeGap } from '@era/core/shop';
-import { transitionFor } from '../../lib/motion';
+import { pressProps, transitionFor } from '../../lib/motion';
 import { getWardrobeGaps } from '../../lib/shop-client';
 
 export interface GapsHeroProps {
@@ -84,11 +84,11 @@ export function GapsHero({ onFill }: GapsHeroProps) {
             <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-text)' }}>{strings.shop.gaps.reason(gap)}</Text>
             <div style={footerStyle}>
               <Text variant="ui" as="span" size="footnote" weight={600} style={{ color: 'var(--color-secondary-strong)' }}>{strings.shop.gaps.unlocksLabel(gap.unlocksOutfits)}</Text>
-              <button type="button" style={fillStyle} onClick={() => onFill(gap)}>
+              <motion.button type="button" style={fillStyle} onClick={() => onFill(gap)} {...pressProps(reduced)}>
                 <Text variant="ui" as="span" size="footnote" weight={600} style={{ color: 'var(--color-accent)' }}>
                   {strings.shop.gaps.fillCta}
                 </Text>
-              </button>
+              </motion.button>
             </div>
           </li>
         ))}

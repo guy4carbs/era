@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type CSSProperties, type PointerEvent } from 'react';
-import { motion, useReducedMotion, useSpring, useTransform } from 'framer-motion';
+import { motion, useReducedMotion, useSpring, useTransform } from 'motion/react';
 import {
   motion as motionToken,
   glow,
@@ -108,6 +108,8 @@ export function GalleryTile({ item, onOpen }: GalleryTileProps) {
       onPointerEnter={handleEnter}
       onPointerLeave={handleLeave}
       onClick={onOpen}
+      whileTap={reduced ? undefined : { scale: motionToken.press.scale }}
+      transition={transitionFor(motionToken.springs.snappy, reduced)}
     >
       <motion.div
         style={{

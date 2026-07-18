@@ -1,8 +1,10 @@
 'use client';
 
 import { type CSSProperties } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import { Card } from '../Card';
 import { Text } from '../Text';
+import { pressProps } from '../../lib/motion';
 import type { ItemWithDisplay } from './types';
 
 export interface ItemCardProps {
@@ -55,11 +57,12 @@ const dotStyle: CSSProperties = {
  * an accessible "tap to confirm" hint; the whole tile is a single tap target.
  */
 export function ItemCard({ item, onClick }: ItemCardProps) {
+  const reduced = useReducedMotion();
   const unconfirmed = !item.tagsConfirmed;
   const label = unconfirmed ? `${item.name} — tap to confirm` : item.name;
 
   return (
-    <button type="button" style={buttonStyle} onClick={onClick} aria-label={label}>
+    <motion.button type="button" style={buttonStyle} onClick={onClick} aria-label={label} {...pressProps(reduced, onClick !== undefined)}>
       <Card aspect="item" interactive>
         <div style={frameStyle}>
           {item.displayUrl ? (
@@ -69,6 +72,6 @@ export function ItemCard({ item, onClick }: ItemCardProps) {
         </div>
       </Card>
       <Text variant="caption" size="footnote" as="p" style={{ margin: 0, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</Text>
-    </button>
+    </motion.button>
   );
 }

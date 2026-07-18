@@ -1,12 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken, layout } from '@era/tokens';
 import { Text } from '../Text';
 import { strings } from '@era/core/strings';
 import type { RankedProduct, WardrobeGap } from '@era/core/shop';
-import { transitionFor } from '../../lib/motion';
+import { pressProps, transitionFor, useStagger } from '../../lib/motion';
 import {
   listSaved,
   rankProducts,
@@ -225,24 +225,27 @@ interface ViewToggleProps {
  * pressed state is the current view, which is the honest semantic here.
  */
 function ViewToggle({ view, onChange }: ViewToggleProps) {
+  const reduced = useReducedMotion();
   return (
     <div style={toggleWrapStyle}>
-      <button
+      <motion.button
         type="button"
         style={view === 'browse' ? toggleActiveStyle : toggleStyle}
         aria-pressed={view === 'browse'}
         onClick={() => onChange('browse')}
+        {...pressProps(reduced)}
       >
         <Text variant="ui" as="span" size="footnote" weight={600}>{strings.shop.title}</Text>
-      </button>
-      <button
+      </motion.button>
+      <motion.button
         type="button"
         style={view === 'saved' ? toggleActiveStyle : toggleStyle}
         aria-pressed={view === 'saved'}
         onClick={() => onChange('saved')}
+        {...pressProps(reduced)}
       >
         <Text variant="ui" as="span" size="footnote" weight={600}>{strings.shop.saved.tab}</Text>
-      </button>
+      </motion.button>
     </div>
   );
 }
@@ -316,9 +319,9 @@ function Body({
     return (
       <div style={noticeColumnStyle}>
         <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{strings.shop.error}</Text>
-        <button type="button" style={retryStyle} onClick={onRetry}>
+        <motion.button type="button" style={retryStyle} onClick={onRetry} {...pressProps(reduced)}>
           <Text variant="ui" as="span" size="subhead" weight={600} style={{ color: 'var(--color-accent)' }}>{strings.errors.retry}</Text>
-        </button>
+        </motion.button>
       </div>
     );
   }
@@ -328,15 +331,69 @@ function Body({
   }
 
   return (
+    <ResultsGrid
+      visible={visible}
+      saved={saved}
+      reduced={reduced}
+      onDismiss={onDismiss}
+      onToggleSave={onToggleSave}
+      hasMore={hasMore}
+      loadingMore={loadingMore}
+      onLoadMore={onLoadMore}
+    />
+  );
+}
+
+interface ResultsGridProps {
+  visible: RankedProduct[];
+  saved: ReadonlySet<string>;
+  reduced: boolean | null;
+  onDismiss: (productId: string) => void;
+  onToggleSave: (product: RankedProduct) => void;
+  hasMore: boolean;
+  loadingMore: boolean;
+  onLoadMore: () => void;
+}
+
+/**
+ * The ranked results grid + load-more. Split out from Body so it can hold the
+ * first-mount stagger guard: the initial page fans in on the token stagger,
+ * while dismiss/filter re-renders keep only the AnimatePresence opacity dance
+ * (no re-stagger in place — entrances only).
+ */
+function ResultsGrid({
+  visible,
+  saved,
+  reduced,
+  onDismiss,
+  onToggleSave,
+  hasMore,
+  loadingMore,
+  onLoadMore,
+}: ResultsGridProps) {
+  const stagger = useStagger(reduced);
+  const didMount = useRef(false);
+  const staggerOnMount = !didMount.current;
+  useEffect(() => {
+    didMount.current = true;
+  }, []);
+
+  return (
     <>
-      <div className="era-shop-grid">
+      <motion.div
+        className="era-shop-grid"
+        variants={staggerOnMount ? stagger.container : undefined}
+        initial={staggerOnMount ? 'hidden' : false}
+        animate={staggerOnMount ? 'visible' : undefined}
+      >
         <AnimatePresence mode="popLayout">
           {visible.map((product) => (
             <motion.div
               key={product.id}
               layout
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              variants={staggerOnMount ? stagger.item : undefined}
+              initial={staggerOnMount ? undefined : { opacity: 0 }}
+              animate={staggerOnMount ? undefined : { opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={transitionFor(motionToken.springs.gentle, reduced)}
             >
@@ -349,12 +406,12 @@ function Body({
             </motion.div>
           ))}
         </AnimatePresence>
-      </div>
+      </motion.div>
 
       {hasMore ? (
-        <button type="button" style={loadMoreStyle} onClick={onLoadMore} disabled={loadingMore}>
+        <motion.button type="button" style={loadMoreStyle} onClick={onLoadMore} disabled={loadingMore} {...pressProps(reduced, !loadingMore)}>
           <Text variant="ui" as="span" size="subhead" weight={600}>{loadingMore ? strings.shop.loading : strings.shop.loadMore}</Text>
-        </button>
+        </motion.button>
       ) : null}
     </>
   );

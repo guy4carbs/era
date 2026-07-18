@@ -2,8 +2,10 @@
 
 import { useState, type CSSProperties, type ReactNode } from 'react';
 import Link from 'next/link';
+import { motion, useReducedMotion } from 'motion/react';
 import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
+import { pressProps } from '../../lib/motion';
 import { useTheme } from '../../lib/theme';
 import { Button, Container } from '../../components';
 import { Text } from '../../components/Text';
@@ -177,6 +179,7 @@ function Paywall({
   onCheckout: (plan: Plan) => void;
   onPortal: () => void;
 }) {
+  const reduced = useReducedMotion();
   return (
     <section style={sectionStyle}>
       {status ? <StatusBanner status={status} /> : null}
@@ -215,14 +218,15 @@ function Paywall({
       ) : null}
       <Text variant="caption" as="p" style={{ margin: 0, color: 'var(--color-secondary)' }}>{copy.cancelAnytime}</Text>
 
-      <button
+      <motion.button
         type="button"
         onClick={onPortal}
         disabled={busy !== null}
         style={restoreLinkStyle}
+        {...pressProps(reduced, busy === null)}
       >
         {copy.restorePurchases}
-      </button>
+      </motion.button>
     </section>
   );
 }

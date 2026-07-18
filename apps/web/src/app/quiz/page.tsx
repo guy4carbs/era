@@ -2,9 +2,11 @@
 
 import { useEffect, useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion, useReducedMotion } from 'motion/react';
 import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { type QuizAnswers } from '@era/core/quiz';
+import { pressProps } from '../../lib/motion';
 import { Button, Card } from '../../components';
 import { QuizFlow, Reveal } from '../../components/quiz';
 import { useSession } from '../../lib/auth-client';
@@ -57,6 +59,7 @@ const skipLinkStyle: CSSProperties = {
  */
 export default function QuizPage() {
   const router = useRouter();
+  const reduced = useReducedMotion();
   const { data: session, isPending } = useSession();
   const [phase, setPhase] = useState<Phase>('intro');
   const [answers, setAnswers] = useState<QuizAnswers | null>(null);
@@ -94,9 +97,9 @@ export default function QuizPage() {
               >
                 {strings.common.continue}
               </Button>
-              <button type="button" style={skipLinkStyle} onClick={goToFeed}>
+              <motion.button type="button" style={skipLinkStyle} onClick={goToFeed} {...pressProps(reduced)}>
                 {strings.quiz.skip}
-              </button>
+              </motion.button>
             </div>
           </Card>
         ) : null}

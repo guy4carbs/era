@@ -2,12 +2,12 @@
 
 import { useEffect, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken } from '@era/tokens';
 import { Text } from '../Text';
 import { strings } from '@era/core/strings';
 import type { WhyDetail, WhyItemRef } from '@era/core/shop';
-import { transitionFor } from '../../lib/motion';
+import { pressProps, transitionFor } from '../../lib/motion';
 import { GlassSheet } from '../GlassSheet';
 
 export interface WhyDetailSheetProps {
@@ -70,14 +70,15 @@ export function WhyDetailSheet({ whyDetail, onClose }: WhyDetailSheetProps) {
             <Text variant="title" size="title3" as="h2" id="shop-why-title" weight={700} style={{ margin: 0, color: 'var(--color-text)' }}>
               {strings.shop.whyDetail.title}
             </Text>
-            <button
+            <motion.button
               type="button"
               style={closeStyle}
               aria-label={strings.common.cancel}
               onClick={onClose}
+              {...pressProps(reduced)}
             >
               <Text variant="ui" as="span" size="title3" style={{ color: 'var(--color-secondary-strong)' }} aria-hidden="true">×</Text>
-            </button>
+            </motion.button>
           </header>
 
           <div style={sectionsStyle}>

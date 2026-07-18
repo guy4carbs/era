@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, type CSSProperties } from 'react';
-import { animate, motion, useMotionValue, useReducedMotion, type MotionValue } from 'framer-motion';
+import { animate, motion, useMotionValue, useReducedMotion, type MotionValue } from 'motion/react';
 import { motion as motionToken } from '@era/tokens';
 import { Text } from '../Text';
 import { strings } from '@era/core/strings';

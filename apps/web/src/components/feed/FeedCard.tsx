@@ -3,7 +3,7 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { layout, motion as motionToken, typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { REPORT_REASONS, type FeedPostPayload, type ReportReason } from '@era/core/feed';
@@ -11,7 +11,10 @@ import { Avatar } from '../profile/Avatar';
 import { Button } from '../Button';
 import { Chip } from '../Chip';
 import { Text } from '../Text';
-import { transitionFor } from '../../lib/motion';
+import { pressProps, transitionFor } from '../../lib/motion';
+
+/** next/link routed through motion so the creator link gets the press affordance. */
+const MotionLink = motion.create(Link);
 
 /** ≤500 app cap on the free-text report detail (mirrors REPORT_DETAIL_MAX server-side). */
 const REPORT_DETAIL_MAX = 500;
@@ -106,7 +109,7 @@ export function FeedCard({
       transition={transitionFor(motionToken.springs.gentle, reduced)}
     >
       <header style={headerStyle}>
-        <Link href={`/${post.creator.username}`} style={creatorLinkStyle} aria-label={`@${post.creator.username}`}>
+        <MotionLink href={`/${post.creator.username}`} style={creatorLinkStyle} aria-label={`@${post.creator.username}`} {...pressProps(reduced)}>
           <Avatar src={post.creator.avatarUrl} name={displayName} size={40} />
           <span style={creatorTextStyle}>
             <Text variant="ui" size="subhead" weight={600} as="span" style={handleColorStyle}>
@@ -120,7 +123,7 @@ export function FeedCard({
               {formatWhen(post.createdAt)}
             </Text>
           </span>
-        </Link>
+        </MotionLink>
 
         <div style={headerActionsStyle}>
           {isOwnPost ? null : <FollowPill following={post.viewer.following} onToggle={() => onFollow(post)} />}
@@ -225,13 +228,15 @@ function EngagementButton({
   count: number;
   onClick: () => void;
 }) {
+  const reduced = useReducedMotion();
   return (
-    <button
+    <motion.button
       type="button"
       style={engagementButtonStyle}
       aria-label={label}
       aria-pressed={active}
       onClick={onClick}
+      {...pressProps(reduced)}
     >
       <span aria-hidden="true" style={{ ...glyphStyle, color: active ? 'var(--color-accent)' : 'var(--color-text)' }}>
         {glyph}
@@ -239,7 +244,7 @@ function EngagementButton({
       <Text variant="caption" size="footnote" weight={600} as="span" style={{ color: 'var(--color-secondary-strong)' }}>
         {compact(count)}
       </Text>
-    </button>
+    </motion.button>
   );
 }
 
@@ -260,6 +265,7 @@ function MoreMenu({
   onReported: (postId: string) => void;
   onBlocked: (username: string) => void;
 }) {
+  const reduced = useReducedMotion();
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<MenuView>('root');
   const [reason, setReason] = useState<ReportReason | null>(null);
@@ -324,34 +330,35 @@ function MoreMenu({
 
   return (
     <div style={menuWrapStyle}>
-      <button
+      <motion.button
         type="button"
         style={moreButtonStyle}
         aria-label={strings.feed.rail.more}
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
+        {...pressProps(reduced)}
       >
         <span aria-hidden="true">⋯</span>
-      </button>
+      </motion.button>
 
       {open ? (
         <>
           {/* Transparent click-away layer. */}
-          <button type="button" aria-hidden="true" tabIndex={-1} style={backdropStyle} onClick={() => setOpen(false)} />
+          <motion.button type="button" aria-hidden="true" tabIndex={-1} style={backdropStyle} onClick={() => setOpen(false)} {...pressProps(reduced)} />
           <div role="menu" style={popoverStyle}>
             {view === 'root' ? (
               <div style={menuColStyle}>
-                <button type="button" role="menuitem" style={menuItemStyle} onClick={() => setView('report')}>
+                <motion.button type="button" role="menuitem" style={menuItemStyle} onClick={() => setView('report')} {...pressProps(reduced)}>
                   <Text variant="ui" size="subhead" weight={600} as="span">
                     {strings.feed.reportTitle}
                   </Text>
-                </button>
-                <button type="button" role="menuitem" style={menuItemDangerStyle} onClick={() => setView('block')}>
+                </motion.button>
+                <motion.button type="button" role="menuitem" style={menuItemDangerStyle} onClick={() => setView('block')} {...pressProps(reduced)}>
                   <Text variant="ui" size="subhead" weight={600} as="span" style={{ color: 'var(--color-rust)' }}>
                     {strings.feed.blockTitle(creatorName)}
                   </Text>
-                </button>
+                </motion.button>
               </div>
             ) : null}
 

@@ -21,6 +21,7 @@ import {
   boxShadows,
   boxShadowsDark,
   sheen,
+  motion,
 } from '@era/tokens';
 
 /** Numbers become `px`; strings pass through (some tokens ship pre-unit'd). */
@@ -126,7 +127,24 @@ function baseVars(): string {
     `--glow-blur:${unit(glow.blurRadius)}`,
   ];
 
-  return [...semantic, ...radiiVars, ...spacingVars, ...dimensionVars].join(';');
+  // Motion vars consumed by the CSS View Transitions in globals.css (CSS can't
+  // import the TS tokens, so the page-transition timing is surfaced here). The
+  // page-rise offset is `motion.pageRise.yPx`; the ease is the token bezier;
+  // the duration is the token max ceiling (350ms → we cap the VT slightly under).
+  const motionVars = [
+    `--motion-page-rise:${unit(motion.pageRise.yPx)}`,
+    `--motion-ease:${motion.easing.css}`,
+    `--motion-page-ms:${motion.durations.maxMs}ms`,
+    `--motion-reduced-ms:${motion.durations.reducedFadeMs}ms`,
+  ];
+
+  return [
+    ...semantic,
+    ...radiiVars,
+    ...spacingVars,
+    ...dimensionVars,
+    ...motionVars,
+  ].join(';');
 }
 
 /**

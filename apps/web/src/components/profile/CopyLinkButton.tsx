@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import { strings } from '@era/core/strings';
 import { typeRamp } from '@era/tokens';
+import { pressProps } from '../../lib/motion';
 import { Text, TextControlBoundary } from '../Text';
 
 export interface CopyLinkButtonProps {
@@ -23,6 +25,7 @@ export interface CopyLinkButtonProps {
  * quietly (no error surfaced): the worst case is simply no confirmation.
  */
 export function CopyLinkButton({ url, withHint = true, align = 'start' }: CopyLinkButtonProps) {
+  const reduced = useReducedMotion();
   const [copied, setCopied] = useState(false);
   const mounted = useRef(true);
 
@@ -59,11 +62,11 @@ export function CopyLinkButton({ url, withHint = true, align = 'start' }: CopyLi
         </Text>
       ) : null}
       <TextControlBoundary>
-        <button type="button" style={buttonStyle} onClick={() => void handleCopy()}>
+        <motion.button type="button" style={buttonStyle} onClick={() => void handleCopy()} {...pressProps(reduced)}>
           <Text variant="ui" size="subhead" weight={600} as="span">
             {strings.profile.copyLinkCta}
           </Text>
-        </button>
+        </motion.button>
       </TextControlBoundary>
       <Text variant="caption" size="footnote" as="p" aria-live="polite" style={confirmStyle}>
         {copied ? strings.profile.linkCopied : ''}

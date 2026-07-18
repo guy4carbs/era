@@ -1,7 +1,7 @@
 'use client';
 
 import { type CSSProperties } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken } from '@era/tokens';
 import { transitionFor } from '../../../lib/motion';
 import { Text, TextControlBoundary } from '../../../components';
@@ -72,7 +72,7 @@ export function OccasionChips({ step, selectedIds, onToggle }: OccasionChipsProp
               border: `var(--glass-border-width) solid ${selected ? 'var(--color-accent)' : 'var(--color-hairline)'}`,
               boxShadow: selected ? SELECTION_RING : undefined,
             }}
-            whileTap={reduced ? undefined : { scale: 0.97 }}
+            whileTap={reduced ? undefined : { scale: motionToken.press.scale }}
             transition={transitionFor(motionToken.springs.snappy, reduced)}
           >
             <span style={thumbStyle}>
