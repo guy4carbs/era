@@ -2,6 +2,7 @@ import { type CSSProperties } from 'react';
 import { typeRamp } from '@era/tokens';
 
 import { Container } from '../Container';
+import { Text } from '../Text';
 import { JsonLd, webPageSchema, faqPageSchema, breadcrumbSchema } from '../seo';
 import { FaqBlock } from './FaqBlock';
 import { RelatedLinks } from './RelatedLinks';
@@ -40,21 +41,25 @@ export function PillarView({ content }: PillarViewProps) {
       />
       <main style={mainStyle}>
         <header style={headerStyle}>
-          <h1 style={titleStyle}>{content.title}</h1>
+          <Text variant="largeTitle" as="h1" style={titleStyle}>
+            {content.title}
+          </Text>
           {content.intro.map((paragraph, index) => (
-            <p key={index} style={introStyle}>
+            <Text variant="body" as="p" size="title3" key={index} style={introStyle}>
               {paragraph}
-            </p>
+            </Text>
           ))}
         </header>
 
         {content.sections.map((section) => (
           <section key={section.heading} style={sectionStyle}>
-            <h2 style={sectionHeadingStyle}>{section.heading}</h2>
+            <Text variant="title" as="h2" style={sectionHeadingStyle}>
+              {section.heading}
+            </Text>
             {section.paragraphs.map((paragraph, index) => (
-              <p key={index} style={bodyStyle}>
+              <Text variant="body" as="p" key={index} style={bodyStyle}>
                 {paragraph}
-              </p>
+              </Text>
             ))}
           </section>
         ))}
@@ -83,20 +88,16 @@ const headerStyle: CSSProperties = {
   gap: 'var(--space-4)',
 };
 
+// Fluid head spanning title1→largeTitle; `largeTitle` supplies the serif face.
 const titleStyle: CSSProperties = {
   margin: 0,
-  fontFamily: 'var(--font-era-serif), Georgia, serif',
-  fontWeight: 500,
   fontSize: `clamp(${typeRamp.title1.rem}, 5vw, ${typeRamp.largeTitle.rem})`,
   lineHeight: 1.1,
-  letterSpacing: '-0.01em',
   color: 'var(--color-text)',
 };
 
 const introStyle: CSSProperties = {
   margin: 0,
-  fontSize: typeRamp.title3.rem,
-  lineHeight: `${typeRamp.title3.lineHeight}px`,
   color: 'var(--color-secondary-strong)',
 };
 
@@ -108,16 +109,10 @@ const sectionStyle: CSSProperties = {
 
 const sectionHeadingStyle: CSSProperties = {
   margin: 0,
-  fontSize: typeRamp.title2.rem,
-  lineHeight: `${typeRamp.title2.lineHeight}px`,
-  fontWeight: 700,
-  letterSpacing: '-0.01em',
   color: 'var(--color-text)',
 };
 
 const bodyStyle: CSSProperties = {
   margin: 0,
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
   color: 'var(--color-secondary-strong)',
 };

@@ -1,6 +1,7 @@
 import { type CSSProperties } from 'react';
 import { strings } from '@era/core/strings';
 import { typeRamp } from '@era/tokens';
+import { Text } from '../Text';
 import { ScrollReveal } from './ScrollReveal';
 import { WaitlistForm } from './WaitlistForm';
 
@@ -21,13 +22,12 @@ const sectionStyle: CSSProperties = {
   paddingBlock: 'var(--space-16)',
 };
 
+// Fluid head spanning title1→largeTitle; the `largeTitle` role supplies the
+// serif face + axes, this keeps the bespoke clamp size and measure.
 const titleStyle: CSSProperties = {
   margin: 0,
-  fontFamily: 'var(--font-era-serif), Georgia, serif',
-  fontWeight: 500,
   fontSize: `clamp(${typeRamp.title1.rem}, 6vw, ${typeRamp.largeTitle.rem})`,
   lineHeight: titleLineHeight,
-  letterSpacing: '-0.02em',
   color: 'var(--color-text)',
   maxWidth: '18ch',
 };
@@ -42,7 +42,9 @@ export function Closer() {
   return (
     <ScrollReveal>
       <section id="waitlist" style={sectionStyle}>
-        <h2 style={titleStyle}>{strings.site.closer.title}</h2>
+        <Text variant="largeTitle" as="h2" style={titleStyle}>
+          {strings.site.closer.title}
+        </Text>
         <div style={formWrapStyle}>
           <WaitlistForm />
         </div>

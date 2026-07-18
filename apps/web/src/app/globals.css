@@ -4,6 +4,16 @@
  * (see src/lib/theme-css.ts). Nothing here hardcodes a palette value.
  */
 
+/*
+ * Type-system bridge: Geist Sans publishes `--font-geist-sans` from the root
+ * loader; the token contract (`fontFamilies.cssVar.sans`) reads `--font-era-sans`.
+ * Alias the two so `<Text>`'s sans stack resolves. `--font-era-serif` is set
+ * directly by the Fraunces loader, so no alias is needed there.
+ */
+:root {
+  --font-era-sans: var(--font-geist-sans);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -18,7 +28,8 @@ body {
   background-color: var(--color-bg);
   color: var(--color-text);
   font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    var(--font-era-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   line-height: 1.5;
 }

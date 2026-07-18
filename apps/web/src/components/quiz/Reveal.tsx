@@ -13,14 +13,11 @@ import {
 } from '@era/core/quiz';
 import { transitionFor } from '../../lib/motion';
 import { useTheme } from '../../lib/theme';
-import { Button } from '../../components';
+import { Button, Text } from '../../components';
 
 export interface RevealProps {
   answers: QuizAnswers;
 }
-
-/** Editorial serif stack — permitted for the era title only (per spec). */
-const SERIF_STACK = 'Georgia, "Times New Roman", serif';
 
 const centerColumn: CSSProperties = {
   display: 'flex',
@@ -41,9 +38,6 @@ const nameStyle: CSSProperties = {
   position: 'relative',
   isolation: 'isolate',
   margin: 0,
-  fontSize: typeRamp.largeTitle.rem,
-  lineHeight: `${typeRamp.largeTitle.lineHeight}px`,
-  fontWeight: 700,
   color: 'var(--color-text)',
 };
 
@@ -67,10 +61,6 @@ const eraCardStyle: CSSProperties = {
 
 const eraTitleStyle: CSSProperties = {
   margin: 0,
-  fontFamily: SERIF_STACK,
-  fontSize: typeRamp.title1.rem,
-  lineHeight: `${typeRamp.title1.lineHeight}px`,
-  fontWeight: 600,
   color: 'var(--color-text)',
 };
 
@@ -129,7 +119,9 @@ export function Reveal({ answers }: RevealProps) {
   if (!profile) {
     return (
       <div style={{ ...centerColumn, paddingBlock: 'var(--space-16)' }} aria-live="polite">
-        <span style={keywordStyle}>{strings.ovi.thinking}</span>
+        <Text variant="body" as="span" style={keywordStyle}>
+          {strings.ovi.thinking}
+        </Text>
       </div>
     );
   }
@@ -154,9 +146,11 @@ export function Reveal({ answers }: RevealProps) {
       animate={{ opacity: 1 }}
       transition={transitionFor(motionToken.springs.gentle, reduced)}
     >
-      <span style={eyebrowStyle}>{strings.quiz.revealTitle}</span>
+      <Text variant="ui" as="span" style={eyebrowStyle}>
+        {strings.quiz.revealTitle}
+      </Text>
 
-      <h1 style={nameStyle}>
+      <Text variant="largeTitle" as="h1" weight={700} style={nameStyle}>
         <span
           aria-hidden="true"
           style={{
@@ -169,10 +163,12 @@ export function Reveal({ answers }: RevealProps) {
           }}
         />
         {archetypeName}
-      </h1>
+      </Text>
 
       {profile.keywords.length > 0 ? (
-        <span style={keywordStyle}>{profile.keywords.join(' · ')}</span>
+        <Text variant="body" as="span" style={keywordStyle}>
+          {profile.keywords.join(' · ')}
+        </Text>
       ) : null}
 
       <motion.div
@@ -199,13 +195,17 @@ export function Reveal({ answers }: RevealProps) {
       </motion.div>
 
       <div style={eraCardStyle}>
-        <h2 style={eraTitleStyle}>{profile.era_suggestion.title}</h2>
-        <p style={eraDescStyle}>{profile.era_suggestion.description}</p>
+        <Text variant="title" as="h2" size="title1" style={eraTitleStyle}>
+          {profile.era_suggestion.title}
+        </Text>
+        <Text variant="body" as="p" style={eraDescStyle}>
+          {profile.era_suggestion.description}
+        </Text>
       </div>
 
-      <span style={{ ...keywordStyle, fontSize: typeRamp.footnote.rem }}>
+      <Text variant="caption" as="span" size="footnote" style={keywordStyle}>
         {strings.quiz.revealSubtitle}
-      </span>
+      </Text>
 
       <Button onClick={() => router.push('/feed')}>{strings.quiz.revealCta}</Button>
     </motion.div>

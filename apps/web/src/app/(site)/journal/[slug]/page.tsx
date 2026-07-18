@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { typeRamp } from '@era/tokens';
 
-import { Container } from '../../../../components';
+import { Container, Text } from '../../../../components';
 import { RelatedLinks } from '../../../../components/site';
 import { JsonLd, articleSchema, breadcrumbSchema } from '../../../../components/seo';
 import { JOURNAL_SLUGS, JOURNAL_POSTS, getPost, isJournalSlug, formatPostDate } from '../../../../lib/journal';
@@ -105,8 +105,10 @@ export default async function JournalPostPage({
         </nav>
 
         <header style={headerStyle}>
-          <h1 style={titleStyle}>{post.title}</h1>
-          <div style={bylineStyle}>
+          <Text variant="largeTitle" as="h1" style={titleStyle}>
+            {post.title}
+          </Text>
+          <Text variant="caption" as="div" size="footnote" style={bylineStyle}>
             <span>By Era</span>
             <span aria-hidden="true">·</span>
             <time dateTime={post.datePublished}>{formatPostDate(post.datePublished)}</time>
@@ -116,7 +118,7 @@ export default async function JournalPostPage({
                 <span>Updated {formatPostDate(post.dateModified)}</span>
               </>
             ) : null}
-          </div>
+          </Text>
         </header>
 
         <Content />
@@ -150,13 +152,11 @@ const headerStyle: CSSProperties = {
   gap: 'var(--space-3)',
 };
 
+// Fluid head spanning title1→largeTitle; `largeTitle` supplies the serif face.
 const titleStyle: CSSProperties = {
   margin: 0,
-  fontFamily: 'var(--font-era-serif), Georgia, serif',
-  fontWeight: 500,
   fontSize: `clamp(${typeRamp.title1.rem}, 5vw, ${typeRamp.largeTitle.rem})`,
   lineHeight: 1.1,
-  letterSpacing: '-0.01em',
   color: 'var(--color-text)',
 };
 
@@ -164,7 +164,5 @@ const bylineStyle: CSSProperties = {
   display: 'flex',
   flexWrap: 'wrap',
   gap: 'var(--space-2)',
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
   color: 'var(--color-secondary)',
 };

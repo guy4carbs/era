@@ -4,6 +4,7 @@ import { type CSSProperties, type ReactNode } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { motion as motionToken, typeRamp } from '@era/tokens';
 import { transitionFor } from '../lib/motion';
+import { Text, TextControlBoundary } from './Text';
 
 type NativeButtonProps = Omit<
   React.ComponentPropsWithoutRef<'button'>,
@@ -62,7 +63,11 @@ export function Chip({ selected = false, children, style, ...rest }: ChipProps) 
       transition={transitionFor(motionToken.springs.snappy, reduced)}
       {...rest}
     >
-      {children}
+      <TextControlBoundary>
+        <Text variant="ui" as="span" size="footnote">
+          {children}
+        </Text>
+      </TextControlBoundary>
     </motion.button>
   );
 }
