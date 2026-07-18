@@ -1,7 +1,7 @@
 'use client';
 
 import { type CSSProperties } from 'react';
-import { typeRamp } from '@era/tokens';
+import { Text } from './Text';
 
 export type TabId = 'feed' | 'closet' | 'design' | 'shop';
 
@@ -53,9 +53,6 @@ const tabStyle: CSSProperties = {
   background: 'transparent',
   border: 'none',
   cursor: 'pointer',
-  fontSize: typeRamp.caption.rem,
-  lineHeight: `${typeRamp.caption.lineHeight}px`,
-  fontWeight: 600,
 };
 
 /**
@@ -77,7 +74,7 @@ export function TabBar({ active, onChange }: TabBarProps) {
             aria-current={isActive ? 'page' : undefined}
             onClick={() => onChange(tab.id)}
           >
-            {tab.label}
+            <Text variant="ui">{tab.label}</Text>
           </button>
         );
       })}

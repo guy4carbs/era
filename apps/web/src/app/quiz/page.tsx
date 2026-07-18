@@ -9,6 +9,7 @@ import { Button, Card } from '../../components';
 import { QuizFlow, Reveal } from '../../components/quiz';
 import { useSession } from '../../lib/auth-client';
 import { track } from '../../lib/analytics';
+import { Text } from '../../components/Text';
 
 type Phase = 'intro' | 'quiz' | 'reveal';
 
@@ -34,21 +35,6 @@ const introInner: CSSProperties = {
   gap: 'var(--space-4)',
   textAlign: 'center',
   padding: 'var(--space-8)',
-};
-
-const introTitleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.largeTitle.rem,
-  lineHeight: `${typeRamp.largeTitle.lineHeight}px`,
-  fontWeight: 700,
-  color: 'var(--color-text)',
-};
-
-const introBodyStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
 };
 
 const skipLinkStyle: CSSProperties = {
@@ -86,7 +72,7 @@ export default function QuizPage() {
   if (isPending || !session) {
     return (
       <main style={mainStyle}>
-        <span style={introBodyStyle}>{strings.ovi.thinking}</span>
+        <Text variant="body" as="span" style={{ color: 'var(--color-secondary-strong)' }}>{strings.ovi.thinking}</Text>
       </main>
     );
   }
@@ -97,8 +83,8 @@ export default function QuizPage() {
         {phase === 'intro' ? (
           <Card>
             <div style={introInner}>
-              <h1 style={introTitleStyle}>{strings.quiz.introTitle}</h1>
-              <p style={introBodyStyle}>{strings.quiz.introBody}</p>
+              <Text variant="largeTitle" as="h1" style={{ margin: 0, color: 'var(--color-text)' }}>{strings.quiz.introTitle}</Text>
+              <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{strings.quiz.introBody}</Text>
               <Button
                 onClick={() => {
                   // The quiz begins here — the first step renders next.

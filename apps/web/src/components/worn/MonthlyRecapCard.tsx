@@ -1,10 +1,11 @@
 'use client';
 
 import { type CSSProperties } from 'react';
-import { boxShadows, typeRamp } from '@era/tokens';
+import { boxShadows } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import type { MonthlyRecap } from '@era/core/wear-stats';
 import { formatMoney } from '../../lib/format-money';
+import { Text } from '../Text';
 import type { WornItem } from './types';
 
 export interface MonthlyRecapCardProps {
@@ -44,22 +45,54 @@ export function MonthlyRecapCard({ recap, itemsById, monthLabel }: MonthlyRecapC
         {/* Axiom spec (kept in lockstep with mobile): quiet letterspaced
             uppercase 'ERA' mark in accent, with the month prominent in text
             colour directly below it. */}
-        <span style={wordmarkStyle}>Era</span>
-        <span style={monthStyle}>{copy.monthHeader(monthLabel)}</span>
+        <Text
+          variant="caption"
+          size="footnote"
+          weight={700}
+          as="span"
+          style={{ letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--color-accent)' }}
+        >
+          Era
+        </Text>
+        <Text
+          variant="ui"
+          size="title3"
+          weight={700}
+          as="span"
+          style={{ letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-text)' }}
+        >
+          {copy.monthHeader(monthLabel)}
+        </Text>
       </header>
 
-      <h2 style={titleStyle}>{copy.title}</h2>
+      <Text variant="title" size="title1" weight={700} as="h2" style={{ margin: 0, color: 'var(--color-text)' }}>
+        {copy.title}
+      </Text>
 
       {isEmpty ? (
-        <p style={emptyStyle}>{copy.empty}</p>
+        <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
+          {copy.empty}
+        </Text>
       ) : (
         <div style={statsStyle}>
-          <p style={leadStatStyle}>{copy.totalWears(recap.totalWears)}</p>
-          <p style={subStatStyle}>{copy.daysDressed(recap.distinctDaysWorn, recap.daysInMonth)}</p>
+          <Text variant="ui" size="title3" weight={700} as="p" style={{ margin: 0, color: 'var(--color-text)' }}>
+            {copy.totalWears(recap.totalWears)}
+          </Text>
+          <Text variant="body" size="subhead" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
+            {copy.daysDressed(recap.distinctDaysWorn, recap.daysInMonth)}
+          </Text>
 
           {recap.topItems.length > 0 ? (
             <div style={topBlockStyle}>
-              <span style={sectionLabelStyle}>{copy.topPieces}</span>
+              <Text
+                variant="caption"
+                size="footnote"
+                weight={700}
+                as="span"
+                style={{ letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--color-secondary-strong)' }}
+              >
+                {copy.topPieces}
+              </Text>
               <ul style={thumbRowStyle}>
                 {recap.topItems.map((top) => {
                   const item = itemsById.get(top.itemId);
@@ -70,7 +103,9 @@ export function MonthlyRecapCard({ recap, itemsById, monthLabel }: MonthlyRecapC
                           <img src={item.imageUrl} alt={item.name} style={thumbImageStyle} />
                         ) : null}
                       </span>
-                      <span style={thumbCountStyle}>×{top.wearCount}</span>
+                      <Text variant="caption" size="footnote" weight={600} as="span" style={{ color: 'var(--color-text)' }}>
+                        ×{top.wearCount}
+                      </Text>
                     </li>
                   );
                 })}
@@ -79,21 +114,32 @@ export function MonthlyRecapCard({ recap, itemsById, monthLabel }: MonthlyRecapC
           ) : null}
 
           {recap.mostWornCategory ? (
-            <p style={subStatStyle}>{copy.mostWornCategory(categoryLower(recap.mostWornCategory))}</p>
+            <Text variant="body" size="subhead" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
+              {copy.mostWornCategory(categoryLower(recap.mostWornCategory))}
+            </Text>
           ) : null}
 
           {recap.bestCostPerWear ? (
-            <p style={subStatStyle}>
+            <Text variant="body" size="subhead" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
               {copy.bestCostPerWear(
                 formatMoney(recap.bestCostPerWear.costPerWear),
                 bestItem?.name ?? categoryLower(recap.bestCostPerWear.category),
               )}
-            </p>
+            </Text>
           ) : null}
         </div>
       )}
 
-      <footer style={footerStyle}>{copy.shareTag}</footer>
+      <footer style={footerStyle}>
+        <Text
+          variant="caption"
+          weight={600}
+          as="span"
+          style={{ letterSpacing: '0.04em', color: 'var(--color-secondary-strong)' }}
+        >
+          {copy.shareTag}
+        </Text>
+      </footer>
     </section>
   );
 }
@@ -118,68 +164,16 @@ const headerStyle: CSSProperties = {
   gap: 'var(--space-1)',
 };
 
-// The Era wordmark — a quiet, small, letterspaced uppercase mark in the accent.
-const wordmarkStyle: CSSProperties = {
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  fontWeight: 700,
-  letterSpacing: '0.16em',
-  textTransform: 'uppercase',
-  color: 'var(--color-accent)',
-};
-
-// The month — prominent, uppercase, in text colour (the card's dateline).
-const monthStyle: CSSProperties = {
-  fontSize: typeRamp.title3.rem,
-  lineHeight: `${typeRamp.title3.lineHeight}px`,
-  fontWeight: 700,
-  letterSpacing: '0.08em',
-  textTransform: 'uppercase',
-  color: 'var(--color-text)',
-};
-
-const titleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.title1.rem,
-  lineHeight: `${typeRamp.title1.lineHeight}px`,
-  fontWeight: 700,
-  color: 'var(--color-text)',
-};
-
 const statsStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: 'var(--space-3)',
 };
 
-const leadStatStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.title3.rem,
-  lineHeight: `${typeRamp.title3.lineHeight}px`,
-  fontWeight: 700,
-  color: 'var(--color-text)',
-};
-
-const subStatStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
-};
-
 const topBlockStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: 'var(--space-2)',
-};
-
-const sectionLabelStyle: CSSProperties = {
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  fontWeight: 700,
-  letterSpacing: '0.04em',
-  textTransform: 'uppercase',
-  color: 'var(--color-secondary-strong)',
 };
 
 const thumbRowStyle: CSSProperties = {
@@ -216,26 +210,7 @@ const thumbImageStyle: CSSProperties = {
   objectFit: 'contain',
 };
 
-const thumbCountStyle: CSSProperties = {
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  fontWeight: 600,
-  color: 'var(--color-text)',
-};
-
-const emptyStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
-};
-
 const footerStyle: CSSProperties = {
   paddingTop: 'var(--space-3)',
   borderTop: '1px solid var(--color-hairline)',
-  fontSize: typeRamp.caption.rem,
-  lineHeight: `${typeRamp.caption.lineHeight}px`,
-  fontWeight: 600,
-  letterSpacing: '0.04em',
-  color: 'var(--color-secondary-strong)',
 };

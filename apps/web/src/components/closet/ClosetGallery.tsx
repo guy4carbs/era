@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, layout, spacing, typeRamp } from '@era/tokens';
+import { motion as motionToken, layout, spacing } from '@era/tokens';
+import { Text } from '../Text';
 import { strings } from '@era/core/strings';
 import { transitionFor } from '../../lib/motion';
 import { Chip } from '../Chip';
@@ -135,7 +136,7 @@ export function ClosetGallery({ items, turnaroundEnabled, onArchived, onUpdated 
 
       <header style={headerStyle}>
         <div style={titleRowStyle}>
-          <h1 style={titleStyle}>Closet</h1>
+          <Text variant="largeTitle" as="h1" style={{ margin: 0 }}>Closet</Text>
           <div style={headerActionsStyle}>
             <WornLink />
             <SettingsLink />
@@ -168,7 +169,9 @@ export function ClosetGallery({ items, turnaroundEnabled, onArchived, onUpdated 
 
       {groups.map((group) => (
         <section key={group.category} style={sectionStyle}>
-          <h2 style={sectionHeadingStyle}>{strings.closet.categoryLabel(group.category)}</h2>
+          <Text variant="title" size="title3" as="h2" style={{ margin: 0 }}>
+            {strings.closet.categoryLabel(group.category)}
+          </Text>
           <div className="era-closet-grid">
             <AnimatePresence mode="popLayout">
               {group.items.map((item) => (
@@ -226,7 +229,9 @@ export function ClosetGallery({ items, turnaroundEnabled, onArchived, onUpdated 
             exit={{ opacity: 0, x: '-50%', y: reduced ? 0 : spacing.s4 }}
             transition={transitionFor(motionToken.springs.gentle, reduced)}
           >
-            {toast}
+            <Text variant="ui" size="subhead" weight={600} style={{ color: 'var(--color-bg)' }}>
+              {toast}
+            </Text>
           </motion.div>
         ) : null}
       </AnimatePresence>
@@ -262,13 +267,6 @@ const headerActionsStyle: CSSProperties = {
   gap: 'var(--space-3)',
 };
 
-const titleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.largeTitle.rem,
-  lineHeight: `${typeRamp.largeTitle.lineHeight}px`,
-  fontWeight: 700,
-};
-
 const filterRowStyle: CSSProperties = {
   display: 'flex',
   gap: 'var(--space-2)',
@@ -280,13 +278,6 @@ const sectionStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: 'var(--space-4)',
-};
-
-const sectionHeadingStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.title3.rem,
-  lineHeight: `${typeRamp.title3.lineHeight}px`,
-  fontWeight: 700,
 };
 
 // Scrim behind the detail sheet; warm ink at partial opacity, below the sheet.
@@ -305,9 +296,5 @@ const toastStyle: CSSProperties = {
   paddingInline: 'var(--space-4)',
   borderRadius: 'var(--radius-hero)',
   background: 'var(--color-text)',
-  color: 'var(--color-bg)',
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  fontWeight: 600,
   zIndex: 60,
 };

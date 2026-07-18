@@ -3,10 +3,10 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import type { ProposedOutfit } from '@era/core/ovi';
 import { useSession } from '../../lib/auth-client';
+import { Text } from '../Text';
 import { OutfitCard } from './OutfitCard';
 import { OviToast, OVI_TOAST_MS } from './OviToast';
 import { fetchOviToday } from './ovi-actions';
@@ -22,20 +22,6 @@ const sectionStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: 'var(--space-3)',
-};
-
-const titleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.title2.rem,
-  lineHeight: `${typeRamp.title2.lineHeight}px`,
-  fontWeight: 700,
-};
-
-const bodyStyle: CSSProperties = {
-  margin: 0,
-  color: 'var(--color-secondary-strong)',
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
 };
 
 /** Round a coordinate to ~1 decimal (~11 km) before it leaves the device. */
@@ -109,8 +95,13 @@ export function TodayCard() {
   if (state.status === 'loading') {
     return (
       <section style={sectionStyle} aria-busy="true">
-        <h2 style={titleStyle}>{strings.ovi.todayTitle}</h2>
-        <p style={bodyStyle}>{strings.ovi.thinking}</p>
+        {/* Ovi's daily editorial greeting — serif title (Fraunces) */}
+        <Text variant="title" as="h2">
+          {strings.ovi.todayTitle}
+        </Text>
+        <Text variant="oviAccent" size="subhead" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
+          {strings.ovi.thinking}
+        </Text>
       </section>
     );
   }
@@ -119,11 +110,16 @@ export function TodayCard() {
 
   return (
     <section style={sectionStyle}>
-      <h2 style={titleStyle}>{strings.ovi.todayTitle}</h2>
+      {/* Ovi's daily editorial greeting — serif title (Fraunces) */}
+      <Text variant="title" as="h2">
+        {strings.ovi.todayTitle}
+      </Text>
 
       {hasOutfit ? (
         <>
-          <p style={bodyStyle}>{state.reply}</p>
+          <Text variant="body" size="subhead" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
+            {state.reply}
+          </Text>
           <AnimatePresence>
             {state.outfit ? (
               <OutfitCard
@@ -148,9 +144,9 @@ export function TodayCard() {
           </AnimatePresence>
         </>
       ) : (
-        <p style={bodyStyle}>
+        <Text variant="body" size="subhead" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
           {dismissed ? strings.ovi.suggestionDeclined : strings.ovi.todayEmpty}
-        </p>
+        </Text>
       )}
 
       <AnimatePresence>{toast ? <OviToast message={toast} /> : null}</AnimatePresence>

@@ -20,7 +20,7 @@ import { isValidUsername } from '../../lib/username';
 import { Container } from '../../components';
 import { Avatar, CopyLinkButton, FollowButton, ProfileView } from '../../components/profile';
 import { JsonLd, profilePageSchema } from '../../components/seo';
-import { typeRamp } from '@era/tokens';
+import { Text } from '../../components/Text';
 
 /**
  * `/{username}` — the public profile, Era's shareable Layer-3 SEO surface. A
@@ -201,10 +201,10 @@ function PrivateCard({
     <Container>
       <main style={privateWrapStyle}>
         <Avatar src={data.profile.avatarUrl} name={name} size={72} />
-        <h1 style={privateNameStyle}>{name}</h1>
-        <p style={privateHandleStyle}>@{data.profile.username}</p>
-        <p style={privateHeadingStyle}>{strings.profile.privateHeading(name)}</p>
-        <p style={privateBodyStyle}>{strings.profile.privateBody}</p>
+        <Text variant="title" as="h1" size="title2" style={{ margin: 0, color: 'var(--color-text)' }}>{name}</Text>
+        <Text variant="ui" as="p" size="subhead" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>@{data.profile.username}</Text>
+        <Text variant="body" as="p" style={{ margin: 0, marginTop: 'var(--space-2)', color: 'var(--color-text)' }}>{strings.profile.privateHeading(name)}</Text>
+        <Text variant="body" as="p" style={{ margin: 0, maxWidth: '36ch', color: 'var(--color-secondary)' }}>{strings.profile.privateBody}</Text>
         {isOwner ? (
           <CopyLinkButton url={canonicalUrl} align="center" />
         ) : (
@@ -232,34 +232,3 @@ const privateWrapStyle: CSSProperties = {
   paddingBlock: 'var(--space-16)',
 };
 
-const privateNameStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.title2.rem,
-  lineHeight: `${typeRamp.title2.lineHeight}px`,
-  fontWeight: 700,
-  color: 'var(--color-text)',
-};
-
-const privateHandleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
-};
-
-const privateHeadingStyle: CSSProperties = {
-  margin: 0,
-  marginTop: 'var(--space-2)',
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
-  fontWeight: 600,
-  color: 'var(--color-text)',
-};
-
-const privateBodyStyle: CSSProperties = {
-  margin: 0,
-  maxWidth: '36ch',
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  color: 'var(--color-secondary)',
-};

@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { type PanInfo, motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, layout, spacing, typeRamp } from '@era/tokens';
+import { motion as motionToken, layout, spacing } from '@era/tokens';
+import { Text } from '../Text';
 import { strings } from '@era/core/strings';
 import { type TurnaroundRender, type TurnaroundState } from '@era/core/turnaround';
 import { transitionFor } from '../../lib/motion';
@@ -146,8 +147,14 @@ export function ItemDetailSheet({
         )}
 
         <div style={headerStyle}>
-          <h2 style={titleStyle}>{item.name}</h2>
-          {item.brand ? <p style={brandStyle}>{item.brand}</p> : null}
+          <Text variant="title" size="title1" as="h2" style={{ margin: 0 }}>
+            {item.name}
+          </Text>
+          {item.brand ? (
+            <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
+              {item.brand}
+            </Text>
+          ) : null}
         </div>
 
         {mode === 'edit' ? (
@@ -161,15 +168,23 @@ export function ItemDetailSheet({
             </div>
 
             <div style={metaColumnStyle}>
-              <span style={metaStyle}>{strings.closet.detailSource(item.source)}</span>
-              {priceLine ? <span style={metaStyle}>{priceLine}</span> : null}
+              <Text variant="caption" size="subhead" as="span" style={{ color: 'var(--color-secondary-strong)' }}>
+                {strings.closet.detailSource(item.source)}
+              </Text>
+              {priceLine ? (
+                <Text variant="caption" size="subhead" as="span" style={{ color: 'var(--color-secondary-strong)' }}>
+                  {priceLine}
+                </Text>
+              ) : null}
             </div>
 
             <ItemWearStats item={item} />
 
             {confirmingArchive ? (
               <div style={confirmColumnStyle}>
-                <span style={confirmTextStyle}>{strings.closet.archiveConfirm}</span>
+                <Text variant="ui" size="subhead" as="span" style={{ color: 'var(--color-text)' }}>
+                  {strings.closet.archiveConfirm}
+                </Text>
                 <div style={actionsRowStyle}>
                   <Button variant="secondary" onClick={() => setConfirmingArchive(false)}>
                     {strings.common.cancel}
@@ -198,7 +213,26 @@ export function ItemDetailSheet({
 
 /** Read-only pill echoing a tag on the detail sheet (not interactive). */
 function TagPill({ children }: { children: ReactNode }) {
-  return <span style={tagPillStyle}>{children}</span>;
+  return (
+    <Text
+      variant="caption"
+      size="footnote"
+      weight={600}
+      as="span"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        minHeight: 'var(--touch-target-min)',
+        paddingInline: 'var(--space-3)',
+        borderRadius: 'var(--radius-chip)',
+        background: 'var(--color-surface)',
+        border: 'var(--glass-border-width) solid var(--color-hairline)',
+        color: 'var(--color-secondary-strong)',
+      }}
+    >
+      {children}
+    </Text>
+  );
 }
 
 /**
@@ -341,11 +375,15 @@ function TurnaroundHero({ item, onToast }: { item: GalleryItem; onToast: (messag
     <div style={turnaroundColumnStyle}>
       <StaticCutout item={item} />
       {phase === 'generating' ? (
-        <span role="status" style={turnaroundNoteStyle}>
+        <Text variant="caption" size="subhead" as="span" role="status" style={{ color: 'var(--color-secondary-strong)' }}>
           {strings.turnaround.generating}
-        </span>
+        </Text>
       ) : null}
-      {notice ? <span style={turnaroundNoteStyle}>{notice}</span> : null}
+      {notice ? (
+        <Text variant="caption" size="subhead" as="span" style={{ color: 'var(--color-secondary-strong)' }}>
+          {notice}
+        </Text>
+      ) : null}
       {phase === 'offer' ? (
         <div style={turnaroundActionRowStyle}>
           <Button variant="secondary" onClick={runGeneration}>
@@ -386,38 +424,10 @@ const headerStyle: CSSProperties = {
   gap: 'var(--space-1)',
 };
 
-const titleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.title1.rem,
-  lineHeight: `${typeRamp.title1.lineHeight}px`,
-  fontWeight: 700,
-};
-
-const brandStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
-};
-
 const tagsRowStyle: CSSProperties = {
   display: 'flex',
   flexWrap: 'wrap',
   gap: 'var(--space-2)',
-};
-
-const tagPillStyle: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  minHeight: 'var(--touch-target-min)',
-  paddingInline: 'var(--space-3)',
-  borderRadius: 'var(--radius-chip)',
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  fontWeight: 600,
-  background: 'var(--color-surface)',
-  border: 'var(--glass-border-width) solid var(--color-hairline)',
-  color: 'var(--color-secondary-strong)',
 };
 
 const metaColumnStyle: CSSProperties = {
@@ -426,22 +436,10 @@ const metaColumnStyle: CSSProperties = {
   gap: 'var(--space-1)',
 };
 
-const metaStyle: CSSProperties = {
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
-};
-
 const confirmColumnStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: 'var(--space-3)',
-};
-
-const confirmTextStyle: CSSProperties = {
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  color: 'var(--color-text)',
 };
 
 const actionsRowStyle: CSSProperties = {
@@ -456,12 +454,6 @@ const turnaroundColumnStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: 'var(--space-3)',
-};
-
-const turnaroundNoteStyle: CSSProperties = {
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
 };
 
 const turnaroundActionRowStyle: CSSProperties = {

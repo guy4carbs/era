@@ -2,7 +2,8 @@
 
 import { useState, type CSSProperties } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, boxShadows, layout, typeRamp } from '@era/tokens';
+import { motion as motionToken, boxShadows, layout } from '@era/tokens';
+import { Text } from '../Text';
 import { strings } from '@era/core/strings';
 import type { ProductWhy, RankedProduct, WhyDetail } from '@era/core/shop';
 import { transitionFor } from '../../lib/motion';
@@ -130,11 +131,11 @@ export function ShopCard({ product, isSaved, onToggleSave, onDismiss }: ShopCard
       )}
 
       <div style={bodyStyle}>
-        <p style={brandStyle}>{product.brand}</p>
-        <p style={titleStyle}>{product.title}</p>
+        <Text variant="ui" as="p" size="caption" weight={600} style={{ margin: 0, letterSpacing: '0.02em', textTransform: 'uppercase', color: 'var(--color-secondary-strong)' }}>{product.brand}</Text>
+        <Text variant="body" as="p" size="subhead" weight={600} style={{ margin: 0, color: 'var(--color-text)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{product.title}</Text>
         <p style={priceRowStyle}>
-          <span style={priceStyle}>{formatPrice(product.price, product.currency)}</span>
-          <span style={retailerStyle}>{product.retailer}</span>
+          <Text variant="ui" as="span" size="subhead" weight={700} style={{ color: 'var(--color-text)' }}>{formatPrice(product.price, product.currency)}</Text>
+          <Text variant="caption" as="span" style={{ color: 'var(--color-secondary-strong)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{product.retailer}</Text>
         </p>
 
         {/* The compact why is tappable ONLY when there's rich detail to reveal;
@@ -159,7 +160,7 @@ export function ShopCard({ product, isSaved, onToggleSave, onDismiss }: ShopCard
         <div style={actionsStyle}>
           {href ? (
             <a href={href} target="_blank" rel={AFFILIATE_REL} onClick={fireClick} style={viewAtStyle}>
-              {strings.shop.viewAt(product.retailer)}
+              <Text variant="ui" as="span" size="footnote" weight={600} style={{ color: 'var(--color-accent)', textDecoration: 'none' }}>{strings.shop.viewAt(product.retailer)}</Text>
             </a>
           ) : (
             <span />
@@ -174,14 +175,14 @@ export function ShopCard({ product, isSaved, onToggleSave, onDismiss }: ShopCard
               whileTap={reduced ? undefined : { scale: 0.9 }}
               transition={transitionFor(motionToken.springs.gentle, reduced)}
             >
-              <span aria-hidden="true" style={heartStyle}>
+              <Text variant="ui" as="span" size="subhead" style={{ lineHeight: '1' }} aria-hidden="true">
                 {isSaved ? '♥' : '♡'}
-              </span>
-              {isSaved ? strings.shop.saved.savedState : strings.shop.saved.save}
+              </Text>
+              <Text variant="ui" as="span" size="footnote" weight={600}>{isSaved ? strings.shop.saved.savedState : strings.shop.saved.save}</Text>
             </motion.button>
             {onDismiss ? (
               <button type="button" onClick={handleDismiss} style={dismissStyle}>
-                {strings.shop.dismiss}
+                <Text variant="ui" as="span" size="footnote" weight={500} style={{ color: 'var(--color-secondary-strong)' }}>{strings.shop.dismiss}</Text>
               </button>
             ) : null}
           </div>
@@ -228,28 +229,6 @@ const bodyStyle: CSSProperties = {
   padding: 'var(--space-3)',
 };
 
-const brandStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.caption.rem,
-  lineHeight: `${typeRamp.caption.lineHeight}px`,
-  fontWeight: 600,
-  letterSpacing: '0.02em',
-  textTransform: 'uppercase',
-  color: 'var(--color-secondary-strong)',
-};
-
-const titleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  fontWeight: 600,
-  color: 'var(--color-text)',
-  // Two-line clamp keeps the grid rows even without truncating hard at one word.
-  display: '-webkit-box',
-  WebkitLineClamp: 2,
-  WebkitBoxOrient: 'vertical',
-  overflow: 'hidden',
-};
 
 const priceRowStyle: CSSProperties = {
   display: 'flex',
@@ -260,20 +239,6 @@ const priceRowStyle: CSSProperties = {
   marginTop: 'var(--space-1)',
 };
 
-const priceStyle: CSSProperties = {
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  fontWeight: 700,
-  color: 'var(--color-text)',
-};
-
-const retailerStyle: CSSProperties = {
-  fontSize: typeRamp.caption.rem,
-  color: 'var(--color-secondary-strong)',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-};
 
 // Full-width transparent wrapper so the compact why label keeps its own layout
 // while gaining button semantics (focus, Enter/Space) for the detail reveal.
@@ -311,19 +276,9 @@ const saveStyle: CSSProperties = {
   background: 'transparent',
   padding: 0,
   cursor: 'pointer',
-  fontSize: typeRamp.footnote.rem,
-  fontWeight: 600,
-};
-
-const heartStyle: CSSProperties = {
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: 1,
 };
 
 const viewAtStyle: CSSProperties = {
-  fontSize: typeRamp.footnote.rem,
-  fontWeight: 600,
-  color: 'var(--color-accent)',
   textDecoration: 'none',
 };
 
@@ -332,7 +287,4 @@ const dismissStyle: CSSProperties = {
   background: 'transparent',
   padding: 0,
   cursor: 'pointer',
-  fontSize: typeRamp.footnote.rem,
-  fontWeight: 500,
-  color: 'var(--color-secondary-strong)',
 };

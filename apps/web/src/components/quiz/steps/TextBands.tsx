@@ -2,8 +2,9 @@
 
 import { type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, typeRamp, boxShadows, layout } from '@era/tokens';
+import { motion as motionToken, boxShadows, layout } from '@era/tokens';
 import { transitionFor } from '../../../lib/motion';
+import { Text, TextControlBoundary } from '../../../components';
 import { SELECTION_RING, type QuizStep } from '../types';
 
 export interface TextBandsProps {
@@ -20,9 +21,6 @@ const bandStyle: CSSProperties = {
   cursor: 'pointer',
   background: 'var(--color-surface)',
   textAlign: 'start',
-  fontSize: typeRamp.title3.rem,
-  lineHeight: `${typeRamp.title3.lineHeight}px`,
-  fontWeight: 600,
   color: 'var(--color-text)',
 };
 
@@ -53,7 +51,11 @@ export function TextBands({ step, selectedId, onSelect }: TextBandsProps) {
             whileTap={reduced ? undefined : { scale: 0.98 }}
             transition={transitionFor(motionToken.springs.snappy, reduced)}
           >
-            {option.label}
+            <TextControlBoundary>
+              <Text variant="ui" size="title3" weight={600} as="span">
+                {option.label}
+              </Text>
+            </TextControlBoundary>
           </motion.button>
         );
       })}

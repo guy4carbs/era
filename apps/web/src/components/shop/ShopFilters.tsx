@@ -1,8 +1,8 @@
 'use client';
 
 import { type CSSProperties } from 'react';
-import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
+import { Text } from '../Text';
 import type { BrandTier, ItemCategory, ShopSearchQuery } from '@era/core/shop';
 import { BUDGET_BANDS, SIZE_OPTIONS, BRAND_TIER_ORDER, budgetBandToQuery } from '@era/core/shop';
 import { CATEGORY_OPTIONS } from '../items';
@@ -135,7 +135,7 @@ export function ShopFilters({ filters, onChange }: ShopFiltersProps) {
 
       {hasActiveFilters(filters) ? (
         <button type="button" style={clearStyle} onClick={() => onChange(EMPTY_FILTERS)}>
-          {strings.shop.clearFilters}
+          <Text variant="ui" as="span" size="footnote" weight={600} style={{ color: 'var(--color-accent)' }}>{strings.shop.clearFilters}</Text>
         </button>
       ) : null}
     </div>
@@ -146,7 +146,7 @@ export function ShopFilters({ filters, onChange }: ShopFiltersProps) {
 function FilterRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={rowStyle} role="group" aria-label={label}>
-      <span style={rowLabelStyle}>{label}</span>
+      <Text variant="ui" as="span" size="footnote" weight={600} style={{ flex: '0 0 auto', width: 'var(--space-16)', color: 'var(--color-secondary-strong)' }}>{label}</Text>
       <div style={chipsStyle}>{children}</div>
     </div>
   );
@@ -164,13 +164,6 @@ const rowStyle: CSSProperties = {
   gap: 'var(--space-3)',
 };
 
-const rowLabelStyle: CSSProperties = {
-  flex: '0 0 auto',
-  width: 'var(--space-16)',
-  fontSize: typeRamp.footnote.rem,
-  fontWeight: 600,
-  color: 'var(--color-secondary-strong)',
-};
 
 const chipsStyle: CSSProperties = {
   display: 'flex',
@@ -185,7 +178,4 @@ const clearStyle: CSSProperties = {
   background: 'transparent',
   padding: 0,
   cursor: 'pointer',
-  fontSize: typeRamp.footnote.rem,
-  fontWeight: 600,
-  color: 'var(--color-accent)',
 };

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { strings } from '@era/core/strings';
 import { typeRamp } from '@era/tokens';
+import { Text, TextControlBoundary } from '../Text';
 
 export interface CopyLinkButtonProps {
   /** The absolute, canonical profile URL to place on the clipboard. */
@@ -52,13 +53,21 @@ export function CopyLinkButton({ url, withHint = true, align = 'start' }: CopyLi
   const crossAxis = align === 'center' ? 'center' : 'flex-start';
   return (
     <div style={{ ...wrapStyle, alignItems: crossAxis, textAlign: align === 'center' ? 'center' : 'start' }}>
-      {withHint ? <p style={hintStyle}>{strings.profile.ownProfileHint}</p> : null}
-      <button type="button" style={buttonStyle} onClick={() => void handleCopy()}>
-        {strings.profile.copyLinkCta}
-      </button>
-      <p aria-live="polite" style={confirmStyle}>
+      {withHint ? (
+        <Text variant="caption" size="footnote" as="p" style={hintStyle}>
+          {strings.profile.ownProfileHint}
+        </Text>
+      ) : null}
+      <TextControlBoundary>
+        <button type="button" style={buttonStyle} onClick={() => void handleCopy()}>
+          <Text variant="ui" size="subhead" weight={600} as="span">
+            {strings.profile.copyLinkCta}
+          </Text>
+        </button>
+      </TextControlBoundary>
+      <Text variant="caption" size="footnote" as="p" aria-live="polite" style={confirmStyle}>
         {copied ? strings.profile.linkCopied : ''}
-      </p>
+      </Text>
     </div>
   );
 }
@@ -71,8 +80,6 @@ const wrapStyle: CSSProperties = {
 
 const hintStyle: CSSProperties = {
   margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
   color: 'var(--color-secondary-strong)',
 };
 
@@ -86,16 +93,11 @@ const buttonStyle: CSSProperties = {
   border: '1px solid var(--color-hairline)',
   background: 'var(--color-surface)',
   color: 'var(--color-text)',
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  fontWeight: 600,
   cursor: 'pointer',
 };
 
 const confirmStyle: CSSProperties = {
   margin: 0,
   minHeight: `${typeRamp.footnote.lineHeight}px`,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
   color: 'var(--color-secondary-strong)',
 };

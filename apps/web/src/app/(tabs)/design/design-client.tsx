@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { layout, motion as motionToken, typeRamp, boxShadows } from '@era/tokens';
+import { Text } from '../../../components/Text';
 import { strings } from '@era/core/strings';
 import { Button } from '../../../components';
 import {
@@ -24,11 +25,9 @@ const screenStyle: CSSProperties = {
   paddingBlock: 'var(--space-8)',
 };
 
+// Screen title — serif largeTitle role owns family/size/weight; margin only here.
 const titleStyle: CSSProperties = {
   margin: 0,
-  fontSize: typeRamp.largeTitle.rem,
-  lineHeight: `${typeRamp.largeTitle.lineHeight}px`,
-  fontWeight: 700,
 };
 
 const emptyWrapStyle: CSSProperties = {
@@ -40,21 +39,11 @@ const emptyWrapStyle: CSSProperties = {
 
 const emptyTitleStyle: CSSProperties = {
   margin: 0,
-  fontSize: typeRamp.title1.rem,
-  lineHeight: `${typeRamp.title1.lineHeight}px`,
-  fontWeight: 700,
 };
 
 const emptyBodyStyle: CSSProperties = {
   margin: 0,
   color: 'var(--color-secondary-strong)',
-  fontSize: typeRamp.body.rem,
-};
-
-const secondaryTextStyle: CSSProperties = {
-  margin: 0,
-  color: 'var(--color-secondary-strong)',
-  fontSize: typeRamp.body.rem,
 };
 
 const signInRowStyle: CSSProperties = {
@@ -252,11 +241,11 @@ export function DesignScreen({ feedEnabled }: { feedEnabled: boolean }) {
   if (!isPending && !session) {
     return (
       <main style={screenStyle}>
-        <h1 style={titleStyle}>Design</h1>
+        <Text variant="largeTitle" as="h1" style={titleStyle}>Design</Text>
         <div style={signInRowStyle}>
-          <span style={{ color: 'var(--color-secondary-strong)', fontSize: typeRamp.footnote.rem }}>
+          <Text variant="caption" style={{ color: 'var(--color-secondary-strong)' }}>
             {strings.design.tabEmptyBody}
-          </span>
+          </Text>
           <Link className="link" href="/sign-in">
             Sign in →
           </Link>
@@ -268,8 +257,8 @@ export function DesignScreen({ feedEnabled }: { feedEnabled: boolean }) {
   if (isPending || outfits === null || eras === null) {
     return (
       <main style={screenStyle}>
-        <h1 style={titleStyle}>Design</h1>
-        <p style={secondaryTextStyle}>Loading…</p>
+        <Text variant="largeTitle" as="h1" style={titleStyle}>Design</Text>
+        <Text variant="body" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>Loading…</Text>
       </main>
     );
   }
@@ -277,12 +266,14 @@ export function DesignScreen({ feedEnabled }: { feedEnabled: boolean }) {
   return (
     <main style={screenStyle}>
       <style>{buildPillCss}</style>
-      <h1 style={titleStyle}>Design</h1>
+      <Text variant="largeTitle" as="h1" size="title1" style={titleStyle}>Design</Text>
 
       {outfits.length === 0 ? (
         <div style={emptyWrapStyle}>
-          <h2 style={emptyTitleStyle}>{strings.design.tabEmptyTitle}</h2>
-          <p style={emptyBodyStyle}>{strings.design.tabEmptyBody}</p>
+          <Text variant="largeTitle" as="h2" size="title1" style={emptyTitleStyle}>
+            {strings.design.tabEmptyTitle}
+          </Text>
+          <Text variant="body" style={emptyBodyStyle}>{strings.design.tabEmptyBody}</Text>
           <Button variant="primary" onClick={() => openCanvas()}>
             {strings.design.newOutfit}
           </Button>

@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, type CSSProperties } from 'react';
-import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
+import { Text } from '../Text';
 import { Button } from '../Button';
 import { Card } from '../Card';
 import { Chip } from '../Chip';
@@ -121,10 +121,10 @@ export function BatchConfirm({ items, failed, onDone }: BatchConfirmProps) {
   return (
     <div style={columnStyle}>
       <div style={headerStyle}>
-        <h1 style={titleStyle}>{strings.closet.bulkCapture.confirmTitle}</h1>
-        <p style={subtitleStyle}>{strings.closet.bulkCapture.confirmSubtitle}</p>
-        <p style={countStyle}>{strings.closet.bulkCapture.found(total)}</p>
-        {failed > 0 ? <p style={partialStyle}>{strings.closet.bulkCapture.partialFailure}</p> : null}
+        <Text variant="title" size="title2" as="h1" weight={700} style={{ margin: 0 }}>{strings.closet.bulkCapture.confirmTitle}</Text>
+        <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{strings.closet.bulkCapture.confirmSubtitle}</Text>
+        <Text variant="caption" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{strings.closet.bulkCapture.found(total)}</Text>
+        {failed > 0 ? <Text variant="caption" as="p" style={{ margin: 0, color: 'var(--color-rust)' }}>{strings.closet.bulkCapture.partialFailure}</Text> : null}
       </div>
 
       <ul style={listStyle}>
@@ -187,12 +187,14 @@ export function BatchConfirm({ items, failed, onDone }: BatchConfirmProps) {
                       disabled={busy}
                       onClick={() => void discardRow(row.id)}
                     >
-                      {strings.closet.archive}
+                      <Text variant="ui" size="footnote" weight={600} style={{ color: 'var(--color-secondary-strong)' }}>
+                        {strings.closet.archive}
+                      </Text>
                     </button>
                   ) : (
-                    <span style={statusStyle} aria-hidden="true">
+                    <Text variant="ui" as="span" style={{ color: 'var(--color-secondary-strong)' }} aria-hidden="true">
                       {row.status === 'confirmed' ? '✓' : '—'}
-                    </span>
+                    </Text>
                   )}
                 </div>
               </div>
@@ -221,33 +223,6 @@ const headerStyle: CSSProperties = {
   gap: 'var(--space-2)',
 };
 
-const titleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.title2.rem,
-  lineHeight: `${typeRamp.title2.lineHeight}px`,
-  fontWeight: 700,
-};
-
-const subtitleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
-};
-
-const countStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
-};
-
-const partialStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  color: 'var(--color-rust)',
-};
 
 const listStyle: CSSProperties = {
   display: 'flex',
@@ -300,14 +275,6 @@ const discardStyle: CSSProperties = {
   background: 'transparent',
   border: 'none',
   cursor: 'pointer',
-  color: 'var(--color-secondary-strong)',
-  fontSize: typeRamp.footnote.rem,
-  fontWeight: 600,
   minHeight: 'var(--touch-target-min)',
   paddingInline: 0,
-};
-
-const statusStyle: CSSProperties = {
-  fontSize: typeRamp.body.rem,
-  color: 'var(--color-secondary-strong)',
 };

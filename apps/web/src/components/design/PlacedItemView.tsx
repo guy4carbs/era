@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, type CSSProperties } from 'react';
 import { animate, motion, useMotionValue, useReducedMotion, type MotionValue } from 'framer-motion';
-import { motion as motionToken, typeRamp } from '@era/tokens';
+import { motion as motionToken } from '@era/tokens';
+import { Text } from '../Text';
 import { strings } from '@era/core/strings';
 import { springTransition, transitionFor } from '../../lib/motion';
 import { applySnap, type Guide } from './snapping';
@@ -48,9 +49,6 @@ const fallbackStyle: CSSProperties = {
   borderRadius: 'var(--radius-card)',
   background: 'var(--color-surface)',
   border: '1px solid var(--color-hairline)',
-  color: 'var(--color-secondary-strong)',
-  fontSize: typeRamp.footnote.rem,
-  textAlign: 'center',
   padding: 'var(--space-2)',
 };
 
@@ -187,7 +185,11 @@ export function PlacedItemView({
               style={{ width: '100%', height: 'auto', display: 'block', pointerEvents: 'none' }}
             />
           ) : (
-            <div style={fallbackStyle}>{strings.closet.categoryLabel(piece.category)}</div>
+            <div style={fallbackStyle}>
+              <Text variant="caption" size="footnote" style={{ color: 'var(--color-secondary-strong)', textAlign: 'center' }}>
+                {strings.closet.categoryLabel(piece.category)}
+              </Text>
+            </div>
           )}
         </motion.div>
       </div>

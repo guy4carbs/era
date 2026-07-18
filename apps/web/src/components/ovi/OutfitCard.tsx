@@ -2,7 +2,7 @@
 
 import { useState, type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, typeRamp, boxShadows } from '@era/tokens';
+import { motion as motionToken, boxShadows } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import type { OviIntent, ProposedOutfit } from '@era/core/ovi';
 import { transitionFor } from '../../lib/motion';
@@ -10,6 +10,7 @@ import { analytics, trackFirstOnce } from '../../lib/analytics';
 import { useSession } from '../../lib/auth-client';
 import { Card } from '../Card';
 import { Button } from '../Button';
+import { Text } from '../Text';
 import { acceptOutfit, logWear, rejectOutfit } from './ovi-actions';
 import type { ItemsById } from './types';
 
@@ -53,28 +54,6 @@ const wrapStyle: CSSProperties = {
   padding: 'var(--space-4)',
 };
 
-const weatherLeadStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
-};
-
-const nameStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.title3.rem,
-  lineHeight: `${typeRamp.title3.lineHeight}px`,
-  fontWeight: 700,
-  color: 'var(--color-text)',
-};
-
-const occasionStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  color: 'var(--color-secondary-strong)',
-  textTransform: 'capitalize',
-};
-
 const gridStyle: CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))',
@@ -100,13 +79,6 @@ const tileImageStyle: CSSProperties = {
   objectFit: 'contain',
 };
 
-const rationaleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  color: 'var(--color-text)',
-};
-
 const actionsStyle: CSSProperties = {
   display: 'flex',
   gap: 'var(--space-3)',
@@ -117,17 +89,6 @@ const savedRowStyle: CSSProperties = {
   alignItems: 'center',
   justifyContent: 'space-between',
   gap: 'var(--space-2)',
-  fontSize: typeRamp.footnote.rem,
-  fontWeight: 600,
-  color: 'var(--color-accent)',
-};
-
-const wearConfirmedStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  fontWeight: 600,
-  color: 'var(--color-secondary-strong)',
 };
 
 /** A single cutout tile on cream/charcoal, mirroring the closet item frame. */
@@ -228,11 +189,22 @@ export function OutfitCard({
         onClick={canOpen && savedId ? () => onOpen?.(savedId) : undefined}
       >
         <div style={wrapStyle}>
-          {weatherLead ? <p style={weatherLeadStyle}>{weatherLead}</p> : null}
+          {weatherLead ? (
+            <Text variant="caption" size="footnote" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
+              {weatherLead}
+            </Text>
+          ) : null}
 
           <div>
-            <p style={nameStyle}>{outfit.name}</p>
-            {outfit.occasion ? <p style={occasionStyle}>{outfit.occasion}</p> : null}
+            {/* outfit.name is an era/outfit name — oviAccent per mapping */}
+            <Text variant="oviAccent" as="p" style={{ margin: 0, color: 'var(--color-text)' }}>
+              {outfit.name}
+            </Text>
+            {outfit.occasion ? (
+              <Text variant="caption" size="footnote" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)', textTransform: 'capitalize' }}>
+                {outfit.occasion}
+              </Text>
+            ) : null}
           </div>
 
           <div style={gridStyle}>
@@ -241,17 +213,29 @@ export function OutfitCard({
             ))}
           </div>
 
-          {outfit.rationale ? <p style={rationaleStyle}>{outfit.rationale}</p> : null}
+          {outfit.rationale ? (
+            <Text variant="caption" size="footnote" as="p" style={{ margin: 0, color: 'var(--color-text)' }}>
+              {outfit.rationale}
+            </Text>
+          ) : null}
 
           {status === 'saved' ? (
             <>
               <div style={savedRowStyle}>
-                <span>{strings.ovi.accepted}</span>
-                {canOpen ? <span aria-hidden="true">Open →</span> : null}
+                <Text variant="caption" size="footnote" weight={600} as="span" style={{ color: 'var(--color-accent)' }}>
+                  {strings.ovi.accepted}
+                </Text>
+                {canOpen ? (
+                  <Text variant="caption" size="footnote" as="span" aria-hidden="true">
+                    Open →
+                  </Text>
+                ) : null}
               </div>
               {canWear ? (
                 wearStatus === 'logged' ? (
-                  <p style={wearConfirmedStyle}>{strings.ovi.woreItConfirmed}</p>
+                  <Text variant="caption" size="footnote" weight={600} as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
+                    {strings.ovi.woreItConfirmed}
+                  </Text>
                 ) : (
                   <div style={actionsStyle}>
                     <Button

@@ -7,6 +7,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { typeRamp, layout, boxShadows } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { ClosetEmpty, ClosetGallery, SettingsLink, type GalleryItem } from '../../../components/closet';
+import { Text } from '../../../components/Text';
 import { useSession } from '../../../lib/auth-client';
 
 const screenStyle: CSSProperties = {
@@ -16,11 +17,10 @@ const screenStyle: CSSProperties = {
   paddingBlock: 'var(--space-8)',
 };
 
+// Screen title — the serif largeTitle role owns family/size/weight; only the
+// margin reset is layout, kept here.
 const titleStyle: CSSProperties = {
   margin: 0,
-  fontSize: typeRamp.largeTitle.rem,
-  lineHeight: `${typeRamp.largeTitle.lineHeight}px`,
-  fontWeight: 700,
 };
 
 // Empty-closet header: title left, Settings gear right (new users still need a
@@ -30,12 +30,6 @@ const emptyHeaderStyle: CSSProperties = {
   alignItems: 'center',
   justifyContent: 'space-between',
   gap: 'var(--space-4)',
-};
-
-const secondaryTextStyle: CSSProperties = {
-  margin: 0,
-  color: 'var(--color-secondary-strong)',
-  fontSize: typeRamp.body.rem,
 };
 
 const signInRowStyle: CSSProperties = {
@@ -142,11 +136,11 @@ export function ClosetScreen({ turnaroundEnabled }: { turnaroundEnabled: boolean
   if (!isPending && !session) {
     return (
       <main style={screenStyle}>
-        <h1 style={titleStyle}>Closet</h1>
+        <Text variant="largeTitle" as="h1" style={titleStyle}>Closet</Text>
         <div style={signInRowStyle}>
-          <span style={{ color: 'var(--color-secondary-strong)', fontSize: typeRamp.footnote.rem }}>
+          <Text variant="caption" style={{ color: 'var(--color-secondary-strong)' }}>
             {strings.closet.empty}
-          </span>
+          </Text>
           <Link className="link" href="/sign-in">
             Sign in →
           </Link>
@@ -159,8 +153,8 @@ export function ClosetScreen({ turnaroundEnabled }: { turnaroundEnabled: boolean
   if (isPending || items === null) {
     return (
       <main style={screenStyle}>
-        <h1 style={titleStyle}>Closet</h1>
-        <p style={secondaryTextStyle}>Loading…</p>
+        <Text variant="largeTitle" as="h1" style={titleStyle}>Closet</Text>
+        <Text variant="body" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>Loading…</Text>
       </main>
     );
   }
@@ -169,7 +163,7 @@ export function ClosetScreen({ turnaroundEnabled }: { turnaroundEnabled: boolean
     return (
       <main style={screenStyle}>
         <div style={emptyHeaderStyle}>
-          <h1 style={titleStyle}>Closet</h1>
+          <Text variant="largeTitle" as="h1" style={titleStyle}>Closet</Text>
           <SettingsLink />
         </div>
         <ClosetEmpty onAddPhoto={openAdd} onAddLink={openAdd} />

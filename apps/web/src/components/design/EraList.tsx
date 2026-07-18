@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, type CSSProperties } from 'react';
-import { layout, typeRamp } from '@era/tokens';
+import { layout } from '@era/tokens';
+import { Text } from '../Text';
 import { strings } from '@era/core/strings';
 import { Input } from '../Input';
 import { Button } from '../Button';
@@ -29,33 +30,10 @@ const sectionStyle: CSSProperties = {
   gap: 'var(--space-4)',
 };
 
-const headingStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.title2.rem,
-  lineHeight: `${typeRamp.title2.lineHeight}px`,
-  fontWeight: 700,
-};
-
 const cardStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: 'var(--space-2)',
-};
-
-const titleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.subhead.rem,
-  fontWeight: 600,
-  color: 'var(--color-text)',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-};
-
-const metaStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  color: 'var(--color-secondary-strong)',
 };
 
 const formStyle: CSSProperties = {
@@ -90,15 +68,26 @@ export function EraList({ eras, creating, feedEnabled, onCreate }: EraListProps)
   return (
     <section style={sectionStyle}>
       <style>{gridCss}</style>
-      <h2 style={headingStyle}>{strings.design.eraSectionTitle}</h2>
+      <Text variant="title" size="title2" as="h2" style={{ margin: 0 }}>
+        {strings.design.eraSectionTitle}
+      </Text>
 
       {eras.length > 0 ? (
         <div className="era-era-grid">
           {eras.map((era) => (
             <div key={era.id} style={cardStyle}>
               <Collage cover={era.coverUrl} thumbs={era.outfitCovers} alt={era.title} />
-              <p style={titleStyle}>{era.title}</p>
-              <p style={metaStyle}>{outfitCountLabel(era.outfitCount)}</p>
+              <Text
+                variant="oviAccent"
+                size="subhead"
+                as="p"
+                style={{ margin: 0, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+              >
+                {era.title}
+              </Text>
+              <Text variant="caption" size="footnote" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
+                {outfitCountLabel(era.outfitCount)}
+              </Text>
               {/* Flag-gated (renders null when the feed is off) — the ONLY web
                   era-share surface this phase. Seeded so an already-shared era
                   reads as shared after the list re-fetches. */}

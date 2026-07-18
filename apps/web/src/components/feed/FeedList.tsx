@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useReducer, useRef, useState, type CSSProperties } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { boxShadows, layout, motion as motionToken, typeRamp } from '@era/tokens';
+import { boxShadows, layout, motion as motionToken } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import type { FeedPage, FeedPostPayload } from '@era/core/feed';
 import { transitionFor } from '../../lib/motion';
 import { useSession } from '../../lib/auth-client';
+import { Text } from '../Text';
 import { FeedCard } from './FeedCard';
 
 interface FeedState {
@@ -278,23 +279,35 @@ export function FeedList() {
         />
       ))}
 
-      {isEmpty && !state.errored ? <p style={quietLineStyle}>{strings.feed.empty}</p> : null}
+      {isEmpty && !state.errored ? (
+        <Text variant="caption" size="footnote" as="p" style={quietLineStyle}>
+          {strings.feed.empty}
+        </Text>
+      ) : null}
 
       {isEmpty && state.errored ? (
         <div style={retryWrapStyle}>
-          <p style={quietLineStyle}>{strings.errors.generic}</p>
+          <Text variant="caption" size="footnote" as="p" style={quietLineStyle}>
+            {strings.errors.generic}
+          </Text>
           <button type="button" style={retryButtonStyle} onClick={() => void loadPage(null)}>
-            {strings.errors.retry}
+            <Text variant="caption" size="footnote" weight={600} as="span" style={{ color: 'var(--color-accent)' }}>
+              {strings.errors.retry}
+            </Text>
           </button>
         </div>
       ) : null}
 
-      {!isEmpty && state.reachedEnd ? <p style={quietLineStyle}>{strings.feed.feedEnd}</p> : null}
+      {!isEmpty && state.reachedEnd ? (
+        <Text variant="caption" size="footnote" as="p" style={quietLineStyle}>
+          {strings.feed.feedEnd}
+        </Text>
+      ) : null}
 
       {state.loading && state.posts.length > 0 ? (
-        <p style={quietLineStyle} role="status">
+        <Text variant="caption" size="footnote" as="p" role="status" style={quietLineStyle}>
           {strings.feed.loadingMore}
-        </p>
+        </Text>
       ) : null}
 
       {!state.reachedEnd ? <div ref={sentinelRef} aria-hidden="true" style={sentinelStyle} /> : null}
@@ -310,7 +323,9 @@ export function FeedList() {
             exit={{ opacity: 0, x: '-50%', y: reduced ? 0 : 8 }}
             transition={transitionFor(motionToken.springs.gentle, reduced)}
           >
-            {toast}
+            <Text variant="caption" size="footnote" as="span">
+              {toast}
+            </Text>
           </motion.div>
         ) : null}
       </AnimatePresence>
@@ -333,8 +348,6 @@ const quietLineStyle: CSSProperties = {
   margin: 0,
   paddingBlock: 'var(--space-6)',
   textAlign: 'center',
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
   color: 'var(--color-secondary)',
 };
 
@@ -349,9 +362,6 @@ const retryButtonStyle: CSSProperties = {
   padding: 0,
   border: 'none',
   background: 'transparent',
-  color: 'var(--color-accent)',
-  fontSize: typeRamp.footnote.rem,
-  fontWeight: 600,
   cursor: 'pointer',
 };
 
@@ -367,7 +377,6 @@ const toastStyle: CSSProperties = {
   background: 'var(--color-surface)',
   border: '1px solid var(--color-hairline)',
   color: 'var(--color-text)',
-  fontSize: typeRamp.footnote.rem,
   boxShadow: boxShadows.e3,
   zIndex: 70,
 };

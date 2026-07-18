@@ -1,8 +1,8 @@
 'use client';
 
 import { type ClipboardEvent, type CSSProperties } from 'react';
-import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
+import { Text } from '../Text';
 import { Card } from '../Card';
 import { Input } from '../Input';
 import { Button } from '../Button';
@@ -66,17 +66,6 @@ const tileStyle: CSSProperties = {
   textAlign: 'center',
 };
 
-const glyphStyle: CSSProperties = {
-  fontSize: typeRamp.title1.rem,
-  lineHeight: 1,
-};
-
-const captionStyle: CSSProperties = {
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  fontWeight: 600,
-  color: 'var(--color-text)',
-};
 
 const linkSectionStyle: CSSProperties = {
   display: 'flex',
@@ -96,10 +85,6 @@ const linkFieldStyle: CSSProperties = {
   flex: 1,
 };
 
-const submitGlyphStyle: CSSProperties = {
-  fontSize: typeRamp.body.rem,
-  lineHeight: 1,
-};
 
 // The two secondary capture paths (batch + receipt) sit as quiet rows beneath
 // the link, subordinate to the two photo tiles — one primary way in (a photo),
@@ -121,17 +106,8 @@ const moreRowStyle: CSSProperties = {
   background: 'transparent',
   border: 'none',
   cursor: 'pointer',
-  color: 'var(--color-secondary-strong)',
-  fontSize: typeRamp.subhead.rem,
-  fontWeight: 600,
   textAlign: 'left',
   width: '100%',
-};
-
-const moreGlyphStyle: CSSProperties = {
-  color: 'var(--color-secondary)',
-  fontSize: typeRamp.body.rem,
-  lineHeight: 1,
 };
 
 /** Parse a trimmed value to an https URL, or null when it isn't one. */
@@ -196,10 +172,10 @@ export function PhotoPicker({
           />
           <Card interactive>
             <div style={tileStyle}>
-              <span style={glyphStyle} aria-hidden="true">
+              <Text variant="ui" as="span" size="title1" style={{ lineHeight: '1' }} aria-hidden="true">
                 ◉
-              </span>
-              <span style={captionStyle}>{strings.closet.takePhoto}</span>
+              </Text>
+              <Text variant="ui" as="span" size="subhead" weight={600} style={{ color: 'var(--color-text)' }}>{strings.closet.takePhoto}</Text>
             </div>
           </Card>
         </label>
@@ -208,10 +184,10 @@ export function PhotoPicker({
           <input type="file" accept="image/*" style={hiddenInputStyle} onChange={handleChange} />
           <Card interactive>
             <div style={tileStyle}>
-              <span style={glyphStyle} aria-hidden="true">
+              <Text variant="ui" as="span" size="title1" style={{ lineHeight: '1' }} aria-hidden="true">
                 ▦
-              </span>
-              <span style={captionStyle}>{strings.closet.pickPhoto}</span>
+              </Text>
+              <Text variant="ui" as="span" size="subhead" weight={600} style={{ color: 'var(--color-text)' }}>{strings.closet.pickPhoto}</Text>
             </div>
           </Card>
         </label>
@@ -242,9 +218,9 @@ export function PhotoPicker({
             {linkFailed ? (
               strings.closet.retryCta
             ) : (
-              <span style={submitGlyphStyle} aria-hidden="true">
+              <Text variant="ui" as="span" size="body" style={{ lineHeight: '1' }} aria-hidden="true">
                 →
-              </span>
+              </Text>
             )}
           </Button>
         </div>
@@ -252,16 +228,16 @@ export function PhotoPicker({
 
       <div style={moreSectionStyle}>
         <button type="button" style={moreRowStyle} onClick={onBulk}>
-          <span>{strings.closet.bulkCapture.entryCta}</span>
-          <span style={moreGlyphStyle} aria-hidden="true">
+          <Text variant="ui" as="span" size="subhead" weight={600} style={{ color: 'var(--color-secondary-strong)' }}>{strings.closet.bulkCapture.entryCta}</Text>
+          <Text variant="ui" as="span" size="body" style={{ color: 'var(--color-secondary)', lineHeight: '1' }} aria-hidden="true">
             →
-          </span>
+          </Text>
         </button>
         <button type="button" style={moreRowStyle} onClick={onReceipt}>
-          <span>{strings.closet.importReceipt.entryCta}</span>
-          <span style={moreGlyphStyle} aria-hidden="true">
+          <Text variant="ui" as="span" size="subhead" weight={600} style={{ color: 'var(--color-secondary-strong)' }}>{strings.closet.importReceipt.entryCta}</Text>
+          <Text variant="ui" as="span" size="body" style={{ color: 'var(--color-secondary)', lineHeight: '1' }} aria-hidden="true">
             →
-          </span>
+          </Text>
         </button>
       </div>
     </div>

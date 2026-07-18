@@ -2,9 +2,10 @@
 
 import { type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, typeRamp, boxShadows, layout } from '@era/tokens';
+import { motion as motionToken, boxShadows, layout } from '@era/tokens';
 import { ARCHETYPES } from '@era/core/quiz';
 import { transitionFor } from '../../../lib/motion';
+import { Text, TextControlBoundary } from '../../../components';
 import { SELECTION_RING, type QuizStep } from '../types';
 
 export interface PaletteBoardsProps {
@@ -60,9 +61,6 @@ const swatchGridStyle: CSSProperties = {
 };
 
 const labelStyle: CSSProperties = {
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  fontWeight: 600,
   color: 'var(--color-text)',
   textAlign: 'start',
 };
@@ -103,7 +101,11 @@ export function PaletteBoards({ step, selectedId, onSelect }: PaletteBoardsProps
                 />
               ))}
             </div>
-            <span style={labelStyle}>{option.label}</span>
+            <TextControlBoundary>
+              <Text variant="ui" size="subhead" weight={600} as="span" style={labelStyle}>
+                {option.label}
+              </Text>
+            </TextControlBoundary>
           </motion.button>
         );
       })}

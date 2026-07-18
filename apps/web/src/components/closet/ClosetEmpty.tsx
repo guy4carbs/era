@@ -1,9 +1,9 @@
 'use client';
 
 import { type CSSProperties } from 'react';
-import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { Button } from '../Button';
+import { Text } from '../Text';
 
 export interface ClosetEmptyProps {
   /** Start the add flow via the photo path. */
@@ -21,8 +21,12 @@ export function ClosetEmpty({ onAddPhoto, onAddLink }: ClosetEmptyProps) {
   return (
     <div style={columnStyle}>
       <div style={copyStyle}>
-        <h1 style={titleStyle}>{strings.closet.emptyTitle}</h1>
-        <p style={bodyStyle}>{strings.closet.emptyBody}</p>
+        <Text variant="largeTitle" size="title1" as="h1" style={{ margin: 0 }}>
+          {strings.closet.emptyTitle}
+        </Text>
+        <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
+          {strings.closet.emptyBody}
+        </Text>
       </div>
       <div style={actionsStyle}>
         <Button variant="primary" onClick={onAddPhoto}>
@@ -48,20 +52,6 @@ const copyStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: 'var(--space-3)',
-};
-
-const titleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.title1.rem,
-  lineHeight: `${typeRamp.title1.lineHeight}px`,
-  fontWeight: 700,
-};
-
-const bodyStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
 };
 
 const actionsStyle: CSSProperties = {

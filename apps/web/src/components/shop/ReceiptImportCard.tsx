@@ -3,7 +3,8 @@
 import { type CSSProperties } from 'react';
 import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, boxShadows, typeRamp } from '@era/tokens';
+import { motion as motionToken, boxShadows } from '@era/tokens';
+import { Text } from '../Text';
 import { markRead, type ReceiptImportPayload } from '../../lib/notifications-client';
 import { transitionFor } from '../../lib/motion';
 
@@ -49,10 +50,10 @@ export function ReceiptImportCard({ id, payload, onResolve }: ReceiptImportCardP
       transition={transitionFor(motionToken.springs.gentle, reduced)}
     >
       <Link href="/closet" onClick={resolve} style={linkStyle}>
-        <p style={lineStyle}>{payload.message}</p>
-        <span aria-hidden="true" style={chevronStyle}>
+        <Text variant="ui" as="p" size="subhead" weight={500} style={{ margin: 0, minWidth: 0, color: 'var(--color-text)' }}>{payload.message}</Text>
+        <Text variant="ui" as="span" size="body" style={{ flexShrink: '0' as CSSProperties['flexShrink'], color: 'var(--color-secondary-strong)' }} aria-hidden="true">
           →
-        </span>
+        </Text>
       </Link>
     </motion.div>
   );
@@ -76,17 +77,3 @@ const linkStyle: CSSProperties = {
   color: 'inherit',
 };
 
-const lineStyle: CSSProperties = {
-  margin: 0,
-  minWidth: 0,
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  fontWeight: 500,
-  color: 'var(--color-text)',
-};
-
-const chevronStyle: CSSProperties = {
-  flexShrink: 0,
-  color: 'var(--color-secondary-strong)',
-  fontSize: typeRamp.body.rem,
-};

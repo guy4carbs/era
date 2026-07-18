@@ -2,7 +2,8 @@
 
 import { type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, typeRamp, boxShadows } from '@era/tokens';
+import { motion as motionToken, boxShadows } from '@era/tokens';
+import { Text } from '../Text';
 import { transitionFor } from '../../lib/motion';
 import {
   clamp,
@@ -51,7 +52,6 @@ const btnStyle: CSSProperties = {
   border: '1px solid var(--color-hairline)',
   background: 'var(--color-surface)',
   color: 'var(--color-text)',
-  fontSize: typeRamp.footnote.rem,
   fontWeight: 600,
   cursor: 'pointer',
 };
@@ -60,13 +60,6 @@ const removeStyle: CSSProperties = {
   ...btnStyle,
   color: 'var(--color-rust)',
   borderColor: 'var(--color-rust)',
-};
-
-const labelStyle: CSSProperties = {
-  fontSize: typeRamp.footnote.rem,
-  color: 'var(--color-secondary-strong)',
-  minWidth: 'var(--space-8)',
-  textAlign: 'center',
 };
 
 /**
@@ -100,7 +93,9 @@ export function ItemControlBar({
       <button type="button" aria-label="Smaller" style={btnStyle} onClick={() => onScale(clamp(piece.scale - SCALE_STEP, SCALE_MIN, SCALE_MAX))}>
         −
       </button>
-      <span style={labelStyle} aria-hidden="true">{`${Math.round(piece.scale * 100)}%`}</span>
+      <Text variant="ui" size="footnote" as="span" aria-hidden="true" style={{ color: 'var(--color-secondary-strong)', minWidth: 'var(--space-8)', textAlign: 'center' }}>
+        {`${Math.round(piece.scale * 100)}%`}
+      </Text>
       <button type="button" aria-label="Larger" style={btnStyle} onClick={() => onScale(clamp(piece.scale + SCALE_STEP, SCALE_MIN, SCALE_MAX))}>
         +
       </button>

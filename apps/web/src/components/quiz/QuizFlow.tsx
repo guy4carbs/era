@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, typeRamp, spacing } from '@era/tokens';
+import { motion as motionToken, spacing } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { QUIZ_STEPS, type QuizAnswers } from '@era/core/quiz';
 import { transitionFor } from '../../lib/motion';
-import { Button } from '../../components';
+import { Button, Text, TextControlBoundary } from '../../components';
 import { ProgressDots } from './ProgressDots';
 import { PhotoOptionGrid } from './steps/PhotoOptionGrid';
 import { PaletteBoards } from './steps/PaletteBoards';
@@ -51,25 +51,17 @@ const skipStyle: CSSProperties = {
   border: 'none',
   cursor: 'pointer',
   color: 'var(--color-secondary-strong)',
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  fontWeight: 600,
   minHeight: 'var(--touch-target-min)',
   paddingInline: 'var(--space-2)',
 };
 
 const titleStyle: CSSProperties = {
   margin: 0,
-  fontSize: typeRamp.title2.rem,
-  lineHeight: `${typeRamp.title2.lineHeight}px`,
-  fontWeight: 600,
   color: 'var(--color-text)',
 };
 
 const promptStyle: CSSProperties = {
   margin: 0,
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
   color: 'var(--color-secondary-strong)',
 };
 
@@ -196,9 +188,13 @@ export function QuizFlow({ onComplete, onSkip }: QuizFlowProps) {
           <span />
         )}
         <ProgressDots current={index} total={TOTAL} />
-        <button type="button" onClick={handleSkip} style={skipStyle}>
-          {strings.quiz.skip}
-        </button>
+        <TextControlBoundary>
+          <button type="button" onClick={handleSkip} style={skipStyle}>
+            <Text variant="ui" size="footnote" weight={600}>
+              {strings.quiz.skip}
+            </Text>
+          </button>
+        </TextControlBoundary>
       </div>
 
       <AnimatePresence mode="wait" custom={direction} initial={false}>
@@ -217,8 +213,12 @@ export function QuizFlow({ onComplete, onSkip }: QuizFlowProps) {
           style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-            <h2 style={titleStyle}>{step.title}</h2>
-            <p style={promptStyle}>{step.prompt}</p>
+            <Text variant="title" as="h2" size="title2" weight={600} style={titleStyle}>
+              {step.title}
+            </Text>
+            <Text variant="body" as="p" style={promptStyle}>
+              {step.prompt}
+            </Text>
           </div>
 
           {renderStep()}

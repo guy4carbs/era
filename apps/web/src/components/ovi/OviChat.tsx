@@ -19,6 +19,7 @@ import { GlassSheet } from '../GlassSheet';
 import { Chip } from '../Chip';
 import { Input } from '../Input';
 import { Button } from '../Button';
+import { Text } from '../Text';
 import { OutfitCard } from './OutfitCard';
 import { OviToast, OVI_TOAST_MS } from './OviToast';
 import { sendOviChat } from './ovi-actions';
@@ -58,13 +59,6 @@ const headerStyle: CSSProperties = {
   paddingBottom: 'var(--space-3)',
 };
 
-const headerTitleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.title3.rem,
-  lineHeight: `${typeRamp.title3.lineHeight}px`,
-  fontWeight: 700,
-};
-
 const closeStyle: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
@@ -97,8 +91,6 @@ const userBubbleStyle: CSSProperties = {
   background: 'color-mix(in srgb, var(--color-accent) 16%, transparent)',
   border: '1px solid var(--color-accent)',
   color: 'var(--color-text)',
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
 };
 
 const oviBubbleStyle: CSSProperties = {
@@ -110,8 +102,6 @@ const oviBubbleStyle: CSSProperties = {
   background: 'var(--color-surface)',
   border: '1px solid var(--color-hairline)',
   color: 'var(--color-text)',
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
   boxShadow: boxShadows.e1,
 };
 
@@ -122,7 +112,7 @@ const oviTurnStyle: CSSProperties = {
   gap: 'var(--space-3)',
 };
 
-const pendingTextStyle: CSSProperties = { color: 'var(--color-secondary-strong)' };
+const pendingColorStyle: CSSProperties = { color: 'var(--color-secondary-strong)' };
 
 const footerStyle: CSSProperties = {
   display: 'flex',
@@ -286,7 +276,9 @@ export function OviChat({ itemContext, itemsById, onClose }: OviChatProps) {
       <GlassSheet labelledBy="ovi-chat-title">
         <div style={rootStyle}>
           <header style={headerStyle}>
-            <h2 id="ovi-chat-title" style={headerTitleStyle}>{strings.ovi.fabLabel}</h2>
+            <Text variant="title" size="title3" weight={700} as="h2" id="ovi-chat-title">
+              {strings.ovi.fabLabel}
+            </Text>
             <button type="button" style={closeStyle} aria-label={strings.common.cancel} onClick={onClose}>
               <span aria-hidden="true">×</span>
             </button>
@@ -295,14 +287,27 @@ export function OviChat({ itemContext, itemsById, onClose }: OviChatProps) {
           <div ref={listRef} style={listStyle}>
             {messages.map((entry) =>
               entry.role === 'user' ? (
-                <p key={entry.id} style={userBubbleStyle}>
+                <Text
+                  key={entry.id}
+                  variant="body"
+                  as="p"
+                  style={{ ...userBubbleStyle, margin: 0 }}
+                >
                   {entry.content}
-                </p>
+                </Text>
               ) : (
                 <div key={entry.id} style={oviTurnStyle}>
-                  <p style={{ ...oviBubbleStyle, ...(entry.pending ? pendingTextStyle : null) }}>
+                  <Text
+                    variant="body"
+                    as="p"
+                    style={{
+                      ...oviBubbleStyle,
+                      margin: 0,
+                      ...(entry.pending ? pendingColorStyle : null),
+                    }}
+                  >
                     {entry.content}
-                  </p>
+                  </Text>
                   <AnimatePresence>
                     {entry.outfit ? (
                       <OutfitCard

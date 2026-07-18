@@ -2,8 +2,9 @@
 
 import { type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, typeRamp, boxShadows } from '@era/tokens';
+import { motion as motionToken, boxShadows } from '@era/tokens';
 import { transitionFor } from '../../lib/motion';
+import { Text } from '../Text';
 
 export interface OviToastProps {
   /** The message to announce, or null to render nothing. */
@@ -20,7 +21,6 @@ const toastStyle: CSSProperties = {
   background: 'var(--color-surface)',
   border: '1px solid var(--color-hairline)',
   color: 'var(--color-text)',
-  fontSize: typeRamp.footnote.rem,
   boxShadow: boxShadows.e3,
   zIndex: 70,
 };
@@ -45,7 +45,9 @@ export function OviToast({ message }: OviToastProps) {
       exit={{ opacity: 0, x: '-50%', y: reduced ? 0 : 8 }}
       transition={transitionFor(motionToken.springs.gentle, reduced)}
     >
-      {message}
+      <Text variant="caption" size="footnote" as="span">
+        {message}
+      </Text>
     </motion.div>
   );
 }

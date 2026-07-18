@@ -1,8 +1,8 @@
 'use client';
 
 import { useRef, useState, type CSSProperties, type DragEvent } from 'react';
-import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
+import { Text } from '../Text';
 import { Button } from '../Button';
 import { StatusPulse } from './StatusPulse';
 import {
@@ -28,12 +28,6 @@ const columnStyle: CSSProperties = {
   width: '100%',
 };
 
-const instructionStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
-};
 
 const fieldColumnStyle: CSSProperties = {
   display: 'flex',
@@ -51,25 +45,11 @@ const textareaStyle: CSSProperties = {
   border: '1px solid var(--color-hairline)',
   background: 'var(--color-surface)',
   color: 'var(--color-text)',
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
+  fontSize: '1.0625rem',
+  lineHeight: '22px',
   resize: 'vertical',
   // eslint-disable-next-line no-restricted-syntax -- textarea inherits the body sans stack; no brand-face declaration
   fontFamily: 'inherit',
-};
-
-const overLimitStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  color: 'var(--color-rust)',
-};
-
-const resultTextStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
-  color: 'var(--color-text)',
 };
 
 /**
@@ -147,7 +127,7 @@ export function ReceiptImport({ onReview }: ReceiptImportProps) {
       <div style={columnStyle} aria-live="polite">
         {outcome.kind === 'added' ? (
           <>
-            <p style={resultTextStyle}>{strings.closet.importReceipt.added(outcome.count)}</p>
+            <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-text)' }}>{strings.closet.importReceipt.added(outcome.count)}</Text>
             <Button variant="primary" onClick={onReview}>
               {strings.common.continue}
             </Button>
@@ -156,7 +136,7 @@ export function ReceiptImport({ onReview }: ReceiptImportProps) {
           <>
             {/* Zero drafts: one honest line that carries the way forward (a photo
                 or a link), not two near-identical "couldn't read it" lines. */}
-            <p style={resultTextStyle}>{strings.closet.importReceipt.unsupported}</p>
+            <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-text)' }}>{strings.closet.importReceipt.unsupported}</Text>
             <Button variant="primary" onClick={() => setMode('input')}>
               {strings.closet.retryCta}
             </Button>
@@ -169,7 +149,7 @@ export function ReceiptImport({ onReview }: ReceiptImportProps) {
   if (mode === 'error') {
     return (
       <div style={columnStyle} aria-live="assertive">
-        <p style={resultTextStyle}>{strings.closet.importReceipt.error}</p>
+        <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-text)' }}>{strings.closet.importReceipt.error}</Text>
         <Button variant="primary" onClick={submit}>
           {strings.closet.retryCta}
         </Button>
@@ -179,7 +159,7 @@ export function ReceiptImport({ onReview }: ReceiptImportProps) {
 
   return (
     <div style={columnStyle}>
-      <p style={instructionStyle}>{strings.closet.importReceipt.instruction}</p>
+      <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{strings.closet.importReceipt.instruction}</Text>
 
       <div style={fieldColumnStyle}>
         <textarea
@@ -203,9 +183,9 @@ export function ReceiptImport({ onReview }: ReceiptImportProps) {
           }}
         />
         {!withinCap ? (
-          <p style={overLimitStyle} role="alert">
+          <Text variant="caption" as="p" role="alert" style={{ margin: 0, color: 'var(--color-rust)' }}>
             {strings.closet.importReceipt.tooLong}
-          </p>
+          </Text>
         ) : null}
       </div>
 

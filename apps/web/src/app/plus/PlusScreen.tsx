@@ -6,6 +6,7 @@ import { typeRamp, boxShadows } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { useTheme } from '../../lib/theme';
 import { Button, Container } from '../../components';
+import { Text } from '../../components/Text';
 
 /** A Stripe redirect can return `?status=success|canceled`; null when neither. */
 type Status = 'success' | 'canceled' | null;
@@ -105,8 +106,8 @@ export function PlusScreen({ isPlus, status, prices }: PlusScreenProps) {
             <span aria-hidden="true">←</span>
             {copy.back}
           </Link>
-          <h1 style={titleStyle}>{copy.paywallTitle}</h1>
-          <p style={subtitleStyle}>{isPlus ? copy.alreadyPlus : copy.paywallSubtitle}</p>
+          <Text variant="largeTitle" as="h1" style={{ margin: 0 }}>{copy.paywallTitle}</Text>
+          <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{isPlus ? copy.alreadyPlus : copy.paywallSubtitle}</Text>
         </header>
 
         {isPlus ? (
@@ -138,12 +139,12 @@ function ManageState({
 }) {
   return (
     <section style={sectionStyle} aria-labelledby="plus-manage-heading">
-      <p style={bodyStyle}>{copy.alreadyPlusBody}</p>
+      <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-text)' }}>{copy.alreadyPlusBody}</Text>
 
       <div style={manageBlockStyle}>
-        <h2 id="plus-manage-heading" style={sectionHeadingStyle}>
+        <Text variant="caption" as="h2" id="plus-manage-heading" style={{ margin: 0, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--color-secondary-strong)' }}>
           {copy.managePlan}
-        </h2>
+        </Text>
         <Button
           variant="secondary"
           onClick={onPortal}
@@ -154,7 +155,7 @@ function ManageState({
           {busy === 'portal' ? copy.checkoutBusy : copy.portalCta}
         </Button>
         <ErrorLine show={errored} />
-        <p style={reassureStyle}>{copy.cancelAnytime}</p>
+        <Text variant="caption" as="p" style={{ margin: 0, color: 'var(--color-secondary)' }}>{copy.cancelAnytime}</Text>
       </div>
     </section>
   );
@@ -206,13 +207,13 @@ function Paywall({
 
       <ErrorLine show={errored} />
 
-      <p style={honestNoteStyle}>{copy.honestAnnualNote}</p>
+      <Text variant="caption" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{copy.honestAnnualNote}</Text>
       {/* Price-free cards must say so — a blind "Continue" would flunk the
           honesty bar. Rendered only when no Stripe-sourced amounts arrived. */}
       {!prices?.monthly && !prices?.annual ? (
-        <p style={honestNoteStyle}>{copy.pricePendingNote}</p>
+        <Text variant="caption" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{copy.pricePendingNote}</Text>
       ) : null}
-      <p style={reassureStyle}>{copy.cancelAnytime}</p>
+      <Text variant="caption" as="p" style={{ margin: 0, color: 'var(--color-secondary)' }}>{copy.cancelAnytime}</Text>
 
       <button
         type="button"
@@ -273,14 +274,14 @@ function PlanCard({
   return (
     <div style={cardStyle}>
       <div style={planTopStyle}>
-        <span style={planNameStyle}>{name}</span>
-        {badge ? <span style={badgeStyle}>{badge}</span> : null}
+        <Text variant="ui" as="span" style={{ color: 'var(--color-text)' }}>{name}</Text>
+        {badge ? <Text variant="caption" as="span" style={{ paddingInline: 'var(--space-2)', paddingBlock: 'var(--space-1)', borderRadius: 'var(--radius-chip)', background: 'color-mix(in srgb, var(--color-accent) 14%, transparent)', color: 'var(--color-accent)', letterSpacing: '0.02em' }}>{badge}</Text> : null}
       </div>
       <div style={priceRowStyle}>
-        {price ? <span style={priceStyle}>{price}</span> : null}
-        <span style={cadenceStyle}>{cadence}</span>
+        {price ? <Text variant="ui" as="span" size="title2" style={{ color: 'var(--color-text)' }}>{price}</Text> : null}
+        <Text variant="caption" as="span" size="subhead" style={{ color: 'var(--color-secondary-strong)' }}>{cadence}</Text>
       </div>
-      {note ? <p style={planNoteStyle}>{note}</p> : null}
+      {note ? <Text variant="caption" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{note}</Text> : null}
       <Button
         variant={primary ? 'primary' : 'secondary'}
         onClick={onSelect}
@@ -299,9 +300,9 @@ function PlanCard({
 function StatusBanner({ status }: { status: NonNullable<Status> }) {
   const text = status === 'success' ? copy.justSubscribed : copy.checkoutCanceled;
   return (
-    <p role="status" style={bannerStyle}>
+    <Text variant="ui" as="p" size="subhead" role="status" style={{ margin: 0, padding: 'var(--space-3) var(--space-4)', borderRadius: 'var(--radius-input)', background: 'color-mix(in srgb, var(--color-accent) 8%, var(--color-surface))', border: '1px solid color-mix(in srgb, var(--color-accent) 30%, var(--color-hairline))', color: 'var(--color-text)' }}>
       {text}
-    </p>
+    </Text>
   );
 }
 
@@ -312,9 +313,9 @@ function StatusBanner({ status }: { status: NonNullable<Status> }) {
  */
 function ErrorLine({ show }: { show: boolean }): ReactNode {
   return (
-    <p role="alert" aria-live="polite" style={errorLineStyle}>
+    <Text variant="caption" as="p" role="alert" aria-live="polite" style={{ margin: 0, minHeight: `${typeRamp.footnote.lineHeight}px`, color: 'var(--color-text)' }}>
       {show ? copy.checkoutError : ''}
-    </p>
+    </Text>
   );
 }
 
@@ -347,41 +348,10 @@ const backStyle: CSSProperties = {
   textDecoration: 'none',
 };
 
-const titleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.largeTitle.rem,
-  lineHeight: `${typeRamp.largeTitle.lineHeight}px`,
-  fontWeight: 700,
-};
-
-const subtitleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
-};
-
 const sectionStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: 'var(--space-4)',
-};
-
-const sectionHeadingStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  fontWeight: 700,
-  letterSpacing: '0.04em',
-  textTransform: 'uppercase',
-  color: 'var(--color-secondary-strong)',
-};
-
-const bodyStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
-  color: 'var(--color-text)',
 };
 
 // --- plans ----------------------------------------------------------------
@@ -407,50 +377,10 @@ const planTopStyle: CSSProperties = {
   gap: 'var(--space-3)',
 };
 
-const planNameStyle: CSSProperties = {
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  fontWeight: 700,
-  color: 'var(--color-text)',
-};
-
-// Quiet, factual best-value marker: accent ink on a faint accent wash, no shout.
-const badgeStyle: CSSProperties = {
-  paddingInline: 'var(--space-2)',
-  paddingBlock: 'var(--space-1)',
-  borderRadius: 'var(--radius-chip)',
-  background: 'color-mix(in srgb, var(--color-accent) 14%, transparent)',
-  color: 'var(--color-accent)',
-  fontSize: typeRamp.caption.rem,
-  lineHeight: `${typeRamp.caption.lineHeight}px`,
-  fontWeight: 700,
-  letterSpacing: '0.02em',
-};
-
 const priceRowStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'baseline',
   gap: 'var(--space-2)',
-};
-
-const priceStyle: CSSProperties = {
-  fontSize: typeRamp.title2.rem,
-  lineHeight: `${typeRamp.title2.lineHeight}px`,
-  fontWeight: 700,
-  color: 'var(--color-text)',
-};
-
-const cadenceStyle: CSSProperties = {
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
-};
-
-const planNoteStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
 };
 
 const ctaStyle: CSSProperties = {
@@ -459,42 +389,6 @@ const ctaStyle: CSSProperties = {
 };
 
 // --- notes, banner, error, links ------------------------------------------
-
-const honestNoteStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
-};
-
-const reassureStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  color: 'var(--color-secondary)',
-};
-
-// Return-from-Stripe note: a soft accent-tinted surface, calm in both themes.
-const bannerStyle: CSSProperties = {
-  margin: 0,
-  padding: 'var(--space-3) var(--space-4)',
-  borderRadius: 'var(--radius-input)',
-  background: 'color-mix(in srgb, var(--color-accent) 8%, var(--color-surface))',
-  border: '1px solid color-mix(in srgb, var(--color-accent) 30%, var(--color-hairline))',
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  color: 'var(--color-text)',
-};
-
-// Deliberately NOT rust/red — a quiet body-ink line that invites a retry.
-const errorLineStyle: CSSProperties = {
-  margin: 0,
-  minHeight: `${typeRamp.footnote.lineHeight}px`,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  fontWeight: 600,
-  color: 'var(--color-text)',
-};
 
 const manageBlockStyle: CSSProperties = {
   display: 'flex',

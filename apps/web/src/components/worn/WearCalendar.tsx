@@ -7,6 +7,7 @@ import { strings } from '@era/core/strings';
 import { groupWearsByDay, type WearLogLike } from '@era/core/wear-stats';
 import { transitionFor } from '../../lib/motion';
 import { localToday } from '../../lib/local-date';
+import { Text } from '../Text';
 import type { WornItem, WornLog } from './types';
 
 export interface WearCalendarProps {
@@ -85,15 +86,27 @@ export function WearCalendar({ month, logs, itemsById }: WearCalendarProps) {
 
   return (
     <section style={sectionStyle} aria-label={strings.wear.calendar.title}>
-      <h2 style={titleStyle}>{strings.wear.calendar.title}</h2>
+      <Text variant="title" size="title3" weight={700} as="h2" style={{ margin: 0, color: 'var(--color-text)' }}>
+        {strings.wear.calendar.title}
+      </Text>
 
-      {isEmpty ? <p style={emptyStyle}>{strings.wear.calendar.emptyMonth}</p> : null}
+      {isEmpty ? (
+        <Text variant="body" size="subhead" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
+          {strings.wear.calendar.emptyMonth}
+        </Text>
+      ) : null}
 
       <div role="row" style={weekdayRowStyle} aria-hidden="true">
         {WEEKDAY_LETTERS.map((letter, index) => (
-          <span key={index} style={weekdayCellStyle}>
+          <Text
+            key={index}
+            variant="caption"
+            weight={700}
+            as="span"
+            style={{ textAlign: 'center', color: 'var(--color-secondary-strong)' }}
+          >
             {letter}
-          </span>
+          </Text>
         ))}
       </div>
 
@@ -139,7 +152,9 @@ export function WearCalendar({ month, logs, itemsById }: WearCalendarProps) {
                 ...(isSelected ? selectedCellStyle : null),
               }}
             >
-              <span style={dayNumberStyle}>{day}</span>
+              <Text variant="caption" weight={600} as="span" style={dayNumberStyle}>
+                {day}
+              </Text>
               {thumbs.length > 0 ? (
                 <span style={thumbStackStyle} aria-hidden="true">
                   {thumbs.map((item) => (
@@ -169,8 +184,12 @@ export function WearCalendar({ month, logs, itemsById }: WearCalendarProps) {
             transition={transitionFor(motionToken.springs.gentle, reduced)}
           >
             <div style={panelHeaderStyle}>
-              <span style={panelDateStyle}>{selected.longDate}</span>
-              <span style={panelCountStyle}>{strings.wear.calendar.dayA11y(selected.count)}</span>
+              <Text variant="ui" size="subhead" weight={700} as="span" style={{ color: 'var(--color-text)' }}>
+                {selected.longDate}
+              </Text>
+              <Text variant="caption" size="footnote" as="span" style={{ color: 'var(--color-secondary-strong)' }}>
+                {strings.wear.calendar.dayA11y(selected.count)}
+              </Text>
             </div>
             {selected.items.length > 0 ? (
               <ul style={panelItemsStyle}>
@@ -181,7 +200,13 @@ export function WearCalendar({ month, logs, itemsById }: WearCalendarProps) {
                         <img src={item.imageUrl} alt={item.name} style={thumbImageStyle} />
                       ) : null}
                     </span>
-                    <span style={panelItemNameStyle}>{item.name}</span>
+                    <Text
+                      variant="caption"
+                      as="span"
+                      style={{ color: 'var(--color-secondary-strong)', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}
+                    >
+                      {item.name}
+                    </Text>
                   </li>
                 ))}
               </ul>
@@ -199,33 +224,10 @@ const sectionStyle: CSSProperties = {
   gap: 'var(--space-4)',
 };
 
-const titleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.title3.rem,
-  lineHeight: `${typeRamp.title3.lineHeight}px`,
-  fontWeight: 700,
-  color: 'var(--color-text)',
-};
-
-const emptyStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
-};
-
 const weekdayRowStyle: CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'repeat(7, 1fr)',
   gap: 'var(--space-1)',
-};
-
-const weekdayCellStyle: CSSProperties = {
-  textAlign: 'center',
-  fontSize: typeRamp.caption.rem,
-  lineHeight: `${typeRamp.caption.lineHeight}px`,
-  fontWeight: 700,
-  color: 'var(--color-secondary-strong)',
 };
 
 const gridStyle: CSSProperties = {
@@ -274,9 +276,7 @@ const todayRingStyle: CSSProperties = {
 };
 
 const dayNumberStyle: CSSProperties = {
-  fontSize: typeRamp.caption.rem,
   lineHeight: `${typeRamp.caption.lineHeight}px`,
-  fontWeight: 600,
 };
 
 const thumbStackStyle: CSSProperties = {
@@ -325,19 +325,6 @@ const panelHeaderStyle: CSSProperties = {
   gap: 'var(--space-3)',
 };
 
-const panelDateStyle: CSSProperties = {
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  fontWeight: 700,
-  color: 'var(--color-text)',
-};
-
-const panelCountStyle: CSSProperties = {
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
-};
-
 const panelItemsStyle: CSSProperties = {
   display: 'flex',
   flexWrap: 'wrap',
@@ -365,15 +352,4 @@ const panelThumbStyle: CSSProperties = {
   borderRadius: 'var(--radius-chip)',
   background: 'var(--color-bg)',
   border: '1px solid var(--color-hairline)',
-};
-
-const panelItemNameStyle: CSSProperties = {
-  fontSize: typeRamp.caption.rem,
-  lineHeight: `${typeRamp.caption.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
-  textAlign: 'center',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-  maxWidth: '100%',
 };

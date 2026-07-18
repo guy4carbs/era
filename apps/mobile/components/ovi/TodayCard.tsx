@@ -111,7 +111,7 @@ export function TodayCard() {
 
   return (
     <View style={styles.card}>
-      <Text variant="ui" size="title3" weight={600} color={colors.text}>
+      <Text variant="title" color={colors.text}>
         {strings.ovi.todayTitle}
       </Text>
 
