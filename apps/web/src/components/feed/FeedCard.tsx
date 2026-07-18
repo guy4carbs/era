@@ -625,6 +625,7 @@ const detailStyle: CSSProperties = {
   fontSize: typeRamp.body.rem,
   lineHeight: `${typeRamp.body.lineHeight}px`,
   resize: 'vertical',
+  // eslint-disable-next-line no-restricted-syntax -- textarea inherits the body sans stack; no brand-face declaration
   fontFamily: 'inherit',
 };
 

@@ -69,6 +69,7 @@ const swatchStyle: CSSProperties = {
 const hexLabelStyle: CSSProperties = {
   fontSize: typeRamp.caption.rem,
   lineHeight: `${typeRamp.caption.lineHeight}px`,
+  // eslint-disable-next-line no-restricted-syntax -- monospace hex-code labels, not brand type
   fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
   color: 'var(--color-secondary)',
 };

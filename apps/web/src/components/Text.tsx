@@ -113,6 +113,7 @@ export function Text({
     : `var(${fontFamilies.cssVar.sans}), ${fontFamilies.sansFallback}`;
 
   const typeStyle: CSSProperties = {
+    // eslint-disable-next-line no-restricted-syntax -- THE type-system primitive: the one sanctioned place fontFamily is set, from @era/tokens
     fontFamily,
     fontSize: resolveFontSize(variant, size),
     fontWeight: weight ?? role.weight,

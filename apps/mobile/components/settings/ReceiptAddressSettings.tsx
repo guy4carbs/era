@@ -131,6 +131,7 @@ export function ReceiptAddressSettings({ onToast }: ReceiptAddressSettingsProps)
           accessibilityLabel={state.address}
           style={{
             color: colors.text,
+            // eslint-disable-next-line no-restricted-syntax -- monospace address/receipt field, not brand type
             fontFamily: MONO,
             fontSize: typeRamp.subhead.pt,
             lineHeight: typeRamp.subhead.lineHeight,

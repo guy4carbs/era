@@ -57,6 +57,7 @@ export function Input({ error, containerStyle, onFocus, onBlur, ...rest }: Input
             color: colors.text,
             // The field text is body-sized sans; TextInput isn't a <Text> node so
             // it can't route through the primitive — mirror the role by hand.
+            // eslint-disable-next-line no-restricted-syntax -- TextInput mirrors the body role; not a <Text> node
             fontFamily: mobileSansFamily(typeRoles.body.weight),
             fontSize: roleSizePx('body'),
           },

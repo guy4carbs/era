@@ -104,6 +104,7 @@ export function Text({
       maxFontSizeMultiplier={maxFontSizeMultiplier}
       style={[
         {
+          // eslint-disable-next-line no-restricted-syntax -- THE type-system primitive: the one sanctioned place fontFamily is set, from @era/tokens
           fontFamily,
           fontSize: sizePx,
           lineHeight,

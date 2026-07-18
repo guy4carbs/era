@@ -33,6 +33,20 @@ export const config = tseslint.config(
           },
         },
       ],
+      // Typography gate: raw `fontFamily` is banned in app/component source. The
+      // Fraunces/Geist faces are reached ONLY through the `<Text variant>` type
+      // system (@era/tokens typeRoles). A genuine exception (the Text primitive
+      // itself, a bare TextInput mirroring a role, a documented monospace field)
+      // must carry an `eslint-disable-next-line no-restricted-syntax` with a
+      // reason — so every raw font declaration is deliberate and auditable.
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "Property[key.name='fontFamily']",
+          message:
+            'Raw fontFamily is banned — render text through <Text variant> (the Fraunces/Geist type system in @era/tokens). If this is the Text primitive, a TextInput, or a documented mono exception, add an eslint-disable-next-line no-restricted-syntax with a reason.',
+        },
+      ],
     },
   },
   prettier,
