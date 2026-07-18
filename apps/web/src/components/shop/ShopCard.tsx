@@ -73,6 +73,10 @@ function formatPrice(price: number, currency: string): string {
 export function ShopCard({ product, isSaved, onToggleSave, onDismiss }: ShopCardProps) {
   const reduced = useReducedMotion();
   const [whyOpen, setWhyOpen] = useState(false);
+  // When the product image URL can't load, we swap in a neutral placeholder tile
+  // rather than letting the browser fall back to raw `alt` text (which, inside the
+  // affiliate anchor, would render as a blue underlined link).
+  const [imgFailed, setImgFailed] = useState(false);
   const alt = `${product.brand} ${product.title}`;
   // Only a validated https link is ever rendered as a click-out. A tampered or
   // non-https URL leaves the card non-clickable rather than exposing a bad href.
@@ -103,10 +107,24 @@ export function ShopCard({ product, isSaved, onToggleSave, onDismiss }: ShopCard
     onDismiss?.(product.id);
   }
 
-  const image = (
+  const image = imgFailed ? (
+    // Broken/missing image → a neutral surface tile carrying the brand initial,
+    // never raw alt text under an anchor (which would style as a blue link).
+    <div style={imagePlaceholderStyle} aria-label={alt} role="img">
+      <Text variant="oviAccent" as="span" size="largeTitle" style={{ color: 'var(--color-secondary)' }} aria-hidden="true">
+        {product.brand.charAt(0).toUpperCase()}
+      </Text>
+    </div>
+  ) : (
     // Product photos read better filled than contained; the surface shows
     // through as a graceful placeholder if the image can't load.
-    <img src={product.imageUrl} alt={alt} style={imageStyle} loading="lazy" />
+    <img
+      src={product.imageUrl}
+      alt={alt}
+      style={imageStyle}
+      loading="lazy"
+      onError={() => setImgFailed(true)}
+    />
   );
 
   return (
@@ -213,6 +231,21 @@ const imageLinkStyle: CSSProperties = {
   aspectRatio: '4 / 5',
   background: 'var(--color-surface)',
   borderBottom: '1px solid var(--color-hairline)',
+  // Belt-and-suspenders: even if a bare alt string ever surfaced here, it can
+  // never render as the default blue underlined link.
+  color: 'var(--color-secondary)',
+  textDecoration: 'none',
+};
+
+// Neutral fallback tile for a broken/missing product image — fills the same box
+// as the photo, brand initial centred, so the card never collapses to alt text.
+const imagePlaceholderStyle: CSSProperties = {
+  width: '100%',
+  height: '100%',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  background: 'var(--color-surface)',
 };
 
 const imageStyle: CSSProperties = {

@@ -158,7 +158,8 @@ export function FeedCard({
 
       <footer style={footerStyle}>
         {post.title ? (
-          <Text variant="ui" size="subhead" weight={600} as="p" style={{ margin: 0, color: 'var(--color-text)' }}>
+          // The shared look's name — editorial label, Fraunces italic (oviAccent).
+          <Text variant="oviAccent" size="subhead" as="p" style={{ margin: 0, color: 'var(--color-text)' }}>
             {post.title}
           </Text>
         ) : null}

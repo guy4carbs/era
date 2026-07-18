@@ -37,7 +37,10 @@ export const proseCss = [
   // Links in accent, underlined for scannability in a wall of prose.
   `.era-prose a{color:var(--color-accent);font-weight:600;text-underline-offset:2px}`,
 
-  // Emphasis + inline code.
+  // Emphasis + inline code. The one sanctioned monospace exception in the app:
+  // literal `<code>` in journal/legal prose is code, and code reads as monospace —
+  // the single universally-justified "different font genuinely needed" case. Lives
+  // in a string literal, so the no-restricted-syntax fontFamily rule doesn't see it.
   `.era-prose strong{font-weight:700}`,
   `.era-prose code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:${typeRamp.footnote.rem};background:var(--color-surface);border:1px solid var(--color-hairline);border-radius:var(--radius-chip);padding:0 var(--space-1)}`,
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { type CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { motion as motionToken, boxShadows } from '@era/tokens';
 import { Text } from '../Text';
@@ -70,6 +70,9 @@ function formatCents(cents: number, currency: string): string {
 export function PriceDropCard({ id, payload, onResolve }: PriceDropCardProps) {
   const reduced = useReducedMotion();
   const href = safeHttpsUrl(payload.affiliateUrl);
+  // A broken thumbnail degrades to a neutral tile, never raw alt text under the
+  // affiliate anchor (which would style as a blue underlined link).
+  const [imgFailed, setImgFailed] = useState(false);
   const alt = payload.title;
   const oldPrice = formatCents(payload.oldPriceCents, payload.currency);
   const newPrice = formatCents(payload.newPriceCents, payload.currency);
@@ -82,6 +85,18 @@ export function PriceDropCard({ id, payload, onResolve }: PriceDropCardProps) {
     });
     onResolve(id);
   }
+
+  const thumb = imgFailed ? (
+    <div style={thumbPlaceholderStyle} aria-label={alt} role="img" />
+  ) : (
+    <img
+      src={payload.imageUrl}
+      alt={alt}
+      style={thumbImageStyle}
+      loading="lazy"
+      onError={() => setImgFailed(true)}
+    />
+  );
 
   return (
     <motion.article
@@ -100,12 +115,10 @@ export function PriceDropCard({ id, payload, onResolve }: PriceDropCardProps) {
           style={thumbLinkStyle}
           aria-label={copy.view}
         >
-          <img src={payload.imageUrl} alt={alt} style={thumbImageStyle} loading="lazy" />
+          {thumb}
         </a>
       ) : (
-        <div style={thumbLinkStyle}>
-          <img src={payload.imageUrl} alt={alt} style={thumbImageStyle} loading="lazy" />
-        </div>
+        <div style={thumbLinkStyle}>{thumb}</div>
       )}
 
       <div style={bodyStyle}>
@@ -147,6 +160,9 @@ const thumbLinkStyle: CSSProperties = {
   overflow: 'hidden',
   background: 'var(--color-bg)',
   border: '1px solid var(--color-hairline)',
+  // Belt-and-suspenders: a bare alt string can never surface as a blue link.
+  color: 'var(--color-secondary)',
+  textDecoration: 'none',
 };
 
 const thumbImageStyle: CSSProperties = {
@@ -154,6 +170,13 @@ const thumbImageStyle: CSSProperties = {
   height: '100%',
   objectFit: 'cover',
   display: 'block',
+};
+
+// Neutral fill for a broken/missing thumbnail — keeps the box, shows no alt text.
+const thumbPlaceholderStyle: CSSProperties = {
+  width: '100%',
+  height: '100%',
+  background: 'var(--color-surface)',
 };
 
 const bodyStyle: CSSProperties = {

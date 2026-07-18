@@ -63,10 +63,11 @@ export function OutfitGrid({ outfits, feedEnabled, onOpen, onAssign }: OutfitGri
             <button type="button" style={openButtonStyle} aria-label={title} onClick={() => onOpen(outfit.id)}>
               <Collage cover={outfit.coverUrl} thumbs={outfit.thumbnailUrls} alt={title} />
             </button>
+            {/* The look's name is an editorial label — Fraunces italic (oviAccent),
+                matching how Ovi's names/eras read across the app. */}
             <Text
-              variant="ui"
+              variant="oviAccent"
               size="subhead"
-              weight={600}
               as="p"
               style={{ margin: 0, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
             >

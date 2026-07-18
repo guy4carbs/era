@@ -10,7 +10,7 @@
  *
  * Three server states drive the body:
  *   - dormant (inbound not switched on yet) → the quiet "coming soon" line only.
- *   - active → the address in a selectable monospace row, a privacy note, and a
+ *   - active → the address in a selectable row, a privacy note, and a
  *     regenerate action guarded by its consequence caption.
  *   - a read failure → a quiet "Try again" that re-fetches, never a wrong state.
  *
@@ -22,17 +22,10 @@
  * the old address shown.
  */
 import { strings } from '@era/core/strings';
-import { layout, radii, spacing, typeRamp } from '@era/tokens';
+import { layout, radii, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text as RNText,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
@@ -40,9 +33,6 @@ import { useTheme } from '@/lib/theme';
 import { getReceiptAddress, regenerateReceiptAddress, type ReceiptAddress } from './receipt-address-api';
 
 const copy = strings.settings.receiptAddress;
-
-/** iOS ships Menlo; Android's system monospace is the safe cross-platform pick. */
-const MONO = Platform.select({ ios: 'Menlo', default: 'monospace' });
 
 /** The load states the section renders against: still loading, a read failure, or the server truth. */
 type LoadState = 'loading' | 'error' | ReceiptAddress;
@@ -126,19 +116,15 @@ export function ReceiptAddressSettings({ onToast }: ReceiptAddressSettingsProps)
         {copy.addressLabel}
       </Text>
       <View style={[styles.addressRow, { backgroundColor: colors.surface, borderColor: colors.hairline }]}>
-        <RNText
+        <Text
+          variant="body"
+          size="subhead"
           selectable
           accessibilityLabel={state.address}
-          style={{
-            color: colors.text,
-            // eslint-disable-next-line no-restricted-syntax -- monospace address/receipt field, not brand type
-            fontFamily: MONO,
-            fontSize: typeRamp.subhead.pt,
-            lineHeight: typeRamp.subhead.lineHeight,
-          }}
+          color={colors.text}
         >
           {state.address}
-        </RNText>
+        </Text>
       </View>
 
       <Text variant="caption" size="footnote" color={colors.secondary}>

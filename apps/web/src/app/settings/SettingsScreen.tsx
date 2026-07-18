@@ -401,7 +401,7 @@ type RegenerateStatus = 'idle' | 'busy' | 'done' | 'error';
  * paste-based receipt import. Dormant server-side (inbound receipts not
  * provisioned, and today's default) → just the quiet "coming soon" line, no
  * address UI and no explainer that would contradict it. Active → the explainer,
- * then the private address in a selectable monospace row with a Copy button, a
+ * then the private address in a selectable row with a Copy button, a
  * privacy footnote, and a
  * destructive-adjacent Regenerate action whose hard-kill consequence is shown
  * inline *before* the tap (no modal — restraint). Copy is Quill's
@@ -507,7 +507,7 @@ function ReceiptAddressControl() {
           <div style={addressBlockStyle}>
             <Text variant="caption" as="span" size="footnote" style={{ color: 'var(--color-secondary-strong)' }}>{copy.addressLabel}</Text>
             <div style={addressRowStyle}>
-              <code style={addressCodeStyle}>{state.address}</code>
+              <Text variant="caption" as="span" size="footnote" style={addressCodeStyle}>{state.address}</Text>
               <button
                 type="button"
                 style={copyButtonStyle}
@@ -727,7 +727,9 @@ const addressRowStyle: CSSProperties = {
   gap: 'var(--space-3)',
 };
 
-// The address itself: monospace + select-all so a single tap grabs the whole token.
+// The address itself: Geist + select-all so a single tap grabs the whole address.
+// A copyable share value (a receipt-forwarding email), not code — reads in Geist
+// like the rest of the UI; only the bordered box + select-all behaviour remain here.
 const addressCodeStyle: CSSProperties = {
   flex: 1,
   minWidth: 0,
@@ -737,10 +739,6 @@ const addressCodeStyle: CSSProperties = {
   borderRadius: 'var(--radius-input)',
   border: '1px solid var(--color-hairline)',
   background: 'color-mix(in srgb, var(--color-hairline) 40%, transparent)',
-  // eslint-disable-next-line no-restricted-syntax -- monospace code/receipt field, not brand type
-  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
   color: 'var(--color-text)',
 };
 
