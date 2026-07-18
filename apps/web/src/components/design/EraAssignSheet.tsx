@@ -2,7 +2,8 @@
 
 import { useState, type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, typeRamp } from '@era/tokens';
+import { motion as motionToken } from '@era/tokens';
+import { Text } from '../Text';
 import { strings } from '@era/core/strings';
 import { transitionFor } from '../../lib/motion';
 import { GlassSheet } from '../GlassSheet';
@@ -33,13 +34,6 @@ const contentStyle: CSSProperties = {
   paddingTop: 'var(--space-4)',
 };
 
-const titleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.title2.rem,
-  lineHeight: `${typeRamp.title2.lineHeight}px`,
-  fontWeight: 700,
-};
-
 const eraRowStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
@@ -52,20 +46,7 @@ const eraRowStyle: CSSProperties = {
   border: '1px solid var(--color-hairline)',
   background: 'var(--color-surface)',
   color: 'var(--color-text)',
-  fontSize: typeRamp.body.rem,
   cursor: 'pointer',
-};
-
-const countStyle: CSSProperties = {
-  color: 'var(--color-secondary-strong)',
-  fontSize: typeRamp.footnote.rem,
-};
-
-const dividerLabelStyle: CSSProperties = {
-  margin: 0,
-  color: 'var(--color-secondary-strong)',
-  fontSize: typeRamp.footnote.rem,
-  fontWeight: 600,
 };
 
 const createStyle: CSSProperties = {
@@ -96,7 +77,9 @@ export function EraAssignSheet({ eras, busy, onAssignExisting, onCreateAndAssign
       />
       <GlassSheet peek>
         <div style={contentStyle}>
-          <h2 style={titleStyle}>{strings.design.assignToEra}</h2>
+          <Text variant="title" size="title2" as="h2" style={{ margin: 0 }}>
+            {strings.design.assignToEra}
+          </Text>
 
           {eras.map((era) => (
             <button
@@ -107,12 +90,16 @@ export function EraAssignSheet({ eras, busy, onAssignExisting, onCreateAndAssign
               onClick={() => onAssignExisting(era.id)}
             >
               <span>{era.title}</span>
-              <span style={countStyle} aria-hidden="true">{era.outfitCount}</span>
+              <Text variant="caption" size="footnote" as="span" aria-hidden="true" style={{ color: 'var(--color-secondary-strong)' }}>
+                {era.outfitCount}
+              </Text>
             </button>
           ))}
 
           <div style={createStyle}>
-            <p style={dividerLabelStyle}>{strings.design.newEra}</p>
+            <Text variant="caption" size="footnote" weight={600} as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
+              {strings.design.newEra}
+            </Text>
             <Input
               aria-label={strings.design.eraTitlePlaceholder}
               placeholder={strings.design.eraTitlePlaceholder}

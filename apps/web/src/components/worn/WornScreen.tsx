@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
-import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { buildMonthlyRecap } from '@era/core/wear-stats';
 import { Container } from '../Container';
+import { Text } from '../Text';
 import { localMonthToday } from '../../lib/local-date';
 import { MonthlyRecapCard } from './MonthlyRecapCard';
 import { WearCalendar } from './WearCalendar';
@@ -98,8 +98,10 @@ export function WornScreen() {
       <main style={screenStyle}>
         <header style={headerStyle}>
           <Link href="/closet" aria-label="Back to Closet" style={backStyle}>
-            <span aria-hidden="true">←</span>
-            Closet
+            <Text variant="ui" size="subhead" weight={600} as="span" style={{ color: 'var(--color-secondary-strong)' }}>
+              <span aria-hidden="true">←</span>
+              {' '}Closet
+            </Text>
           </Link>
 
           <div style={monthNavStyle}>
@@ -111,9 +113,9 @@ export function WornScreen() {
             >
               <span aria-hidden="true">←</span>
             </button>
-            <h1 style={monthTitleStyle} aria-live="polite">
+            <Text variant="largeTitle" size="title1" weight={700} as="h1" aria-live="polite" style={{ margin: 0, color: 'var(--color-text)', textAlign: 'center', flex: 1 }}>
               {monthLabel}
-            </h1>
+            </Text>
             <button
               type="button"
               onClick={() => setMonth((m) => shiftMonth(m, 1))}
@@ -127,9 +129,13 @@ export function WornScreen() {
         </header>
 
         {state.status === 'error' ? (
-          <p style={messageStyle}>{strings.errors.generic}</p>
+          <Text variant="body" size="subhead" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
+            {strings.errors.generic}
+          </Text>
         ) : state.status === 'loading' ? (
-          <p style={messageStyle}>{strings.wear.calendar.title}…</p>
+          <Text variant="body" size="subhead" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
+            {strings.wear.calendar.title}…
+          </Text>
         ) : (
           <>
             <MonthlyRecapCard recap={recap} itemsById={itemsById} monthLabel={monthLabel} />
@@ -161,10 +167,6 @@ const backStyle: CSSProperties = {
   gap: 'var(--space-2)',
   alignSelf: 'flex-start',
   minHeight: 'var(--touch-target-min)',
-  color: 'var(--color-secondary-strong)',
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  fontWeight: 600,
   textDecoration: 'none',
 };
 
@@ -173,16 +175,6 @@ const monthNavStyle: CSSProperties = {
   alignItems: 'center',
   justifyContent: 'space-between',
   gap: 'var(--space-3)',
-};
-
-const monthTitleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.title1.rem,
-  lineHeight: `${typeRamp.title1.lineHeight}px`,
-  fontWeight: 700,
-  color: 'var(--color-text)',
-  textAlign: 'center',
-  flex: 1,
 };
 
 const navButtonStyle: CSSProperties = {
@@ -196,13 +188,6 @@ const navButtonStyle: CSSProperties = {
   border: '1px solid var(--color-hairline)',
   background: 'var(--color-surface)',
   color: 'var(--color-text)',
-  fontSize: typeRamp.body.rem,
+  fontSize: 'var(--text-body)',
   cursor: 'pointer',
-};
-
-const messageStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
 };

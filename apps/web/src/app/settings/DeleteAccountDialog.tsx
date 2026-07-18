@@ -8,6 +8,7 @@ import { transitionFor } from '../../lib/motion';
 import { eraAuth } from '../../lib/auth-client';
 import { GlassSheet } from '../../components/GlassSheet';
 import { Input } from '../../components/Input';
+import { Text } from '../../components/Text';
 import { SETTINGS_COPY } from './copy';
 
 /** The delete request's lifecycle, driving the dialog's controls + copy. */
@@ -144,18 +145,18 @@ export function DeleteAccountDialog({ accountEmail }: DeleteAccountDialogProps) 
           />
           <GlassSheet labelledBy="delete-account-title">
             <div style={contentStyle}>
-              <h2 id="delete-account-title" style={titleStyle}>
+              <Text variant="title" as="h2" id="delete-account-title" style={{ margin: 0 }}>
                 {SETTINGS_COPY.deleteTitle}
-              </h2>
+              </Text>
 
               {phase === 'deleted' ? (
-                <p role="status" style={bodyStyle}>
+                <Text variant="body" as="p" role="status" style={{ margin: 0, color: 'var(--color-text)' }}>
                   {SETTINGS_COPY.deleted}
-                </p>
+                </Text>
               ) : (
                 <>
-                  <p style={bodyStyle}>{SETTINGS_COPY.deleteBody}</p>
-                  <p style={promptStyle}>{SETTINGS_COPY.deletePrompt(accountEmail)}</p>
+                  <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-text)' }}>{SETTINGS_COPY.deleteBody}</Text>
+                  <Text variant="caption" as="p" size="footnote" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{SETTINGS_COPY.deletePrompt(accountEmail)}</Text>
                   <Input
                     ref={inputRef}
                     label={SETTINGS_COPY.deleteInputLabel}
@@ -233,27 +234,6 @@ const contentStyle: CSSProperties = {
   flexDirection: 'column',
   gap: 'var(--space-4)',
   paddingTop: 'var(--space-4)',
-};
-
-const titleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.title2.rem,
-  lineHeight: `${typeRamp.title2.lineHeight}px`,
-  fontWeight: 700,
-};
-
-const bodyStyle: CSSProperties = {
-  margin: 0,
-  color: 'var(--color-text)',
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
-};
-
-const promptStyle: CSSProperties = {
-  margin: 0,
-  color: 'var(--color-secondary-strong)',
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
 };
 
 const actionsStyle: CSSProperties = {

@@ -1,4 +1,5 @@
 import { type CSSProperties, type JSX } from 'react';
+import { Text } from '../Text';
 
 export interface AvatarProps {
   /** The avatar image URL, or null to fall back to the monogram. */
@@ -37,21 +38,24 @@ export function Avatar({ src, name, size }: AvatarProps): JSX.Element {
   }
 
   const initial = name.trim().charAt(0).toUpperCase() || '·';
+  const monoSize = Math.round(size * 0.42);
   return (
-    <span
+    <Text
+      variant="ui"
+      size={monoSize}
+      weight={600}
+      as="span"
       aria-hidden="true"
       style={{
         ...box,
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: `${Math.round(size * 0.42)}px`,
-        fontWeight: 600,
         color: 'var(--color-secondary-strong)',
         userSelect: 'none',
       }}
     >
       {initial}
-    </span>
+    </Text>
   );
 }

@@ -1,6 +1,6 @@
 import { type CSSProperties } from 'react';
-import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
+import { Text } from '../Text';
 import type { ProductWhy } from '@era/core/shop';
 
 export interface WhyLabelProps {
@@ -32,10 +32,10 @@ export function WhyLabel({ why }: WhyLabelProps) {
 
   if (why.kind === 'similar_owned') {
     return (
-      <p style={warningStyle}>
+      <Text variant="caption" as="p" size="footnote" weight={600} style={warningStyle}>
         <span aria-hidden="true" style={warningDotStyle} />
         {strings.shop.whySimilarOwned(why.ownedCount)}
-      </p>
+      </Text>
     );
   }
 
@@ -45,10 +45,10 @@ export function WhyLabel({ why }: WhyLabelProps) {
       : strings.shop.whyCompletesOutfits(why.count);
 
   return (
-    <p style={positiveStyle}>
+    <Text variant="caption" as="p" size="footnote" weight={600} style={positiveStyle}>
       <span aria-hidden="true" style={positiveDotStyle} />
       {text}
-    </p>
+    </Text>
   );
 }
 
@@ -57,9 +57,6 @@ const lineBase: CSSProperties = {
   alignItems: 'center',
   gap: 'var(--space-1)',
   margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  fontWeight: 600,
 };
 
 const positiveStyle: CSSProperties = {

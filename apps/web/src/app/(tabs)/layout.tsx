@@ -3,10 +3,10 @@
 import { type CSSProperties, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { typeRamp } from '@era/tokens';
 import { Container, OviFab, TabBar, TAB_ITEMS, type TabId } from '../../components';
 import { OviChatProvider, useOviChat } from '../../components/ovi';
 import { AnalyticsIdentity } from '../../components/system/AnalyticsIdentity';
+import { Text } from '../../components/Text';
 
 /** Resolve the active tab from the first path segment; default to feed. */
 function activeTabFrom(pathname: string): TabId {
@@ -40,9 +40,6 @@ const railItemStyle: CSSProperties = {
   minHeight: 'var(--touch-target-min)',
   paddingInline: 'var(--space-2)',
   borderRadius: 'var(--radius-chip)',
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  fontWeight: 600,
   textDecoration: 'none',
 };
 
@@ -74,7 +71,7 @@ function TabsShell({ children }: { children: ReactNode }) {
                 color: isActive ? 'var(--color-accent)' : 'var(--color-secondary-strong)',
               }}
             >
-              {tab.label}
+              <Text variant="ui">{tab.label}</Text>
             </Link>
           );
         })}

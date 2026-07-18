@@ -1,7 +1,8 @@
 'use client';
 
 import { type CSSProperties } from 'react';
-import { layout, typeRamp } from '@era/tokens';
+import { layout } from '@era/tokens';
+import { Text } from '../Text';
 import { strings } from '@era/core/strings';
 import { ShareToFeedButton } from '../feed';
 import { Collage } from './Collage';
@@ -35,31 +36,11 @@ const openButtonStyle: CSSProperties = {
   width: '100%',
 };
 
-const nameStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  fontWeight: 600,
-  color: 'var(--color-text)',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-};
-
-const metaStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  color: 'var(--color-secondary-strong)',
-};
-
 const assignStyle: CSSProperties = {
   alignSelf: 'flex-start',
   padding: 0,
   border: 'none',
   background: 'transparent',
-  color: 'var(--color-accent)',
-  fontSize: typeRamp.footnote.rem,
-  fontWeight: 600,
   cursor: 'pointer',
 };
 
@@ -82,10 +63,22 @@ export function OutfitGrid({ outfits, feedEnabled, onOpen, onAssign }: OutfitGri
             <button type="button" style={openButtonStyle} aria-label={title} onClick={() => onOpen(outfit.id)}>
               <Collage cover={outfit.coverUrl} thumbs={outfit.thumbnailUrls} alt={title} />
             </button>
-            <p style={nameStyle}>{title}</p>
-            <p style={metaStyle}>{meta}</p>
+            <Text
+              variant="ui"
+              size="subhead"
+              weight={600}
+              as="p"
+              style={{ margin: 0, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+            >
+              {title}
+            </Text>
+            <Text variant="caption" size="footnote" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
+              {meta}
+            </Text>
             <button type="button" style={assignStyle} onClick={() => onAssign(outfit)}>
-              {strings.design.assignToEra}
+              <Text variant="ui" size="footnote" weight={600} style={{ color: 'var(--color-accent)' }}>
+                {strings.design.assignToEra}
+              </Text>
             </button>
             {/* Flag-gated (renders null when the feed is off) — the web outfit
                 share entry point, matching the inline "add to an era" idiom.

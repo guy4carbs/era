@@ -1,8 +1,8 @@
 'use client';
 
 import { useRef, useState, type CSSProperties } from 'react';
-import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
+import { Text } from '../Text';
 import { Button } from '../Button';
 import { Card } from '../Card';
 import { BatchConfirm } from './BatchConfirm';
@@ -178,16 +178,16 @@ export function BulkCapture({ onDone, onBack }: BulkCaptureProps) {
   // mode === 'pick'
   return (
     <div style={columnStyle}>
-      <p style={instructionStyle}>{strings.closet.bulkCapture.instruction}</p>
+      <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{strings.closet.bulkCapture.instruction}</Text>
       <div style={gridStyle}>
         <label style={labelStyle}>
           <input type="file" accept="image/*" capture="environment" style={hiddenInputStyle} onChange={handlePick} />
           <Card interactive>
             <div style={tileStyle}>
-              <span style={glyphStyle} aria-hidden="true">
+              <Text variant="ui" as="span" size="title1" style={{ lineHeight: '1' }} aria-hidden="true">
                 ◉
-              </span>
-              <span style={captionStyle}>{strings.closet.takePhoto}</span>
+              </Text>
+              <Text variant="ui" as="span" size="subhead" weight={600} style={{ color: 'var(--color-text)' }}>{strings.closet.takePhoto}</Text>
             </div>
           </Card>
         </label>
@@ -195,10 +195,10 @@ export function BulkCapture({ onDone, onBack }: BulkCaptureProps) {
           <input type="file" accept="image/*" style={hiddenInputStyle} onChange={handlePick} />
           <Card interactive>
             <div style={tileStyle}>
-              <span style={glyphStyle} aria-hidden="true">
+              <Text variant="ui" as="span" size="title1" style={{ lineHeight: '1' }} aria-hidden="true">
                 ▦
-              </span>
-              <span style={captionStyle}>{strings.closet.pickPhoto}</span>
+              </Text>
+              <Text variant="ui" as="span" size="subhead" weight={600} style={{ color: 'var(--color-text)' }}>{strings.closet.pickPhoto}</Text>
             </div>
           </Card>
         </label>
@@ -219,7 +219,7 @@ function StatusMessage({
 }) {
   return (
     <div style={messageColumnStyle} aria-live={tone === 'assertive' ? 'assertive' : 'polite'}>
-      <p style={messageStyle}>{message}</p>
+      <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-text)' }}>{message}</Text>
       {children}
     </div>
   );
@@ -232,12 +232,6 @@ const columnStyle: CSSProperties = {
   width: '100%',
 };
 
-const instructionStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
-};
 
 const gridStyle: CSSProperties = {
   display: 'grid',
@@ -274,17 +268,6 @@ const tileStyle: CSSProperties = {
   textAlign: 'center',
 };
 
-const glyphStyle: CSSProperties = {
-  fontSize: typeRamp.title1.rem,
-  lineHeight: 1,
-};
-
-const captionStyle: CSSProperties = {
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  fontWeight: 600,
-  color: 'var(--color-text)',
-};
 
 const messageColumnStyle: CSSProperties = {
   display: 'flex',
@@ -295,9 +278,3 @@ const messageColumnStyle: CSSProperties = {
   textAlign: 'center',
 };
 
-const messageStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
-  color: 'var(--color-text)',
-};

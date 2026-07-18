@@ -2,8 +2,9 @@
 
 import { useEffect, useState, type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, typeRamp } from '@era/tokens';
+import { motion as motionToken } from '@era/tokens';
 import { strings } from '@era/core/strings';
+import { Text } from '../Text';
 import type { WardrobeGap } from '@era/core/shop';
 import { transitionFor } from '../../lib/motion';
 import { getWardrobeGaps } from '../../lib/shop-client';
@@ -59,7 +60,7 @@ export function GapsHero({ onFill }: GapsHeroProps) {
 
   // Covered closet — the brand's whole point. One quiet, honest line, no nudge.
   if (gaps.length === 0) {
-    return <p style={emptyStyle}>{strings.shop.gaps.empty}</p>;
+    return <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{strings.shop.gaps.empty}</Text>;
   }
 
   return (
@@ -71,20 +72,22 @@ export function GapsHero({ onFill }: GapsHeroProps) {
       transition={transitionFor(motionToken.springs.gentle, reduced)}
     >
       <div style={introBlockStyle}>
-        <h2 id="era-gaps-title" style={titleStyle}>
+        <Text variant="title" size="title3" as="h2" id="era-gaps-title" weight={700} style={{ margin: 0, color: 'var(--color-text)' }}>
           {strings.shop.gaps.title}
-        </h2>
-        <p style={introStyle}>{strings.shop.gaps.intro}</p>
+        </Text>
+        <Text variant="body" as="p" size="footnote" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{strings.shop.gaps.intro}</Text>
       </div>
 
       <ul style={listStyle}>
         {gaps.map((gap) => (
           <li key={gap.category} style={cardStyle}>
-            <p style={reasonStyle}>{strings.shop.gaps.reason(gap)}</p>
+            <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-text)' }}>{strings.shop.gaps.reason(gap)}</Text>
             <div style={footerStyle}>
-              <span style={unlocksStyle}>{strings.shop.gaps.unlocksLabel(gap.unlocksOutfits)}</span>
+              <Text variant="ui" as="span" size="footnote" weight={600} style={{ color: 'var(--color-secondary-strong)' }}>{strings.shop.gaps.unlocksLabel(gap.unlocksOutfits)}</Text>
               <button type="button" style={fillStyle} onClick={() => onFill(gap)}>
-                {strings.shop.gaps.fillCta}
+                <Text variant="ui" as="span" size="footnote" weight={600} style={{ color: 'var(--color-accent)' }}>
+                  {strings.shop.gaps.fillCta}
+                </Text>
               </button>
             </div>
           </li>
@@ -106,20 +109,6 @@ const introBlockStyle: CSSProperties = {
   gap: 'var(--space-1)',
 };
 
-const titleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.title3.rem,
-  lineHeight: `${typeRamp.title3.lineHeight}px`,
-  fontWeight: 700,
-  color: 'var(--color-text)',
-};
-
-const introStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
-};
 
 const listStyle: CSSProperties = {
   listStyle: 'none',
@@ -140,12 +129,6 @@ const cardStyle: CSSProperties = {
   borderRadius: 'var(--radius-card)',
 };
 
-const reasonStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
-  color: 'var(--color-text)',
-};
 
 const footerStyle: CSSProperties = {
   display: 'flex',
@@ -155,26 +138,10 @@ const footerStyle: CSSProperties = {
   minHeight: 'var(--touch-target-min)',
 };
 
-const unlocksStyle: CSSProperties = {
-  fontSize: typeRamp.footnote.rem,
-  fontWeight: 600,
-  color: 'var(--color-secondary-strong)',
-};
-
 const fillStyle: CSSProperties = {
   flex: '0 0 auto',
   border: 'none',
   background: 'transparent',
   padding: 0,
   cursor: 'pointer',
-  fontSize: typeRamp.footnote.rem,
-  fontWeight: 600,
-  color: 'var(--color-accent)',
-};
-
-const emptyStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
 };

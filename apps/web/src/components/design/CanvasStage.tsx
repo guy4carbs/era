@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
+import { Text } from '../Text';
 import { PlacedItemView } from './PlacedItemView';
 import type { Guide } from './snapping';
 import { STAGE_ASPECT, type PlacedItem } from './types';
@@ -32,19 +32,6 @@ const paperStyle: CSSProperties = {
   border: '1px solid var(--color-hairline)',
 };
 
-const hintStyle: CSSProperties = {
-  position: 'absolute',
-  inset: 0,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  textAlign: 'center',
-  padding: 'var(--space-8)',
-  margin: 0,
-  color: 'var(--color-secondary-strong)',
-  fontSize: typeRamp.body.rem,
-  pointerEvents: 'none',
-};
 
 /** A thin accent guide line drawn while a piece snaps. */
 function GuideLine({ guide, width, height }: { guide: Guide; width: number; height: number }) {
@@ -99,7 +86,26 @@ export function CanvasStage({ placed, selectedId, onSelect, onCommit }: CanvasSt
           if (event.target === event.currentTarget) onSelect(null);
         }}
       >
-        {placed.length === 0 ? <p style={hintStyle}>{strings.design.canvasEmptyHint}</p> : null}
+        {placed.length === 0 ? (
+          <Text
+            variant="body"
+            as="p"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+              padding: 'var(--space-8)',
+              margin: 0,
+              color: 'var(--color-secondary-strong)',
+              pointerEvents: 'none',
+            }}
+          >
+            {strings.design.canvasEmptyHint}
+          </Text>
+        ) : null}
 
         {width > 0
           ? placed.map((piece) => (

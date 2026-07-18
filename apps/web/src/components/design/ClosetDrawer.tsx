@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { layout, typeRamp } from '@era/tokens';
+import { layout } from '@era/tokens';
+import { Text } from '../Text';
 import { strings } from '@era/core/strings';
 import { GlassSheet } from '../GlassSheet';
 import { Chip } from '../Chip';
@@ -33,13 +34,6 @@ const headerStyle: CSSProperties = {
   paddingBottom: 'var(--space-3)',
 };
 
-const titleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  fontWeight: 700,
-};
-
 const chipRowStyle: CSSProperties = {
   display: 'flex',
   gap: 'var(--space-2)',
@@ -65,22 +59,6 @@ const frameStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-};
-
-const captionStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  color: 'var(--color-text)',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-};
-
-const emptyStyle: CSSProperties = {
-  margin: 0,
-  padding: 'var(--space-6) 0',
-  color: 'var(--color-secondary-strong)',
-  fontSize: typeRamp.body.rem,
 };
 
 /**
@@ -120,7 +98,9 @@ export function ClosetDrawer({ items, placedIds, onAdd }: ClosetDrawerProps) {
     <GlassSheet peek>
       <style>{gridCss}</style>
       <div style={headerStyle}>
-        <h2 style={titleStyle}>{strings.design.addFromCloset}</h2>
+        <Text variant="ui" size="subhead" weight={700} as="h2" style={{ margin: 0 }}>
+          {strings.design.addFromCloset}
+        </Text>
         <Input
           aria-label={strings.design.drawerSearchPlaceholder}
           placeholder={strings.design.drawerSearchPlaceholder}
@@ -144,9 +124,9 @@ export function ClosetDrawer({ items, placedIds, onAdd }: ClosetDrawerProps) {
       </div>
 
       {items === null ? (
-        <p style={emptyStyle}>Loading…</p>
+        <Text variant="body" as="p" style={{ margin: 0, padding: 'var(--space-6) 0', color: 'var(--color-secondary-strong)' }}>Loading…</Text>
       ) : visible.length === 0 ? (
-        <p style={emptyStyle}>{strings.closet.empty}</p>
+        <Text variant="body" as="p" style={{ margin: 0, padding: 'var(--space-6) 0', color: 'var(--color-secondary-strong)' }}>{strings.closet.empty}</Text>
       ) : (
         <div className="era-drawer-grid">
           {visible.map((item) => {
@@ -167,7 +147,14 @@ export function ClosetDrawer({ items, placedIds, onAdd }: ClosetDrawerProps) {
                     {item.displayUrl ? <img src={item.displayUrl} alt="" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} /> : null}
                   </div>
                 </Card>
-                <p style={captionStyle}>{item.name}</p>
+                <Text
+                  variant="caption"
+                  size="footnote"
+                  as="p"
+                  style={{ margin: 0, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                >
+                  {item.name}
+                </Text>
               </button>
             );
           })}

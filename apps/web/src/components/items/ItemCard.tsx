@@ -1,8 +1,8 @@
 'use client';
 
 import { type CSSProperties } from 'react';
-import { typeRamp } from '@era/tokens';
 import { Card } from '../Card';
+import { Text } from '../Text';
 import type { ItemWithDisplay } from './types';
 
 export interface ItemCardProps {
@@ -48,15 +48,6 @@ const dotStyle: CSSProperties = {
   background: 'var(--color-accent)',
 };
 
-const captionStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  color: 'var(--color-text)',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-};
 
 /**
  * One garment in the closet grid: a 4:5 item card showing the cutout on cream
@@ -77,7 +68,7 @@ export function ItemCard({ item, onClick }: ItemCardProps) {
           {unconfirmed ? <span style={dotStyle} aria-hidden="true" /> : null}
         </div>
       </Card>
-      <p style={captionStyle}>{item.name}</p>
+      <Text variant="caption" size="footnote" as="p" style={{ margin: 0, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</Text>
     </button>
   );
 }

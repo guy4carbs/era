@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, layout, typeRamp } from '@era/tokens';
+import { motion as motionToken, layout } from '@era/tokens';
+import { Text } from '../Text';
 import { strings } from '@era/core/strings';
 import type { RankedProduct, WardrobeGap } from '@era/core/shop';
 import { transitionFor } from '../../lib/motion';
@@ -174,11 +175,11 @@ export function ShopBrowser() {
       <style>{gridCss}</style>
 
       <header style={headerStyle}>
-        <h1 style={titleStyle}>{strings.shop.title}</h1>
-        <p style={introStyle}>{strings.shop.intro}</p>
+        <Text variant="largeTitle" as="h1" weight={700} style={{ margin: 0 }}>{strings.shop.title}</Text>
+        <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-text)' }}>{strings.shop.intro}</Text>
         {/* Affiliate disclosure — VISIBLE at the top of the tab at all times
             (Shield/Ledger require it present and legible). */}
-        <p style={disclosureStyle}>{strings.shop.affiliateDisclosure}</p>
+        <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-secondary)' }}>{strings.shop.affiliateDisclosure}</Text>
       </header>
 
       <ViewToggle view={view} onChange={setView} />
@@ -190,7 +191,7 @@ export function ShopBrowser() {
           <ShopFilters filters={filters} onChange={setFilters} />
 
           {status !== 'error' ? (
-            <p style={sortStyle}>{strings.shop.sortRelevance}</p>
+            <Text variant="ui" as="p" size="footnote" weight={600} style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{strings.shop.sortRelevance}</Text>
           ) : null}
 
           <Body
@@ -232,7 +233,7 @@ function ViewToggle({ view, onChange }: ViewToggleProps) {
         aria-pressed={view === 'browse'}
         onClick={() => onChange('browse')}
       >
-        {strings.shop.title}
+        <Text variant="ui" as="span" size="footnote" weight={600}>{strings.shop.title}</Text>
       </button>
       <button
         type="button"
@@ -240,7 +241,7 @@ function ViewToggle({ view, onChange }: ViewToggleProps) {
         aria-pressed={view === 'saved'}
         onClick={() => onChange('saved')}
       >
-        {strings.shop.saved.tab}
+        <Text variant="ui" as="span" size="footnote" weight={600}>{strings.shop.saved.tab}</Text>
       </button>
     </div>
   );
@@ -255,12 +256,12 @@ interface SavedViewProps {
 /** The wishlist grid: same {@link ShopCard} with a filled heart, no dismiss, no why. */
 function SavedView({ products, reduced, onUnsave }: SavedViewProps) {
   if (products.length === 0) {
-    return <p style={noticeStyle}>{strings.shop.saved.empty}</p>;
+    return <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{strings.shop.saved.empty}</Text>;
   }
 
   return (
     <>
-      <p style={savedIntroStyle}>{strings.shop.saved.intro}</p>
+      <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-secondary)' }}>{strings.shop.saved.intro}</Text>
       <div className="era-shop-grid">
         <AnimatePresence mode="popLayout">
           {products.map((product) => (
@@ -308,22 +309,22 @@ function Body({
   onRetry,
 }: BodyProps) {
   if (status === 'loading') {
-    return <p style={noticeStyle}>{strings.shop.loading}</p>;
+    return <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{strings.shop.loading}</Text>;
   }
 
   if (status === 'error') {
     return (
       <div style={noticeColumnStyle}>
-        <p style={noticeStyle}>{strings.shop.error}</p>
+        <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{strings.shop.error}</Text>
         <button type="button" style={retryStyle} onClick={onRetry}>
-          {strings.errors.retry}
+          <Text variant="ui" as="span" size="subhead" weight={600} style={{ color: 'var(--color-accent)' }}>{strings.errors.retry}</Text>
         </button>
       </div>
     );
   }
 
   if (visible.length === 0) {
-    return <p style={noticeStyle}>{strings.shop.empty}</p>;
+    return <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{strings.shop.empty}</Text>;
   }
 
   return (
@@ -352,7 +353,7 @@ function Body({
 
       {hasMore ? (
         <button type="button" style={loadMoreStyle} onClick={onLoadMore} disabled={loadingMore}>
-          {loadingMore ? strings.shop.loading : strings.shop.loadMore}
+          <Text variant="ui" as="span" size="subhead" weight={600}>{loadingMore ? strings.shop.loading : strings.shop.loadMore}</Text>
         </button>
       ) : null}
     </>
@@ -372,35 +373,7 @@ const headerStyle: CSSProperties = {
   gap: 'var(--space-2)',
 };
 
-const titleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.largeTitle.rem,
-  lineHeight: `${typeRamp.largeTitle.lineHeight}px`,
-  fontWeight: 700,
-};
-
-const introStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
-  color: 'var(--color-text)',
-};
-
-// Disclosure copy is legal/disclosure text at >=17pt, so `secondary` clears its
-// large-text contrast gate; keep it at body size, never smaller.
-const disclosureStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
-  color: 'var(--color-secondary)',
-};
-
-const sortStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  fontWeight: 600,
-  color: 'var(--color-secondary-strong)',
-};
+// Disclosure copy is legal/disclosure text at >=17pt — body size, never smaller.
 
 const toggleWrapStyle: CSSProperties = {
   display: 'inline-flex',
@@ -418,8 +391,6 @@ const toggleBase: CSSProperties = {
   borderRadius: 'var(--radius-hero)',
   border: 'none',
   cursor: 'pointer',
-  fontSize: typeRamp.footnote.rem,
-  fontWeight: 600,
 };
 
 const toggleStyle: CSSProperties = {
@@ -436,18 +407,6 @@ const toggleActiveStyle: CSSProperties = {
   color: 'var(--color-ink)',
 };
 
-const savedIntroStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
-  color: 'var(--color-secondary)',
-};
-
-const noticeStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.body.rem,
-  color: 'var(--color-secondary-strong)',
-};
 
 const noticeColumnStyle: CSSProperties = {
   display: 'flex',
@@ -461,9 +420,6 @@ const retryStyle: CSSProperties = {
   background: 'transparent',
   padding: 0,
   cursor: 'pointer',
-  fontSize: typeRamp.subhead.rem,
-  fontWeight: 600,
-  color: 'var(--color-accent)',
 };
 
 const loadMoreStyle: CSSProperties = {
@@ -475,6 +431,4 @@ const loadMoreStyle: CSSProperties = {
   background: 'var(--color-surface)',
   color: 'var(--color-text)',
   cursor: 'pointer',
-  fontSize: typeRamp.subhead.rem,
-  fontWeight: 600,
 };

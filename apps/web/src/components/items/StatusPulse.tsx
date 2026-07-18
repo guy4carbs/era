@@ -2,7 +2,7 @@
 
 import { type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { typeRamp } from '@era/tokens';
+import { Text } from '../Text';
 
 export interface StatusPulseProps {
   /** The in-flight line to announce (e.g. "Uploading…"). */
@@ -18,12 +18,6 @@ const columnStyle: CSSProperties = {
   textAlign: 'center',
 };
 
-const textStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
-};
 
 /**
  * A gentle breathing status line for the in-flight stages of the add flows
@@ -37,11 +31,13 @@ export function StatusPulse({ label }: StatusPulseProps) {
   return (
     <div style={columnStyle} aria-live="polite">
       <motion.p
-        style={textStyle}
+        style={{ margin: 0, color: 'var(--color-secondary-strong)' }}
         animate={reduced ? undefined : { opacity: [0.55, 1, 0.55] }}
         transition={reduced ? undefined : { duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
       >
-        {label}
+        <Text variant="body" as="span" style={{ color: 'inherit' }}>
+          {label}
+        </Text>
       </motion.p>
     </div>
   );

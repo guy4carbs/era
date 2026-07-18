@@ -2,8 +2,9 @@
 
 import { type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, typeRamp } from '@era/tokens';
+import { motion as motionToken } from '@era/tokens';
 import { transitionFor } from '../../../lib/motion';
+import { Text, TextControlBoundary } from '../../../components';
 import { QuizImage } from '../QuizImage';
 import { SELECTION_RING, type QuizStep } from '../types';
 
@@ -25,9 +26,6 @@ const chipStyle: CSSProperties = {
   borderRadius: 'var(--radius-input)',
   cursor: 'pointer',
   textAlign: 'start',
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  fontWeight: 600,
 };
 
 const thumbStyle: CSSProperties = {
@@ -80,7 +78,11 @@ export function OccasionChips({ step, selectedIds, onToggle }: OccasionChipsProp
             <span style={thumbStyle}>
               <QuizImage imageKey={'imageKey' in option ? option.imageKey : undefined} />
             </span>
-            {option.label}
+            <TextControlBoundary>
+              <Text variant="ui" size="subhead" weight={600} as="span">
+                {option.label}
+              </Text>
+            </TextControlBoundary>
           </motion.button>
         );
       })}

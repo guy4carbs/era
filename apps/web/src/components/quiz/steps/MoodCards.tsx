@@ -2,9 +2,10 @@
 
 import { type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, typeRamp, boxShadows, layout } from '@era/tokens';
+import { motion as motionToken, boxShadows, layout } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { transitionFor } from '../../../lib/motion';
+import { Text, TextControlBoundary } from '../../../components';
 import { SELECTION_RING, type QuizStep } from '../types';
 
 export interface MoodCardsProps {
@@ -31,15 +32,10 @@ const cardStyle: CSSProperties = {
 };
 
 const titleStyle: CSSProperties = {
-  fontSize: typeRamp.title2.rem,
-  lineHeight: `${typeRamp.title2.lineHeight}px`,
-  fontWeight: 600,
   color: 'var(--color-text)',
 };
 
 const taglineStyle: CSSProperties = {
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
   color: 'var(--color-secondary-strong)',
 };
 
@@ -72,8 +68,16 @@ export function MoodCards({ step, selectedId, onSelect }: MoodCardsProps) {
             whileTap={reduced ? undefined : { scale: 0.98 }}
             transition={transitionFor(motionToken.springs.snappy, reduced)}
           >
-            <span style={titleStyle}>{title}</span>
-            {mood ? <span style={taglineStyle}>{mood.tagline}</span> : null}
+            <TextControlBoundary>
+              <Text variant="ui" size="title2" weight={600} as="span" style={titleStyle}>
+                {title}
+              </Text>
+              {mood ? (
+                <Text variant="caption" size="footnote" as="span" style={taglineStyle}>
+                  {mood.tagline}
+                </Text>
+              ) : null}
+            </TextControlBoundary>
           </motion.button>
         );
       })}

@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { layout, motion as motionToken, typeRamp, boxShadows } from '@era/tokens';
+import { layout, motion as motionToken, boxShadows } from '@era/tokens';
+import { Text } from '../Text';
 import { strings } from '@era/core/strings';
 import { transitionFor } from '../../lib/motion';
 import { trackFirstOnce } from '../../lib/analytics';
@@ -54,7 +55,6 @@ const iconBtnStyle: CSSProperties = {
   border: '1px solid var(--color-hairline)',
   background: 'var(--color-surface)',
   color: 'var(--color-text)',
-  fontSize: typeRamp.body.rem,
   cursor: 'pointer',
 };
 
@@ -65,7 +65,6 @@ const saveBtnStyle: CSSProperties = {
   border: 'none',
   background: 'var(--color-accent)',
   color: 'var(--color-ink)',
-  fontSize: typeRamp.subhead.rem,
   fontWeight: 700,
   cursor: 'pointer',
   boxShadow: boxShadows.e1,
@@ -95,8 +94,6 @@ const toastStyle: CSSProperties = {
   borderRadius: 'var(--radius-input)',
   background: 'var(--color-surface)',
   border: '1px solid var(--color-hairline)',
-  color: 'var(--color-text)',
-  fontSize: typeRamp.footnote.rem,
   boxShadow: boxShadows.e3,
   zIndex: 70,
 };
@@ -302,7 +299,7 @@ export function OutfitCanvas({ outfitId }: OutfitCanvasProps) {
     <main style={rootStyle}>
       <header style={topBarStyle}>
         <button type="button" aria-label={strings.common.cancel} style={iconBtnStyle} onClick={() => router.push('/design')}>
-          ←
+          <span aria-hidden="true">←</span>
         </button>
         <button
           type="button"
@@ -310,7 +307,9 @@ export function OutfitCanvas({ outfitId }: OutfitCanvasProps) {
           disabled={placed.length === 0}
           onClick={() => setSaveOpen(true)}
         >
-          {strings.design.saveOutfit}
+          <Text variant="ui" size="subhead" weight={700} style={{ color: 'var(--color-ink)' }}>
+            {strings.design.saveOutfit}
+          </Text>
         </button>
       </header>
 
@@ -361,7 +360,9 @@ export function OutfitCanvas({ outfitId }: OutfitCanvasProps) {
             exit={{ opacity: 0, x: '-50%', y: reduced ? 0 : 8 }}
             transition={transitionFor(motionToken.springs.gentle, reduced)}
           >
-            {toast}
+            <Text variant="ui" size="footnote" style={{ color: 'var(--color-text)' }}>
+              {toast}
+            </Text>
           </motion.div>
         ) : null}
       </AnimatePresence>

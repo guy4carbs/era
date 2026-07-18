@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { strings } from '@era/core/strings';
 import { typeRamp } from '@era/tokens';
 import { Button } from '../Button';
+import { Text } from '../Text';
 
 export interface FollowButtonProps {
   /** The profile being followed — sent as `{ username }` to `/api/follows`. */
@@ -88,7 +89,7 @@ export function FollowButton({
   }
 
   const counts = (
-    <p style={countsStyle}>
+    <Text variant="ui" size="subhead" weight={600} as="p" style={countsStyle}>
       <span>{strings.profile.followerCount(followerCount)}</span>
       {typeof followingCount === 'number' ? (
         <>
@@ -98,18 +99,18 @@ export function FollowButton({
           <span>{strings.profile.followingCount(followingCount)}</span>
         </>
       ) : null}
-    </p>
+    </Text>
   );
 
   if (!signedIn) {
     return (
       <div style={wrapStyle}>
         {counts}
-        <p style={signInStyle}>
+        <Text variant="caption" size="footnote" as="p" style={signInStyle}>
           <Link href="/sign-in" style={signInLinkStyle}>
             {strings.profile.signInToFollow(name)}
           </Link>
-        </p>
+        </Text>
       </div>
     );
   }
@@ -140,9 +141,9 @@ export function FollowButton({
       >
         {visibleLabel}
       </Button>
-      <p role="status" aria-live="polite" style={errorStyle}>
+      <Text variant="caption" size="footnote" as="p" role="status" aria-live="polite" style={errorStyle}>
         {failed ? strings.errors.generic : ''}
-      </p>
+      </Text>
     </div>
   );
 }
@@ -159,10 +160,7 @@ const countsStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   gap: 'var(--space-2)',
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
   color: 'var(--color-text)',
-  fontWeight: 600,
 };
 
 const dotStyle: CSSProperties = {
@@ -175,8 +173,6 @@ const followButtonStyle: CSSProperties = {
 
 const signInStyle: CSSProperties = {
   margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
   color: 'var(--color-secondary-strong)',
 };
 
@@ -190,7 +186,5 @@ const signInLinkStyle: CSSProperties = {
 const errorStyle: CSSProperties = {
   margin: 0,
   minHeight: `${typeRamp.footnote.lineHeight}px`,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
   color: 'var(--color-rust)',
 };

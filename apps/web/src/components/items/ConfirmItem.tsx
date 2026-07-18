@@ -2,7 +2,8 @@
 
 import { useState, type CSSProperties } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, typeRamp } from '@era/tokens';
+import { motion as motionToken } from '@era/tokens';
+import { Text } from '../Text';
 import { strings } from '@era/core/strings';
 import { transitionFor } from '../../lib/motion';
 import { Button } from '../Button';
@@ -58,12 +59,6 @@ const imageStyle: CSSProperties = {
   objectFit: 'contain',
 };
 
-const titleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.title2.rem,
-  lineHeight: `${typeRamp.title2.lineHeight}px`,
-  fontWeight: 700,
-};
 
 const chipsRowStyle: CSSProperties = {
   display: 'flex',
@@ -232,7 +227,7 @@ export function ConfirmItem({ item, processed, busy, onConfirm }: ConfirmItemPro
         </div>
       </Card>
 
-      <h1 style={titleStyle}>{title}</h1>
+      <Text variant="title" size="title2" as="h1" weight={700} style={{ margin: 0 }}>{title}</Text>
 
       <div style={chipsRowStyle} role="group" aria-label={strings.closet.manualTitle}>
         {FIELDS.map((field) => {

@@ -9,10 +9,10 @@ import {
   layout,
   sheen,
   spacing,
-  typeRamp,
 } from '@era/tokens';
 import { useTheme } from '../../lib/theme';
 import { transitionFor } from '../../lib/motion';
+import { Text } from '../Text';
 import type { GalleryItem } from './types';
 
 export interface GalleryTileProps {
@@ -131,7 +131,14 @@ export function GalleryTile({ item, onOpen }: GalleryTileProps) {
         />
         {unconfirmed ? <span style={dotStyle} aria-hidden="true" /> : null}
       </motion.div>
-      <p style={captionStyle}>{item.name}</p>
+      <Text
+        variant="caption"
+        size="footnote"
+        as="p"
+        style={{ margin: 0, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+      >
+        {item.name}
+      </Text>
     </motion.button>
   );
 }
@@ -197,12 +204,3 @@ const dotStyle: CSSProperties = {
   zIndex: 3,
 };
 
-const captionStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  color: 'var(--color-text)',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-};

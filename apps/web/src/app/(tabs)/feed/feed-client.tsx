@@ -2,12 +2,12 @@
 
 import { type CSSProperties } from 'react';
 import Link from 'next/link';
-import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { eraAuth, useSession } from '../../../lib/auth-client';
 import { TodayCard } from '../../../components/ovi';
 import { NotificationFeed } from '../../../components/shop';
 import { FeedList } from '../../../components/feed';
+import { Text } from '../../../components/Text';
 
 const screenStyle: CSSProperties = {
   display: 'flex',
@@ -16,17 +16,14 @@ const screenStyle: CSSProperties = {
   paddingBlock: 'var(--space-8)',
 };
 
+// Screen title — serif largeTitle role at the title1 step (matches mobile feed).
 const titleStyle: CSSProperties = {
   margin: 0,
-  fontSize: typeRamp.title1.rem,
-  lineHeight: `${typeRamp.title1.lineHeight}px`,
-  fontWeight: 700,
 };
 
 const emptyStyle: CSSProperties = {
   margin: 0,
   color: 'var(--color-secondary)',
-  fontSize: typeRamp.body.rem,
 };
 
 const sessionRowStyle: CSSProperties = {
@@ -48,9 +45,9 @@ function SessionHeader() {
   if (!session) {
     return (
       <div style={sessionRowStyle}>
-        <span style={{ color: 'var(--color-secondary)', fontSize: typeRamp.footnote.rem }}>
+        <Text variant="caption" style={{ color: 'var(--color-secondary)' }}>
           Your wardrobe, reimagined.
-        </span>
+        </Text>
         <Link className="link" href="/sign-in">
           Sign in →
         </Link>
@@ -63,9 +60,9 @@ function SessionHeader() {
 
   return (
     <div style={sessionRowStyle}>
-      <span style={{ color: 'var(--color-secondary)', fontSize: typeRamp.footnote.rem }}>
+      <Text variant="body" style={{ color: 'var(--color-secondary)' }}>
         Hi {greeting}
-      </span>
+      </Text>
       <button
         type="button"
         className="btn btn-secondary"
@@ -93,8 +90,8 @@ export function FeedScreen({ feedEnabled }: { feedEnabled: boolean }) {
       <SessionHeader />
       <TodayCard />
       <NotificationFeed />
-      <h1 style={titleStyle}>Feed</h1>
-      {feedEnabled ? <FeedList /> : <p style={emptyStyle}>{strings.feed.empty}</p>}
+      <Text variant="largeTitle" as="h1" size="title1" style={titleStyle}>Feed</Text>
+      {feedEnabled ? <FeedList /> : <Text variant="body" style={emptyStyle}>{strings.feed.empty}</Text>}
     </main>
   );
 }

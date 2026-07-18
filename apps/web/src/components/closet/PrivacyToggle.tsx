@@ -2,7 +2,8 @@
 
 import { useEffect, useState, type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, spacing, typeRamp } from '@era/tokens';
+import { motion as motionToken, spacing } from '@era/tokens';
+import { Text } from '../Text';
 import { strings } from '@era/core/strings';
 import { transitionFor } from '../../lib/motion';
 
@@ -67,12 +68,16 @@ export function PrivacyToggle() {
   return (
     <div style={columnStyle}>
       <div style={rowStyle}>
-        <span
+        <Text
+          variant="ui"
+          size="subhead"
+          weight={700}
+          as="span"
           id="privacy-label"
-          style={{ ...labelStyle, color: isPublic ? 'var(--color-accent)' : 'var(--color-secondary-strong)' }}
+          style={{ color: isPublic ? 'var(--color-accent)' : 'var(--color-secondary-strong)' }}
         >
           {label}
-        </span>
+        </Text>
         <button
           type="button"
           role="switch"
@@ -93,7 +98,14 @@ export function PrivacyToggle() {
           />
         </button>
       </div>
-      <span style={hintStyle}>{hint}</span>
+      <Text
+        variant="caption"
+        size="footnote"
+        as="span"
+        style={{ margin: 0, color: 'var(--color-secondary-strong)', textAlign: 'right' }}
+      >
+        {hint}
+      </Text>
     </div>
   );
 }
@@ -109,12 +121,6 @@ const rowStyle: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   gap: 'var(--space-2)',
-};
-
-const labelStyle: CSSProperties = {
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  fontWeight: 700,
 };
 
 // Track: 48×24 pill (space-12 × space-6), 4px inset (space-1); thumb travels
@@ -138,10 +144,3 @@ const thumbStyle: CSSProperties = {
   background: 'var(--color-bg)',
 };
 
-const hintStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
-  textAlign: 'right',
-};

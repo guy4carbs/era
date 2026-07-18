@@ -2,9 +2,10 @@
 
 import { type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { boxShadows, glow, typeRamp } from '@era/tokens';
+import { boxShadows, glow } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { useTheme } from '../lib/theme';
+import { Text } from './Text';
 
 export interface OviFabProps {
   onClick?: () => void;
@@ -35,8 +36,6 @@ const fabStyle: CSSProperties = {
   cursor: 'pointer',
   background: 'var(--color-accent)',
   color: 'var(--color-ink)',
-  fontSize: typeRamp.subhead.rem,
-  fontWeight: 700,
   zIndex: 60,
 };
 
@@ -77,7 +76,7 @@ export function OviFab({ onClick, style }: OviFabProps) {
       whileTap={reduced ? undefined : { scale: 0.94 }}
       onClick={onClick}
     >
-      <span aria-hidden="true">Ovi</span>
+      <Text variant="ui" aria-hidden="true">Ovi</Text>
     </motion.button>
   );
 }

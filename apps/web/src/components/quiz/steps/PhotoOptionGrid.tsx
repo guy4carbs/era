@@ -2,8 +2,9 @@
 
 import { type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, typeRamp, boxShadows, layout } from '@era/tokens';
+import { motion as motionToken, boxShadows, layout } from '@era/tokens';
 import { transitionFor } from '../../../lib/motion';
+import { Text, TextControlBoundary } from '../../../components';
 import { QuizImage } from '../QuizImage';
 import { SELECTION_RING, type QuizStep } from '../types';
 
@@ -35,9 +36,6 @@ const captionStyle: CSSProperties = {
   paddingInline: 'var(--space-3)',
   paddingBlock: 'var(--space-2)',
   textAlign: 'start',
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  fontWeight: 600,
   color: 'var(--color-text)',
   background: `color-mix(in srgb, var(--color-surface) var(--glass-tint), transparent)`,
   backdropFilter: 'blur(var(--glass-blur))',
@@ -81,7 +79,11 @@ export function PhotoOptionGrid({ step, selectedId, onSelect }: PhotoOptionGridP
             transition={transitionFor(motionToken.springs.snappy, reduced)}
           >
             <QuizImage imageKey={'imageKey' in option ? option.imageKey : undefined} />
-            <span style={captionStyle}>{option.label}</span>
+            <TextControlBoundary>
+              <Text variant="ui" size="subhead" weight={600} as="span" style={captionStyle}>
+                {option.label}
+              </Text>
+            </TextControlBoundary>
           </motion.button>
         );
       })}

@@ -23,6 +23,7 @@ import {
   type NotificationPreferences,
 } from '../../lib/notifications-client';
 import { Container } from '../../components';
+import { Text } from '../../components/Text';
 import { DeleteAccountDialog } from './DeleteAccountDialog';
 import { SETTINGS_COPY, SUPPORT_MAILTO } from './copy';
 
@@ -61,7 +62,7 @@ export function SettingsScreen({ accountEmail, initialIsPrivate, username }: Set
             <span aria-hidden="true">←</span>
             {SETTINGS_COPY.back}
           </Link>
-          <h1 style={titleStyle}>{SETTINGS_COPY.title}</h1>
+          <Text variant="largeTitle" as="h1" style={{ margin: 0 }}>{SETTINGS_COPY.title}</Text>
         </header>
 
         <Section title={SETTINGS_COPY.appearance}>
@@ -92,8 +93,8 @@ export function SettingsScreen({ accountEmail, initialIsPrivate, username }: Set
           <Section title={strings.plus.settingsRowLabel}>
             <Link href="/plus" style={navRowStyle}>
               <span style={privacyTextStyle}>
-                <span style={rowLabelStyle}>{strings.plus.paywallTitle}</span>
-                <span style={rowHintStyle}>{strings.plus.settingsRowHint}</span>
+                <Text variant="ui" as="span" style={{ color: 'var(--color-text)' }}>{strings.plus.paywallTitle}</Text>
+                <Text variant="caption" as="span" size="footnote" style={{ color: 'var(--color-secondary-strong)' }}>{strings.plus.settingsRowHint}</Text>
               </span>
               <span aria-hidden="true" style={chevronStyle}>
                 →
@@ -104,20 +105,20 @@ export function SettingsScreen({ accountEmail, initialIsPrivate, username }: Set
 
         <Section title={SETTINGS_COPY.support}>
           <a href={SUPPORT_MAILTO} style={linkRowStyle}>
-            <span style={rowLabelStyle}>{SETTINGS_COPY.contactSupport}</span>
-            <span style={rowHintStyle}>{SETTINGS_COPY.contactSupportHint}</span>
+            <Text variant="ui" as="span" style={{ color: 'var(--color-text)' }}>{SETTINGS_COPY.contactSupport}</Text>
+            <Text variant="caption" as="span" size="footnote" style={{ color: 'var(--color-secondary-strong)' }}>{SETTINGS_COPY.contactSupportHint}</Text>
           </a>
         </Section>
 
         <Section title={SETTINGS_COPY.legal}>
           <Link href="/privacy" style={navRowStyle}>
-            <span style={rowLabelStyle}>{SETTINGS_COPY.privacyPolicy}</span>
+            <Text variant="ui" as="span" style={{ color: 'var(--color-text)' }}>{SETTINGS_COPY.privacyPolicy}</Text>
             <span aria-hidden="true" style={chevronStyle}>
               →
             </span>
           </Link>
           <Link href="/terms" style={navRowStyle}>
-            <span style={rowLabelStyle}>{SETTINGS_COPY.terms}</span>
+            <Text variant="ui" as="span" style={{ color: 'var(--color-text)' }}>{SETTINGS_COPY.terms}</Text>
             <span aria-hidden="true" style={chevronStyle}>
               →
             </span>
@@ -125,10 +126,10 @@ export function SettingsScreen({ accountEmail, initialIsPrivate, username }: Set
         </Section>
 
         <Section title={SETTINGS_COPY.account}>
-          <p style={rowHintStyle}>{SETTINGS_COPY.signedInAs(accountEmail)}</p>
+          <Text variant="caption" as="p" size="footnote" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{SETTINGS_COPY.signedInAs(accountEmail)}</Text>
           {username ? (
             <Link href={`/${username}`} style={navRowStyle}>
-              <span style={rowLabelStyle}>{SETTINGS_COPY.viewProfile}</span>
+              <Text variant="ui" as="span" style={{ color: 'var(--color-text)' }}>{SETTINGS_COPY.viewProfile}</Text>
               <span aria-hidden="true" style={chevronStyle}>
                 →
               </span>
@@ -148,7 +149,7 @@ export function SettingsScreen({ accountEmail, initialIsPrivate, username }: Set
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section style={sectionStyle}>
-      <h2 style={sectionHeadingStyle}>{title}</h2>
+      <Text variant="caption" as="h2" style={{ margin: 0, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--color-secondary-strong)' }}>{title}</Text>
       <div style={sectionBodyStyle}>{children}</div>
     </section>
   );
@@ -158,7 +159,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div style={rowStyle}>
-      <span style={rowLabelStyle}>{label}</span>
+      <Text variant="ui" as="span" style={{ color: 'var(--color-text)' }}>{label}</Text>
       {children}
     </div>
   );
@@ -232,10 +233,10 @@ function PrivacyControl({ initialIsPrivate }: { initialIsPrivate: boolean }) {
   return (
     <div style={rowStyle}>
       <span style={privacyTextStyle}>
-        <span id="private-closet-label" style={rowLabelStyle}>
+        <Text variant="ui" as="span" id="private-closet-label" style={{ color: 'var(--color-text)' }}>
           {SETTINGS_COPY.privateClosetTitle}
-        </span>
-        <span style={rowHintStyle}>{SETTINGS_COPY.privateClosetHint}</span>
+        </Text>
+        <Text variant="caption" as="span" size="footnote" style={{ color: 'var(--color-secondary-strong)' }}>{SETTINGS_COPY.privateClosetHint}</Text>
       </span>
       <button
         type="button"
@@ -281,9 +282,9 @@ function AlertSwitch({
   const labelId = `alert-switch-${label.replace(/\s+/g, '-').toLowerCase()}`;
   return (
     <div style={{ ...rowStyle, opacity: disabled ? 0.5 : 1 }}>
-      <span id={labelId} style={rowLabelStyle}>
+      <Text variant="ui" as="span" id={labelId} style={{ color: 'var(--color-text)' }}>
         {label}
-      </span>
+      </Text>
       <button
         type="button"
         role="switch"
@@ -356,7 +357,7 @@ function PriceAlertsControl() {
 
   return (
     <div style={alertsGroupStyle}>
-      <p style={rowHintStyle}>{copy.explain}</p>
+      <Text variant="caption" as="p" size="footnote" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{copy.explain}</Text>
 
       <AlertSwitch
         label={copy.toggle}
@@ -380,7 +381,7 @@ function PriceAlertsControl() {
         />
       </div>
 
-      <p style={rowHintStyle}>{copy.savedOnlyNote}</p>
+      <Text variant="caption" as="p" size="footnote" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{copy.savedOnlyNote}</Text>
     </div>
   );
 }
@@ -489,22 +490,22 @@ function ReceiptAddressControl() {
     <div style={alertsGroupStyle}>
       {state.status === 'error' && (
         <div style={receiptErrorRowStyle}>
-          <p role="status" style={receiptErrorTextStyle}>
+          <Text variant="caption" as="p" size="footnote" role="status" style={{ margin: 0, color: 'var(--color-rust)' }}>
             {SETTINGS_COPY.genericError}
-          </p>
+          </Text>
           <button type="button" style={receiptRetryStyle} onClick={() => void load()}>
             {SETTINGS_COPY.retry}
           </button>
         </div>
       )}
 
-      {state.status === 'dormant' && <p style={rowHintStyle}>{copy.dormant}</p>}
+      {state.status === 'dormant' && <Text variant="caption" as="p" size="footnote" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{copy.dormant}</Text>}
 
       {state.status === 'active' && (
         <>
-          <p style={rowHintStyle}>{copy.explain}</p>
+          <Text variant="caption" as="p" size="footnote" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{copy.explain}</Text>
           <div style={addressBlockStyle}>
-            <span style={rowHintStyle}>{copy.addressLabel}</span>
+            <Text variant="caption" as="span" size="footnote" style={{ color: 'var(--color-secondary-strong)' }}>{copy.addressLabel}</Text>
             <div style={addressRowStyle}>
               <code style={addressCodeStyle}>{state.address}</code>
               <button
@@ -515,15 +516,15 @@ function ReceiptAddressControl() {
                 {copy.copyCta}
               </button>
             </div>
-            <p aria-live="polite" style={receiptConfirmStyle}>
+            <Text variant="caption" as="p" size="footnote" aria-live="polite" style={{ margin: 0, minHeight: `${typeRamp.footnote.lineHeight}px`, color: 'var(--color-secondary-strong)' }}>
               {copied ? copy.copied : ''}
-            </p>
+            </Text>
           </div>
 
-          <p style={rowHintStyle}>{copy.privacyNote}</p>
+          <Text variant="caption" as="p" size="footnote" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{copy.privacyNote}</Text>
 
           <div style={regenerateBlockStyle}>
-            <p style={rowHintStyle}>{copy.regenerateConsequence}</p>
+            <Text variant="caption" as="p" size="footnote" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{copy.regenerateConsequence}</Text>
             <button
               type="button"
               style={{
@@ -536,16 +537,19 @@ function ReceiptAddressControl() {
             >
               {copy.regenerateCta}
             </button>
-            <p
+            <Text
+              variant="caption"
+              as="p"
+              size="footnote"
               aria-live="polite"
-              style={regen === 'error' ? receiptErrorTextStyle : receiptConfirmStyle}
+              style={{ margin: 0, minHeight: `${typeRamp.footnote.lineHeight}px`, color: regen === 'error' ? 'var(--color-rust)' : 'var(--color-secondary-strong)' }}
             >
               {regen === 'done'
                 ? copy.regenerated
                 : regen === 'error'
                   ? SETTINGS_COPY.genericError
                   : ''}
-            </p>
+            </Text>
           </div>
         </>
       )}
@@ -598,27 +602,10 @@ const backStyle: CSSProperties = {
   textDecoration: 'none',
 };
 
-const titleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.largeTitle.rem,
-  lineHeight: `${typeRamp.largeTitle.lineHeight}px`,
-  fontWeight: 700,
-};
-
 const sectionStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: 'var(--space-3)',
-};
-
-const sectionHeadingStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  fontWeight: 700,
-  letterSpacing: '0.04em',
-  textTransform: 'uppercase',
-  color: 'var(--color-secondary-strong)',
 };
 
 const sectionBodyStyle: CSSProperties = {
@@ -635,20 +622,6 @@ const rowStyle: CSSProperties = {
   justifyContent: 'space-between',
   gap: 'var(--space-4)',
   minHeight: 'var(--touch-target-min)',
-};
-
-const rowLabelStyle: CSSProperties = {
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
-  fontWeight: 600,
-  color: 'var(--color-text)',
-};
-
-const rowHintStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
 };
 
 // A tappable row that navigates (legal links) — label left, chevron right.
@@ -786,16 +759,6 @@ const copyButtonStyle: CSSProperties = {
   cursor: 'pointer',
 };
 
-// Transient/quiet confirmation line (copied, regenerated) — an always-present
-// live region so assistive tech announces it; empty until there's something to say.
-const receiptConfirmStyle: CSSProperties = {
-  margin: 0,
-  minHeight: `${typeRamp.footnote.lineHeight}px`,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
-};
-
 // The Regenerate group: the hard-kill consequence, the action, then its result line.
 const regenerateBlockStyle: CSSProperties = {
   display: 'flex',
@@ -826,13 +789,6 @@ const receiptErrorRowStyle: CSSProperties = {
   justifyContent: 'space-between',
   gap: 'var(--space-3)',
   minHeight: 'var(--touch-target-min)',
-};
-
-const receiptErrorTextStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  color: 'var(--color-rust)',
 };
 
 const receiptRetryStyle: CSSProperties = {

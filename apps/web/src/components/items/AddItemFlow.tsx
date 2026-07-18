@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
-import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
+import { Text } from '../Text';
 import { Button } from '../Button';
 import { BulkCapture } from './BulkCapture';
 import { ConfirmItem } from './ConfirmItem';
@@ -67,8 +67,6 @@ const cancelStyle: CSSProperties = {
   border: 'none',
   cursor: 'pointer',
   color: 'var(--color-secondary-strong)',
-  fontSize: typeRamp.footnote.rem,
-  fontWeight: 600,
   minHeight: 'var(--touch-target-min)',
   paddingInline: 'var(--space-2)',
 };
@@ -80,21 +78,6 @@ const statusColumnStyle: CSSProperties = {
   gap: 'var(--space-3)',
   paddingBlock: 'var(--space-16)',
   textAlign: 'center',
-};
-
-const errorTextStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
-  color: 'var(--color-text)',
-};
-
-/** Inline failure line shown above the picker when a link import comes back empty. */
-const linkErrorStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  color: 'var(--color-rust)',
 };
 
 /**
@@ -343,7 +326,9 @@ export function AddItemFlow({ resumeItemId = null }: AddItemFlowProps) {
         <div style={topRowStyle}>
           {showCancel ? (
             <button type="button" style={cancelStyle} onClick={() => router.push('/closet')}>
-              {strings.common.cancel}
+              <Text variant="ui" size="footnote" weight={600} style={{ color: 'var(--color-secondary-strong)' }}>
+                {strings.common.cancel}
+              </Text>
             </button>
           ) : null}
         </div>
@@ -351,9 +336,9 @@ export function AddItemFlow({ resumeItemId = null }: AddItemFlowProps) {
         {stage === 'picker' ? (
           <>
             {linkError ? (
-              <p style={linkErrorStyle} role="alert">
+              <Text variant="caption" as="p" role="alert" style={{ margin: 0, color: 'var(--color-rust)' }}>
                 {linkError}
-              </p>
+              </Text>
             ) : null}
             <PhotoPicker
               onPick={handlePick}
@@ -396,7 +381,7 @@ export function AddItemFlow({ resumeItemId = null }: AddItemFlowProps) {
 
         {stage === 'error' ? (
           <div style={statusColumnStyle} aria-live="assertive">
-            <p style={errorTextStyle}>{limitMessage ?? strings.closet.addFailed}</p>
+            <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-text)' }}>{limitMessage ?? strings.closet.addFailed}</Text>
             {/* A daily-limit stop offers no retry (it would re-hit the cap); the
                 top Cancel returns to the closet. Other failures keep Retry. */}
             {limitMessage ? null : (

@@ -2,7 +2,8 @@
 
 import { type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, boxShadows, typeRamp } from '@era/tokens';
+import { motion as motionToken, boxShadows } from '@era/tokens';
+import { Text } from '../Text';
 import { strings } from '@era/core/strings';
 import { transitionFor } from '../../lib/motion';
 import { markRead, type PriceDropPayload } from '../../lib/notifications-client';
@@ -108,18 +109,18 @@ export function PriceDropCard({ id, payload, onResolve }: PriceDropCardProps) {
       )}
 
       <div style={bodyStyle}>
-        <p style={headingStyle}>{copy.title}</p>
-        <p style={lineStyle}>{copy.body(payload.title, oldPrice, newPrice)}</p>
+        <Text variant="caption" as="p" weight={600} style={{ margin: 0, letterSpacing: '0.02em', textTransform: 'uppercase', color: 'var(--color-secondary-strong)' }}>{copy.title}</Text>
+        <Text variant="ui" as="p" size="subhead" weight={500} style={{ margin: 0, color: 'var(--color-text)' }}>{copy.body(payload.title, oldPrice, newPrice)}</Text>
         <div style={actionsStyle}>
           {href ? (
             <a href={href} target="_blank" rel={AFFILIATE_REL} onClick={resolve} style={viewStyle}>
-              {copy.view}
+              <Text variant="ui" as="span" size="footnote" weight={600} style={{ color: 'var(--color-accent)', textDecoration: 'none' }}>{copy.view}</Text>
             </a>
           ) : (
             <span />
           )}
           <button type="button" onClick={resolve} style={dismissStyle}>
-            {copy.dismiss}
+            <Text variant="ui" as="span" size="footnote" weight={500} style={{ color: 'var(--color-secondary-strong)' }}>{copy.dismiss}</Text>
           </button>
         </div>
       </div>
@@ -163,23 +164,6 @@ const bodyStyle: CSSProperties = {
   flex: 1,
 };
 
-const headingStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.caption.rem,
-  lineHeight: `${typeRamp.caption.lineHeight}px`,
-  fontWeight: 600,
-  letterSpacing: '0.02em',
-  textTransform: 'uppercase',
-  color: 'var(--color-secondary-strong)',
-};
-
-const lineStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  fontWeight: 500,
-  color: 'var(--color-text)',
-};
 
 const actionsStyle: CSSProperties = {
   display: 'flex',
@@ -191,9 +175,6 @@ const actionsStyle: CSSProperties = {
 };
 
 const viewStyle: CSSProperties = {
-  fontSize: typeRamp.footnote.rem,
-  fontWeight: 600,
-  color: 'var(--color-accent)',
   textDecoration: 'none',
 };
 
@@ -202,7 +183,4 @@ const dismissStyle: CSSProperties = {
   background: 'transparent',
   padding: 0,
   cursor: 'pointer',
-  fontSize: typeRamp.footnote.rem,
-  fontWeight: 500,
-  color: 'var(--color-secondary-strong)',
 };

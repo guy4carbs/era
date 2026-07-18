@@ -3,7 +3,8 @@
 import { useEffect, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, typeRamp } from '@era/tokens';
+import { motion as motionToken } from '@era/tokens';
+import { Text } from '../Text';
 import { strings } from '@era/core/strings';
 import type { WhyDetail, WhyItemRef } from '@era/core/shop';
 import { transitionFor } from '../../lib/motion';
@@ -66,16 +67,16 @@ export function WhyDetailSheet({ whyDetail, onClose }: WhyDetailSheetProps) {
       <GlassSheet labelledBy="shop-why-title">
         <div style={rootStyle}>
           <header style={headerStyle}>
-            <h2 id="shop-why-title" style={titleStyle}>
+            <Text variant="title" size="title3" as="h2" id="shop-why-title" weight={700} style={{ margin: 0, color: 'var(--color-text)' }}>
               {strings.shop.whyDetail.title}
-            </h2>
+            </Text>
             <button
               type="button"
               style={closeStyle}
               aria-label={strings.common.cancel}
               onClick={onClose}
             >
-              <span aria-hidden="true">×</span>
+              <Text variant="ui" as="span" size="title3" style={{ color: 'var(--color-secondary-strong)' }} aria-hidden="true">×</Text>
             </button>
           </header>
 
@@ -105,18 +106,18 @@ export function WhyDetailSheet({ whyDetail, onClose }: WhyDetailSheetProps) {
             ) : null}
 
             {fillsGap ? (
-              <p style={lineStyle}>
+              <Text variant="body" as="p" size="subhead" style={{ margin: 0, color: 'var(--color-text)' }}>
                 {strings.shop.whyDetail.fillsGap(
                   strings.closet.categoryLabel(fillsGap.category).toLowerCase(),
                   fillsGap.ownedCount,
                 )}
-              </p>
+              </Text>
             ) : null}
 
             {paletteMatch.length > 0 ? (
-              <p style={lineStyle}>
+              <Text variant="body" as="p" size="subhead" style={{ margin: 0, color: 'var(--color-text)' }}>
                 {strings.shop.whyDetail.paletteMatch(paletteMatch.join(', '))}
-              </p>
+              </Text>
             ) : null}
           </div>
         </div>
@@ -137,7 +138,7 @@ function WhyItemRow({ item, line }: { item: WhyItemRef; line: string }) {
       ) : (
         <span aria-hidden="true" style={thumbFallbackStyle} />
       )}
-      <span style={rowTextStyle}>{line}</span>
+      <Text variant="body" as="span" size="subhead" style={{ color: 'var(--color-text)' }}>{line}</Text>
     </li>
   );
 }
@@ -164,14 +165,6 @@ const headerStyle: CSSProperties = {
   gap: 'var(--space-3)',
 };
 
-const titleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.title3.rem,
-  lineHeight: `${typeRamp.title3.lineHeight}px`,
-  fontWeight: 700,
-  color: 'var(--color-text)',
-};
-
 const closeStyle: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
@@ -180,9 +173,7 @@ const closeStyle: CSSProperties = {
   minHeight: 'var(--touch-target-min)',
   border: 'none',
   background: 'transparent',
-  color: 'var(--color-secondary-strong)',
   cursor: 'pointer',
-  fontSize: typeRamp.title3.rem,
 };
 
 const sectionsStyle: CSSProperties = {
@@ -225,15 +216,3 @@ const thumbFallbackStyle: CSSProperties = {
   border: '1px solid var(--color-hairline)',
 };
 
-const rowTextStyle: CSSProperties = {
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  color: 'var(--color-text)',
-};
-
-const lineStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  color: 'var(--color-text)',
-};

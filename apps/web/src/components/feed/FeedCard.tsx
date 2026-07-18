@@ -10,6 +10,7 @@ import { REPORT_REASONS, type FeedPostPayload, type ReportReason } from '@era/co
 import { Avatar } from '../profile/Avatar';
 import { Button } from '../Button';
 import { Chip } from '../Chip';
+import { Text } from '../Text';
 import { transitionFor } from '../../lib/motion';
 
 /** ≤500 app cap on the free-text report detail (mirrors REPORT_DETAIL_MAX server-side). */
@@ -108,14 +109,16 @@ export function FeedCard({
         <Link href={`/${post.creator.username}`} style={creatorLinkStyle} aria-label={`@${post.creator.username}`}>
           <Avatar src={post.creator.avatarUrl} name={displayName} size={40} />
           <span style={creatorTextStyle}>
-            <span style={handleStyle}>@{post.creator.username}</span>
-            <span style={metaStyle}>
+            <Text variant="ui" size="subhead" weight={600} as="span" style={handleColorStyle}>
+              @{post.creator.username}
+            </Text>
+            <Text variant="caption" size="footnote" as="span" style={metaRowStyle}>
               {displayName}
               <span aria-hidden="true" style={dotStyle}>
                 ·
               </span>
               {formatWhen(post.createdAt)}
-            </span>
+            </Text>
           </span>
         </Link>
 
@@ -154,7 +157,11 @@ export function FeedCard({
       </div>
 
       <footer style={footerStyle}>
-        {post.title ? <p style={titleStyle}>{post.title}</p> : null}
+        {post.title ? (
+          <Text variant="ui" size="subhead" weight={600} as="p" style={{ margin: 0, color: 'var(--color-text)' }}>
+            {post.title}
+          </Text>
+        ) : null}
         <div style={engagementRowStyle}>
           <EngagementButton
             glyph={post.viewer.liked ? '♥' : '♡'}
@@ -228,7 +235,9 @@ function EngagementButton({
       <span aria-hidden="true" style={{ ...glyphStyle, color: active ? 'var(--color-accent)' : 'var(--color-text)' }}>
         {glyph}
       </span>
-      <span style={countStyle}>{compact(count)}</span>
+      <Text variant="caption" size="footnote" weight={600} as="span" style={{ color: 'var(--color-secondary-strong)' }}>
+        {compact(count)}
+      </Text>
     </button>
   );
 }
@@ -333,17 +342,23 @@ function MoreMenu({
             {view === 'root' ? (
               <div style={menuColStyle}>
                 <button type="button" role="menuitem" style={menuItemStyle} onClick={() => setView('report')}>
-                  {strings.feed.reportTitle}
+                  <Text variant="ui" size="subhead" weight={600} as="span">
+                    {strings.feed.reportTitle}
+                  </Text>
                 </button>
                 <button type="button" role="menuitem" style={menuItemDangerStyle} onClick={() => setView('block')}>
-                  {strings.feed.blockTitle(creatorName)}
+                  <Text variant="ui" size="subhead" weight={600} as="span" style={{ color: 'var(--color-rust)' }}>
+                    {strings.feed.blockTitle(creatorName)}
+                  </Text>
                 </button>
               </div>
             ) : null}
 
             {view === 'report' ? (
               <div style={menuColStyle}>
-                <p style={menuHeadingStyle}>{strings.feed.reportTitle}</p>
+                <Text variant="ui" size="subhead" weight={700} as="p" style={{ margin: 0, color: 'var(--color-text)' }}>
+                  {strings.feed.reportTitle}
+                </Text>
                 <div style={chipRowStyle}>
                   {REPORT_REASONS.map((value) => (
                     <Chip key={value} selected={reason === value} onClick={() => setReason(value)}>
@@ -361,7 +376,11 @@ function MoreMenu({
                   disabled={busy}
                   onChange={(event) => setDetail(event.target.value)}
                 />
-                {error ? <p style={menuErrorStyle}>{error}</p> : null}
+                {error ? (
+                  <Text variant="caption" size="footnote" as="p" style={{ margin: 0, color: 'var(--color-rust)' }}>
+                    {error}
+                  </Text>
+                ) : null}
                 <Button
                   variant="primary"
                   disabled={reason === null || busy}
@@ -375,9 +394,17 @@ function MoreMenu({
 
             {view === 'block' ? (
               <div style={menuColStyle}>
-                <p style={menuHeadingStyle}>{strings.feed.blockTitle(creatorName)}</p>
-                <p style={blockBodyStyle}>{strings.feed.blockBody}</p>
-                {error ? <p style={menuErrorStyle}>{error}</p> : null}
+                <Text variant="ui" size="subhead" weight={700} as="p" style={{ margin: 0, color: 'var(--color-text)' }}>
+                  {strings.feed.blockTitle(creatorName)}
+                </Text>
+                <Text variant="caption" size="footnote" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
+                  {strings.feed.blockBody}
+                </Text>
+                {error ? (
+                  <Text variant="caption" size="footnote" as="p" style={{ margin: 0, color: 'var(--color-rust)' }}>
+                    {error}
+                  </Text>
+                ) : null}
                 <Button variant="secondary" disabled={busy} onClick={() => void confirmBlock()} style={fullWidthStyle}>
                   {strings.feed.blockCta}
                 </Button>
@@ -424,22 +451,17 @@ const creatorTextStyle: CSSProperties = {
   minWidth: 0,
 };
 
-const handleStyle: CSSProperties = {
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  fontWeight: 600,
+const handleColorStyle: CSSProperties = {
   color: 'var(--color-text)',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
 };
 
-const metaStyle: CSSProperties = {
+const metaRowStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   gap: 'var(--space-1)',
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
   color: 'var(--color-secondary-strong)',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
@@ -498,14 +520,6 @@ const footerStyle: CSSProperties = {
   gap: 'var(--space-2)',
 };
 
-const titleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  fontWeight: 600,
-  color: 'var(--color-text)',
-};
-
 const engagementRowStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
@@ -527,12 +541,6 @@ const engagementButtonStyle: CSSProperties = {
 const glyphStyle: CSSProperties = {
   fontSize: typeRamp.title3.rem,
   lineHeight: 1,
-};
-
-const countStyle: CSSProperties = {
-  fontSize: typeRamp.footnote.rem,
-  fontWeight: 600,
-  color: 'var(--color-secondary-strong)',
 };
 
 const menuWrapStyle: CSSProperties = { position: 'relative', flexShrink: 0 };
@@ -589,22 +597,11 @@ const menuItemStyle: CSSProperties = {
   borderRadius: 'var(--radius-input)',
   background: 'var(--color-surface)',
   color: 'var(--color-text)',
-  fontSize: typeRamp.subhead.rem,
-  fontWeight: 600,
   cursor: 'pointer',
 };
 
 const menuItemDangerStyle: CSSProperties = {
   ...menuItemStyle,
-  color: 'var(--color-rust)',
-};
-
-const menuHeadingStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  fontWeight: 700,
-  color: 'var(--color-text)',
 };
 
 const chipRowStyle: CSSProperties = {
@@ -627,20 +624,6 @@ const detailStyle: CSSProperties = {
   resize: 'vertical',
   // eslint-disable-next-line no-restricted-syntax -- textarea inherits the body sans stack; no brand-face declaration
   fontFamily: 'inherit',
-};
-
-const menuErrorStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  color: 'var(--color-rust)',
-};
-
-const blockBodyStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
 };
 
 const fullWidthStyle: CSSProperties = { width: '100%' };

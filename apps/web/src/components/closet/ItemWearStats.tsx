@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState, type CSSProperties } from 'react';
-import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
+import { Text } from '../Text';
 import { costPerWear } from '@era/core/wear-stats';
 import { formatMoney } from '../../lib/format-money';
 import { WoreItButton } from '../ovi/WoreItButton';
@@ -30,28 +30,6 @@ const rowStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: 'var(--space-1)',
-};
-
-const countStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
-  fontWeight: 600,
-  color: 'var(--color-text)',
-};
-
-const cpwStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
-};
-
-const errorStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  color: 'var(--color-secondary-strong)',
 };
 
 /**
@@ -97,13 +75,19 @@ export function ItemWearStats({ item }: ItemWearStatsProps) {
   return (
     <div style={blockStyle}>
       <div style={rowStyle}>
-        <p style={countStyle}>{strings.wear.count(stats.wearCount)}</p>
+        <Text variant="body" weight={600} as="p" style={{ margin: 0, color: 'var(--color-text)' }}>
+          {strings.wear.count(stats.wearCount)}
+        </Text>
         {priceUsable ? (
           cpw !== null ? (
-            <p style={cpwStyle}>{strings.wear.costPerWear(formatMoney(cpw, item.currency))}</p>
+            <Text variant="caption" size="subhead" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
+              {strings.wear.costPerWear(formatMoney(cpw, item.currency))}
+            </Text>
           ) : null
         ) : (
-          <p style={cpwStyle}>{strings.wear.costPerWearUnknown}</p>
+          <Text variant="caption" size="subhead" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
+            {strings.wear.costPerWearUnknown}
+          </Text>
         )}
       </div>
 
@@ -118,7 +102,11 @@ export function ItemWearStats({ item }: ItemWearStatsProps) {
         onError={() => setLogFailed(true)}
       />
 
-      {logFailed ? <p style={errorStyle}>{strings.wear.logFailed}</p> : null}
+      {logFailed ? (
+        <Text variant="caption" size="footnote" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
+          {strings.wear.logFailed}
+        </Text>
+      ) : null}
     </div>
   );
 }

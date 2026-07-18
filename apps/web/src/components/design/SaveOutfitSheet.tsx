@@ -2,7 +2,8 @@
 
 import { useState, type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, typeRamp } from '@era/tokens';
+import { motion as motionToken } from '@era/tokens';
+import { Text } from '../Text';
 import { strings } from '@era/core/strings';
 import { transitionFor } from '../../lib/motion';
 import { GlassSheet } from '../GlassSheet';
@@ -30,19 +31,6 @@ const contentStyle: CSSProperties = {
   flexDirection: 'column',
   gap: 'var(--space-4)',
   paddingTop: 'var(--space-4)',
-};
-
-const titleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: typeRamp.title2.rem,
-  lineHeight: `${typeRamp.title2.lineHeight}px`,
-  fontWeight: 700,
-};
-
-const savingStyle: CSSProperties = {
-  margin: 0,
-  color: 'var(--color-secondary-strong)',
-  fontSize: typeRamp.footnote.rem,
 };
 
 const actionsStyle: CSSProperties = {
@@ -73,7 +61,9 @@ export function SaveOutfitSheet({ initialName, initialOccasion, saving, onSave, 
       />
       <GlassSheet>
         <div style={contentStyle}>
-          <h2 style={titleStyle}>{strings.design.saveOutfit}</h2>
+          <Text variant="title" size="title2" as="h2" style={{ margin: 0 }}>
+            {strings.design.saveOutfit}
+          </Text>
           <Input
             aria-label={strings.design.outfitNamePlaceholder}
             placeholder={strings.design.outfitNamePlaceholder}
@@ -90,7 +80,11 @@ export function SaveOutfitSheet({ initialName, initialOccasion, saving, onSave, 
             disabled={saving}
             onChange={(event) => setOccasion(event.target.value)}
           />
-          {saving ? <p style={savingStyle}>{strings.design.saving}</p> : null}
+          {saving ? (
+            <Text variant="caption" size="footnote" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
+              {strings.design.saving}
+            </Text>
+          ) : null}
           <div style={actionsStyle}>
             <Button variant="ghost" disabled={saving} onClick={onCancel}>
               {strings.common.cancel}

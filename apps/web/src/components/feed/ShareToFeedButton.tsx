@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, type CSSProperties } from 'react';
-import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
+import { Text } from '../Text';
 
 export interface ShareToFeedButtonProps {
   /**
@@ -27,19 +27,6 @@ export interface ShareToFeedButtonProps {
    */
   readonly initialSharedPostId?: string | null;
 }
-
-const buttonStyle: CSSProperties = {
-  alignSelf: 'flex-start',
-  padding: 0,
-  border: 'none',
-  background: 'transparent',
-  color: 'var(--color-accent)',
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  fontWeight: 600,
-  cursor: 'pointer',
-  textAlign: 'left',
-};
 
 /**
  * Flag-gated "Share to feed" toggle for a saved outfit or era on the Design tab —
@@ -119,11 +106,17 @@ export function ShareToFeedButton({
         aria-pressed={sharedPostId !== null}
         onClick={() => void toggle()}
       >
-        {label}
+        <Text variant="ui" size="footnote" weight={600} as="span" style={{ color: 'var(--color-accent)' }}>
+          {label}
+        </Text>
       </button>
       {/* The consent line — sharing is public regardless of profile privacy, and
           unshare is the retraction. Shown only while unshared (pre-consent). */}
-      {sharedPostId === null ? <span style={consentStyle}>{strings.feed.shareConsent}</span> : null}
+      {sharedPostId === null ? (
+        <Text variant="caption" size="footnote" as="span" style={{ color: 'var(--color-secondary-strong)' }}>
+          {strings.feed.shareConsent}
+        </Text>
+      ) : null}
     </span>
   );
 }
@@ -135,9 +128,11 @@ const wrapStyle: CSSProperties = {
   alignSelf: 'flex-start',
 };
 
-const consentStyle: CSSProperties = {
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  fontWeight: 400,
-  color: 'var(--color-secondary-strong)',
+const buttonStyle: CSSProperties = {
+  alignSelf: 'flex-start',
+  padding: 0,
+  border: 'none',
+  background: 'transparent',
+  cursor: 'pointer',
+  textAlign: 'left',
 };

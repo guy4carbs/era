@@ -24,6 +24,7 @@ import {
   TabBar,
   type TabId,
 } from '../../components';
+import { Text } from '../../components/Text';
 import { useTheme, type ThemeMode } from '../../lib/theme';
 import { springTransition } from '../../lib/motion';
 
@@ -59,16 +60,9 @@ const rowStyle: CSSProperties = {
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section style={sectionStyle}>
-      <h2
-        style={{
-          margin: 0,
-          fontSize: typeRamp.title2.rem,
-          lineHeight: `${typeRamp.title2.lineHeight}px`,
-          fontWeight: 600,
-        }}
-      >
+      <Text variant="title" as="h2" size="title2" style={{ margin: 0 }}>
         {title}
-      </h2>
+      </Text>
       {children}
     </section>
   );
@@ -78,9 +72,9 @@ function Swatch({ label, box }: { label: string; box: CSSProperties }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', alignItems: 'center' }}>
       <div style={box} />
-      <span style={{ fontSize: typeRamp.caption.rem, color: 'var(--color-secondary)' }}>
+      <Text variant="caption" as="span" style={{ color: 'var(--color-secondary)' }}>
         {label}
-      </span>
+      </Text>
     </div>
   );
 }
@@ -103,9 +97,9 @@ function SpringDemo({ name }: { name: (typeof SPRING_NAMES)[number] }) {
       }}
       aria-label={`Toggle ${name} spring`}
     >
-      <span style={{ fontSize: typeRamp.footnote.rem, color: 'var(--color-secondary)' }}>
+      <Text variant="caption" as="span" size="footnote" style={{ color: 'var(--color-secondary)' }}>
         {name}
-      </span>
+      </Text>
       <div
         style={{
           width: 'var(--content-max)',
@@ -148,17 +142,17 @@ function ContrastReadout() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-      <strong style={{ fontSize: typeRamp.subhead.rem }}>
+      <Text variant="ui" as="strong" size="subhead">
         {passed}/{rows.length} pass
-      </strong>
+      </Text>
       <div style={{ overflowX: 'auto' }}>
         <table style={{ borderCollapse: 'collapse', width: '100%' }}>
           <thead>
             <tr>
               {['', 'id', 'mode', 'fg', 'bg', 'usage', 'req', 'ratio', ''].map((h, i) => (
-                <th key={i} style={{ ...cellStyle, color: 'var(--color-secondary)', fontWeight: 600 }}>
+                <Text key={i} variant="caption" as="th" size="footnote" style={{ padding: 'var(--space-2)', textAlign: 'left', borderBottom: '1px solid var(--color-hairline)', whiteSpace: 'nowrap', color: 'var(--color-secondary)' }}>
                   {h}
-                </th>
+                </Text>
               ))}
             </tr>
           </thead>
@@ -214,18 +208,18 @@ export default function DesignLabPage() {
     <main style={{ paddingBottom: 'calc(var(--tabbar-height) + var(--space-16))' }}>
       <Container>
         <header style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', paddingBlock: 'var(--space-8)' }}>
-          <h1 style={{ margin: 0, fontSize: typeRamp.largeTitle.rem, lineHeight: `${typeRamp.largeTitle.lineHeight}px`, fontWeight: 700 }}>
+          <Text variant="largeTitle" as="h1" style={{ margin: 0 }}>
             Era design lab
-          </h1>
+          </Text>
           <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
             {(['light', 'dark', 'system'] as ThemeMode[]).map((m) => (
               <Chip key={m} selected={mode === m} onClick={() => setMode(m)}>
                 {m}
               </Chip>
             ))}
-            <span style={{ alignSelf: 'center', color: 'var(--color-secondary)', fontSize: typeRamp.footnote.rem }}>
+            <Text variant="caption" as="span" size="footnote" style={{ alignSelf: 'center', color: 'var(--color-secondary)' }}>
               resolved: {resolved}
-            </span>
+            </Text>
           </div>
         </header>
 
@@ -285,9 +279,9 @@ export default function DesignLabPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
             {TYPE_ROLES.map((role) => (
               <div key={role} style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'baseline' }}>
-                <span style={{ width: 'var(--space-16)', color: 'var(--color-secondary)', fontSize: typeRamp.caption.rem }}>
+                <Text variant="caption" as="span" style={{ width: 'var(--space-16)', color: 'var(--color-secondary)' }}>
                   {role} · {typeRamp[role].px}px
-                </span>
+                </Text>
                 <span style={{ fontSize: typeRamp[role].rem, lineHeight: `${typeRamp[role].lineHeight}px` }}>
                   The quick brown fox
                 </span>
@@ -405,8 +399,8 @@ export default function DesignLabPage() {
       {sheetOpen ? (
         <GlassSheet peek>
           <div style={{ padding: 'var(--space-4)', display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-            <h3 style={{ margin: 0, fontSize: typeRamp.title3.rem }}>Glass sheet</h3>
-            <p style={{ color: 'var(--color-secondary)' }}>Tap the grabber to expand to full height.</p>
+            <Text variant="title" as="h3" size="title3" style={{ margin: 0 }}>Glass sheet</Text>
+            <Text variant="body" as="p" style={{ color: 'var(--color-secondary)' }}>Tap the grabber to expand to full height.</Text>
           </div>
         </GlassSheet>
       ) : null}

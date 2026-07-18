@@ -1,9 +1,10 @@
 import { type CSSProperties, type JSX, type ReactNode } from 'react';
 import Image from 'next/image';
 import { strings } from '@era/core/strings';
-import { boxShadows, layout, typeRamp } from '@era/tokens';
+import { boxShadows, layout } from '@era/tokens';
 import type { PublicProfilePublic } from '../../lib/public-profile-server';
 import { coverAlt, itemAlt, profileName } from '../../lib/profile-presenter';
+import { Text } from '../Text';
 import { Avatar } from './Avatar';
 import { FollowButton } from './FollowButton';
 import { CopyLinkButton } from './CopyLinkButton';
@@ -55,17 +56,21 @@ export function ProfileView({ data, isOwner, signedIn, canonicalUrl }: ProfileVi
       <header style={headerStyle}>
         <Avatar src={data.profile.avatarUrl} name={name} size={72} />
         <div style={identityStyle}>
-          <h1 style={nameStyle}>{name}</h1>
-          <p style={handleStyle}>@{data.profile.username}</p>
+          <Text variant="largeTitle" as="h1" size="title1" weight={700} style={nameStyle}>
+            {name}
+          </Text>
+          <Text variant="caption" as="p" size="subhead" style={handleStyle}>
+            @{data.profile.username}
+          </Text>
           {isOwner ? (
             <div style={ownerBlockStyle}>
-              <p style={countsStyle}>
+              <Text variant="ui" as="p" size="subhead" weight={600} style={countsStyle}>
                 <span>{strings.profile.followerCount(data.followerCount)}</span>
                 <span aria-hidden="true" style={dotStyle}>
                   ·
                 </span>
                 <span>{strings.profile.followingCount(data.followingCount)}</span>
-              </p>
+              </Text>
               <CopyLinkButton url={canonicalUrl} />
             </div>
           ) : (
@@ -89,9 +94,9 @@ export function ProfileView({ data, isOwner, signedIn, canonicalUrl }: ProfileVi
             ))}
           </div>
         ) : (
-          <p style={emptyStyle}>
+          <Text variant="body" as="p" style={emptyStyle}>
             {isOwner ? strings.profile.emptyPublicOwn : strings.profile.emptyPublic(name)}
-          </p>
+          </Text>
         )}
       </Section>
 
@@ -132,7 +137,9 @@ export function ProfileView({ data, isOwner, signedIn, canonicalUrl }: ProfileVi
 function Section({ title, children }: { title: string; children: ReactNode }): JSX.Element {
   return (
     <section style={sectionStyle}>
-      <h2 style={sectionHeadingStyle}>{title}</h2>
+      <Text variant="caption" as="h2" size="footnote" weight={700} style={sectionHeadingStyle}>
+        {title}
+      </Text>
       {children}
     </section>
   );
@@ -157,7 +164,9 @@ function CutoutTile({
           <span aria-hidden="true" style={placeholderStyle} />
         )}
       </div>
-      <figcaption style={captionStyle}>{name}</figcaption>
+      <Text variant="caption" as="figcaption" size="footnote" style={captionStyle}>
+        {name}
+      </Text>
     </figure>
   );
 }
@@ -181,7 +190,11 @@ function CoverCard({
           <span aria-hidden="true" style={placeholderStyle} />
         )}
       </div>
-      {title ? <figcaption style={captionStyle}>{title}</figcaption> : null}
+      {title ? (
+        <Text variant="caption" as="figcaption" size="footnote" style={captionStyle}>
+          {title}
+        </Text>
+      ) : null}
     </figure>
   );
 }
@@ -208,16 +221,11 @@ const identityStyle: CSSProperties = {
 
 const nameStyle: CSSProperties = {
   margin: 0,
-  fontSize: typeRamp.title1.rem,
-  lineHeight: `${typeRamp.title1.lineHeight}px`,
-  fontWeight: 700,
   color: 'var(--color-text)',
 };
 
 const handleStyle: CSSProperties = {
   margin: 0,
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
   color: 'var(--color-secondary-strong)',
 };
 
@@ -234,10 +242,7 @@ const countsStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   gap: 'var(--space-2)',
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
   color: 'var(--color-text)',
-  fontWeight: 600,
 };
 
 const dotStyle: CSSProperties = { color: 'var(--color-secondary-strong)' };
@@ -250,9 +255,6 @@ const sectionStyle: CSSProperties = {
 
 const sectionHeadingStyle: CSSProperties = {
   margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  fontWeight: 700,
   letterSpacing: '0.04em',
   textTransform: 'uppercase',
   color: 'var(--color-secondary-strong)',
@@ -261,8 +263,6 @@ const sectionHeadingStyle: CSSProperties = {
 const emptyStyle: CSSProperties = {
   margin: 0,
   paddingBlock: 'var(--space-8)',
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
   color: 'var(--color-secondary)',
   textAlign: 'center',
 };
@@ -307,8 +307,6 @@ const placeholderStyle: CSSProperties = {
 
 const captionStyle: CSSProperties = {
   margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
   color: 'var(--color-text)',
   overflow: 'hidden',
   textOverflow: 'ellipsis',

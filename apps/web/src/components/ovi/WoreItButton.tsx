@@ -2,10 +2,11 @@
 
 import { useState, type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, typeRamp } from '@era/tokens';
+import { motion as motionToken } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { transitionFor } from '../../lib/motion';
 import { Button } from '../Button';
+import { Text } from '../Text';
 import { analytics } from '../../lib/analytics';
 import { logWear } from './ovi-actions';
 
@@ -32,14 +33,10 @@ export interface WoreItButtonProps {
 
 type WearStatus = 'idle' | 'logging' | 'confirmed';
 
-const confirmedStyle: CSSProperties = {
+const confirmedWrapStyle: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   minHeight: 'var(--touch-target-web)',
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  fontWeight: 600,
-  color: 'var(--color-secondary-strong)',
 };
 
 /**
@@ -86,12 +83,14 @@ export function WoreItButton({
     return (
       <motion.span
         role="status"
-        style={confirmedStyle}
+        style={confirmedWrapStyle}
         initial={reduced ? { opacity: 0 } : { opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={transitionFor(motionToken.springs.gentle, reduced)}
       >
-        {confirmedLabel ?? strings.ovi.woreItConfirmed}
+        <Text variant="caption" size="footnote" weight={600} as="span" style={{ color: 'var(--color-secondary-strong)' }}>
+          {confirmedLabel ?? strings.ovi.woreItConfirmed}
+        </Text>
       </motion.span>
     );
   }
