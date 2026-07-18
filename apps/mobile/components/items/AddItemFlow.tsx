@@ -28,10 +28,11 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
+import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { trackOnce } from '@/lib/analytics';
 import { LimitReachedError } from '@/lib/rate-limit';
@@ -287,7 +288,7 @@ function isImportableUrl(value: string): boolean {
 function SourceCard({ label, onPress }: { readonly label: string; readonly onPress: () => void }) {
   const { colors, resolved } = useTheme();
   return (
-    <Pressable
+    <Press
       accessibilityRole="button"
       accessibilityLabel={label}
       onPress={() => {
@@ -303,7 +304,7 @@ function SourceCard({ label, onPress }: { readonly label: string; readonly onPre
       <Text variant="ui" size="title3" weight={600} color={colors.text}>
         {label}
       </Text>
-    </Pressable>
+    </Press>
   );
 }
 

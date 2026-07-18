@@ -16,8 +16,9 @@
 import type { ProductWhy } from '@era/core/shop';
 import { strings } from '@era/core/strings';
 import { radii, spacing } from '@era/tokens';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
@@ -61,7 +62,7 @@ export function WhyLabel({ why, onPress }: WhyLabelProps) {
   }
 
   return (
-    <Pressable
+    <Press
       accessibilityRole="button"
       accessibilityLabel={text}
       accessibilityHint={strings.shop.whyDetail.title}
@@ -72,7 +73,7 @@ export function WhyLabel({ why, onPress }: WhyLabelProps) {
       <Text variant="ui" size="footnote" weight={labelWeight} color={colors.text}>
         {text}
       </Text>
-    </Pressable>
+    </Press>
   );
 }
 

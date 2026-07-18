@@ -20,13 +20,12 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { Text } from '@/components/Text';
-import { animate, useReducedMotionSafe } from '@/lib/motion';
+import { PRESS_SCALE, animate, tokenEasing, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const DIAMETER = layout.touchTarget.ios;
-const PRESS_SCALE = 0.92;
 const REST_SCALE = 1;
 
 interface OviFabProps {
@@ -49,7 +48,7 @@ export function OviFab({ onPress, style }: OviFabProps) {
     }
     // 0 → 1 → 0 over `pulse.durationMs`; each timing leg is half the period.
     pulse.value = withRepeat(
-      withTiming(1, { duration: glow.pulse.durationMs / 2 }),
+      withTiming(1, { duration: glow.pulse.durationMs / 2, easing: tokenEasing }),
       -1,
       true,
     );

@@ -5,5 +5,6 @@ export { Container, type ContainerProps } from './Container';
 export { GlassSheet, type GlassSheetProps } from './GlassSheet';
 export { Input, type InputProps } from './Input';
 export { OviFab, type OviFabProps } from './OviFab';
+export { Press, type PressProps, type PressAs } from './Press';
 export { TabBar, TAB_ITEMS, type TabBarProps, type TabId, type TabDef } from './TabBar';
 export { Text, TextControlBoundary, type TextProps } from './Text';

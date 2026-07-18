@@ -1,7 +1,7 @@
 'use client';
 
 import { type CSSProperties } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken, layout } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { transitionFor } from '../../../lib/motion';
@@ -65,7 +65,7 @@ export function MoodCards({ step, selectedId, onSelect }: MoodCardsProps) {
               boxShadow: selected ? `var(--shadow-e3), ${SELECTION_RING}` : 'var(--shadow-e2)',
             }}
             whileHover={reduced ? undefined : { y: layout.hover.liftPx, boxShadow: 'var(--shadow-e3)' }}
-            whileTap={reduced ? undefined : { scale: 0.98 }}
+            whileTap={reduced ? undefined : { scale: motionToken.press.scale }}
             transition={transitionFor(motionToken.springs.snappy, reduced)}
           >
             <TextControlBoundary>

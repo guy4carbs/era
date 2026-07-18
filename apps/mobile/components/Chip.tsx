@@ -14,12 +14,11 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { Text, TextControlBoundary } from '@/components/Text';
-import { animate, useReducedMotionSafe } from '@/lib/motion';
+import { PRESS_SCALE, animate, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-const PRESS_SCALE = 0.94;
 const REST_SCALE = 1;
 // Expands the touch area so a small chip still meets the 44pt target.
 const HIT_SLOP = spacing.s3;

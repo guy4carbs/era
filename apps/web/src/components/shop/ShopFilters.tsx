@@ -1,7 +1,9 @@
 'use client';
 
 import { type CSSProperties } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import { strings } from '@era/core/strings';
+import { pressProps } from '../../lib/motion';
 import { Text } from '../Text';
 import type { BrandTier, ItemCategory, ShopSearchQuery } from '@era/core/shop';
 import { BUDGET_BANDS, SIZE_OPTIONS, BRAND_TIER_ORDER, budgetBandToQuery } from '@era/core/shop';
@@ -91,6 +93,7 @@ export interface ShopFiltersProps {
  * the bar never wraps into a wall.
  */
 export function ShopFilters({ filters, onChange }: ShopFiltersProps) {
+  const reduced = useReducedMotion();
   // Toggle helper: picking the active value again clears that axis.
   const set = <K extends keyof ShopFilterState>(key: K, value: ShopFilterState[K]) =>
     onChange({ ...filters, [key]: filters[key] === value ? null : value });
@@ -134,9 +137,9 @@ export function ShopFilters({ filters, onChange }: ShopFiltersProps) {
       </FilterRow>
 
       {hasActiveFilters(filters) ? (
-        <button type="button" style={clearStyle} onClick={() => onChange(EMPTY_FILTERS)}>
+        <motion.button type="button" style={clearStyle} onClick={() => onChange(EMPTY_FILTERS)} {...pressProps(reduced)}>
           <Text variant="ui" as="span" size="footnote" weight={600} style={{ color: 'var(--color-accent)' }}>{strings.shop.clearFilters}</Text>
-        </button>
+        </motion.button>
       ) : null}
     </div>
   );

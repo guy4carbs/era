@@ -1,14 +1,9 @@
 'use client';
 
 import { forwardRef, type CSSProperties, type ReactNode } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
-import {
-  motion as motionToken,
-  typeRamp,
-  glow,
-  layout,
-} from '@era/tokens';
-import { transitionFor } from '../lib/motion';
+import { motion, useReducedMotion } from 'motion/react';
+import { typeRamp, glow, layout } from '@era/tokens';
+import { pressProps } from '../lib/motion';
 import { useTheme } from '../lib/theme';
 import { Text, TextControlBoundary } from './Text';
 
@@ -99,8 +94,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
         ...style,
       }}
       whileHover={interactive ? { y: layout.hover.liftPx, boxShadow: hoverGlow } : undefined}
-      whileTap={interactive ? { scale: 0.97 } : undefined}
-      transition={transitionFor(motionToken.springs.snappy, reduced)}
+      {...pressProps(reduced, interactive)}
       {...rest}
     >
       {variant === 'primary' ? <span style={sheenOverlay} aria-hidden="true" /> : null}

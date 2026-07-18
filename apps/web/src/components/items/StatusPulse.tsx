@@ -1,7 +1,8 @@
 'use client';
 
 import { type CSSProperties } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'motion/react';
+import { motion as motionToken } from '@era/tokens';
 import { Text } from '../Text';
 
 export interface StatusPulseProps {
@@ -33,7 +34,7 @@ export function StatusPulse({ label }: StatusPulseProps) {
       <motion.p
         style={{ margin: 0, color: 'var(--color-secondary-strong)' }}
         animate={reduced ? undefined : { opacity: [0.55, 1, 0.55] }}
-        transition={reduced ? undefined : { duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+        transition={reduced ? undefined : { duration: 1.4, repeat: Infinity, ease: motionToken.easing.bezier }}
       >
         <Text variant="body" as="span" style={{ color: 'inherit' }}>
           {label}

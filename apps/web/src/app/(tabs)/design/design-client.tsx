@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { layout, motion as motionToken, typeRamp } from '@era/tokens';
 import { Text } from '../../../components/Text';
 import { strings } from '@era/core/strings';
@@ -104,7 +104,7 @@ function BuildPill({ onClick }: { onClick: () => void }) {
       aria-label={strings.design.newOutfit}
       style={buildPillStyle}
       whileHover={reduced ? undefined : { boxShadow: 'var(--shadow-e3)' }}
-      whileTap={reduced ? undefined : { scale: 0.96 }}
+      whileTap={reduced ? undefined : { scale: motionToken.press.scale }}
       onClick={onClick}
     >
       <span aria-hidden="true">+</span>

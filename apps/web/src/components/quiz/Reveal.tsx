@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken, typeRamp, glow } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import {

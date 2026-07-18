@@ -1,7 +1,7 @@
 'use client';
 
 import { type CSSProperties, type ReactNode } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken, layout } from '@era/tokens';
 import { transitionFor } from '../lib/motion';
 
@@ -48,11 +48,14 @@ const contentStyle: CSSProperties = { position: 'relative', zIndex: 2, height: '
 export function Card({ children, interactive, aspect, style, onClick }: CardProps) {
   const reduced = useReducedMotion();
   const canHover = interactive && !reduced;
+  // A card only presses when it actually does something on tap (has an onClick).
+  const clickable = onClick !== undefined;
 
   return (
     <motion.div
-      style={{ ...baseStyle, ...(aspect === 'item' ? itemStyle : null), ...style }}
+      style={{ ...baseStyle, ...(aspect === 'item' ? itemStyle : null), ...(clickable ? { cursor: 'pointer' } : null), ...style }}
       whileHover={canHover ? { y: layout.hover.liftPx, boxShadow: 'var(--shadow-e3)' } : undefined}
+      whileTap={clickable && !reduced ? { scale: motionToken.press.scale } : undefined}
       transition={transitionFor(motionToken.springs.gentle, reduced)}
       onClick={onClick}
     >

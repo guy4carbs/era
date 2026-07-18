@@ -16,13 +16,12 @@ import { Image, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
 import { Text } from '@/components/Text';
-import { animate, useReducedMotionSafe } from '@/lib/motion';
+import { PRESS_SCALE, animate, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
 
 import type { ItemWithDisplay } from './api';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-const PRESS_SCALE = 0.97;
 const REST_SCALE = 1;
 const DOT_SIZE = spacing.s3;
 

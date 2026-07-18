@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, type CSSProperties } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken, layout } from '@era/tokens';
 import { Text } from '../Text';
 import { strings } from '@era/core/strings';
 import type { ProductWhy, RankedProduct, WhyDetail } from '@era/core/shop';
-import { transitionFor } from '../../lib/motion';
+import { pressProps, transitionFor } from '../../lib/motion';
 import { logRecEvent, type SavedShopProduct } from '../../lib/shop-client';
 import { WhyLabel } from './WhyLabel';
 import { WhyDetailSheet } from './WhyDetailSheet';
@@ -134,16 +134,17 @@ export function ShopCard({ product, isSaved, onToggleSave, onDismiss }: ShopCard
       transition={transitionFor(motionToken.springs.gentle, reduced)}
     >
       {href ? (
-        <a
+        <motion.a
           href={href}
           target="_blank"
           rel={AFFILIATE_REL}
           onClick={fireClick}
           style={imageLinkStyle}
           aria-label={strings.shop.viewAt(product.retailer)}
+          {...pressProps(reduced)}
         >
           {image}
-        </a>
+        </motion.a>
       ) : (
         <div style={imageLinkStyle}>{image}</div>
       )}
@@ -161,25 +162,26 @@ export function ShopCard({ product, isSaved, onToggleSave, onDismiss }: ShopCard
             — the button is a transparent, full-width wrapper so a keyboard user
             gets the reveal for free. */}
         {why && whyDetail ? (
-          <button
+          <motion.button
             type="button"
             style={whyTriggerStyle}
             aria-haspopup="dialog"
             aria-expanded={whyOpen}
             aria-label={strings.shop.whyDetail.title}
             onClick={() => setWhyOpen(true)}
+            {...pressProps(reduced)}
           >
             <WhyLabel why={why} />
-          </button>
+          </motion.button>
         ) : (
           <WhyLabel why={why} />
         )}
 
         <div style={actionsStyle}>
           {href ? (
-            <a href={href} target="_blank" rel={AFFILIATE_REL} onClick={fireClick} style={viewAtStyle}>
+            <motion.a href={href} target="_blank" rel={AFFILIATE_REL} onClick={fireClick} style={viewAtStyle} {...pressProps(reduced)}>
               <Text variant="ui" as="span" size="footnote" weight={600} style={{ color: 'var(--color-accent)', textDecoration: 'none' }}>{strings.shop.viewAt(product.retailer)}</Text>
-            </a>
+            </motion.a>
           ) : (
             <span />
           )}
@@ -190,7 +192,7 @@ export function ShopCard({ product, isSaved, onToggleSave, onDismiss }: ShopCard
               style={{ ...saveStyle, color: isSaved ? 'var(--color-accent)' : 'var(--color-secondary-strong)' }}
               aria-pressed={isSaved}
               aria-label={isSaved ? strings.shop.saved.removeA11y : strings.shop.saved.saveA11y}
-              whileTap={reduced ? undefined : { scale: 0.9 }}
+              whileTap={reduced ? undefined : { scale: motionToken.press.scale }}
               transition={transitionFor(motionToken.springs.gentle, reduced)}
             >
               <Text variant="ui" as="span" size="subhead" style={{ lineHeight: '1' }} aria-hidden="true">
@@ -199,9 +201,9 @@ export function ShopCard({ product, isSaved, onToggleSave, onDismiss }: ShopCard
               <Text variant="ui" as="span" size="footnote" weight={600}>{isSaved ? strings.shop.saved.savedState : strings.shop.saved.save}</Text>
             </motion.button>
             {onDismiss ? (
-              <button type="button" onClick={handleDismiss} style={dismissStyle}>
+              <motion.button type="button" onClick={handleDismiss} style={dismissStyle} {...pressProps(reduced)}>
                 <Text variant="ui" as="span" size="footnote" weight={500} style={{ color: 'var(--color-secondary-strong)' }}>{strings.shop.dismiss}</Text>
-              </button>
+              </motion.button>
             ) : null}
           </div>
         </div>

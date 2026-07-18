@@ -15,6 +15,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
+import { ScreenEntrance } from '@/components/ScreenEntrance';
 import { Text } from '@/components/Text';
 import { Toast } from '@/components/closet';
 import {
@@ -130,33 +131,35 @@ export default function DesignScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.header}>
-          <Text accessibilityRole="header" variant="largeTitle" color={colors.text}>
-            Design
-          </Text>
-          <Button label={strings.design.newOutfit} onPress={openCanvas} haptic />
-        </View>
-
-        {rows.map((row, index) => (
-          <View key={`row-${index}`} style={styles.row}>
-            {row.map((outfit) => (
-              <OutfitCard key={outfit.id} outfit={outfit} onPress={openOutfit} />
-            ))}
-            {row.length === 1 ? <View style={styles.cell} /> : null}
+    <ScreenEntrance>
+      <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.header}>
+            <Text accessibilityRole="header" variant="largeTitle" color={colors.text}>
+              Design
+            </Text>
+            <Button label={strings.design.newOutfit} onPress={openCanvas} haptic />
           </View>
-        ))}
 
-        <EraSection eras={eras} busy={busy} onCreate={onCreateEra} />
-      </ScrollView>
+          {rows.map((row, index) => (
+            <View key={`row-${index}`} style={styles.row}>
+              {row.map((outfit) => (
+                <OutfitCard key={outfit.id} outfit={outfit} onPress={openOutfit} />
+              ))}
+              {row.length === 1 ? <View style={styles.cell} /> : null}
+            </View>
+          ))}
 
-      <Toast message={toast} onHide={() => setToast(null)} bottom={layout.tabBarHeight + spacing.s6} />
-    </SafeAreaView>
+          <EraSection eras={eras} busy={busy} onCreate={onCreateEra} />
+        </ScrollView>
+
+        <Toast message={toast} onHide={() => setToast(null)} bottom={layout.tabBarHeight + spacing.s6} />
+      </SafeAreaView>
+    </ScreenEntrance>
   );
 }
 

@@ -14,9 +14,10 @@ import { strings } from '@era/core/strings';
 import { glass, radii, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { type RefObject } from 'react';
-import { Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 
+import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
@@ -160,7 +161,7 @@ interface ControlButtonProps {
 
 function ControlButton({ label, onPress, colors, danger = false }: ControlButtonProps) {
   return (
-    <Pressable
+    <Press
       accessibilityRole="button"
       accessibilityLabel={label}
       hitSlop={spacing.s2}
@@ -175,7 +176,7 @@ function ControlButton({ label, onPress, colors, danger = false }: ControlButton
       >
         {label}
       </Text>
-    </Pressable>
+    </Press>
   );
 }
 

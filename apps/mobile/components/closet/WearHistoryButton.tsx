@@ -8,8 +8,9 @@
  */
 import { strings } from '@era/core/strings';
 import { layout, spacing } from '@era/tokens';
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 
+import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
@@ -20,7 +21,7 @@ interface WearHistoryButtonProps {
 export function WearHistoryButton({ onPress }: WearHistoryButtonProps) {
   const { colors } = useTheme();
   return (
-    <Pressable
+    <Press
       accessibilityRole="button"
       accessibilityLabel={strings.wear.calendar.title}
       hitSlop={spacing.s3}
@@ -28,7 +29,7 @@ export function WearHistoryButton({ onPress }: WearHistoryButtonProps) {
       style={styles.button}
     >
       <Text variant="ui" size="title2" color={colors.text}>▦</Text>
-    </Pressable>
+    </Press>
   );
 }
 

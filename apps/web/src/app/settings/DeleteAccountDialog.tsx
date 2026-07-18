@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken, typeRamp } from '@era/tokens';
-import { transitionFor } from '../../lib/motion';
+import { pressProps, transitionFor } from '../../lib/motion';
 import { eraAuth } from '../../lib/auth-client';
 import { GlassSheet } from '../../components/GlassSheet';
 import { Input } from '../../components/Input';
@@ -130,9 +130,9 @@ export function DeleteAccountDialog({ accountEmail }: DeleteAccountDialogProps) 
 
   return (
     <>
-      <button type="button" style={triggerStyle} onClick={() => setOpen(true)}>
+      <motion.button type="button" style={triggerStyle} onClick={() => setOpen(true)} {...pressProps(reduced)}>
         {SETTINGS_COPY.deleteAccount}
-      </button>
+      </motion.button>
 
       {open ? (
         <>
@@ -175,15 +175,16 @@ export function DeleteAccountDialog({ accountEmail }: DeleteAccountDialogProps) 
                     }}
                   />
                   <div style={actionsStyle}>
-                    <button
+                    <motion.button
                       type="button"
                       style={cancelStyle}
                       disabled={busy}
                       onClick={close}
+                      {...pressProps(reduced, !busy)}
                     >
                       {SETTINGS_COPY.cancel}
-                    </button>
-                    <button
+                    </motion.button>
+                    <motion.button
                       type="button"
                       style={{
                         ...dangerStyle,
@@ -192,9 +193,10 @@ export function DeleteAccountDialog({ accountEmail }: DeleteAccountDialogProps) 
                       }}
                       disabled={!matches || busy}
                       onClick={confirmDelete}
+                      {...pressProps(reduced, matches && !busy)}
                     >
                       {SETTINGS_COPY.deleteConfirmCta}
-                    </button>
+                    </motion.button>
                   </div>
                 </>
               )}

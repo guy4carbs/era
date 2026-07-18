@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, type CSSProperties, type ReactNode } from 'react';
-import { motion, useInView, useReducedMotion } from 'framer-motion';
+import { motion, useInView, useReducedMotion } from 'motion/react';
 import { motion as motionToken, spacing } from '@era/tokens';
 import { transitionFor } from '../../lib/motion';
 

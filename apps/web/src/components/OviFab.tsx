@@ -1,8 +1,8 @@
 'use client';
 
 import { type CSSProperties } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
-import { glow } from '@era/tokens';
+import { motion, useReducedMotion } from 'motion/react';
+import { glow, motion as motionToken } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { useTheme } from '../lib/theme';
 import { Text } from './Text';
@@ -63,7 +63,7 @@ export function OviFab({ onClick, style }: OviFabProps) {
     : {
         duration: glow.pulse.durationMs / 1000,
         repeat: Infinity,
-        ease: 'easeInOut' as const,
+        ease: motionToken.easing.bezier,
       };
 
   return (
@@ -73,7 +73,7 @@ export function OviFab({ onClick, style }: OviFabProps) {
       style={{ ...fabStyle, boxShadow: restShadow, ...style }}
       animate={animate}
       transition={transition}
-      whileTap={reduced ? undefined : { scale: 0.94 }}
+      whileTap={reduced ? undefined : { scale: motionToken.press.scale }}
       onClick={onClick}
     >
       <Text variant="ui" aria-hidden="true">Ovi</Text>

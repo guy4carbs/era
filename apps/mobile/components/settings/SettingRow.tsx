@@ -8,8 +8,9 @@
  * label-only glyph convention (no icon font is bundled).
  */
 import { layout, spacing } from '@era/tokens';
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 
+import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
@@ -34,7 +35,7 @@ export function SettingRow({
   const labelColor = destructive ? colors.danger : colors.text;
 
   return (
-    <Pressable
+    <Press
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityHint={accessibilityHint}
@@ -53,7 +54,7 @@ export function SettingRow({
       >
         {trailing}
       </Text>
-    </Pressable>
+    </Press>
   );
 }
 

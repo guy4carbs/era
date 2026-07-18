@@ -3,8 +3,8 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { motion, useReducedMotion } from 'framer-motion';
-import { typeRamp, layout } from '@era/tokens';
+import { motion, useReducedMotion } from 'motion/react';
+import { typeRamp, layout, motion as motionToken } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { ClosetEmpty, ClosetGallery, SettingsLink, type GalleryItem } from '../../../components/closet';
 import { Text } from '../../../components/Text';
@@ -74,7 +74,7 @@ function AddPill({ onClick }: { onClick: () => void }) {
       aria-label={strings.closet.addCta}
       style={addPillStyle}
       whileHover={reduced ? undefined : { boxShadow: 'var(--shadow-e3)' }}
-      whileTap={reduced ? undefined : { scale: 0.96 }}
+      whileTap={reduced ? undefined : { scale: motionToken.press.scale }}
       onClick={onClick}
     >
       <span aria-hidden="true">+</span>

@@ -23,10 +23,13 @@ import { layout, radii, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import * as Linking from 'expo-linking';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
+import { Press } from '@/components/Press';
+import { ScreenEntrance } from '@/components/ScreenEntrance';
+import { StaggerItem } from '@/components/StaggerItem';
 import { Text } from '@/components/Text';
 import {
   EMPTY_FILTERS,
@@ -330,35 +333,38 @@ export default function ShopScreen() {
   const data: readonly ShopCardProduct[] = saved ? savedProducts : visible;
 
   return (
-    <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
+    <ScreenEntrance>
+      <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
       <FlatList
         data={data}
         keyExtractor={(product) => product.id}
-        renderItem={({ item }) =>
-          // Ranked picks (with `whyDetail`) get the dismiss + why affordances; saved
-          // picks get a permanently-filled heart that un-saves on tap.
-          'whyDetail' in item ? (
-            <ShopCard
-              product={item}
-              onView={onView}
-              isSaved={savedIds.has(item.id)}
-              onToggleSave={() => toggleSaveRanked(item)}
-              onDismiss={onDismiss}
-              onOpenWhy={openWhy}
-              canAddToCart={cardCheckoutSupport(item) === 'in_flow'}
-              onAddToCart={onAddToCart}
-            />
-          ) : (
-            <ShopCard
-              product={item}
-              onView={onView}
-              isSaved
-              onToggleSave={() => unsaveSaved(item)}
-              canAddToCart={cardCheckoutSupport(item) === 'in_flow'}
-              onAddToCart={onAddToCart}
-            />
-          )
-        }
+        renderItem={({ item, index }) => (
+          <StaggerItem index={index}>
+            {/* Ranked picks (with `whyDetail`) get the dismiss + why affordances; saved
+                picks get a permanently-filled heart that un-saves on tap. */}
+            {'whyDetail' in item ? (
+              <ShopCard
+                product={item}
+                onView={onView}
+                isSaved={savedIds.has(item.id)}
+                onToggleSave={() => toggleSaveRanked(item)}
+                onDismiss={onDismiss}
+                onOpenWhy={openWhy}
+                canAddToCart={cardCheckoutSupport(item) === 'in_flow'}
+                onAddToCart={onAddToCart}
+              />
+            ) : (
+              <ShopCard
+                product={item}
+                onView={onView}
+                isSaved
+                onToggleSave={() => unsaveSaved(item)}
+                canAddToCart={cardCheckoutSupport(item) === 'in_flow'}
+                onAddToCart={onAddToCart}
+              />
+            )}
+          </StaggerItem>
+        )}
         ListHeaderComponent={
           <>
             <ShopHeader
@@ -427,7 +433,8 @@ export default function ShopScreen() {
           onCartCountChange={setCartCount}
         />
       ) : null}
-    </SafeAreaView>
+      </SafeAreaView>
+    </ScreenEntrance>
   );
 }
 
@@ -523,7 +530,7 @@ function HeaderPill({
 }) {
   const { colors } = useTheme();
   return (
-    <Pressable
+    <Press
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ selected }}
@@ -541,7 +548,7 @@ function HeaderPill({
       <Text variant="ui" size="footnote" weight={600} color={colors.text}>
         {label}
       </Text>
-    </Pressable>
+    </Press>
   );
 }
 

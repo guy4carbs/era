@@ -10,8 +10,9 @@
  * verbatim rather than re-deriving the count copy.
  */
 import { layout, radii, rnShadow, spacing } from '@era/tokens';
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 
+import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
@@ -28,7 +29,7 @@ export function ReceiptImportCard({ notification, onOpen }: ReceiptImportCardPro
   const { message } = notification.payload;
 
   return (
-    <Pressable
+    <Press
       accessibilityRole="button"
       accessibilityLabel={message}
       onPress={() => onOpen(notification)}
@@ -48,7 +49,7 @@ export function ReceiptImportCard({ notification, onOpen }: ReceiptImportCardPro
       <Text variant="body" color={colors.secondary} aria-hidden>
         ›
       </Text>
-    </Pressable>
+    </Press>
   );
 }
 

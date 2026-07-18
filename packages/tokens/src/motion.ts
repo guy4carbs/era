@@ -32,4 +32,24 @@ export const motion = {
     maxDeg: 7, // max pointer-tilt rotation
     parallaxPx: 6, // max parallax offset; OFF under reduced motion
   },
+  // press — the universal tap affordance (§3: "scale 0.97 on press-in, spring
+  // back; every tappable element — nothing is inert"). Snappy spring in, spring
+  // back on release; a 150ms fade under reduced motion.
+  press: {
+    scale: 0.97,
+  },
+  // stagger — list/grid/chat entrance choreography (§3: "children delay 45ms;
+  // y 12→0; opacity 0→1; blur 4→0"). Blur applies on web only — RN has no
+  // performant view blur, so mobile entrances run rise+fade without it.
+  // Under reduced motion: simultaneous 150ms fade, no rise, no blur.
+  stagger: {
+    delayMs: 45,
+    riseYPx: 12,
+    blurPx: 4,
+  },
+  // pageRise — page/tab transition: content cross-fades with a small rise on
+  // the gentle spring (View Transitions on web approximate with the css bezier).
+  pageRise: {
+    yPx: 6,
+  },
 } as const;

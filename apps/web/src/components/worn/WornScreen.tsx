@@ -2,8 +2,10 @@
 
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
+import { motion, useReducedMotion } from 'motion/react';
 import { strings } from '@era/core/strings';
 import { buildMonthlyRecap } from '@era/core/wear-stats';
+import { pressProps } from '../../lib/motion';
 import { Container } from '../Container';
 import { Text } from '../Text';
 import { localMonthToday } from '../../lib/local-date';
@@ -45,6 +47,7 @@ function monthLabelOf(month: string): string {
  * `strings.wear`.
  */
 export function WornScreen() {
+  const reduced = useReducedMotion();
   const [month, setMonth] = useState<string>(localMonthToday);
   const [state, setState] = useState<LoadState>({ status: 'loading' });
 
@@ -105,26 +108,28 @@ export function WornScreen() {
           </Link>
 
           <div style={monthNavStyle}>
-            <button
+            <motion.button
               type="button"
               onClick={() => setMonth((m) => shiftMonth(m, -1))}
               aria-label="Previous month"
               style={navButtonStyle}
+              {...pressProps(reduced)}
             >
               <span aria-hidden="true">←</span>
-            </button>
+            </motion.button>
             <Text variant="largeTitle" size="title1" weight={700} as="h1" aria-live="polite" style={{ margin: 0, color: 'var(--color-text)', textAlign: 'center', flex: 1 }}>
               {monthLabel}
             </Text>
-            <button
+            <motion.button
               type="button"
               onClick={() => setMonth((m) => shiftMonth(m, 1))}
               aria-label="Next month"
               disabled={atCurrentMonth}
               style={{ ...navButtonStyle, opacity: atCurrentMonth ? 0.35 : 1, cursor: atCurrentMonth ? 'not-allowed' : 'pointer' }}
+              {...pressProps(reduced, !atCurrentMonth)}
             >
               <span aria-hidden="true">→</span>
-            </button>
+            </motion.button>
           </div>
         </header>
 

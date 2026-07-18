@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type CSSProperties } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { transitionFor } from '../../lib/motion';

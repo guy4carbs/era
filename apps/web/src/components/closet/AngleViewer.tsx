@@ -8,7 +8,7 @@
  * three-quarter / side / back renders in the frozen {@link TURNAROUND_ANGLES}
  * order (missing angles skipped) — composed by the pure `composeAnglePages`.
  *
- * Interaction: a framer-motion `drag="x"` track that snaps to the nearest page on
+ * Interaction: a motion `drag="x"` track that snaps to the nearest page on
  * release (distance OR fling velocity), plus real arrow buttons and ArrowLeft/Right
  * keys. During a drag each image drifts a touch OPPOSITE the swipe for a subtle
  * dimensional read; quiet page dots track position. The whole viewer is a labelled
@@ -25,11 +25,11 @@ import {
   useTransform,
   type MotionValue,
   type PanInfo,
-} from 'framer-motion';
+} from 'motion/react';
 import { motion as motionToken, layout, spacing, typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { type TurnaroundRender } from '@era/core/turnaround';
-import { springTransition } from '../../lib/motion';
+import { pressProps, springTransition } from '../../lib/motion';
 import { composeAnglePages, type AngleViewerPage } from '../../lib/turnaround-pages';
 
 export interface AngleViewerProps {
@@ -240,8 +240,9 @@ function ArrowButton({
   disabled: boolean;
   onClick: () => void;
 }) {
+  const reduced = useReducedMotion();
   return (
-    <button
+    <motion.button
       type="button"
       aria-label={direction === 'prev' ? 'Previous view' : 'Next view'}
       disabled={disabled}
@@ -252,9 +253,10 @@ function ArrowButton({
         opacity: disabled ? 0 : 1,
         pointerEvents: disabled ? 'none' : 'auto',
       }}
+      {...pressProps(reduced, !disabled)}
     >
       <span aria-hidden="true">{direction === 'prev' ? '‹' : '›'}</span>
-    </button>
+    </motion.button>
   );
 }
 

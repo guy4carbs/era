@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState, type CSSProperties } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken, spacing } from '@era/tokens';
 import { Text } from '../Text';
 import { strings } from '@era/core/strings';
-import { transitionFor } from '../../lib/motion';
+import { pressProps, transitionFor } from '../../lib/motion';
 
 /**
  * Closet privacy switch. Reads the owner's `isPrivate` on mount and PATCHes it
@@ -78,7 +78,7 @@ export function PrivacyToggle() {
         >
           {label}
         </Text>
-        <button
+        <motion.button
           type="button"
           role="switch"
           aria-checked={isPublic}
@@ -89,6 +89,7 @@ export function PrivacyToggle() {
             ...trackStyle,
             background: isPublic ? 'var(--color-accent)' : 'var(--color-hairline)',
           }}
+          {...pressProps(reduced, !busy)}
         >
           <motion.span
             aria-hidden="true"
@@ -96,7 +97,7 @@ export function PrivacyToggle() {
             animate={{ x: isPublic ? spacing.s6 : 0 }}
             transition={transitionFor(motionToken.springs.snappy, reduced)}
           />
-        </button>
+        </motion.button>
       </div>
       <Text
         variant="caption"

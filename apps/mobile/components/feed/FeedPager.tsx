@@ -42,7 +42,7 @@ import Animated, {
 
 import { Text } from '@/components/Text';
 import { Button } from '@/components/Button';
-import { springFromToken, useReducedMotionSafe } from '@/lib/motion';
+import { springFromToken, tokenEasing, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
 import { isHidden, type FeedSlot } from '@/lib/feed-store';
 
@@ -197,9 +197,11 @@ export function FeedPager() {
           burstScale.value = 0.4;
           burstScale.value = withSpring(1.3, snappySpring);
           burstOpacity.value = 0;
+          // Heart burst: a quick fade-in, then a fade-out capped at the 350ms
+          // ceiling. Both legs carry the token easing.
           burstOpacity.value = withSequence(
-            withTiming(1, { duration: 120 }),
-            withTiming(0, { duration: 380 }),
+            withTiming(1, { duration: motion.durations.reducedFadeMs, easing: tokenEasing }),
+            withTiming(0, { duration: motion.durations.maxMs, easing: tokenEasing }),
           );
         }
         runOnJS(doubleTapLike)();

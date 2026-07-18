@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { strings } from '@era/core/strings';
 import { Text } from '../Text';
 import { Button } from '../Button';
+import { pressProps } from '../../lib/motion';
 import { BulkCapture } from './BulkCapture';
 import { ConfirmItem } from './ConfirmItem';
 import { PhotoPicker } from './PhotoPicker';
@@ -98,6 +100,7 @@ function inferVision(item: ItemWithDisplay): boolean {
  */
 export function AddItemFlow({ resumeItemId = null }: AddItemFlowProps) {
   const router = useRouter();
+  const reduced = useReducedMotion();
   const { data: session } = useSession();
   const [stage, setStage] = useState<Stage>(resumeItemId ? 'loading' : 'picker');
   const [confirmData, setConfirmData] = useState<{ item: ItemWithDisplay; processed: Processed } | null>(
@@ -325,11 +328,11 @@ export function AddItemFlow({ resumeItemId = null }: AddItemFlowProps) {
       <div style={columnStyle}>
         <div style={topRowStyle}>
           {showCancel ? (
-            <button type="button" style={cancelStyle} onClick={() => router.push('/closet')}>
+            <motion.button type="button" style={cancelStyle} onClick={() => router.push('/closet')} {...pressProps(reduced)}>
               <Text variant="ui" size="footnote" weight={600} style={{ color: 'var(--color-secondary-strong)' }}>
                 {strings.common.cancel}
               </Text>
-            </button>
+            </motion.button>
           ) : null}
         </div>
 

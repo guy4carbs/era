@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import { layout } from '@era/tokens';
 import { Text } from '../Text';
 import { strings } from '@era/core/strings';
+import { pressProps } from '../../lib/motion';
 import { GlassSheet } from '../GlassSheet';
 import { Chip } from '../Chip';
 import { Input } from '../Input';
@@ -68,6 +70,7 @@ const frameStyle: CSSProperties = {
  * and can't be re-added (each item appears once per outfit).
  */
 export function ClosetDrawer({ items, placedIds, onAdd }: ClosetDrawerProps) {
+  const reduced = useReducedMotion();
   const [query, setQuery] = useState('');
   const [debounced, setDebounced] = useState('');
   const [category, setCategory] = useState<string | null>(null);
@@ -132,7 +135,7 @@ export function ClosetDrawer({ items, placedIds, onAdd }: ClosetDrawerProps) {
           {visible.map((item) => {
             const placed = placedIds.has(item.id);
             return (
-              <button
+              <motion.button
                 key={item.id}
                 type="button"
                 style={{ ...tileButtonStyle, opacity: placed ? 0.45 : 1, cursor: placed ? 'default' : 'pointer' }}
@@ -141,6 +144,7 @@ export function ClosetDrawer({ items, placedIds, onAdd }: ClosetDrawerProps) {
                 onClick={() => {
                   if (!placed) onAdd(item);
                 }}
+                {...pressProps(reduced, !placed)}
               >
                 <Card aspect="item" interactive={!placed}>
                   <div style={frameStyle}>
@@ -155,7 +159,7 @@ export function ClosetDrawer({ items, placedIds, onAdd }: ClosetDrawerProps) {
                 >
                   {item.name}
                 </Text>
-              </button>
+              </motion.button>
             );
           })}
         </div>

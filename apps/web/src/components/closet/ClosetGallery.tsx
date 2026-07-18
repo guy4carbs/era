@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken, layout, spacing } from '@era/tokens';
 import { Text } from '../Text';
 import { strings } from '@era/core/strings';
-import { transitionFor } from '../../lib/motion';
+import { transitionFor, useStagger } from '../../lib/motion';
 import { Chip } from '../Chip';
 import { Input } from '../Input';
 import { CATEGORY_OPTIONS } from '../items';
@@ -107,6 +107,16 @@ export function ClosetGallery({ items, turnaroundEnabled, onArchived, onUpdated 
 
   const selected = selectedId ? (items.find((item) => item.id === selectedId) ?? null) : null;
 
+  // Stagger the tiles on first mount only. Filter/search re-renders keep the
+  // AnimatePresence opacity dance (below) but must NOT re-stagger in place — so
+  // after the first paint the container drops back to an immediate reveal.
+  const stagger = useStagger(reduced);
+  const didMount = useRef(false);
+  const staggerOnMount = !didMount.current;
+  useEffect(() => {
+    didMount.current = true;
+  }, []);
+
   function handleArchived(id: string) {
     setSelectedId(null);
     onArchived(id);
@@ -172,14 +182,23 @@ export function ClosetGallery({ items, turnaroundEnabled, onArchived, onUpdated 
           <Text variant="title" size="title3" as="h2" style={{ margin: 0 }}>
             {strings.closet.categoryLabel(group.category)}
           </Text>
-          <div className="era-closet-grid">
+          <motion.div
+            className="era-closet-grid"
+            // First paint: orchestrate the entrance stagger across the tiles.
+            // Subsequent filter renders skip it (empty variants) so the grid
+            // reveals immediately and only the presence opacity below animates.
+            variants={staggerOnMount ? stagger.container : undefined}
+            initial={staggerOnMount ? 'hidden' : false}
+            animate={staggerOnMount ? 'visible' : undefined}
+          >
             <AnimatePresence mode="popLayout">
               {group.items.map((item) => (
                 <motion.div
                   key={item.id}
                   layout
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
+                  variants={staggerOnMount ? stagger.item : undefined}
+                  initial={staggerOnMount ? undefined : { opacity: 0 }}
+                  animate={staggerOnMount ? undefined : { opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={transitionFor(motionToken.springs.gentle, reduced)}
                 >
@@ -187,7 +206,7 @@ export function ClosetGallery({ items, turnaroundEnabled, onArchived, onUpdated 
                 </motion.div>
               ))}
             </AnimatePresence>
-          </div>
+          </motion.div>
         </section>
       ))}
 

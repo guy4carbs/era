@@ -12,9 +12,10 @@
 import { layout, spacing } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { SettingRow } from '@/components/settings/SettingRow';
 import { useTheme } from '@/lib/theme';
@@ -85,7 +86,7 @@ export function ShippingAddressSettings({ onToast }: ShippingAddressSettingsProp
 
   if (view === 'error') {
     return (
-      <Pressable
+      <Press
         accessibilityRole="button"
         accessibilityLabel={strings.errors.retry}
         onPress={() => {
@@ -97,7 +98,7 @@ export function ShippingAddressSettings({ onToast }: ShippingAddressSettingsProp
         <Text variant="caption" size="footnote" color={colors.secondaryStrong}>
           {strings.errors.retry}
         </Text>
-      </Pressable>
+      </Press>
     );
   }
 

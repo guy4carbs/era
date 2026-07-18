@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, type CSSProperties } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import { strings } from '@era/core/strings';
 import { Text } from '../Text';
 import { Button } from '../Button';
 import { Card } from '../Card';
 import { Chip } from '../Chip';
 import { Input } from '../Input';
+import { pressProps } from '../../lib/motion';
 import { CATEGORY_OPTIONS } from './constants';
 import { batchItemEdits, type BatchItem } from '../../lib/bulk-capture';
 import type { ItemCategory } from './types';
@@ -48,6 +50,7 @@ function initialRows(items: BatchItem[]): RowState[] {
 }
 
 export function BatchConfirm({ items, failed, onDone }: BatchConfirmProps) {
+  const reduced = useReducedMotion();
   const [rows, setRows] = useState<RowState[]>(() => initialRows(items));
   const [editing, setEditing] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
@@ -181,16 +184,17 @@ export function BatchConfirm({ items, failed, onDone }: BatchConfirmProps) {
                   ) : null}
 
                   {!resolved ? (
-                    <button
+                    <motion.button
                       type="button"
                       style={discardStyle}
                       disabled={busy}
                       onClick={() => void discardRow(row.id)}
+                      {...pressProps(reduced, !busy)}
                     >
                       <Text variant="ui" size="footnote" weight={600} style={{ color: 'var(--color-secondary-strong)' }}>
                         {strings.closet.archive}
                       </Text>
-                    </button>
+                    </motion.button>
                   ) : (
                     <Text variant="ui" as="span" style={{ color: 'var(--color-secondary-strong)' }} aria-hidden="true">
                       {row.status === 'confirmed' ? '✓' : '—'}

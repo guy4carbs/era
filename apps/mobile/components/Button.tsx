@@ -16,11 +16,9 @@ import Animated, {
 import { Pressable } from 'react-native';
 
 import { Text, TextControlBoundary } from '@/components/Text';
-import { animate, useReducedMotionSafe } from '@/lib/motion';
+import { PRESS_SCALE, animate, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
 
-// No token exists for press-feedback scale; kept local. See contract-gap notes.
-const PRESS_SCALE = 0.97;
 const REST_SCALE = 1;
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);

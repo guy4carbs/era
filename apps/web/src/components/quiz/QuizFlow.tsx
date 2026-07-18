@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken, spacing } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { QUIZ_STEPS, type QuizAnswers } from '@era/core/quiz';
-import { transitionFor } from '../../lib/motion';
+import { pressProps, transitionFor } from '../../lib/motion';
 import { Button, Text, TextControlBoundary } from '../../components';
 import { ProgressDots } from './ProgressDots';
 import { PhotoOptionGrid } from './steps/PhotoOptionGrid';
@@ -181,19 +181,19 @@ export function QuizFlow({ onComplete, onSkip }: QuizFlowProps) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
       <div style={headerStyle}>
         {index > 0 ? (
-          <button type="button" aria-label="Back" onClick={handleBack} style={iconButtonStyle}>
+          <motion.button type="button" aria-label="Back" onClick={handleBack} style={iconButtonStyle} {...pressProps(reduced)}>
             <BackChevron />
-          </button>
+          </motion.button>
         ) : (
           <span />
         )}
         <ProgressDots current={index} total={TOTAL} />
         <TextControlBoundary>
-          <button type="button" onClick={handleSkip} style={skipStyle}>
+          <motion.button type="button" onClick={handleSkip} style={skipStyle} {...pressProps(reduced)}>
             <Text variant="ui" size="footnote" weight={600}>
               {strings.quiz.skip}
             </Text>
-          </button>
+          </motion.button>
         </TextControlBoundary>
       </div>
 

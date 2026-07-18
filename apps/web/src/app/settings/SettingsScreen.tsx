@@ -10,10 +10,10 @@ import {
 } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken, spacing, typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
-import { transitionFor } from '../../lib/motion';
+import { pressProps, transitionFor } from '../../lib/motion';
 import { useTheme, type ThemeMode } from '../../lib/theme';
 import { isPlusEnabledClient } from '../../lib/plus-flags';
 import { eraAuth } from '../../lib/auth-client';
@@ -44,6 +44,7 @@ export interface SettingsScreenProps {
  */
 export function SettingsScreen({ accountEmail, initialIsPrivate, username }: SettingsScreenProps) {
   const router = useRouter();
+  const reduced = useReducedMotion();
 
   async function handleSignOut() {
     try {
@@ -135,9 +136,9 @@ export function SettingsScreen({ accountEmail, initialIsPrivate, username }: Set
               </span>
             </Link>
           ) : null}
-          <button type="button" style={signOutStyle} onClick={handleSignOut}>
+          <motion.button type="button" style={signOutStyle} onClick={handleSignOut} {...pressProps(reduced)}>
             {SETTINGS_COPY.signOut}
-          </button>
+          </motion.button>
           <DeleteAccountDialog accountEmail={accountEmail} />
         </Section>
       </main>
@@ -167,6 +168,7 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 
 /** System / Light / Dark segmented control over the existing theme provider. */
 function ThemeControl() {
+  const reduced = useReducedMotion();
   const { mode, setMode } = useTheme();
   const options: { id: ThemeMode; label: string }[] = [
     { id: 'system', label: SETTINGS_COPY.themeSystem },
@@ -179,7 +181,7 @@ function ThemeControl() {
       {options.map((option) => {
         const active = mode === option.id;
         return (
-          <button
+          <motion.button
             key={option.id}
             type="button"
             role="radio"
@@ -192,9 +194,10 @@ function ThemeControl() {
               boxShadow: active ? 'var(--shadow-e1)' : 'none',
               fontWeight: active ? 700 : 600,
             }}
+            {...pressProps(reduced)}
           >
             {option.label}
-          </button>
+          </motion.button>
         );
       })}
     </div>
@@ -238,7 +241,7 @@ function PrivacyControl({ initialIsPrivate }: { initialIsPrivate: boolean }) {
         </Text>
         <Text variant="caption" as="span" size="footnote" style={{ color: 'var(--color-secondary-strong)' }}>{SETTINGS_COPY.privateClosetHint}</Text>
       </span>
-      <button
+      <motion.button
         type="button"
         role="switch"
         aria-checked={isPrivate}
@@ -249,6 +252,7 @@ function PrivacyControl({ initialIsPrivate }: { initialIsPrivate: boolean }) {
           ...trackStyle,
           background: isPrivate ? 'var(--color-accent)' : 'var(--color-hairline)',
         }}
+        {...pressProps(reduced, !busy)}
       >
         <motion.span
           aria-hidden="true"
@@ -256,7 +260,7 @@ function PrivacyControl({ initialIsPrivate }: { initialIsPrivate: boolean }) {
           animate={{ x: isPrivate ? spacing.s6 : 0 }}
           transition={transitionFor(motionToken.springs.snappy, reduced)}
         />
-      </button>
+      </motion.button>
     </div>
   );
 }
@@ -285,7 +289,7 @@ function AlertSwitch({
       <Text variant="ui" as="span" id={labelId} style={{ color: 'var(--color-text)' }}>
         {label}
       </Text>
-      <button
+      <motion.button
         type="button"
         role="switch"
         aria-checked={checked}
@@ -297,6 +301,7 @@ function AlertSwitch({
           cursor: disabled ? 'not-allowed' : 'pointer',
           background: checked ? 'var(--color-accent)' : 'var(--color-hairline)',
         }}
+        {...pressProps(reduced, !disabled)}
       >
         <motion.span
           aria-hidden="true"
@@ -304,7 +309,7 @@ function AlertSwitch({
           animate={{ x: checked ? spacing.s6 : 0 }}
           transition={transitionFor(motionToken.springs.snappy, reduced)}
         />
-      </button>
+      </motion.button>
     </div>
   );
 }
@@ -409,6 +414,7 @@ type RegenerateStatus = 'idle' | 'busy' | 'done' | 'error';
  * error idiom. Fetch failure resolves to a quiet retry.
  */
 function ReceiptAddressControl() {
+  const reduced = useReducedMotion();
   const copy = strings.settings.receiptAddress;
   const [state, setState] = useState<ReceiptAddressState>({ status: 'loading' });
   const [copied, setCopied] = useState(false);
@@ -493,9 +499,9 @@ function ReceiptAddressControl() {
           <Text variant="caption" as="p" size="footnote" role="status" style={{ margin: 0, color: 'var(--color-rust)' }}>
             {SETTINGS_COPY.genericError}
           </Text>
-          <button type="button" style={receiptRetryStyle} onClick={() => void load()}>
+          <motion.button type="button" style={receiptRetryStyle} onClick={() => void load()} {...pressProps(reduced)}>
             {SETTINGS_COPY.retry}
-          </button>
+          </motion.button>
         </div>
       )}
 
@@ -508,13 +514,14 @@ function ReceiptAddressControl() {
             <Text variant="caption" as="span" size="footnote" style={{ color: 'var(--color-secondary-strong)' }}>{copy.addressLabel}</Text>
             <div style={addressRowStyle}>
               <Text variant="caption" as="span" size="footnote" style={addressCodeStyle}>{state.address}</Text>
-              <button
+              <motion.button
                 type="button"
                 style={copyButtonStyle}
                 onClick={() => void handleCopy(state.address)}
+                {...pressProps(reduced)}
               >
                 {copy.copyCta}
-              </button>
+              </motion.button>
             </div>
             <Text variant="caption" as="p" size="footnote" aria-live="polite" style={{ margin: 0, minHeight: `${typeRamp.footnote.lineHeight}px`, color: 'var(--color-secondary-strong)' }}>
               {copied ? copy.copied : ''}
@@ -525,7 +532,7 @@ function ReceiptAddressControl() {
 
           <div style={regenerateBlockStyle}>
             <Text variant="caption" as="p" size="footnote" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{copy.regenerateConsequence}</Text>
-            <button
+            <motion.button
               type="button"
               style={{
                 ...regenerateButtonStyle,
@@ -534,9 +541,10 @@ function ReceiptAddressControl() {
               }}
               disabled={regen === 'busy'}
               onClick={() => void handleRegenerate()}
+              {...pressProps(reduced, regen !== 'busy')}
             >
               {copy.regenerateCta}
-            </button>
+            </motion.button>
             <Text
               variant="caption"
               as="p"

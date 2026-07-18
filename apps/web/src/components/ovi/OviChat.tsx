@@ -8,12 +8,12 @@ import {
   type CSSProperties,
   type FormEvent,
 } from 'react';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { motion as motionToken, typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import type { OviIntent } from '@era/core/ovi';
-import { transitionFor } from '../../lib/motion';
+import { pressProps, transitionFor, useStagger } from '../../lib/motion';
 import { track } from '../../lib/analytics';
 import { GlassSheet } from '../GlassSheet';
 import { Chip } from '../Chip';
@@ -149,6 +149,7 @@ function entryId(): string {
 export function OviChat({ itemContext, itemsById, onClose }: OviChatProps) {
   const reduced = useReducedMotion();
   const router = useRouter();
+  const stagger = useStagger(reduced);
 
   const [messages, setMessages] = useState<ChatEntry[]>(() => [
     { id: entryId(), role: 'assistant', content: strings.ovi.chatOpener },
@@ -279,24 +280,36 @@ export function OviChat({ itemContext, itemsById, onClose }: OviChatProps) {
             <Text variant="title" size="title3" weight={700} as="h2" id="ovi-chat-title">
               {strings.ovi.fabLabel}
             </Text>
-            <button type="button" style={closeStyle} aria-label={strings.common.cancel} onClick={onClose}>
+            <motion.button type="button" style={closeStyle} aria-label={strings.common.cancel} onClick={onClose} {...pressProps(reduced)}>
               <span aria-hidden="true">×</span>
-            </button>
+            </motion.button>
           </header>
 
           <div ref={listRef} style={listStyle}>
             {messages.map((entry) =>
               entry.role === 'user' ? (
-                <Text
+                // Each message rises + fades in as it enters (variant.visible as
+                // initial/animate — messages append incrementally, so no container
+                // orchestration; reduced motion collapses to the flat fade).
+                <motion.div
                   key={entry.id}
-                  variant="body"
-                  as="p"
                   style={{ ...userBubbleStyle, margin: 0 }}
+                  variants={stagger.item}
+                  initial="hidden"
+                  animate="visible"
                 >
-                  {entry.content}
-                </Text>
+                  <Text variant="body" as="p" style={{ margin: 0, color: 'inherit' }}>
+                    {entry.content}
+                  </Text>
+                </motion.div>
               ) : (
-                <div key={entry.id} style={oviTurnStyle}>
+                <motion.div
+                  key={entry.id}
+                  style={oviTurnStyle}
+                  variants={stagger.item}
+                  initial="hidden"
+                  animate="visible"
+                >
                   <Text
                     variant="body"
                     as="p"
@@ -325,7 +338,7 @@ export function OviChat({ itemContext, itemsById, onClose }: OviChatProps) {
                       />
                     ) : null}
                   </AnimatePresence>
-                </div>
+                </motion.div>
               ),
             )}
           </div>

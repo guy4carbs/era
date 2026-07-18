@@ -8,8 +8,9 @@
 import { strings } from '@era/core/strings';
 import { layout, radii, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
@@ -25,7 +26,7 @@ export function OutfitCard({ outfit, onPress }: OutfitCardProps) {
   const { colors } = useTheme();
 
   return (
-    <Pressable
+    <Press
       accessibilityRole="button"
       accessibilityLabel={outfit.name ?? strings.design.newOutfit}
       onPress={() => {
@@ -47,7 +48,7 @@ export function OutfitCard({ outfit, onPress }: OutfitCardProps) {
           ? `${outfit.occasion} · ${strings.design.outfitItemCount(outfit.itemCount)}`
           : strings.design.outfitItemCount(outfit.itemCount)}
       </Text>
-    </Pressable>
+    </Press>
   );
 }
 

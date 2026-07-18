@@ -8,7 +8,7 @@
  * feed. Under reduced motion the glow holds static and the swatches appear at
  * once — no bloom, no stagger.
  */
-import { glow, radii, rnShadow, spacing } from '@era/tokens';
+import { glow, motion, radii, rnShadow, spacing } from '@era/tokens';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -23,13 +23,13 @@ import { strings } from '@era/core/strings';
 
 import { Button } from '@/components/Button';
 import { Text } from '@/components/Text';
-import { springFromToken, useReducedMotionSafe } from '@/lib/motion';
+import { springFromToken, tokenEasing, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
 
 import type { RevealData } from './contract';
 
 const GLOW_SIZE = spacing.s16 + spacing.s12; // large soft disc behind the title
-const STAGGER_MS = 80;
+const STAGGER_MS = motion.stagger.delayMs;
 
 interface QuizRevealProps {
   readonly profile: RevealData;
@@ -114,7 +114,10 @@ function GlowBloom({ color, mode, reduced }: { color: string; mode: 'light' | 'd
       return;
     }
     scale.value = withSpring(1, springFromToken('gentle'));
-    opacity.value = withTiming(baseOpacity, { duration: 350 });
+    opacity.value = withTiming(baseOpacity, {
+      duration: motion.durations.maxMs,
+      easing: tokenEasing,
+    });
   }, [reduced, baseOpacity, scale, opacity]);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -151,7 +154,10 @@ function Swatch({ hex, index, reduced }: { hex: string; index: number; reduced: 
       scale.value = 1;
       return;
     }
-    opacity.value = withDelay(index * STAGGER_MS, withTiming(1, { duration: 200 }));
+    opacity.value = withDelay(
+      index * STAGGER_MS,
+      withTiming(1, { duration: motion.durations.minMs, easing: tokenEasing }),
+    );
     scale.value = withDelay(index * STAGGER_MS, withSpring(1, springFromToken('gentle')));
   }, [reduced, index, opacity, scale]);
 

@@ -2,11 +2,14 @@
 
 import { type CSSProperties } from 'react';
 import Link from 'next/link';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken } from '@era/tokens';
 import { Text } from '../Text';
 import { markRead, type ReceiptImportPayload } from '../../lib/notifications-client';
-import { transitionFor } from '../../lib/motion';
+import { pressProps, transitionFor } from '../../lib/motion';
+
+/** next/link routed through motion so the tap-through card gets the press affordance. */
+const MotionLink = motion.create(Link);
 
 export interface ReceiptImportCardProps {
   /** The notification id — the key the read-mark and parent removal both use. */
@@ -49,12 +52,12 @@ export function ReceiptImportCard({ id, payload, onResolve }: ReceiptImportCardP
       exit={reduced ? undefined : { opacity: 0, y: -8 }}
       transition={transitionFor(motionToken.springs.gentle, reduced)}
     >
-      <Link href="/closet" onClick={resolve} style={linkStyle}>
+      <MotionLink href="/closet" onClick={resolve} style={linkStyle} {...pressProps(reduced)}>
         <Text variant="ui" as="p" size="subhead" weight={500} style={{ margin: 0, minWidth: 0, color: 'var(--color-text)' }}>{payload.message}</Text>
         <Text variant="ui" as="span" size="body" style={{ flexShrink: '0' as CSSProperties['flexShrink'], color: 'var(--color-secondary-strong)' }} aria-hidden="true">
           →
         </Text>
-      </Link>
+      </MotionLink>
     </motion.div>
   );
 }

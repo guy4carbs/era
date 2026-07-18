@@ -15,8 +15,9 @@ import { strings } from '@era/core/strings';
 import { spacing, palette, glass, radii } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { BlurView } from 'expo-blur';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 
 import type { FeedPostPayload } from '@era/core/feed';
@@ -41,7 +42,7 @@ interface RailButtonProps {
 function RailButton({ glyph, label, caption, onPress }: RailButtonProps) {
   return (
     <View style={styles.item}>
-      <Pressable
+      <Press
         accessibilityRole="button"
         accessibilityLabel={label}
         onPress={() => {
@@ -55,7 +56,7 @@ function RailButton({ glyph, label, caption, onPress }: RailButtonProps) {
         <Text variant="ui" size="title3" color={ON_IMAGE}>
           {glyph}
         </Text>
-      </Pressable>
+      </Press>
       {caption ? (
         <Text variant="caption" weight={600} color={ON_IMAGE} accessible={false}>
           {caption}

@@ -8,9 +8,10 @@
  */
 import { glass, layout } from '@era/tokens';
 import { BlurView } from 'expo-blur';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
@@ -51,7 +52,7 @@ export function TabBar({ active, onChange }: TabBarProps) {
         {TABS.map((tab) => {
           const isActive = tab.key === active;
           return (
-            <Pressable
+            <Press
               key={tab.key}
               accessibilityRole="tab"
               accessibilityState={{ selected: isActive }}
@@ -67,7 +68,7 @@ export function TabBar({ active, onChange }: TabBarProps) {
               >
                 {tab.label}
               </Text>
-            </Pressable>
+            </Press>
           );
         })}
       </View>

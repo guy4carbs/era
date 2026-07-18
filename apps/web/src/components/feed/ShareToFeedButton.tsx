@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, type CSSProperties } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import { strings } from '@era/core/strings';
+import { pressProps } from '../../lib/motion';
 import { Text } from '../Text';
 
 export interface ShareToFeedButtonProps {
@@ -54,6 +56,7 @@ export function ShareToFeedButton({
 }: ShareToFeedButtonProps) {
   const [sharedPostId, setSharedPostId] = useState<string | null>(initialSharedPostId ?? null);
   const [busy, setBusy] = useState(false);
+  const reduced = useReducedMotion();
 
   // Cosmetic gate — the routes are the real gate. Hooks run first (above) so the
   // early return never trips the rules-of-hooks.
@@ -99,17 +102,18 @@ export function ShareToFeedButton({
 
   return (
     <span style={wrapStyle}>
-      <button
+      <motion.button
         type="button"
         style={{ ...buttonStyle, opacity: busy ? 0.5 : 1, cursor: busy ? 'default' : 'pointer' }}
         disabled={busy}
         aria-pressed={sharedPostId !== null}
         onClick={() => void toggle()}
+        {...pressProps(reduced, !busy)}
       >
         <Text variant="ui" size="footnote" weight={600} as="span" style={{ color: 'var(--color-accent)' }}>
           {label}
         </Text>
-      </button>
+      </motion.button>
       {/* The consent line — sharing is public regardless of profile privacy, and
           unshare is the retraction. Shown only while unshared (pre-consent). */}
       {sharedPostId === null ? (

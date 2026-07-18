@@ -50,6 +50,69 @@ body {
   }
 }
 
+/*
+ * Page/tab transitions via the View Transitions API (driven by viewTransition()
+ * in src/lib/motion.ts). Cross-fade the whole root with a small rise on the
+ * token bezier. Timing + rise come from the motion tokens surfaced as CSS vars
+ * in theme-css.ts: --motion-page-ms (durations.maxMs, capped), --motion-ease
+ * (easing.css), --motion-page-rise (pageRise.yPx). Fallbacks below keep it safe
+ * before the theme <style> injects (the token max is 350ms).
+ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--motion-page-ms, 300ms);
+  animation-timing-function: var(--motion-ease, cubic-bezier(0.32, 0.72, 0, 1));
+  animation-fill-mode: both;
+}
+
+::view-transition-old(root) {
+  animation-name: era-page-fade-out;
+}
+
+::view-transition-new(root) {
+  animation-name: era-page-fade-in;
+}
+
+@keyframes era-page-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes era-page-fade-in {
+  from {
+    opacity: 0;
+    /* Rise from --motion-page-rise (pageRise.yPx token). */
+    transform: translateY(var(--motion-page-rise, 6px));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/*
+ * Reduced motion: strip the rise, keep a plain, short opacity fade. viewTransition()
+ * already skips VT entirely for reduced-motion users, so this is belt-and-braces
+ * for any UA that starts the transition anyway.
+ */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: var(--motion-reduced-ms, 150ms);
+  }
+  @keyframes era-page-fade-in {
+    from {
+      opacity: 0;
+      transform: none;
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
 .era-input:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;

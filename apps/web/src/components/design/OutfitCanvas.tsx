@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { layout, motion as motionToken } from '@era/tokens';
 import { Text } from '../Text';
 import { strings } from '@era/core/strings';
-import { transitionFor } from '../../lib/motion';
+import { pressProps, transitionFor } from '../../lib/motion';
 import { trackFirstOnce } from '../../lib/analytics';
 import { useSession } from '../../lib/auth-client';
 import type { ItemWithDisplay } from '../items';
@@ -298,19 +298,20 @@ export function OutfitCanvas({ outfitId }: OutfitCanvasProps) {
   return (
     <main style={rootStyle}>
       <header style={topBarStyle}>
-        <button type="button" aria-label={strings.common.cancel} style={iconBtnStyle} onClick={() => router.push('/design')}>
+        <motion.button type="button" aria-label={strings.common.cancel} style={iconBtnStyle} onClick={() => router.push('/design')} {...pressProps(reduced)}>
           <span aria-hidden="true">←</span>
-        </button>
-        <button
+        </motion.button>
+        <motion.button
           type="button"
           style={{ ...saveBtnStyle, opacity: placed.length === 0 ? 0.5 : 1, cursor: placed.length === 0 ? 'not-allowed' : 'pointer' }}
           disabled={placed.length === 0}
           onClick={() => setSaveOpen(true)}
+          {...pressProps(reduced, placed.length > 0)}
         >
           <Text variant="ui" size="subhead" weight={700} style={{ color: 'var(--color-ink)' }}>
             {strings.design.saveOutfit}
           </Text>
-        </button>
+        </motion.button>
       </header>
 
       <CanvasStage placed={placed} selectedId={selectedId} onSelect={setSelectedId} onCommit={commitPos} />

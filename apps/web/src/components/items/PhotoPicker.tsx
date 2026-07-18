@@ -1,11 +1,13 @@
 'use client';
 
 import { type ClipboardEvent, type CSSProperties } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import { strings } from '@era/core/strings';
 import { Text } from '../Text';
 import { Card } from '../Card';
 import { Input } from '../Input';
 import { Button } from '../Button';
+import { pressProps } from '../../lib/motion';
 
 export interface PhotoPickerProps {
   /** Fires with the chosen image File (from camera capture or the library). */
@@ -137,6 +139,7 @@ export function PhotoPicker({
   onBulk,
   onReceipt,
 }: PhotoPickerProps) {
+  const reduced = useReducedMotion();
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     // Reset so re-picking the same file still fires change.
@@ -227,18 +230,18 @@ export function PhotoPicker({
       </div>
 
       <div style={moreSectionStyle}>
-        <button type="button" style={moreRowStyle} onClick={onBulk}>
+        <motion.button type="button" style={moreRowStyle} onClick={onBulk} {...pressProps(reduced)}>
           <Text variant="ui" as="span" size="subhead" weight={600} style={{ color: 'var(--color-secondary-strong)' }}>{strings.closet.bulkCapture.entryCta}</Text>
           <Text variant="ui" as="span" size="body" style={{ color: 'var(--color-secondary)', lineHeight: '1' }} aria-hidden="true">
             →
           </Text>
-        </button>
-        <button type="button" style={moreRowStyle} onClick={onReceipt}>
+        </motion.button>
+        <motion.button type="button" style={moreRowStyle} onClick={onReceipt} {...pressProps(reduced)}>
           <Text variant="ui" as="span" size="subhead" weight={600} style={{ color: 'var(--color-secondary-strong)' }}>{strings.closet.importReceipt.entryCta}</Text>
           <Text variant="ui" as="span" size="body" style={{ color: 'var(--color-secondary)', lineHeight: '1' }} aria-hidden="true">
             →
           </Text>
-        </button>
+        </motion.button>
       </div>
     </div>
   );

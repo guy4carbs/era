@@ -9,8 +9,9 @@
  */
 import { strings } from '@era/core/strings';
 import { layout, spacing } from '@era/tokens';
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 
+import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
@@ -21,7 +22,7 @@ interface SettingsGearProps {
 export function SettingsGear({ onPress }: SettingsGearProps) {
   const { colors } = useTheme();
   return (
-    <Pressable
+    <Press
       accessibilityRole="button"
       accessibilityLabel={strings.settings.title}
       hitSlop={spacing.s3}
@@ -29,7 +30,7 @@ export function SettingsGear({ onPress }: SettingsGearProps) {
       style={styles.gear}
     >
       <Text variant="ui" size="title2" color={colors.text}>⚙</Text>
-    </Pressable>
+    </Press>
   );
 }
 

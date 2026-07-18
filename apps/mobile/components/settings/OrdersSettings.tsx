@@ -10,8 +10,9 @@
 import { layout, radii, spacing } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
 
+import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
@@ -93,7 +94,7 @@ function OrderRow({ order }: { readonly order: OrderRecord }) {
           {total ? `  ·  ${total}` : ''}
         </Text>
         {failed ? (
-          <Pressable
+          <Press
             accessibilityRole="button"
             accessibilityLabel={checkoutCopy.finishAt(order.retailer)}
             onPress={openHandoff}
@@ -102,7 +103,7 @@ function OrderRow({ order }: { readonly order: OrderRecord }) {
             <Text variant="ui" size="footnote" weight={600} color={colors.accent}>
               {checkoutCopy.finishAt(order.retailer)}
             </Text>
-          </Pressable>
+          </Press>
         ) : null}
       </View>
     </View>

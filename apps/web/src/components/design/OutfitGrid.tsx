@@ -1,9 +1,11 @@
 'use client';
 
 import { type CSSProperties } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import { layout } from '@era/tokens';
 import { Text } from '../Text';
 import { strings } from '@era/core/strings';
+import { pressProps } from '../../lib/motion';
 import { ShareToFeedButton } from '../feed';
 import { Collage } from './Collage';
 import type { OutfitSummary } from './types';
@@ -50,6 +52,7 @@ const assignStyle: CSSProperties = {
  * era" action.
  */
 export function OutfitGrid({ outfits, feedEnabled, onOpen, onAssign }: OutfitGridProps) {
+  const reduced = useReducedMotion();
   return (
     <div className="era-outfit-grid">
       <style>{gridCss}</style>
@@ -60,9 +63,9 @@ export function OutfitGrid({ outfits, feedEnabled, onOpen, onAssign }: OutfitGri
           .join(' · ');
         return (
           <div key={outfit.id} style={cardStyle}>
-            <button type="button" style={openButtonStyle} aria-label={title} onClick={() => onOpen(outfit.id)}>
+            <motion.button type="button" style={openButtonStyle} aria-label={title} onClick={() => onOpen(outfit.id)} {...pressProps(reduced)}>
               <Collage cover={outfit.coverUrl} thumbs={outfit.thumbnailUrls} alt={title} />
-            </button>
+            </motion.button>
             {/* The look's name is an editorial label — Fraunces italic (oviAccent),
                 matching how Ovi's names/eras read across the app. */}
             <Text
@@ -76,11 +79,11 @@ export function OutfitGrid({ outfits, feedEnabled, onOpen, onAssign }: OutfitGri
             <Text variant="caption" size="footnote" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
               {meta}
             </Text>
-            <button type="button" style={assignStyle} onClick={() => onAssign(outfit)}>
+            <motion.button type="button" style={assignStyle} onClick={() => onAssign(outfit)} {...pressProps(reduced)}>
               <Text variant="ui" size="footnote" weight={600} style={{ color: 'var(--color-accent)' }}>
                 {strings.design.assignToEra}
               </Text>
-            </button>
+            </motion.button>
             {/* Flag-gated (renders null when the feed is off) — the web outfit
                 share entry point, matching the inline "add to an era" idiom.
                 Seeded so an already-shared outfit reads as shared after a reload. */}
