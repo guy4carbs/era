@@ -11,7 +11,7 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, boxShadows, spacing, typeRamp } from '@era/tokens';
+import { motion as motionToken, spacing, typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { transitionFor } from '../../lib/motion';
 import { useTheme, type ThemeMode } from '../../lib/theme';
@@ -189,7 +189,7 @@ function ThemeControl() {
               ...segButtonStyle,
               background: active ? 'var(--color-surface)' : 'transparent',
               color: active ? 'var(--color-text)' : 'var(--color-secondary-strong)',
-              boxShadow: active ? boxShadows.e1 : 'none',
+              boxShadow: active ? 'var(--shadow-e1)' : 'none',
               fontWeight: active ? 700 : 600,
             }}
           >

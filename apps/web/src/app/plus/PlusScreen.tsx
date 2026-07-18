@@ -2,7 +2,7 @@
 
 import { useState, type CSSProperties, type ReactNode } from 'react';
 import Link from 'next/link';
-import { typeRamp, boxShadows } from '@era/tokens';
+import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { useTheme } from '../../lib/theme';
 import { Button, Container } from '../../components';
@@ -262,7 +262,7 @@ function PlanCard({
   // tint stays faint (glow, not colour) and reads in both themes via color-mix.
   const cardStyle: CSSProperties = {
     ...planCardBaseStyle,
-    boxShadow: primary ? boxShadows.e2 : boxShadows.e1,
+    boxShadow: primary ? 'var(--shadow-e2)' : 'var(--shadow-e1)',
     border: primary
       ? '1px solid color-mix(in srgb, var(--color-accent) 45%, var(--color-hairline))'
       : '1px solid var(--color-hairline)',

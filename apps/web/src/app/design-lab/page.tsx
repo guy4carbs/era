@@ -6,12 +6,11 @@ import {
   typeRamp,
   spacing,
   radii,
-  boxShadows,
-  sheen,
-  glass,
+  palette,
   glow,
   motion as motionToken,
   runContrastAudit,
+  type ThemeMode as PaletteMode,
 } from '@era/tokens';
 import {
   Button,
@@ -26,21 +25,98 @@ import {
 } from '../../components';
 import { Text } from '../../components/Text';
 import { useTheme, type ThemeMode } from '../../lib/theme';
+import { themeVarStyle } from '../../lib/theme-css';
 import { springTransition } from '../../lib/motion';
 
-const TYPE_ROLES = [
-  'caption',
-  'footnote',
-  'subhead',
-  'body',
-  'title3',
-  'title2',
-  'title1',
-  'largeTitle',
-  'display',
+/**
+ * Design Lab v2 — a living spec sheet. Every section renders its content TWICE,
+ * side by side: a light island and a dark island. Each island is a `<div>` whose
+ * inline style applies `themeVarStyle(mode)` — the exact same `--var` set the
+ * app emits for `[data-theme]`, but scoped to that subtree — so everything inside
+ * resolves to that mode regardless of the page's own theme. The single global
+ * light/dark/system chip row (top) still themes the page chrome; the islands are
+ * what let you eyeball both recipes at once (crucially the mode-specific shadow
+ * and glass recipes, which a single-theme page can't show together).
+ *
+ * The page is a public route but dev-facing. No client data fetches; every value
+ * is a token or a deterministic, asset-free render.
+ */
+
+/** The two faces we render every section in. */
+const ISLAND_MODES: readonly PaletteMode[] = ['light', 'dark'];
+
+/** The seven type roles the system exposes (Text `variant`s). */
+const TYPE_ROLES = ['display', 'largeTitle', 'title', 'oviAccent', 'body', 'ui', 'caption'] as const;
+
+/** The seven themed colour roles + the mode-independent semantics. */
+const PALETTE_ROLES = [
+  'bg',
+  'surface',
+  'text',
+  'secondary',
+  'secondaryStrong',
+  'accent',
+  'hairline',
 ] as const;
 
 const SPRING_NAMES = ['gentle', 'snappy', 'fluid'] as const;
+
+// ---------------------------------------------------------------------------
+// Theme islands
+// ---------------------------------------------------------------------------
+
+/**
+ * A subtree forced to one theme. Applies the mode's full `--var` set, then a
+ * base bg/text so the island reads as a real page surface in that mode.
+ */
+function ThemeIsland({ mode, children }: { mode: PaletteMode; children: ReactNode }) {
+  return (
+    <div
+      data-island-mode={mode}
+      style={{
+        ...themeVarStyle(mode),
+        background: 'var(--color-bg)',
+        color: 'var(--color-text)',
+        borderRadius: 'var(--radius-card)',
+        border: '1px solid var(--color-hairline)',
+        padding: 'var(--space-4)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'var(--space-3)',
+        minWidth: 0,
+      }}
+    >
+      <Text variant="caption" as="span" size="footnote" style={{ color: 'var(--color-secondary)', textTransform: 'uppercase', letterSpacing: '0.14em' }}>
+        {mode}
+      </Text>
+      {children}
+    </div>
+  );
+}
+
+const pairGridStyle: CSSProperties = {
+  display: 'grid',
+  // Two columns wide; stacks to one on narrow viewports.
+  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, var(--feed-col)), 1fr))',
+  gap: 'var(--space-4)',
+};
+
+/**
+ * Render `content(mode)` inside a light island and a dark island, side by side.
+ * The render function receives the island's mode so a section can, e.g., label
+ * hex values from the matching palette.
+ */
+function IslandPair({ content }: { content: (mode: PaletteMode) => ReactNode }) {
+  return (
+    <div style={pairGridStyle}>
+      {ISLAND_MODES.map((mode) => (
+        <ThemeIsland key={mode} mode={mode}>
+          {content(mode)}
+        </ThemeIsland>
+      ))}
+    </div>
+  );
+}
 
 const sectionStyle: CSSProperties = {
   display: 'flex',
@@ -57,12 +133,17 @@ const rowStyle: CSSProperties = {
   alignItems: 'flex-end',
 };
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+function Section({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
   return (
     <section style={sectionStyle}>
       <Text variant="title" as="h2" size="title2" style={{ margin: 0 }}>
         {title}
       </Text>
+      {note ? (
+        <Text variant="body" as="p" size="footnote" style={{ margin: 0, color: 'var(--color-secondary)' }}>
+          {note}
+        </Text>
+      ) : null}
       {children}
     </section>
   );
@@ -79,9 +160,61 @@ function Swatch({ label, box }: { label: string; box: CSSProperties }) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Busy-imagery panel — a deterministic, asset-free "photographically busy"
+// background so glass legibility over real imagery is verifiable with no
+// bundled photo. Layered feTurbulence noise over 3 vivid diagonal gradients,
+// encoded as an SVG data-URI. Swap path: replace `busyDataUri` with a bundled
+// photograph (e.g. a `next/image` or a `background-image:url(...)`) if a real
+// photo is ever wanted — the glass panel over it stays exactly as-is.
+// ---------------------------------------------------------------------------
+const BUSY_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff5e62"/>
+      <stop offset="1" stop-color="#7b2ff7"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#00c6ff"/>
+      <stop offset="1" stop-color="#00ff87"/>
+    </linearGradient>
+    <linearGradient id="g3" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#f7971e"/>
+      <stop offset="1" stop-color="#ffd200"/>
+    </linearGradient>
+    <filter id="noise">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0.7"/>
+    </filter>
+  </defs>
+  <rect width="600" height="400" fill="url(#g1)"/>
+  <rect width="600" height="400" fill="url(#g2)" opacity="0.55" transform="rotate(18 300 200)"/>
+  <rect width="600" height="400" fill="url(#g3)" opacity="0.4" transform="rotate(-24 300 200)"/>
+  <rect width="600" height="400" filter="url(#noise)" opacity="0.5"/>
+</svg>`;
+
+const busyDataUri = `url("data:image/svg+xml,${encodeURIComponent(BUSY_SVG.trim())}")`;
+
+/** The §3 glass recipe panel — reused by the Glass and Busy-imagery sections. */
+const glassPanelStyle: CSSProperties = {
+  background: 'color-mix(in srgb, var(--color-surface) var(--glass-tint), transparent)',
+  backdropFilter: 'blur(var(--glass-blur))',
+  WebkitBackdropFilter: 'blur(var(--glass-blur))',
+  border: 'var(--glass-border-width) solid var(--glass-border)',
+  borderRadius: 'var(--radius-sheet)',
+  boxShadow: 'var(--shadow-e4), inset 0 1px 0 0 var(--glass-highlight)',
+  padding: 'var(--space-4)',
+};
+
+// ---------------------------------------------------------------------------
+// Motion playground
+// ---------------------------------------------------------------------------
+
 function SpringDemo({ name }: { name: (typeof SPRING_NAMES)[number] }) {
   const [on, setOn] = useState(false);
   const reduced = useReducedMotion();
+  const spring = motionToken.springs[name];
   return (
     <button
       type="button"
@@ -94,15 +227,16 @@ function SpringDemo({ name }: { name: (typeof SPRING_NAMES)[number] }) {
         border: 'none',
         cursor: 'pointer',
         padding: 0,
+        textAlign: 'left',
       }}
       aria-label={`Toggle ${name} spring`}
     >
       <Text variant="caption" as="span" size="footnote" style={{ color: 'var(--color-secondary)' }}>
-        {name}
+        {name} · stiffness {spring.stiffness} · damping {spring.damping}
       </Text>
       <div
         style={{
-          width: 'var(--content-max)',
+          width: '100%',
           maxWidth: 'var(--feed-col)',
           height: 'var(--space-8)',
           background: 'var(--color-surface)',
@@ -113,7 +247,7 @@ function SpringDemo({ name }: { name: (typeof SPRING_NAMES)[number] }) {
       >
         <motion.div
           animate={{ x: on ? 120 : 0 }}
-          transition={reduced ? { duration: motionToken.durations.reducedFadeMs / 1000 } : springTransition(motionToken.springs[name])}
+          transition={reduced ? { duration: motionToken.durations.reducedFadeMs / 1000 } : springTransition(spring)}
           style={{
             width: 'var(--space-6)',
             height: 'var(--space-6)',
@@ -126,11 +260,40 @@ function SpringDemo({ name }: { name: (typeof SPRING_NAMES)[number] }) {
   );
 }
 
+function MotionPlayground() {
+  const reduced = useReducedMotion();
+  const d = motionToken.durations;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+      <div style={{ ...rowStyle, alignItems: 'flex-start' }}>
+        {SPRING_NAMES.map((name) => (
+          <SpringDemo key={name} name={name} />
+        ))}
+      </div>
+      <Text variant="body" as="p" size="footnote" style={{ margin: 0, color: 'var(--color-secondary)' }}>
+        Easing {motionToken.easing.css} · durations {d.minMs}–{d.maxMs}ms (reduced fade {d.reducedFadeMs}ms).
+        Tap a track to spring the dot.
+        {reduced
+          ? ' Reduced motion is ON — springs collapse to a short fade.'
+          : ' Set “Reduce motion” in your OS to see the fade fallback.'}
+      </Text>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// WCAG contrast readout — data-driven from the token audit, grouped by mode.
+// ---------------------------------------------------------------------------
+
 type AuditRow = ReturnType<typeof runContrastAudit>[number];
 
 function ContrastReadout() {
   const rows: readonly AuditRow[] = runContrastAudit();
-  const passed = rows.filter((r: AuditRow) => r.pass).length;
+  const passed = rows.filter((r) => r.pass).length;
+  const byMode: Record<string, AuditRow[]> = {};
+  for (const row of rows) {
+    (byMode[row.mode] ??= []).push(row);
+  }
 
   const cellStyle: CSSProperties = {
     padding: 'var(--space-2)',
@@ -139,70 +302,234 @@ function ContrastReadout() {
     borderBottom: '1px solid var(--color-hairline)',
     whiteSpace: 'nowrap',
   };
+  const headStyle: CSSProperties = { ...cellStyle, color: 'var(--color-secondary)' };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
       <Text variant="ui" as="strong" size="subhead">
         {passed}/{rows.length} pass
       </Text>
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ borderCollapse: 'collapse', width: '100%' }}>
-          <thead>
-            <tr>
-              {['', 'id', 'mode', 'fg', 'bg', 'usage', 'req', 'ratio', ''].map((h, i) => (
-                <Text key={i} variant="caption" as="th" size="footnote" style={{ padding: 'var(--space-2)', textAlign: 'left', borderBottom: '1px solid var(--color-hairline)', whiteSpace: 'nowrap', color: 'var(--color-secondary)' }}>
-                  {h}
-                </Text>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row: AuditRow) => (
-              <tr key={`${row.id}-${row.mode}`}>
-                <td style={cellStyle}>
-                  <span style={{ display: 'inline-flex', gap: 'var(--space-1)' }}>
-                    <span style={{ width: 'var(--space-4)', height: 'var(--space-4)', borderRadius: 'var(--radius-chip)', background: row.fg, border: '1px solid var(--color-hairline)' }} />
-                    <span style={{ width: 'var(--space-4)', height: 'var(--space-4)', borderRadius: 'var(--radius-chip)', background: row.bg, border: '1px solid var(--color-hairline)' }} />
-                  </span>
-                </td>
-                <td style={cellStyle}>{row.id}</td>
-                <td style={cellStyle}>{row.mode}</td>
-                <td style={cellStyle}>{row.fgKey}</td>
-                <td style={cellStyle}>{row.bgKey}</td>
-                <td style={cellStyle}>{row.usage}</td>
-                <td style={cellStyle}>{row.required}</td>
-                <td style={cellStyle}>{row.ratio.toFixed(2)}</td>
-                <td style={cellStyle}>
-                  <span
-                    style={{
-                      padding: 'var(--space-1) var(--space-2)',
-                      borderRadius: 'var(--radius-chip)',
-                      color: 'var(--color-ink)',
-                      fontWeight: 600,
-                      background: row.pass ? 'var(--color-sage)' : 'var(--color-rust)',
-                    }}
-                  >
-                    {row.pass ? 'PASS' : 'FAIL'}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {Object.entries(byMode).map(([mode, modeRows]) => (
+        <div key={mode} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+          <Text variant="caption" as="h3" size="footnote" style={{ margin: 0, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--color-secondary)' }}>
+            {mode} · {modeRows.filter((r) => r.pass).length}/{modeRows.length} pass
+          </Text>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+              <thead>
+                <tr>
+                  {['', 'id', 'fg', 'bg', 'usage', 'req', 'ratio', ''].map((h, i) => (
+                    <th key={i} style={headStyle}>
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {modeRows.map((row) => (
+                  <tr key={`${row.id}-${row.mode}`}>
+                    <td style={cellStyle}>
+                      <span style={{ display: 'inline-flex', gap: 'var(--space-1)' }}>
+                        <span style={{ width: 'var(--space-4)', height: 'var(--space-4)', borderRadius: 'var(--radius-chip)', background: row.fg, border: '1px solid var(--color-hairline)' }} />
+                        <span style={{ width: 'var(--space-4)', height: 'var(--space-4)', borderRadius: 'var(--radius-chip)', background: row.bg, border: '1px solid var(--color-hairline)' }} />
+                      </span>
+                    </td>
+                    <td style={cellStyle}>{row.id}</td>
+                    <td style={cellStyle}>{row.fgKey}</td>
+                    <td style={cellStyle}>{row.bgKey}</td>
+                    <td style={cellStyle}>{row.usage}</td>
+                    <td style={cellStyle}>{row.required}</td>
+                    <td style={cellStyle}>{row.ratio.toFixed(2)}</td>
+                    <td style={cellStyle}>
+                      <span
+                        style={{
+                          padding: 'var(--space-1) var(--space-2)',
+                          borderRadius: 'var(--radius-chip)',
+                          color: 'var(--color-ink)',
+                          fontWeight: 600,
+                          background: row.pass ? 'var(--color-sage)' : 'var(--color-rust)',
+                        }}
+                      >
+                        {row.pass ? 'PASS' : 'FAIL'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Per-island section bodies
+// ---------------------------------------------------------------------------
+
+function PaletteIsland({ mode }: { mode: PaletteMode }) {
+  const p = palette[mode];
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
+      {PALETTE_ROLES.map((role) => (
+        <div key={role} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', alignItems: 'center' }}>
+          <div style={{ width: 'var(--space-12)', height: 'var(--space-12)', borderRadius: 'var(--radius-card)', background: p[role], border: '1px solid var(--color-hairline)' }} />
+          <Text variant="caption" as="span" size="footnote" style={{ color: 'var(--color-secondary)' }}>
+            {role}
+          </Text>
+          <Text variant="caption" as="span" size="footnote" style={{ color: 'var(--color-secondary)' }}>
+            {p[role]}
+          </Text>
+        </div>
+      ))}
+      {(['sage', 'rust'] as const).map((role) => (
+        <div key={role} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', alignItems: 'center' }}>
+          <div style={{ width: 'var(--space-12)', height: 'var(--space-12)', borderRadius: 'var(--radius-card)', background: palette.semantic[role], border: '1px solid var(--color-hairline)' }} />
+          <Text variant="caption" as="span" size="footnote" style={{ color: 'var(--color-secondary)' }}>
+            {role}
+          </Text>
+          <Text variant="caption" as="span" size="footnote" style={{ color: 'var(--color-secondary)' }}>
+            {palette.semantic[role]}
+          </Text>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TypeIsland() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+      {TYPE_ROLES.map((role) => (
+        <div key={role} style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'baseline', flexWrap: 'wrap' }}>
+          <Text variant="caption" as="span" size="footnote" style={{ width: 'var(--space-16)', color: 'var(--color-secondary)' }}>
+            {role}
+          </Text>
+          <Text variant={role} as="span">
+            {role === 'oviAccent' ? 'Ovi' : 'The quiet fox'}
+          </Text>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ElevationIsland() {
+  return (
+    <div style={rowStyle}>
+      {(['e1', 'e2', 'e3', 'e4'] as const).map((level) => (
+        <Swatch
+          key={level}
+          label={level}
+          box={{
+            width: 'var(--space-16)',
+            height: 'var(--space-12)',
+            background: 'var(--color-surface)',
+            borderRadius: 'var(--radius-card)',
+            boxShadow: `var(--shadow-${level})`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function GlassIsland() {
+  return (
+    <div style={{ ...glassPanelStyle, display: 'grid', placeItems: 'center', minHeight: 'var(--space-16)' }}>
+      <Text variant="body" as="span" size="footnote" style={{ color: 'var(--color-text)' }}>
+        glass · blur + tint + border + top highlight
+      </Text>
+    </div>
+  );
+}
+
+function GlowIsland({ mode }: { mode: PaletteMode }) {
+  const glowShadow = `0 0 var(--glow-blur) color-mix(in srgb, var(--color-accent) ${Math.round(glow.opacity[mode] * 100)}%, transparent)`;
+  return (
+    <div style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'center' }}>
+      <motion.div
+        animate={{ boxShadow: [glowShadow, `0 0 var(--glow-blur) color-mix(in srgb, var(--color-accent) ${Math.round(glow.opacity[mode] * (1 + glow.pulse.amount) * 100)}%, transparent)`, glowShadow] }}
+        transition={{ duration: glow.pulse.durationMs / 1000, repeat: Infinity, ease: 'easeInOut' }}
+        style={{ width: 'var(--space-16)', height: 'var(--space-16)', borderRadius: 'var(--radius-card)', background: 'var(--color-accent)', display: 'grid', placeItems: 'center', color: 'var(--color-ink)' }}
+      >
+        <Text variant="caption" as="span" size="footnote" style={{ color: 'var(--color-ink)' }}>
+          pulse
+        </Text>
+      </motion.div>
+    </div>
+  );
+}
+
+function SheenIsland() {
+  return (
+    <div style={{ position: 'relative', width: '100%', height: 'var(--space-16)', borderRadius: 'var(--radius-card)', overflow: 'hidden', background: 'var(--color-accent)' }}>
+      <span aria-hidden="true" style={{ position: 'absolute', inset: 0, background: 'var(--sheen-gradient)' }} />
+      <span style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', color: 'var(--color-ink)', fontSize: typeRamp.footnote.rem }}>sheen</span>
+    </div>
+  );
+}
+
+function ComponentsIsland({ chips, onToggleChip }: { chips: Record<string, boolean>; onToggleChip: (key: string) => void }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+      <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+        <Button variant="primary">Primary</Button>
+        <Button variant="secondary">Secondary</Button>
+        <Button variant="ghost">Ghost</Button>
+      </div>
+      <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+        {Object.keys(chips).map((key) => (
+          <Chip key={key} selected={chips[key]} onClick={() => onToggleChip(key)}>
+            {key}
+          </Chip>
+        ))}
+      </div>
+      <Input label="Email" placeholder="you@example.com" />
+      <Card>
+        <div style={{ padding: 'var(--space-4)' }}>Card (e2)</div>
+      </Card>
+    </div>
+  );
+}
+
+function BusyImageryIsland() {
+  return (
+    <div
+      style={{
+        position: 'relative',
+        minHeight: 'var(--space-16)',
+        borderRadius: 'var(--radius-card)',
+        overflow: 'hidden',
+        backgroundImage: busyDataUri,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        display: 'grid',
+        placeItems: 'center',
+        padding: 'var(--space-4)',
+      }}
+    >
+      <div style={{ ...glassPanelStyle, maxWidth: 'var(--feed-col)' }}>
+        <Text variant="body" as="p" size="footnote" style={{ margin: 0, color: 'var(--color-text)' }}>
+          Legibility check — this text sits on the glass recipe over deliberately busy imagery. The tint + blur
+          must keep it readable in both modes.
+        </Text>
       </div>
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
 
 export default function DesignLabPage() {
   const { mode, resolved, setMode } = useTheme();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('design');
   const [chips, setChips] = useState<Record<string, boolean>>({ linen: true, wool: false, silk: false });
-
-  const glowShadow = `${boxShadows.e3}, 0 0 var(--glow-blur) color-mix(in srgb, var(--color-accent) ${Math.round(
-    glow.opacity[resolved] * 100,
-  )}%, transparent)`;
+  const toggleChip = (key: string) => setChips((c) => ({ ...c, [key]: !c[key] }));
 
   return (
     <main style={{ paddingBottom: 'calc(var(--tabbar-height) + var(--space-16))' }}>
@@ -211,7 +538,11 @@ export default function DesignLabPage() {
           <Text variant="largeTitle" as="h1" style={{ margin: 0 }}>
             Era design lab
           </Text>
-          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+          <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-secondary)' }}>
+            Every section renders light | dark side by side via theme islands. The chips below theme the page
+            chrome; the islands are independent.
+          </Text>
+          <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center', flexWrap: 'wrap' }}>
             {(['light', 'dark', 'system'] as ThemeMode[]).map((m) => (
               <Chip key={m} selected={mode === m} onClick={() => setMode(m)}>
                 {m}
@@ -223,164 +554,82 @@ export default function DesignLabPage() {
           </div>
         </header>
 
-        <Section title="Buttons">
-          <div style={rowStyle}>
-            <Button variant="primary">Primary</Button>
-            <Button variant="secondary">Secondary</Button>
-            <Button variant="ghost">Ghost</Button>
-            <Button variant="primary" disabled>
-              Disabled
-            </Button>
-          </div>
+        <Section title="Palette" note="Seven themed roles + the mode-independent semantic hues, with hex labels.">
+          <IslandPair content={(m) => <PaletteIsland mode={m} />} />
         </Section>
 
-        <Section title="Cards">
-          <div style={rowStyle}>
-            <div style={{ width: 'var(--feed-col)' }}>
-              <Card>
-                <div style={{ padding: 'var(--space-4)' }}>Resting card (e2)</div>
-              </Card>
-            </div>
-            <div style={{ width: 'var(--feed-col)' }}>
-              <Card interactive>
-                <div style={{ padding: 'var(--space-4)' }}>Interactive — hover to lift (e3)</div>
-              </Card>
-            </div>
-            <div style={{ width: 'var(--feed-col)' }}>
-              <Card interactive aspect="item">
-                <div style={{ color: 'var(--color-secondary)' }}>Item 4:5 + sheen</div>
-              </Card>
-            </div>
-          </div>
-        </Section>
-
-        <Section title="Inputs">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', maxWidth: 'var(--feed-col)' }}>
-            <Input label="Email" placeholder="you@example.com" />
-            <Input label="Username" defaultValue="!!" error="3–20 characters: letters, numbers, or underscores." />
-          </div>
-        </Section>
-
-        <Section title="Chips">
-          <div style={rowStyle}>
-            {Object.keys(chips).map((key) => (
-              <Chip
-                key={key}
-                selected={chips[key]}
-                onClick={() => setChips((c) => ({ ...c, [key]: !c[key] }))}
-              >
-                {key}
-              </Chip>
-            ))}
-          </div>
-        </Section>
-
-        <Section title="Type ramp">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-            {TYPE_ROLES.map((role) => (
-              <div key={role} style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'baseline' }}>
-                <Text variant="caption" as="span" style={{ width: 'var(--space-16)', color: 'var(--color-secondary)' }}>
-                  {role} · {typeRamp[role].px}px
-                </Text>
-                <span style={{ fontSize: typeRamp[role].rem, lineHeight: `${typeRamp[role].lineHeight}px` }}>
-                  The quick brown fox
-                </span>
-              </div>
-            ))}
-          </div>
+        <Section title="Type roles" note="The seven Fraunces/Geist variants at their default step.">
+          <IslandPair content={() => <TypeIsland />} />
         </Section>
 
         <Section title="Spacing">
-          <div style={rowStyle}>
-            {Object.entries(spacing).map(([key, value]) => (
-              <Swatch
-                key={key}
-                label={`${key} · ${value}`}
-                box={{ width: `var(--space-${key.slice(1)})`, height: `var(--space-${key.slice(1)})`, background: 'var(--color-accent)', borderRadius: 'var(--radius-chip)' }}
-              />
-            ))}
-          </div>
+          <IslandPair
+            content={() => (
+              <div style={rowStyle}>
+                {Object.entries(spacing).map(([key, value]) => (
+                  <Swatch
+                    key={key}
+                    label={`${key} · ${value}`}
+                    box={{ width: `var(--space-${key.slice(1)})`, height: `var(--space-${key.slice(1)})`, background: 'var(--color-accent)', borderRadius: 'var(--radius-chip)' }}
+                  />
+                ))}
+              </div>
+            )}
+          />
         </Section>
 
-        <Section title="Radii">
-          <div style={rowStyle}>
-            {Object.entries(radii).map(([key, value]) => (
-              <Swatch
-                key={key}
-                label={`${key} · ${value}`}
-                box={{ width: 'var(--space-12)', height: 'var(--space-12)', background: 'var(--color-surface)', border: '1px solid var(--color-hairline)', borderRadius: `var(--radius-${key})` }}
-              />
-            ))}
-          </div>
+        <Section title="Radii" note="Including `full` (9999) as a pill / orb.">
+          <IslandPair
+            content={() => (
+              <div style={rowStyle}>
+                {Object.entries(radii).map(([key, value]) => (
+                  <Swatch
+                    key={key}
+                    label={`${key} · ${value}`}
+                    box={{
+                      width: 'var(--space-12)',
+                      height: 'var(--space-12)',
+                      background: 'var(--color-surface)',
+                      border: '1px solid var(--color-hairline)',
+                      borderRadius: `var(--radius-${key})`,
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          />
         </Section>
 
-        <Section title="Elevation">
-          <div style={rowStyle}>
-            {(['e1', 'e2', 'e3', 'e4'] as const).map((level) => (
-              <Swatch
-                key={level}
-                label={level}
-                box={{ width: 'var(--space-16)', height: 'var(--space-12)', background: 'var(--color-surface)', borderRadius: 'var(--radius-card)', boxShadow: boxShadows[level] }}
-              />
-            ))}
-          </div>
+        <Section title="Elevation" note="e1–e4. The dark column uses the DARK shadow recipes (e4 true black) via var(--shadow-e*).">
+          <IslandPair content={() => <ElevationIsland />} />
         </Section>
 
-        <Section title="Glass · glow · sheen">
-          <div style={rowStyle}>
-            <div
-              style={{
-                width: 'var(--content-max)',
-                maxWidth: 'var(--feed-col)',
-                height: 'var(--space-16)',
-                borderRadius: 'var(--radius-sheet)',
-                background: `color-mix(in srgb, var(--color-surface) var(--glass-tint), transparent)`,
-                backdropFilter: 'blur(var(--glass-blur))',
-                WebkitBackdropFilter: 'blur(var(--glass-blur))',
-                border: 'var(--glass-border-width) solid var(--color-hairline)',
-                boxShadow: `${boxShadows.e4}, inset 0 1px 0 0 ${glass.innerHighlightColor}`,
-                display: 'grid',
-                placeItems: 'center',
-                color: 'var(--color-secondary)',
-              }}
-            >
-              glass
-            </div>
-            <div
-              style={{
-                width: 'var(--space-16)',
-                height: 'var(--space-16)',
-                borderRadius: 'var(--radius-card)',
-                background: 'var(--color-accent)',
-                boxShadow: glowShadow,
-                display: 'grid',
-                placeItems: 'center',
-                color: 'var(--color-ink)',
-              }}
-            >
-              glow
-            </div>
-            <div
-              style={{
-                position: 'relative',
-                width: 'var(--space-16)',
-                height: 'var(--space-16)',
-                borderRadius: 'var(--radius-card)',
-                overflow: 'hidden',
-                background: 'var(--color-accent)',
-              }}
-            >
-              <span style={{ position: 'absolute', inset: 0, background: `linear-gradient(${sheen.angleDeg}deg, ${sheen.from}, ${sheen.to})` }} />
-            </div>
-          </div>
+        <Section title="Glass" note="The §3 recipe: blur(20) + mode tint + var(--glass-border) frame + var(--glass-highlight) top edge.">
+          <IslandPair content={() => <GlassIsland />} />
         </Section>
 
-        <Section title="Springs">
-          <div style={{ ...rowStyle, alignItems: 'flex-start' }}>
-            {SPRING_NAMES.map((name) => (
-              <SpringDemo key={name} name={name} />
-            ))}
-          </div>
+        <Section title="Glow + pulse" note="Accent halo at the per-mode glow opacity, breathing on the idle loop.">
+          <IslandPair content={(m) => <GlowIsland mode={m} />} />
+        </Section>
+
+        <Section title="Sheen" note="var(--sheen-gradient) laid over an accent surface.">
+          <IslandPair content={() => <SheenIsland />} />
+        </Section>
+
+        <Section title="Components" note="Button variants, Chip, Input, Card — in both islands.">
+          <IslandPair content={() => <ComponentsIsland chips={chips} onToggleChip={toggleChip} />} />
+        </Section>
+
+        <Section title="Motion playground">
+          <IslandPair content={() => <MotionPlayground />} />
+        </Section>
+
+        <Section title="Glass over busy imagery" note="A deterministic feTurbulence + gradient background (no assets) with the glass panel floating over it — legibility of the tint + blur, verifiable in both modes.">
+          <IslandPair content={() => <BusyImageryIsland />} />
+        </Section>
+
+        <Section title="WCAG contrast" note="Data-driven from runContrastAudit(), grouped by mode.">
+          <ContrastReadout />
         </Section>
 
         <Section title="Overlays">
@@ -390,17 +639,17 @@ export default function DesignLabPage() {
             </Button>
           </div>
         </Section>
-
-        <Section title="Contrast audit">
-          <ContrastReadout />
-        </Section>
       </Container>
 
       {sheetOpen ? (
         <GlassSheet peek>
           <div style={{ padding: 'var(--space-4)', display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-            <Text variant="title" as="h3" size="title3" style={{ margin: 0 }}>Glass sheet</Text>
-            <Text variant="body" as="p" style={{ color: 'var(--color-secondary)' }}>Tap the grabber to expand to full height.</Text>
+            <Text variant="title" as="h3" size="title3" style={{ margin: 0 }}>
+              Glass sheet
+            </Text>
+            <Text variant="body" as="p" style={{ color: 'var(--color-secondary)' }}>
+              Tap the grabber to expand to full height.
+            </Text>
           </div>
         </GlassSheet>
       ) : null}

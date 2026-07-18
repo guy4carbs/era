@@ -2,7 +2,7 @@
 
 import { useState, type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, boxShadows } from '@era/tokens';
+import { motion as motionToken } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import type { OviIntent, ProposedOutfit } from '@era/core/ovi';
 import { transitionFor } from '../../lib/motion';
@@ -70,7 +70,7 @@ const tileStyle: CSSProperties = {
   borderRadius: 'var(--radius-card)',
   background: 'var(--color-surface)',
   border: '1px solid var(--color-hairline)',
-  boxShadow: boxShadows.e1,
+  boxShadow: 'var(--shadow-e1)',
 };
 
 const tileImageStyle: CSSProperties = {

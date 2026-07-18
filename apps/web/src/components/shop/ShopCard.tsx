@@ -2,7 +2,7 @@
 
 import { useState, type CSSProperties } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, boxShadows, layout } from '@era/tokens';
+import { motion as motionToken, layout } from '@era/tokens';
 import { Text } from '../Text';
 import { strings } from '@era/core/strings';
 import type { ProductWhy, RankedProduct, WhyDetail } from '@era/core/shop';
@@ -130,7 +130,7 @@ export function ShopCard({ product, isSaved, onToggleSave, onDismiss }: ShopCard
   return (
     <motion.article
       style={cardStyle}
-      whileHover={reduced ? undefined : { y: layout.hover.liftPx, boxShadow: boxShadows.e3 }}
+      whileHover={reduced ? undefined : { y: layout.hover.liftPx, boxShadow: 'var(--shadow-e3)' }}
       transition={transitionFor(motionToken.springs.gentle, reduced)}
     >
       {href ? (
@@ -221,7 +221,7 @@ const cardStyle: CSSProperties = {
   flexDirection: 'column',
   background: 'var(--color-surface)',
   borderRadius: 'var(--radius-card)',
-  boxShadow: boxShadows.e1,
+  boxShadow: 'var(--shadow-e1)',
   overflow: 'hidden',
   isolation: 'isolate',
 };

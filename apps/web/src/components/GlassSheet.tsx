@@ -2,7 +2,7 @@
 
 import { useState, type CSSProperties, type ReactNode } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, glass, boxShadows, layout } from '@era/tokens';
+import { motion as motionToken, layout } from '@era/tokens';
 import { transitionFor } from '../lib/motion';
 
 export interface GlassSheetProps {
@@ -27,13 +27,13 @@ const sheetStyle: CSSProperties = {
   background: `color-mix(in srgb, var(--color-surface) var(--glass-tint), transparent)`,
   backdropFilter: 'blur(var(--glass-blur))',
   WebkitBackdropFilter: 'blur(var(--glass-blur))',
-  borderTop: 'var(--glass-border-width) solid var(--color-hairline)',
-  borderLeft: 'var(--glass-border-width) solid var(--color-hairline)',
-  borderRight: 'var(--glass-border-width) solid var(--color-hairline)',
+  borderTop: 'var(--glass-border-width) solid var(--glass-border)',
+  borderLeft: 'var(--glass-border-width) solid var(--glass-border)',
+  borderRight: 'var(--glass-border-width) solid var(--glass-border)',
   borderTopLeftRadius: 'var(--radius-sheet)',
   borderTopRightRadius: 'var(--radius-sheet)',
   // e4 lift plus a 1px inner highlight along the top edge (glass token colour).
-  boxShadow: `${boxShadows.e4}, inset 0 1px 0 0 ${glass.innerHighlightColor}`,
+  boxShadow: 'var(--shadow-e4), inset 0 1px 0 0 var(--glass-highlight)',
   paddingInline: 'var(--space-4)',
   paddingBottom: 'var(--space-4)',
   zIndex: 50,

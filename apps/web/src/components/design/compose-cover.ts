@@ -9,6 +9,8 @@
  * failure, resolves to null so the caller can save the outfit without a cover
  * (the list falls back to member thumbnails). Never throws.
  */
+import { palette } from '@era/tokens';
+
 import { EXPORT_WIDTH, STAGE_ASPECT, type PlacedItem } from './types';
 
 /** Load one image with CORS enabled; resolve null if it never loads. */
@@ -25,7 +27,7 @@ function loadImage(src: string): Promise<HTMLImageElement | null> {
 /** Read a resolved theme color (canvas needs a real value, not a CSS var). */
 function surfaceColor(): string {
   const value = getComputedStyle(document.documentElement).getPropertyValue('--color-surface').trim();
-  return value.length > 0 ? value : '#ffffff';
+  return value.length > 0 ? value : palette.white;
 }
 
 /**

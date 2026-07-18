@@ -4,7 +4,7 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, useReducedMotion } from 'framer-motion';
-import { typeRamp, layout, boxShadows } from '@era/tokens';
+import { typeRamp, layout } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { ClosetEmpty, ClosetGallery, SettingsLink, type GalleryItem } from '../../../components/closet';
 import { Text } from '../../../components/Text';
@@ -56,7 +56,7 @@ const addPillStyle: CSSProperties = {
   color: 'var(--color-ink)',
   fontSize: typeRamp.subhead.rem,
   fontWeight: 700,
-  boxShadow: boxShadows.e2,
+  boxShadow: 'var(--shadow-e2)',
 };
 
 const addPillCss = [
@@ -73,7 +73,7 @@ function AddPill({ onClick }: { onClick: () => void }) {
       className="era-add-pill"
       aria-label={strings.closet.addCta}
       style={addPillStyle}
-      whileHover={reduced ? undefined : { boxShadow: boxShadows.e3 }}
+      whileHover={reduced ? undefined : { boxShadow: 'var(--shadow-e3)' }}
       whileTap={reduced ? undefined : { scale: 0.96 }}
       onClick={onClick}
     >

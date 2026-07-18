@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og';
+import { palette } from '@era/tokens';
 
 import { JOURNAL_SLUGS, JOURNAL_POSTS, isJournalSlug } from '../../../../lib/journal';
 
@@ -27,11 +28,12 @@ export async function generateImageMetadata({
   return [{ id: 'og', alt, size, contentType }];
 }
 
+// Dark brand card — colours from the dark palette (token single source).
 const COLORS = {
-  bg: '#1C1B19',
-  text: '#F5F1E8',
-  accent: '#C9BEA9',
-  muted: '#B5AC9C',
+  bg: palette.dark.bg,
+  text: palette.dark.text,
+  accent: palette.dark.accent,
+  muted: palette.dark.secondaryStrong,
 } as const;
 
 export default async function OpengraphImage({

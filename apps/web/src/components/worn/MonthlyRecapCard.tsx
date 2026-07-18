@@ -1,7 +1,7 @@
 'use client';
 
 import { type CSSProperties } from 'react';
-import { boxShadows } from '@era/tokens';
+
 import { strings } from '@era/core/strings';
 import type { MonthlyRecap } from '@era/core/wear-stats';
 import { formatMoney } from '../../lib/format-money';
@@ -154,7 +154,7 @@ const cardStyle: CSSProperties = {
   background: 'var(--color-surface)',
   border: '1px solid var(--color-hairline)',
   borderRadius: 'var(--radius-card)',
-  boxShadow: boxShadows.e2,
+  boxShadow: 'var(--shadow-e2)',
 };
 
 // Mark stacked directly above the month, left-aligned.

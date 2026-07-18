@@ -1,7 +1,7 @@
 'use client';
 
 import { forwardRef, useId, type CSSProperties } from 'react';
-import { typeRamp, boxShadows } from '@era/tokens';
+import { typeRamp } from '@era/tokens';
 import { Text, TextControlBoundary } from './Text';
 
 type NativeInputProps = Omit<React.ComponentPropsWithoutRef<'input'>, 'style'>;
@@ -32,7 +32,7 @@ const inputStyle: CSSProperties = {
   paddingBlock: 'var(--space-2)',
   borderRadius: 'var(--radius-input)',
   border: '1px solid var(--color-hairline)',
-  boxShadow: boxShadows.e1,
+  boxShadow: 'var(--shadow-e1)',
   background: 'var(--color-surface)',
   color: 'var(--color-text)',
   fontSize: typeRamp.body.rem,

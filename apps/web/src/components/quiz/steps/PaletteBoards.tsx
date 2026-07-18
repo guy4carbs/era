@@ -2,7 +2,7 @@
 
 import { type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, boxShadows, layout } from '@era/tokens';
+import { motion as motionToken, layout } from '@era/tokens';
 import { ARCHETYPES } from '@era/core/quiz';
 import { transitionFor } from '../../../lib/motion';
 import { Text, TextControlBoundary } from '../../../components';
@@ -87,9 +87,9 @@ export function PaletteBoards({ step, selectedId, onSelect }: PaletteBoardsProps
             onClick={() => onSelect(option.id)}
             style={{
               ...boardStyle,
-              boxShadow: selected ? `${boxShadows.e3}, ${SELECTION_RING}` : boxShadows.e2,
+              boxShadow: selected ? `var(--shadow-e3), ${SELECTION_RING}` : 'var(--shadow-e2)',
             }}
-            whileHover={reduced ? undefined : { y: layout.hover.liftPx, boxShadow: boxShadows.e3 }}
+            whileHover={reduced ? undefined : { y: layout.hover.liftPx, boxShadow: 'var(--shadow-e3)' }}
             whileTap={reduced ? undefined : { scale: 0.98 }}
             transition={transitionFor(motionToken.springs.snappy, reduced)}
           >

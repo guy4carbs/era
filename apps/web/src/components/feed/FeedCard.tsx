@@ -4,7 +4,7 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { boxShadows, layout, motion as motionToken, typeRamp } from '@era/tokens';
+import { layout, motion as motionToken, typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { REPORT_REASONS, type FeedPostPayload, type ReportReason } from '@era/core/feed';
 import { Avatar } from '../profile/Avatar';
@@ -426,7 +426,7 @@ const cardStyle: CSSProperties = {
   background: 'var(--color-surface)',
   border: '1px solid var(--color-hairline)',
   borderRadius: 'var(--radius-card)',
-  boxShadow: boxShadows.e1,
+  boxShadow: 'var(--shadow-e1)',
 };
 
 const headerStyle: CSSProperties = {
@@ -581,7 +581,7 @@ const popoverStyle: CSSProperties = {
   background: 'var(--color-surface)',
   border: '1px solid var(--color-hairline)',
   borderRadius: 'var(--radius-card)',
-  boxShadow: boxShadows.e3,
+  boxShadow: 'var(--shadow-e3)',
 };
 
 const menuColStyle: CSSProperties = {

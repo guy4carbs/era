@@ -1,7 +1,7 @@
 import { type CSSProperties, type JSX, type ReactNode } from 'react';
 import Image from 'next/image';
 import { strings } from '@era/core/strings';
-import { boxShadows, layout } from '@era/tokens';
+import { layout } from '@era/tokens';
 import type { PublicProfilePublic } from '../../lib/public-profile-server';
 import { coverAlt, itemAlt, profileName } from '../../lib/profile-presenter';
 import { Text } from '../Text';
@@ -281,7 +281,7 @@ const frameBase: CSSProperties = {
   background: 'var(--color-surface)',
   borderRadius: 'var(--radius-card)',
   overflow: 'hidden',
-  boxShadow: boxShadows.e2,
+  boxShadow: 'var(--shadow-e2)',
 };
 
 const cutoutFrameStyle: CSSProperties = frameBase;

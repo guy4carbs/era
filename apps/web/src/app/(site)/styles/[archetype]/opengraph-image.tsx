@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { ARCHETYPES } from '@era/core/quiz';
+import { palette } from '@era/tokens';
 
 import { STYLE_SLUGS, isStyleSlug, slugToArchetype } from '../../../../lib/style-pages';
 
@@ -29,10 +30,11 @@ export async function generateImageMetadata({
   return [{ id: 'og', alt, size, contentType }];
 }
 
+// Dark brand card — colours from the dark palette (token single source).
 const COLORS = {
-  bg: '#1C1B19',
-  text: '#F5F1E8',
-  accent: '#C9BEA9',
+  bg: palette.dark.bg,
+  text: palette.dark.text,
+  accent: palette.dark.accent,
 } as const;
 
 export default async function OpengraphImage({

@@ -3,7 +3,7 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, typeRamp, boxShadows, glow } from '@era/tokens';
+import { motion as motionToken, typeRamp, glow } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import {
   ARCHETYPES,
@@ -52,7 +52,7 @@ const eraCardStyle: CSSProperties = {
   padding: 'var(--space-6)',
   borderRadius: 'var(--radius-hero)',
   background: 'var(--color-surface)',
-  boxShadow: boxShadows.e2,
+  boxShadow: 'var(--shadow-e2)',
   display: 'flex',
   flexDirection: 'column',
   gap: 'var(--space-3)',
@@ -188,7 +188,7 @@ export function Reveal({ answers }: RevealProps) {
               height: 'var(--space-8)',
               borderRadius: 'var(--radius-chip)',
               background: hex,
-              boxShadow: boxShadows.e1,
+              boxShadow: 'var(--shadow-e1)',
             }}
           />
         ))}

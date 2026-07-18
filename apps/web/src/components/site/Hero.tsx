@@ -1,6 +1,6 @@
 import { type CSSProperties } from 'react';
 import { strings } from '@era/core/strings';
-import { typeRamp, boxShadows, sheen } from '@era/tokens';
+import { typeRamp } from '@era/tokens';
 import { Text, TextControlBoundary } from '../Text';
 import { HeroGlow } from './HeroGlow';
 
@@ -84,7 +84,7 @@ const ctaStyle: CSSProperties = {
   lineHeight: `${typeRamp.subhead.lineHeight}px`,
   fontWeight: 600,
   textDecoration: 'none',
-  boxShadow: boxShadows.e1,
+  boxShadow: 'var(--shadow-e1)',
 };
 
 const ctaSheenStyle: CSSProperties = {
@@ -92,7 +92,7 @@ const ctaSheenStyle: CSSProperties = {
   inset: 0,
   pointerEvents: 'none',
   zIndex: 1,
-  background: `linear-gradient(${sheen.angleDeg}deg, ${sheen.from}, ${sheen.to})`,
+  background: 'var(--sheen-gradient)',
 };
 
 export function Hero() {

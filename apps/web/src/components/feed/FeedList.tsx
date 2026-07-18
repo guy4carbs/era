@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useReducer, useRef, useState, type CSSProperties } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { boxShadows, layout, motion as motionToken } from '@era/tokens';
+import { layout, motion as motionToken } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import type { FeedPage, FeedPostPayload } from '@era/core/feed';
 import { transitionFor } from '../../lib/motion';
@@ -377,6 +377,6 @@ const toastStyle: CSSProperties = {
   background: 'var(--color-surface)',
   border: '1px solid var(--color-hairline)',
   color: 'var(--color-text)',
-  boxShadow: boxShadows.e3,
+  boxShadow: 'var(--shadow-e3)',
   zIndex: 70,
 };

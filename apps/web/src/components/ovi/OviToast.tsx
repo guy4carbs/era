@@ -2,7 +2,7 @@
 
 import { type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, boxShadows } from '@era/tokens';
+import { motion as motionToken } from '@era/tokens';
 import { transitionFor } from '../../lib/motion';
 import { Text } from '../Text';
 
@@ -21,7 +21,7 @@ const toastStyle: CSSProperties = {
   background: 'var(--color-surface)',
   border: '1px solid var(--color-hairline)',
   color: 'var(--color-text)',
-  boxShadow: boxShadows.e3,
+  boxShadow: 'var(--shadow-e3)',
   zIndex: 70,
 };
 

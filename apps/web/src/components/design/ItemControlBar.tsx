@@ -2,7 +2,7 @@
 
 import { type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, boxShadows } from '@era/tokens';
+import { motion as motionToken } from '@era/tokens';
 import { Text } from '../Text';
 import { transitionFor } from '../../lib/motion';
 import {
@@ -41,7 +41,7 @@ const barStyle: CSSProperties = {
   backdropFilter: 'blur(var(--glass-blur))',
   WebkitBackdropFilter: 'blur(var(--glass-blur))',
   border: 'var(--glass-border-width) solid var(--color-hairline)',
-  boxShadow: boxShadows.e2,
+  boxShadow: 'var(--shadow-e2)',
 };
 
 const btnStyle: CSSProperties = {

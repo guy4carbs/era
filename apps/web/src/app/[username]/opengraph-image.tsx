@@ -1,5 +1,7 @@
 import { ImageResponse } from 'next/og';
 
+import { palette } from '@era/tokens';
+
 import { createDbClient } from '@era/db';
 import { loadPublicProfile } from '../../lib/public-profile-server';
 import { serverStorageClient } from '../../lib/storage-server';
@@ -25,13 +27,15 @@ export const alt = 'A closet on Era';
 
 const db = createDbClient(process.env.DATABASE_URL!);
 
+// The share card is always the dark brand card — source its colours from the
+// dark palette so the token set stays the single source of truth.
 const COLORS = {
-  bg: '#1C1B19',
-  surface: '#26241F',
-  text: '#F5F1E8',
-  muted: '#B5AC9C',
-  accent: '#C9BEA9',
-  hairline: '#3A3833',
+  bg: palette.dark.bg,
+  surface: palette.dark.surface,
+  text: palette.dark.text,
+  muted: palette.dark.secondaryStrong,
+  accent: palette.dark.accent,
+  hairline: palette.dark.hairline,
 } as const;
 
 const MAX_TILES = 6;

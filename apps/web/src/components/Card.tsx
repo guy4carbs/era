@@ -2,7 +2,7 @@
 
 import { type CSSProperties, type ReactNode } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, boxShadows, sheen, layout } from '@era/tokens';
+import { motion as motionToken, layout } from '@era/tokens';
 import { transitionFor } from '../lib/motion';
 
 export interface CardProps {
@@ -19,7 +19,7 @@ const baseStyle: CSSProperties = {
   position: 'relative',
   background: 'var(--color-surface)',
   borderRadius: 'var(--radius-card)',
-  boxShadow: boxShadows.e2,
+  boxShadow: 'var(--shadow-e2)',
   overflow: 'hidden',
   isolation: 'isolate',
 };
@@ -34,7 +34,7 @@ const sheenOverlay: CSSProperties = {
   position: 'absolute',
   inset: 0,
   pointerEvents: 'none',
-  background: `linear-gradient(${sheen.angleDeg}deg, ${sheen.from}, ${sheen.to})`,
+  background: 'var(--sheen-gradient)',
   zIndex: 1,
 };
 
@@ -52,7 +52,7 @@ export function Card({ children, interactive, aspect, style, onClick }: CardProp
   return (
     <motion.div
       style={{ ...baseStyle, ...(aspect === 'item' ? itemStyle : null), ...style }}
-      whileHover={canHover ? { y: layout.hover.liftPx, boxShadow: boxShadows.e3 } : undefined}
+      whileHover={canHover ? { y: layout.hover.liftPx, boxShadow: 'var(--shadow-e3)' } : undefined}
       transition={transitionFor(motionToken.springs.gentle, reduced)}
       onClick={onClick}
     >
