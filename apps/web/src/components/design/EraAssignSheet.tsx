@@ -89,7 +89,9 @@ export function EraAssignSheet({ eras, busy, onAssignExisting, onCreateAndAssign
               disabled={busy}
               onClick={() => onAssignExisting(era.id)}
             >
-              <span>{era.title}</span>
+              {/* An era name, but this is a control (list-row button) — serif is
+                  barred inside controls, so it reads in Geist (ui), not oviAccent. */}
+              <Text variant="ui" as="span" style={{ color: 'var(--color-text)' }}>{era.title}</Text>
               <Text variant="caption" size="footnote" as="span" aria-hidden="true" style={{ color: 'var(--color-secondary-strong)' }}>
                 {era.outfitCount}
               </Text>

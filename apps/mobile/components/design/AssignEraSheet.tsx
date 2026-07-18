@@ -65,7 +65,7 @@ export function AssignEraSheet({
             onPress={() => onAssign(era.id)}
             style={[styles.row, { borderColor: colors.hairline, borderRadius: radii.input }]}
           >
-            <Text variant="body" color={colors.text}>
+            <Text variant="oviAccent" color={colors.text}>
               {era.title}
             </Text>
             <Text variant="caption" size="footnote" color={colors.secondaryStrong}>

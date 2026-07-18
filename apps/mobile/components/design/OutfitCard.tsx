@@ -38,7 +38,7 @@ export function OutfitCard({ outfit, onPress }: OutfitCardProps) {
         <Collage cover={outfit.coverUrl} images={outfit.thumbnailUrls} />
       </View>
       {outfit.name ? (
-        <Text numberOfLines={1} variant="ui" size="subhead" weight={600} color={colors.text}>
+        <Text numberOfLines={1} variant="oviAccent" size="subhead" color={colors.text}>
           {outfit.name}
         </Text>
       ) : null}

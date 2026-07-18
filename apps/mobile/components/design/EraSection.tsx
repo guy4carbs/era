@@ -56,13 +56,7 @@ export function EraSection({ eras, busy, onCreate }: EraSectionProps) {
                 <View style={[styles.cover, { borderRadius: radii.card }]}>
                   <Collage cover={era.coverUrl} images={era.outfitCovers} />
                 </View>
-                <Text
-                  numberOfLines={1}
-                  variant="ui"
-                  size="subhead"
-                  weight={600}
-                  color={colors.text}
-                >
+                <Text numberOfLines={1} variant="oviAccent" size="subhead" color={colors.text}>
                   {era.title}
                 </Text>
                 <View style={styles.metaRow}>

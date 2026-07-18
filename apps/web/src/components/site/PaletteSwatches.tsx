@@ -1,5 +1,5 @@
 import { type CSSProperties } from 'react';
-import { typeRamp } from '@era/tokens';
+import { Text } from '../Text';
 
 export interface PaletteSwatchesProps {
   /** Hex colors to show, in order — read from `ARCHETYPES` (never duplicated in content). */
@@ -37,9 +37,13 @@ export function PaletteSwatches({ hexes, showLabels = false, size = 44, label }:
             }}
           />
           {showLabels ? (
-            <span aria-hidden="true" style={hexLabelStyle}>
+            <Text
+              variant="caption"
+              aria-hidden="true"
+              style={{ color: 'var(--color-secondary)' }}
+            >
               {hex.toUpperCase()}
-            </span>
+            </Text>
           ) : null}
         </div>
       ))}
@@ -64,12 +68,4 @@ const swatchStyle: CSSProperties = {
   display: 'block',
   borderRadius: 'var(--radius-chip)',
   border: '1px solid var(--color-hairline)',
-};
-
-const hexLabelStyle: CSSProperties = {
-  fontSize: typeRamp.caption.rem,
-  lineHeight: `${typeRamp.caption.lineHeight}px`,
-  // eslint-disable-next-line no-restricted-syntax -- monospace hex-code labels, not brand type
-  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-  color: 'var(--color-secondary)',
 };
