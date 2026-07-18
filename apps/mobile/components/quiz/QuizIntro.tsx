@@ -5,12 +5,13 @@
  * the one primary action to begin. The skip affordance lives in the flow's
  * header, so the intro keeps a single, unpushy call to action.
  */
-import { spacing, typeRamp } from '@era/tokens';
-import { StyleSheet, Text, View } from 'react-native';
+import { spacing } from '@era/tokens';
+import { StyleSheet, View } from 'react-native';
 
 import { strings } from '@era/core/strings';
 
 import { Button } from '@/components/Button';
+import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
 interface QuizIntroProps {
@@ -23,21 +24,10 @@ export function QuizIntro({ onBegin }: QuizIntroProps) {
   return (
     <View style={styles.container}>
       <View style={styles.copy}>
-        <Text
-          accessibilityRole="header"
-          style={[
-            styles.title,
-            { color: colors.text, fontSize: typeRamp.title1.pt, lineHeight: typeRamp.title1.lineHeight },
-          ]}
-        >
+        <Text accessibilityRole="header" variant="ui" size="title1" weight={700} color={colors.text}>
           {strings.quiz.introTitle}
         </Text>
-        <Text
-          style={[
-            styles.body,
-            { color: colors.secondaryStrong, fontSize: typeRamp.body.pt, lineHeight: typeRamp.body.lineHeight },
-          ]}
-        >
+        <Text variant="body" color={colors.secondaryStrong}>
           {strings.quiz.introBody}
         </Text>
       </View>
@@ -55,11 +45,5 @@ const styles = StyleSheet.create({
   },
   copy: {
     gap: spacing.s4,
-  },
-  title: {
-    fontWeight: '700',
-  },
-  body: {
-    fontWeight: '400',
   },
 });

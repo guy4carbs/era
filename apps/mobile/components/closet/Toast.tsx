@@ -5,15 +5,16 @@
  * owns the message state and clears it via `onHide`). Reduced motion collapses
  * the fade to an instant show/hide. Used for the "archived" confirmation.
  */
-import { motion, radii, spacing, typeRamp } from '@era/tokens';
+import { motion, radii, spacing } from '@era/tokens';
 import { useEffect } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
 
+import { Text } from '@/components/Text';
 import { useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
 
@@ -57,14 +58,7 @@ export function Toast({ message, onHide, bottom }: ToastProps) {
         { bottom, backgroundColor: colors.text, borderColor: colors.hairline },
       ]}
     >
-      <Text
-        style={{
-          color: colors.bg,
-          fontSize: typeRamp.subhead.pt,
-          lineHeight: typeRamp.subhead.lineHeight,
-          textAlign: 'center',
-        }}
-      >
+      <Text variant="caption" size="subhead" color={colors.bg} style={{ textAlign: 'center' }}>
         {message}
       </Text>
     </Animated.View>

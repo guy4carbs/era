@@ -12,12 +12,13 @@
  * dropped by the effect's own re-run — the fetch is keyed on `postId`.
  */
 import { strings } from '@era/core/strings';
-import { radii, spacing, typeRamp } from '@era/tokens';
+import { radii, spacing } from '@era/tokens';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 
+import { Text } from '@/components/Text';
 import { Button } from '@/components/Button';
 import { GlassSheet } from '@/components/GlassSheet';
 import { useTheme } from '@/lib/theme';
@@ -75,15 +76,7 @@ export function ShopSimilarSheet({ postId, onClose }: ShopSimilarSheetProps) {
 
   return (
     <GlassSheet open={postId !== null} onClose={onClose}>
-      <Text
-        accessibilityRole="header"
-        style={{
-          color: colors.text,
-          fontSize: typeRamp.title3.pt,
-          lineHeight: typeRamp.title3.lineHeight,
-          fontWeight: '600',
-        }}
-      >
+      <Text variant="ui" size="title3" weight={600} color={colors.text} accessibilityRole="header">
         {strings.feed.shopSimilarTitle}
       </Text>
 
@@ -93,14 +86,7 @@ export function ShopSimilarSheet({ postId, onClose }: ShopSimilarSheetProps) {
         </View>
       ) : load.kind === 'error' ? (
         <View style={styles.empty}>
-          <Text
-            style={{
-              color: colors.secondaryStrong,
-              fontSize: typeRamp.body.pt,
-              lineHeight: typeRamp.body.lineHeight,
-              textAlign: 'center',
-            }}
-          >
+          <Text variant="body" color={colors.secondaryStrong} style={{ textAlign: 'center' }}>
             {strings.errors.generic}
           </Text>
           <Button
@@ -111,14 +97,7 @@ export function ShopSimilarSheet({ postId, onClose }: ShopSimilarSheetProps) {
         </View>
       ) : empty ? (
         <View style={styles.empty}>
-          <Text
-            style={{
-              color: colors.secondaryStrong,
-              fontSize: typeRamp.body.pt,
-              lineHeight: typeRamp.body.lineHeight,
-              textAlign: 'center',
-            }}
-          >
+          <Text variant="body" color={colors.secondaryStrong} style={{ textAlign: 'center' }}>
             {strings.feed.shopSimilarEmpty}
           </Text>
           <Button label={strings.feed.shopSimilarGapCta} variant="secondary" onPress={goToShop} />
@@ -147,14 +126,7 @@ export function ShopSimilarSheet({ postId, onClose }: ShopSimilarSheetProps) {
                   />
                 ) : null}
               </View>
-              <Text
-                numberOfLines={1}
-                style={{
-                  color: colors.text,
-                  fontSize: typeRamp.footnote.pt,
-                  lineHeight: typeRamp.footnote.lineHeight,
-                }}
-              >
+              <Text variant="caption" size="footnote" color={colors.text} numberOfLines={1}>
                 {match.name}
               </Text>
             </View>

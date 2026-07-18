@@ -1,8 +1,8 @@
 import type { CSSProperties, ReactNode } from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Fraunces } from 'next/font/google';
 import { typeRamp } from '@era/tokens';
+import { Text } from '../../components/Text';
 import { strings } from '@era/core/strings';
 import { Pageview } from '../../components/site';
 import { siteUrl } from '../../lib/site-url';
@@ -11,19 +11,10 @@ import { FOOTER_LINKS } from '../../lib/seo-graph';
 /**
  * Public marketing chrome for the `(site)` route group — the pre-launch landing
  * and waitlist. No TabBar, no auth shell: this layer only carries brand
- * metadata, the editorial display font, and a dormant pageview beacon. The
- * shared `<html>`/`<body>` and ThemeProvider come from the root layout.
- *
- * Editorial serif (Fraunces) is loaded via `next/font` and exposed as the
- * `--font-era-serif` CSS variable that the hero and section titles read; body
- * copy stays on the system stack from `globals.css`. The token comment in
- * `@era/tokens` typography sanctions a serif for editorial "era" titles.
+ * metadata and a dormant pageview beacon. The shared `<html>`/`<body>`,
+ * ThemeProvider, and the Fraunces/Geist type system (`--font-era-serif` /
+ * `--font-era-sans`) all come from the root layout — this group inherits them.
  */
-const serif = Fraunces({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-era-serif',
-});
 
 export const metadata: Metadata = {
   // Absolute base for Open Graph / Twitter asset URLs and per-page canonicals.
@@ -100,7 +91,9 @@ function SiteFooter() {
         ))}
       </nav>
       <div style={footerBottomStyle}>
-        <span style={footerBrandStyle}>© Era</span>
+        <Text variant="caption" style={footerBrandStyle}>
+          © Era
+        </Text>
         <nav style={footerNavStyle} aria-label="Legal">
           <Link href="/privacy" style={footerLinkStyle}>
             Privacy
@@ -155,7 +148,7 @@ const footerLinkStyle: CSSProperties = {
 
 export default function SiteLayout({ children }: { children: ReactNode }) {
   return (
-    <div className={serif.variable}>
+    <div>
       <Pageview />
       {children}
       <SiteFooter />

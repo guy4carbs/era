@@ -15,9 +15,10 @@
  */
 import type { ProductWhy } from '@era/core/shop';
 import { strings } from '@era/core/strings';
-import { radii, spacing, typeRamp } from '@era/tokens';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { radii, spacing } from '@era/tokens';
+import { Pressable, StyleSheet, View } from 'react-native';
 
+import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
 import { resolveWhy } from './labels';
@@ -46,18 +47,15 @@ export function WhyLabel({ why, onPress }: WhyLabelProps) {
       borderRadius: radii.chip,
     },
   ];
-  const labelStyle = {
-    color: colors.text,
-    fontSize: typeRamp.footnote.pt,
-    lineHeight: typeRamp.footnote.lineHeight,
-    fontWeight: caution ? ('600' as const) : ('400' as const),
-  };
+  const labelWeight = caution ? 600 : 400;
 
   // Static label when there's no detail to expand into.
   if (!onPress) {
     return (
       <View accessibilityRole="text" style={pillStyle}>
-        <Text style={labelStyle}>{text}</Text>
+        <Text variant="ui" size="footnote" weight={labelWeight} color={colors.text}>
+          {text}
+        </Text>
       </View>
     );
   }
@@ -71,7 +69,9 @@ export function WhyLabel({ why, onPress }: WhyLabelProps) {
       onPress={onPress}
       style={pillStyle}
     >
-      <Text style={labelStyle}>{text}</Text>
+      <Text variant="ui" size="footnote" weight={labelWeight} color={colors.text}>
+        {text}
+      </Text>
     </Pressable>
   );
 }

@@ -7,9 +7,10 @@
  * no undo — a quiet dead-end the viewer swipes past.
  */
 import { strings } from '@era/core/strings';
-import { spacing, typeRamp } from '@era/tokens';
-import { StyleSheet, Text, View } from 'react-native';
+import { spacing } from '@era/tokens';
+import { StyleSheet, View } from 'react-native';
 
+import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
 interface PostHiddenCardProps {
@@ -24,24 +25,10 @@ export function PostHiddenCard({ height }: PostHiddenCardProps) {
       accessibilityLabel={strings.feed.hiddenPost}
       style={[styles.card, { height, backgroundColor: colors.bg }]}
     >
-      <Text
-        style={{
-          color: colors.text,
-          fontSize: typeRamp.title3.pt,
-          lineHeight: typeRamp.title3.lineHeight,
-          fontWeight: '600',
-        }}
-      >
+      <Text variant="ui" size="title3" weight={600} color={colors.text}>
         {strings.feed.hiddenPost}
       </Text>
-      <Text
-        style={{
-          color: colors.secondaryStrong,
-          fontSize: typeRamp.subhead.pt,
-          lineHeight: typeRamp.subhead.lineHeight,
-          textAlign: 'center',
-        }}
-      >
+      <Text variant="body" size="subhead" color={colors.secondaryStrong} style={{ textAlign: 'center' }}>
         {strings.feed.reportConfirm}
       </Text>
     </View>

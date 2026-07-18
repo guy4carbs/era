@@ -7,11 +7,12 @@
  * controlled presenter. Rendered as the SectionList header.
  */
 import { strings } from '@era/core/strings';
-import { spacing, typeRamp } from '@era/tokens';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { spacing } from '@era/tokens';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Chip } from '@/components/Chip';
 import { Input } from '@/components/Input';
+import { Text } from '@/components/Text';
 import type { ItemCategory } from '@/components/items/constants';
 import { useTheme } from '@/lib/theme';
 
@@ -47,15 +48,7 @@ export function ClosetHeader({
   return (
     <View style={styles.container}>
       <View style={styles.titleRow}>
-        <Text
-          accessibilityRole="header"
-          style={{
-            color: colors.text,
-            fontSize: typeRamp.largeTitle.pt,
-            lineHeight: typeRamp.largeTitle.lineHeight,
-            fontWeight: '700',
-          }}
-        >
+        <Text accessibilityRole="header" variant="largeTitle" color={colors.text}>
           Closet
         </Text>
         <View style={styles.actions}>

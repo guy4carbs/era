@@ -12,10 +12,12 @@
  * placeholder an icon set will replace.
  */
 import { strings } from '@era/core/strings';
-import { spacing, typeRamp, palette, glass, radii } from '@era/tokens';
+import { spacing, palette, glass, radii } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { BlurView } from 'expo-blur';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+
+import { Text } from '@/components/Text';
 
 import type { FeedPostPayload } from '@era/core/feed';
 
@@ -50,10 +52,12 @@ function RailButton({ glyph, label, caption, onPress }: RailButtonProps) {
       >
         <BlurView intensity={glass.blur} tint="dark" style={StyleSheet.absoluteFill} />
         <View style={styles.buttonTint} />
-        <Text style={styles.glyph}>{glyph}</Text>
+        <Text variant="ui" size="title3" color={ON_IMAGE}>
+          {glyph}
+        </Text>
       </Pressable>
       {caption ? (
-        <Text style={styles.caption} accessible={false}>
+        <Text variant="caption" weight={600} color={ON_IMAGE} accessible={false}>
           {caption}
         </Text>
       ) : null}
@@ -115,16 +119,5 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: 'rgba(28, 27, 25, 0.28)',
-  },
-  glyph: {
-    color: ON_IMAGE,
-    fontSize: typeRamp.title3.pt,
-    lineHeight: typeRamp.title3.lineHeight,
-  },
-  caption: {
-    color: ON_IMAGE,
-    fontSize: typeRamp.caption.pt,
-    lineHeight: typeRamp.caption.lineHeight,
-    fontWeight: '600',
   },
 });

@@ -764,6 +764,7 @@ const addressCodeStyle: CSSProperties = {
   borderRadius: 'var(--radius-input)',
   border: '1px solid var(--color-hairline)',
   background: 'color-mix(in srgb, var(--color-hairline) 40%, transparent)',
+  // eslint-disable-next-line no-restricted-syntax -- monospace code/receipt field, not brand type
   fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
   fontSize: typeRamp.footnote.rem,
   lineHeight: `${typeRamp.footnote.lineHeight}px`,

@@ -6,3 +6,4 @@ export { GlassSheet } from './GlassSheet';
 export { Input } from './Input';
 export { OviFab } from './OviFab';
 export { TabBar, type TabKey } from './TabBar';
+export { Text, TextControlBoundary } from './Text';

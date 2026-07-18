@@ -1,5 +1,6 @@
 import { type CSSProperties } from 'react';
 import { typeRamp, boxShadows, glass } from '@era/tokens';
+import { Text } from '../Text';
 import { ScrollReveal } from './ScrollReveal';
 
 export interface FeatureSectionProps {
@@ -30,30 +31,25 @@ const panelStyle: CSSProperties = {
   gap: 'var(--space-4)',
 };
 
+// Editorial ordinal — tracked metadata at subhead size. Sans (caption): a serif
+// here would sit below the 20px serif floor.
 const indexStyle: CSSProperties = {
   margin: 0,
-  fontFamily: 'var(--font-era-serif), Georgia, serif',
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
   letterSpacing: '0.14em',
   color: 'var(--color-secondary-strong)',
 };
 
+// Fluid head spanning title2→largeTitle; `largeTitle` supplies the serif face.
 const titleStyle: CSSProperties = {
   margin: 0,
-  fontFamily: 'var(--font-era-serif), Georgia, serif',
-  fontWeight: 500,
   fontSize: `clamp(${typeRamp.title2.rem}, 4.5vw, ${typeRamp.largeTitle.rem})`,
   lineHeight: titleLineHeight,
-  letterSpacing: '-0.01em',
   color: 'var(--color-text)',
   maxWidth: '18ch',
 };
 
 const bodyStyle: CSSProperties = {
   margin: 0,
-  fontSize: typeRamp.title3.rem,
-  lineHeight: `${typeRamp.title3.lineHeight}px`,
   color: 'var(--color-secondary-strong)',
   maxWidth: '38ch',
 };
@@ -68,9 +64,15 @@ export function FeatureSection({ index, title, body }: FeatureSectionProps) {
   return (
     <ScrollReveal>
       <article style={panelStyle}>
-        <p style={indexStyle}>{ordinal}</p>
-        <h2 style={titleStyle}>{title}</h2>
-        <p style={bodyStyle}>{body}</p>
+        <Text variant="caption" as="p" size="subhead" style={indexStyle}>
+          {ordinal}
+        </Text>
+        <Text variant="largeTitle" as="h2" style={titleStyle}>
+          {title}
+        </Text>
+        <Text variant="body" as="p" size="title3" style={bodyStyle}>
+          {body}
+        </Text>
       </article>
     </ScrollReveal>
   );

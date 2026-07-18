@@ -14,10 +14,10 @@
  * cosmetic try-on flag is on and only for a signed-in user.
  */
 import { strings } from '@era/core/strings';
-import { spacing, typeRamp } from '@era/tokens';
+import { spacing } from '@era/tokens';
 import { Redirect, Stack, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AvatarPhotoStep, ConsentScreen } from '@/components/avatar';
@@ -29,6 +29,7 @@ import {
   uploadAvatarPhoto,
 } from '@/components/avatar/api';
 import { Button } from '@/components/Button';
+import { Text } from '@/components/Text';
 import { useSession } from '@/lib/auth-client';
 import { eraTryonEnabled } from '@/lib/tryon-flag';
 import { useTheme } from '@/lib/theme';
@@ -126,14 +127,7 @@ function Progress({ line }: { readonly line: string }) {
   return (
     <View style={styles.centeredBlock}>
       <ActivityIndicator color={colors.text} />
-      <Text
-        style={{
-          color: colors.secondaryStrong,
-          fontSize: typeRamp.body.pt,
-          lineHeight: typeRamp.body.lineHeight,
-          textAlign: 'center',
-        }}
-      >
+      <Text variant="body" color={colors.secondaryStrong} style={{ textAlign: 'center' }}>
         {line}
       </Text>
     </View>
@@ -156,13 +150,10 @@ function Done({ previewUrl, onDone }: { readonly previewUrl: string | null; read
         ) : (
           <Text
             accessibilityRole="header"
-            style={{
-              color: colors.text,
-              fontSize: typeRamp.title3.pt,
-              lineHeight: typeRamp.title3.lineHeight,
-              fontWeight: '600',
-              textAlign: 'center',
-            }}
+            variant="title"
+            size="title3"
+            color={colors.text}
+            style={{ textAlign: 'center' }}
           >
             {strings.tryon.consent.heading}
           </Text>
@@ -181,14 +172,7 @@ function Failed({ onRetry, onClose }: { readonly onRetry: () => void; readonly o
   return (
     <View style={styles.doneScreen}>
       <View style={styles.centeredBlock}>
-        <Text
-          style={{
-            color: colors.text,
-            fontSize: typeRamp.body.pt,
-            lineHeight: typeRamp.body.lineHeight,
-            textAlign: 'center',
-          }}
-        >
+        <Text variant="body" color={colors.text} style={{ textAlign: 'center' }}>
           {strings.tryon.failed}
         </Text>
       </View>
@@ -206,14 +190,7 @@ function Message({ line, onClose }: { readonly line: string; readonly onClose: (
   return (
     <View style={styles.doneScreen}>
       <View style={styles.centeredBlock}>
-        <Text
-          style={{
-            color: colors.secondaryStrong,
-            fontSize: typeRamp.body.pt,
-            lineHeight: typeRamp.body.lineHeight,
-            textAlign: 'center',
-          }}
-        >
+        <Text variant="body" color={colors.secondaryStrong} style={{ textAlign: 'center' }}>
           {line}
         </Text>
       </View>

@@ -7,9 +7,10 @@
  * delete-account action. Meets the iOS touch target and follows the app's
  * label-only glyph convention (no icon font is bundled).
  */
-import { layout, spacing, typeRamp } from '@era/tokens';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { layout, spacing } from '@era/tokens';
+import { Pressable, StyleSheet } from 'react-native';
 
+import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
 interface SettingRowProps {
@@ -40,23 +41,15 @@ export function SettingRow({
       onPress={onPress}
       style={styles.row}
     >
-      <Text
-        style={{
-          color: labelColor,
-          fontSize: typeRamp.body.pt,
-          lineHeight: typeRamp.body.lineHeight,
-          fontWeight: '500',
-        }}
-      >
+      <Text variant="ui" size="body" weight={500} color={labelColor}>
         {label}
       </Text>
       <Text
+        variant="ui"
+        size="body"
+        weight={400}
         aria-hidden
-        style={{
-          color: destructive ? colors.danger : colors.secondary,
-          fontSize: typeRamp.body.pt,
-          lineHeight: typeRamp.body.lineHeight,
-        }}
+        color={destructive ? colors.danger : colors.secondary}
       >
         {trailing}
       </Text>

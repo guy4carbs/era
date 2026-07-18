@@ -17,14 +17,15 @@
  * UX; the durable grant lives in the server subscriptions cache.
  */
 import { strings } from '@era/core/strings';
-import { spacing, typeRamp } from '@era/tokens';
+import { spacing } from '@era/tokens';
 import { Redirect, Stack, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
 import { PlanCard } from '@/components/plus';
+import { Text } from '@/components/Text';
 import { useSession } from '@/lib/auth-client';
 import {
   eraPlusEnabled,
@@ -183,36 +184,16 @@ export default function PaywallRoute() {
           </View>
         ) : phase === 'dormant' ? (
           <View style={styles.messageBlock}>
-            <Text
-              accessibilityRole="header"
-              style={{
-                color: colors.text,
-                fontSize: typeRamp.title2.pt,
-                lineHeight: typeRamp.title2.lineHeight,
-                fontWeight: '700',
-              }}
-            >
+            <Text accessibilityRole="header" variant="title" color={colors.text}>
               {strings.plus.paywallTitle}
             </Text>
-            <Text
-              style={{
-                color: colors.secondaryStrong,
-                fontSize: typeRamp.body.pt,
-                lineHeight: typeRamp.body.lineHeight,
-              }}
-            >
+            <Text variant="body" color={colors.secondaryStrong}>
               {strings.plus.unavailable}
             </Text>
           </View>
         ) : phase === 'error' ? (
           <View style={styles.messageBlock}>
-            <Text
-              style={{
-                color: colors.secondaryStrong,
-                fontSize: typeRamp.body.pt,
-                lineHeight: typeRamp.body.lineHeight,
-              }}
-            >
+            <Text variant="body" color={colors.secondaryStrong}>
               {strings.errors.generic}
             </Text>
             <Button label={strings.errors.retry} variant="secondary" onPress={() => void load()} />
@@ -222,22 +203,13 @@ export default function PaywallRoute() {
             <View style={styles.intro}>
               <Text
                 accessibilityRole="header"
-                style={{
-                  color: colors.text,
-                  fontSize: typeRamp.title1.pt,
-                  lineHeight: typeRamp.title1.lineHeight,
-                  fontWeight: '700',
-                }}
+                variant="largeTitle"
+                size="title1"
+                color={colors.text}
               >
                 {strings.plus.paywallTitle}
               </Text>
-              <Text
-                style={{
-                  color: colors.secondaryStrong,
-                  fontSize: typeRamp.body.pt,
-                  lineHeight: typeRamp.body.lineHeight,
-                }}
-              >
+              <Text variant="body" color={colors.secondaryStrong}>
                 {strings.plus.paywallSubtitle}
               </Text>
             </View>
@@ -263,13 +235,7 @@ export default function PaywallRoute() {
             </View>
 
             {/* Honest annual savings — no fake urgency, no countdown. */}
-            <Text
-              style={{
-                color: colors.secondary,
-                fontSize: typeRamp.footnote.pt,
-                lineHeight: typeRamp.footnote.lineHeight,
-              }}
-            >
+            <Text variant="caption" size="footnote" color={colors.secondary}>
               {strings.plus.honestAnnualNote}
             </Text>
 
@@ -286,11 +252,9 @@ export default function PaywallRoute() {
             {notice ? (
               <Text
                 accessibilityLiveRegion="polite"
-                style={{
-                  color: colors.secondaryStrong,
-                  fontSize: typeRamp.footnote.pt,
-                  lineHeight: typeRamp.footnote.lineHeight,
-                }}
+                variant="caption"
+                size="footnote"
+                color={colors.secondaryStrong}
               >
                 {notice}
               </Text>
@@ -303,14 +267,7 @@ export default function PaywallRoute() {
               onPress={() => void handleRestore()}
             />
 
-            <Text
-              style={{
-                color: colors.secondary,
-                fontSize: typeRamp.caption.pt,
-                lineHeight: typeRamp.caption.lineHeight,
-                textAlign: 'center',
-              }}
-            >
+            <Text variant="caption" color={colors.secondary} style={{ textAlign: 'center' }}>
               {strings.plus.cancelAnytime}
             </Text>
           </View>
@@ -331,12 +288,9 @@ function ManagementState({ onManage }: { readonly onManage: () => void }) {
       <View style={styles.intro}>
         <Text
           accessibilityRole="header"
-          style={{
-            color: colors.text,
-            fontSize: typeRamp.title1.pt,
-            lineHeight: typeRamp.title1.lineHeight,
-            fontWeight: '700',
-          }}
+          variant="largeTitle"
+          size="title1"
+          color={colors.text}
         >
           {strings.plus.alreadyPlus}
         </Text>
@@ -344,14 +298,7 @@ function ManagementState({ onManage }: { readonly onManage: () => void }) {
 
       <Button label={strings.plus.managePlan} variant="secondary" onPress={onManage} />
 
-      <Text
-        style={{
-          color: colors.secondary,
-          fontSize: typeRamp.caption.pt,
-          lineHeight: typeRamp.caption.lineHeight,
-          textAlign: 'center',
-        }}
-      >
+      <Text variant="caption" color={colors.secondary} style={{ textAlign: 'center' }}>
         {strings.plus.cancelAnytime}
       </Text>
     </View>

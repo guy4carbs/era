@@ -2,8 +2,7 @@
 
 import { useEffect, useState, type CSSProperties } from 'react';
 import { strings } from '@era/core/strings';
-import { typeRamp } from '@era/tokens';
-import { Button, Input } from '../index';
+import { Button, Input, Text } from '../index';
 import { track } from '../../lib/analytics';
 
 export interface PostSignupReferralProps {
@@ -27,16 +26,11 @@ const wrapStyle: CSSProperties = {
 
 const confirmStyle: CSSProperties = {
   margin: 0,
-  fontFamily: 'var(--font-era-serif), Georgia, serif',
-  fontSize: typeRamp.title2.rem,
-  lineHeight: `${typeRamp.title2.lineHeight}px`,
   color: 'var(--color-text)',
 };
 
 const lineStyle: CSSProperties = {
   margin: 0,
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
   color: 'var(--color-secondary-strong)',
 };
 
@@ -75,8 +69,12 @@ export function PostSignupReferral({ referralCode, alreadyJoined }: PostSignupRe
 
   return (
     <div style={wrapStyle}>
-      <p style={confirmStyle}>{alreadyJoined ? ALREADY_JOINED_NOTE : strings.site.form.success}</p>
-      <p style={lineStyle}>{strings.site.referral.line}</p>
+      <Text variant="title" as="p" size="title2" style={confirmStyle}>
+        {alreadyJoined ? ALREADY_JOINED_NOTE : strings.site.form.success}
+      </Text>
+      <Text variant="body" as="p" style={lineStyle}>
+        {strings.site.referral.line}
+      </Text>
       <div style={rowStyle}>
         <Input
           readOnly

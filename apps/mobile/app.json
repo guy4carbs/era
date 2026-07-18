@@ -40,7 +40,21 @@
         }
       ],
       "expo-image",
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/Geist-Regular.ttf",
+            "./assets/fonts/Geist-Medium.ttf",
+            "./assets/fonts/Geist-SemiBold.ttf",
+            "./assets/fonts/Fraunces-LargeTitle.ttf",
+            "./assets/fonts/Fraunces-Title.ttf",
+            "./assets/fonts/Fraunces-OviAccent.ttf"
+          ]
+        }
+      ],
+      "expo-splash-screen"
     ],
     "experiments": {
       "typedRoutes": true

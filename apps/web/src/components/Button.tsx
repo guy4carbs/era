@@ -12,6 +12,7 @@ import {
 } from '@era/tokens';
 import { transitionFor } from '../lib/motion';
 import { useTheme } from '../lib/theme';
+import { Text, TextControlBoundary } from './Text';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost';
 
@@ -105,7 +106,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       {...rest}
     >
       {variant === 'primary' ? <span style={sheenOverlay} aria-hidden="true" /> : null}
-      <span style={labelStyle}>{children}</span>
+      <TextControlBoundary>
+        <Text variant="ui" as="span" style={labelStyle}>
+          {children}
+        </Text>
+      </TextControlBoundary>
     </motion.button>
   );
 });

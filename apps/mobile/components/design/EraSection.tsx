@@ -6,12 +6,13 @@
  * its member outfits' covers) drives the collage. Copy is strings.design.*.
  */
 import { strings } from '@era/core/strings';
-import { radii, spacing, typeRamp } from '@era/tokens';
+import { radii, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { Text } from '@/components/Text';
 import { Input } from '@/components/Input';
 import { useCollageExport } from '@/components/share';
 import { useTheme } from '@/lib/theme';
@@ -34,12 +35,10 @@ export function EraSection({ eras, busy, onCreate }: EraSectionProps) {
     <View style={styles.section}>
       <Text
         accessibilityRole="header"
-        style={{
-          color: colors.text,
-          fontSize: typeRamp.title3.pt,
-          lineHeight: typeRamp.title3.lineHeight,
-          fontWeight: '600',
-        }}
+        variant="ui"
+        size="title3"
+        weight={600}
+        color={colors.text}
       >
         {strings.design.eraSectionTitle}
       </Text>
@@ -59,23 +58,15 @@ export function EraSection({ eras, busy, onCreate }: EraSectionProps) {
                 </View>
                 <Text
                   numberOfLines={1}
-                  style={{
-                    color: colors.text,
-                    fontSize: typeRamp.subhead.pt,
-                    lineHeight: typeRamp.subhead.lineHeight,
-                    fontWeight: '600',
-                  }}
+                  variant="ui"
+                  size="subhead"
+                  weight={600}
+                  color={colors.text}
                 >
                   {era.title}
                 </Text>
                 <View style={styles.metaRow}>
-                  <Text
-                    style={{
-                      color: colors.secondaryStrong,
-                      fontSize: typeRamp.footnote.pt,
-                      lineHeight: typeRamp.footnote.lineHeight,
-                    }}
-                  >
+                  <Text variant="caption" size="footnote" color={colors.secondaryStrong}>
                     {strings.design.outfitItemCount(era.outfitCount)}
                   </Text>
                   {canShare ? (
@@ -96,13 +87,11 @@ export function EraSection({ eras, busy, onCreate }: EraSectionProps) {
                       }}
                     >
                       <Text
-                        style={{
-                          color: colors.accent,
-                          opacity: shareBusy ? 0.5 : 1,
-                          fontSize: typeRamp.footnote.pt,
-                          lineHeight: typeRamp.footnote.lineHeight,
-                          fontWeight: '600',
-                        }}
+                        variant="ui"
+                        size="footnote"
+                        weight={600}
+                        color={colors.accent}
+                        style={{ opacity: shareBusy ? 0.5 : 1 }}
                       >
                         {shareBusy ? strings.share.preparing : strings.share.shareEra}
                       </Text>

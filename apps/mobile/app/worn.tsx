@@ -12,13 +12,14 @@
  */
 import { buildMonthlyRecap, groupWearsByDay, type RecapItemLike } from '@era/core/wear-stats';
 import { strings } from '@era/core/strings';
-import { spacing, typeRamp } from '@era/tokens';
+import { spacing } from '@era/tokens';
 import { Redirect, Stack } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
+import { Text } from '@/components/Text';
 import { useSession } from '@/lib/auth-client';
 import { useTheme } from '@/lib/theme';
 import {
@@ -103,15 +104,7 @@ export default function WornScreen() {
             label={monthLabel(shiftMonth(month, -1))}
             onPress={() => setMonth((current) => shiftMonth(current, -1))}
           />
-          <Text
-            accessibilityRole="header"
-            style={{
-              color: colors.text,
-              fontSize: typeRamp.title2.pt,
-              lineHeight: typeRamp.title2.lineHeight,
-              fontWeight: '600',
-            }}
-          >
+          <Text accessibilityRole="header" variant="title" color={colors.text}>
             {monthLabel(month)}
           </Text>
           <MonthChevron
@@ -128,14 +121,7 @@ export default function WornScreen() {
           </View>
         ) : state === 'error' ? (
           <View style={styles.centeredBlock}>
-            <Text
-              style={{
-                color: colors.secondaryStrong,
-                fontSize: typeRamp.body.pt,
-                lineHeight: typeRamp.body.lineHeight,
-                textAlign: 'center',
-              }}
-            >
+            <Text variant="body" color={colors.secondaryStrong} style={{ textAlign: 'center' }}>
               {strings.errors.generic}
             </Text>
             <Button
@@ -183,7 +169,7 @@ function MonthChevron({
       onPress={onPress}
       style={styles.chevron}
     >
-      <Text style={{ color: disabled ? colors.secondary : colors.text, fontSize: typeRamp.title1.pt }}>
+      <Text variant="ui" size="title1" color={disabled ? colors.secondary : colors.text}>
         {glyph}
       </Text>
     </Pressable>

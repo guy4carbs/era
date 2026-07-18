@@ -2,10 +2,11 @@ import { spacing, typeRamp } from '@era/tokens';
 import * as Linking from 'expo-linking';
 import { Link } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
+import { Text } from '@/components/Text';
 import { Input } from '@/components/Input';
 import { eraAuth } from '@/lib/auth-client';
 import { useTheme } from '@/lib/theme';
@@ -57,23 +58,10 @@ export default function SignInScreen() {
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]}>
       <View style={styles.header}>
-        <Text
-          style={{
-            color: colors.text,
-            fontSize: typeRamp.largeTitle.pt,
-            lineHeight: typeRamp.largeTitle.lineHeight,
-            fontWeight: '700',
-          }}
-        >
+        <Text variant="largeTitle" color={colors.text}>
           Era
         </Text>
-        <Text
-          style={{
-            color: colors.secondary,
-            fontSize: typeRamp.body.pt,
-            lineHeight: typeRamp.body.lineHeight,
-          }}
-        >
+        <Text variant="body" color={colors.secondary}>
           Your wardrobe, styled.
         </Text>
       </View>
@@ -103,13 +91,7 @@ export default function SignInScreen() {
         {sending ? <ActivityIndicator color={colors.accent} /> : null}
 
         {status.kind === 'sent' && (
-          <Text
-            style={{
-              color: colors.secondary,
-              fontSize: typeRamp.footnote.pt,
-              lineHeight: typeRamp.footnote.lineHeight,
-            }}
-          >
+          <Text variant="caption" size="footnote" color={colors.secondary}>
             Check your email for a sign-in link. In development the link is printed
             to the server console.
           </Text>
@@ -117,7 +99,7 @@ export default function SignInScreen() {
 
         <View style={styles.divider}>
           <View style={[styles.rule, { backgroundColor: colors.hairline }]} />
-          <Text style={{ color: colors.secondary, fontSize: typeRamp.footnote.pt }}>or</Text>
+          <Text variant="caption" size="footnote" color={colors.secondary}>or</Text>
           <View style={[styles.rule, { backgroundColor: colors.hairline }]} />
         </View>
 

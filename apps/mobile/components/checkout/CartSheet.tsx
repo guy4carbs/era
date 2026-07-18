@@ -19,7 +19,7 @@
  */
 import { groupCartByRetailer, sizeKindForCategory } from '@era/core/checkout';
 import { strings } from '@era/core/strings';
-import { layout, radii, spacing, typeRamp } from '@era/tokens';
+import { layout, radii, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -29,11 +29,11 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { Text } from '@/components/Text';
 import { GlassSheet } from '@/components/GlassSheet';
 import { prefillSizeForCategory, type UserSizes } from '@/lib/checkout-logic';
 import { useTheme } from '@/lib/theme';
@@ -276,7 +276,13 @@ export function CartSheet({ open, onClose, onCartCountChange }: CartSheetProps) 
   return (
     <GlassSheet open={open} onClose={busy ? () => {} : onClose}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-        <Text accessibilityRole="header" style={title(colors.text)}>
+        <Text
+          variant="ui"
+          size="title3"
+          weight={600}
+          color={colors.text}
+          accessibilityRole="header"
+        >
           {stage === 'review'
             ? copy.reviewTitle
             : stage === 'done'
@@ -285,9 +291,15 @@ export function CartSheet({ open, onClose, onCartCountChange }: CartSheetProps) 
         </Text>
 
         {/* The load-bearing honesty line — shown wherever the cart/confirm appears. */}
-        <Text style={disclosure(colors.secondary)}>{copy.separateShipments}</Text>
+        <Text variant="caption" size="footnote" color={colors.secondary}>
+          {copy.separateShipments}
+        </Text>
 
-        {notice ? <Text style={noticeLine(colors.secondaryStrong)}>{notice}</Text> : null}
+        {notice ? (
+          <Text variant="body" color={colors.secondaryStrong}>
+            {notice}
+          </Text>
+        ) : null}
 
         {loading ? (
           <ActivityIndicator color={colors.text} style={styles.block} />
@@ -366,7 +378,15 @@ function CartView({
   const empty = groups.length === 0 && handoff.length === 0;
 
   if (empty) {
-    return <Text style={emptyLine(colors.secondaryStrong)}>{copy.cartEmpty}</Text>;
+    return (
+      <Text
+        variant="body"
+        color={colors.secondaryStrong}
+        style={{ paddingVertical: spacing.s6 }}
+      >
+        {copy.cartEmpty}
+      </Text>
+    );
   }
 
   const canCheckout = groups.length > 0 && address !== null && !busy;
@@ -379,7 +399,13 @@ function CartView({
         );
         return (
           <View key={group.retailer} style={styles.group}>
-            <Text style={sectionHeading(colors.secondaryStrong)}>
+            <Text
+              variant="caption"
+              size="footnote"
+              weight={600}
+              color={colors.secondaryStrong}
+              style={{ textTransform: 'uppercase' }}
+            >
               {copy.retailerSection(group.retailer)}
             </Text>
             {groupItems.map((item) => (
@@ -393,7 +419,7 @@ function CartView({
                 onSelectSize={onSelectSize}
               />
             ))}
-            <Text style={subtotalLine(colors.text)}>
+            <Text variant="caption" size="footnote" color={colors.text}>
               {copy.retailerSubtotal(formatCents(group.subtotalCents, group.currency))}
             </Text>
           </View>
@@ -403,7 +429,13 @@ function CartView({
       {/* Handoff pieces — never in-flow; they tap out to the retailer's own site. */}
       {handoff.length > 0 ? (
         <View style={styles.group}>
-          <Text style={sectionHeading(colors.secondaryStrong)}>
+          <Text
+            variant="caption"
+            size="footnote"
+            weight={600}
+            color={colors.secondaryStrong}
+            style={{ textTransform: 'uppercase' }}
+          >
             {checkoutCopy.handoffSectionTitle}
           </Text>
           {handoff.map((item) => (
@@ -423,15 +455,27 @@ function CartView({
           />
         ) : address ? (
           <>
-            <Text style={sectionHeading(colors.secondaryStrong)}>{copy.shippingTo}</Text>
-            <Text style={addressLine(colors.text)}>{summarizeAddress(address)}</Text>
+            <Text
+              variant="caption"
+              size="footnote"
+              weight={600}
+              color={colors.secondaryStrong}
+              style={{ textTransform: 'uppercase' }}
+            >
+              {copy.shippingTo}
+            </Text>
+            <Text variant="body" color={colors.text}>
+              {summarizeAddress(address)}
+            </Text>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={checkoutCopy.editAddress}
               onPress={onOpenAddressForm}
               style={styles.linkRow}
             >
-              <Text style={linkLabel(colors.accent)}>{checkoutCopy.editAddress}</Text>
+              <Text variant="ui" size="footnote" weight={600} color={colors.accent}>
+                {checkoutCopy.editAddress}
+              </Text>
             </Pressable>
           </>
         ) : (
@@ -477,10 +521,10 @@ function CartLine({
           accessible={false}
         />
         <View style={styles.lineInfo}>
-          <Text numberOfLines={2} style={lineTitle(colors.text)}>
+          <Text variant="body" color={colors.text} numberOfLines={2}>
             {item.title}
           </Text>
-          <Text style={linePrice(colors.text)}>
+          <Text variant="ui" size="subhead" weight={600} color={colors.text}>
             {formatCents(item.priceSnapshotCents * Math.max(1, item.quantity), item.currency)}
           </Text>
           {sized ? (
@@ -490,10 +534,12 @@ function CartLine({
               onPress={onEditSize}
               style={styles.sizeChip}
             >
-              <Text style={sizeChipLabel(colors.text)}>
+              <Text variant="caption" size="footnote" color={colors.text}>
                 {currentSize ? `${copy.sizeLabel}: ${currentSize}` : copy.addSize}
               </Text>
-              <Text style={sizeChipLabel(colors.secondary)}>{`  ${checkoutCopy.changeSize}`}</Text>
+              <Text variant="caption" size="footnote" color={colors.secondary}>
+                {`  ${checkoutCopy.changeSize}`}
+              </Text>
             </Pressable>
           ) : null}
         </View>
@@ -504,7 +550,9 @@ function CartLine({
           onPress={onRemove}
           style={styles.removeBtn}
         >
-          <Text style={removeLabel(colors.secondaryStrong)}>{copy.removeItem}</Text>
+          <Text variant="ui" size="footnote" weight={600} color={colors.secondaryStrong}>
+            {copy.removeItem}
+          </Text>
         </Pressable>
       </View>
 
@@ -539,7 +587,7 @@ function HandoffLine({ item, onRemove }: { readonly item: CartItem; readonly onR
           accessible={false}
         />
         <View style={styles.lineInfo}>
-          <Text numberOfLines={2} style={lineTitle(colors.text)}>
+          <Text variant="body" color={colors.text} numberOfLines={2}>
             {item.title}
           </Text>
           <Pressable
@@ -548,7 +596,9 @@ function HandoffLine({ item, onRemove }: { readonly item: CartItem; readonly onR
             onPress={open}
             style={styles.linkRow}
           >
-            <Text style={linkLabel(colors.accent)}>{checkoutCopy.finishAt(item.retailer)}</Text>
+            <Text variant="ui" size="footnote" weight={600} color={colors.accent}>
+              {checkoutCopy.finishAt(item.retailer)}
+            </Text>
           </Pressable>
         </View>
         <Pressable
@@ -558,7 +608,9 @@ function HandoffLine({ item, onRemove }: { readonly item: CartItem; readonly onR
           onPress={onRemove}
           style={styles.removeBtn}
         >
-          <Text style={removeLabel(colors.secondaryStrong)}>{copy.removeItem}</Text>
+          <Text variant="ui" size="footnote" weight={600} color={colors.secondaryStrong}>
+            {copy.removeItem}
+          </Text>
         </Pressable>
       </View>
     </View>
@@ -576,7 +628,12 @@ function StartingView({ groups }: { readonly groups: ReturnType<typeof groupCart
     <View style={styles.block}>
       <ActivityIndicator color={colors.text} />
       {groups.map((group) => (
-        <Text key={group.retailer} style={progressLine(colors.secondaryStrong)}>
+        <Text
+          key={group.retailer}
+          variant="body"
+          color={colors.secondaryStrong}
+          style={{ textAlign: 'center' }}
+        >
           {copy.retrievingOffer(group.retailer)}
         </Text>
       ))}
@@ -603,7 +660,13 @@ function ReviewView({
     <View style={styles.block}>
       {batch.combined.perRetailer.map((line) => (
         <View key={line.retailer} style={styles.group}>
-          <Text style={sectionHeading(colors.secondaryStrong)}>
+          <Text
+            variant="caption"
+            size="footnote"
+            weight={600}
+            color={colors.secondaryStrong}
+            style={{ textTransform: 'uppercase' }}
+          >
             {copy.retailerSection(line.retailer)}
           </Text>
           <PriceRow label={copy.retailerSubtotal(formatCents(line.subtotalCents, batch.combined.currency))} />
@@ -617,13 +680,15 @@ function ReviewView({
         <HandoffOutcome key={order.orderId} order={order} />
       ))}
 
-      <Text style={grandTotalLine(colors.text)}>
+      <Text variant="ui" size="subhead" weight={700} color={colors.text}>
         {copy.grandTotal(formatCents(batch.combined.grandTotalCents, batch.combined.currency))}
       </Text>
 
       {/* Commission disclosure AT the transaction (Axiom/FTC), beside the amount
           being authorized — not only in the Shop feed two screens back. */}
-      <Text style={disclosure(colors.secondary)}>{copy.commissionDisclosure}</Text>
+      <Text variant="caption" size="footnote" color={colors.secondary}>
+        {copy.commissionDisclosure}
+      </Text>
 
       {confirmable ? (
         <Button label={copy.confirmPurchase} onPress={onConfirm} disabled={busy} haptic />
@@ -649,7 +714,12 @@ function ConfirmingView({
     <View style={styles.block}>
       <ActivityIndicator color={colors.text} />
       {retailers.map((retailer) => (
-        <Text key={retailer} style={progressLine(colors.secondaryStrong)}>
+        <Text
+          key={retailer}
+          variant="body"
+          color={colors.secondaryStrong}
+          style={{ textAlign: 'center' }}
+        >
           {copy.placingOrder(retailer)}
         </Text>
       ))}
@@ -670,7 +740,7 @@ function DoneView({
     <View style={styles.block}>
       {(batch?.orders ?? []).map((order) =>
         order.status === 'completed' ? (
-          <Text key={order.orderId} style={outcomeLine(colors.text)}>
+          <Text key={order.orderId} variant="body" color={colors.text}>
             {copy.orderPlaced(order.retailer)}
           </Text>
         ) : (
@@ -686,7 +756,7 @@ function DoneView({
 function HandoffOutcome({ order }: { readonly order: BatchOrder }) {
   const { colors } = useTheme();
   return (
-    <Text key={order.orderId} style={outcomeLine(colors.secondaryStrong)}>
+    <Text key={order.orderId} variant="body" color={colors.secondaryStrong}>
       {copy.orderFailed(order.retailer)}
     </Text>
   );
@@ -695,7 +765,11 @@ function HandoffOutcome({ order }: { readonly order: BatchOrder }) {
 /** A single price line inside a review breakdown. */
 function PriceRow({ label }: { readonly label: string }) {
   const { colors } = useTheme();
-  return <Text style={subtotalLine(colors.secondaryStrong)}>{label}</Text>;
+  return (
+    <Text variant="caption" size="footnote" color={colors.secondaryStrong}>
+      {label}
+    </Text>
+  );
 }
 
 // -----------------------------------------------------------------------------
@@ -763,60 +837,6 @@ function handleCheckoutError(
       // all calm, cart intact.
       handlers.onCalm(copy.checkoutError);
   }
-}
-
-// --- text styles -------------------------------------------------------------
-
-function title(color: string) {
-  return { color, fontSize: typeRamp.title3.pt, lineHeight: typeRamp.title3.lineHeight, fontWeight: '600' as const };
-}
-function disclosure(color: string) {
-  return { color, fontSize: typeRamp.footnote.pt, lineHeight: typeRamp.footnote.lineHeight };
-}
-function noticeLine(color: string) {
-  return { color, fontSize: typeRamp.body.pt, lineHeight: typeRamp.body.lineHeight };
-}
-function emptyLine(color: string) {
-  return { color, fontSize: typeRamp.body.pt, lineHeight: typeRamp.body.lineHeight, paddingVertical: spacing.s6 };
-}
-function sectionHeading(color: string) {
-  return {
-    color,
-    fontSize: typeRamp.footnote.pt,
-    lineHeight: typeRamp.footnote.lineHeight,
-    fontWeight: '600' as const,
-    textTransform: 'uppercase' as const,
-  };
-}
-function lineTitle(color: string) {
-  return { color, fontSize: typeRamp.body.pt, lineHeight: typeRamp.body.lineHeight };
-}
-function linePrice(color: string) {
-  return { color, fontSize: typeRamp.subhead.pt, lineHeight: typeRamp.subhead.lineHeight, fontWeight: '600' as const };
-}
-function subtotalLine(color: string) {
-  return { color, fontSize: typeRamp.footnote.pt, lineHeight: typeRamp.footnote.lineHeight };
-}
-function grandTotalLine(color: string) {
-  return { color, fontSize: typeRamp.subhead.pt, lineHeight: typeRamp.subhead.lineHeight, fontWeight: '700' as const };
-}
-function progressLine(color: string) {
-  return { color, fontSize: typeRamp.body.pt, lineHeight: typeRamp.body.lineHeight, textAlign: 'center' as const };
-}
-function outcomeLine(color: string) {
-  return { color, fontSize: typeRamp.body.pt, lineHeight: typeRamp.body.lineHeight };
-}
-function addressLine(color: string) {
-  return { color, fontSize: typeRamp.body.pt, lineHeight: typeRamp.body.lineHeight };
-}
-function sizeChipLabel(color: string) {
-  return { color, fontSize: typeRamp.footnote.pt, lineHeight: typeRamp.footnote.lineHeight };
-}
-function removeLabel(color: string) {
-  return { color, fontSize: typeRamp.footnote.pt, lineHeight: typeRamp.footnote.lineHeight, fontWeight: '600' as const };
-}
-function linkLabel(color: string) {
-  return { color, fontSize: typeRamp.footnote.pt, lineHeight: typeRamp.footnote.lineHeight, fontWeight: '600' as const };
 }
 
 const styles = StyleSheet.create({

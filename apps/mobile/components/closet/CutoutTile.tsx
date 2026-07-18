@@ -23,7 +23,7 @@
  * holds a static e3 with no glow.
  */
 import { strings } from '@era/core/strings';
-import { elevation, glow, layout, motion, radii, rnShadow, sheen, spacing, typeRamp } from '@era/tokens';
+import { elevation, glow, layout, motion, radii, rnShadow, sheen, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRef } from 'react';
@@ -31,7 +31,6 @@ import {
   PanResponder,
   Pressable,
   StyleSheet,
-  Text,
   View,
   type LayoutChangeEvent,
 } from 'react-native';
@@ -43,6 +42,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { Text } from '@/components/Text';
 import type { ItemWithDisplay } from '@/components/items';
 import { springFromToken, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
@@ -255,15 +255,11 @@ export function CutoutTile({ item, onPress }: CutoutTileProps) {
         ) : null}
       </View>
       <Text
+        variant="caption"
+        size="footnote"
         numberOfLines={1}
-        style={[
-          styles.caption,
-          {
-            color: colors.text,
-            fontSize: typeRamp.footnote.pt,
-            lineHeight: typeRamp.footnote.lineHeight,
-          },
-        ]}
+        color={colors.text}
+        style={styles.caption}
       >
         {item.name}
       </Text>

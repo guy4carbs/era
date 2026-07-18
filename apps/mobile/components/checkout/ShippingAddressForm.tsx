@@ -7,12 +7,13 @@
  * (phone, address2) never block. The parent owns the async (PUT + busy state); this
  * is a controlled, presentational form that just gathers a valid address.
  */
-import { spacing, typeRamp } from '@era/tokens';
+import { spacing } from '@era/tokens';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
+import { Text } from '@/components/Text';
 import { strings } from '@era/core/strings';
 import { useTheme } from '@/lib/theme';
 
@@ -92,7 +93,9 @@ export function ShippingAddressForm({ initial, busy, onSubmit, onCancel }: Shipp
     const meta = checkoutCopy.fields[key];
     return (
       <View style={styles.field}>
-        <Text style={label(colors.secondaryStrong)}>{meta.label}</Text>
+        <Text variant="ui" size="footnote" weight={600} color={colors.secondaryStrong}>
+          {meta.label}
+        </Text>
         <Input
           value={draft[key]}
           onChangeText={(text) => set(key, text)}
@@ -121,13 +124,17 @@ export function ShippingAddressForm({ initial, busy, onSubmit, onCancel }: Shipp
         <View style={styles.half}>{field('postalCode')}</View>
         <View style={styles.half}>
           {field('country', { autoCapitalize: 'characters', maxLength: 2 })}
-          <Text style={caption(colors.secondary)}>{checkoutCopy.countryHelp}</Text>
+          <Text variant="caption" size="footnote" color={colors.secondary}>
+            {checkoutCopy.countryHelp}
+          </Text>
         </View>
       </View>
       {field('phone', { keyboardType: 'phone-pad' })}
 
       {/* Point-of-capture privacy note — the address leaves Era to place orders. */}
-      <Text style={caption(colors.secondary)}>{checkoutCopy.shippingPrivacyNote}</Text>
+      <Text variant="caption" size="footnote" color={colors.secondary}>
+        {checkoutCopy.shippingPrivacyNote}
+      </Text>
 
       <Button label={checkoutCopy.saveAddress} onPress={handleSubmit} disabled={busy} />
       {onCancel ? (
@@ -135,25 +142,6 @@ export function ShippingAddressForm({ initial, busy, onSubmit, onCancel }: Shipp
       ) : null}
     </View>
   );
-}
-
-/** Small uppercase-weight label above each field. */
-function label(color: string) {
-  return {
-    color,
-    fontSize: typeRamp.footnote.pt,
-    lineHeight: typeRamp.footnote.lineHeight,
-    fontWeight: '600' as const,
-  };
-}
-
-/** Plain footnote — the country-code helper line. */
-function caption(color: string) {
-  return {
-    color,
-    fontSize: typeRamp.footnote.pt,
-    lineHeight: typeRamp.footnote.lineHeight,
-  };
 }
 
 const styles = StyleSheet.create({

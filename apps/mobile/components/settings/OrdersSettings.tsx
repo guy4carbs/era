@@ -7,11 +7,12 @@
  * back to the retailer's own site. Only mounted by the Settings screen when the
  * cosmetic checkout flag is on.
  */
-import { layout, radii, spacing, typeRamp } from '@era/tokens';
+import { layout, radii, spacing } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, StyleSheet, View } from 'react-native';
 
+import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
 import { getOrders, type OrderRecord } from '@/components/checkout/api';
@@ -43,7 +44,11 @@ export function OrdersSettings() {
   }
 
   if (orders.length === 0) {
-    return <Text style={caption(colors.secondaryStrong)}>{copy.ordersEmpty}</Text>;
+    return (
+      <Text variant="caption" size="footnote" color={colors.secondaryStrong}>
+        {copy.ordersEmpty}
+      </Text>
+    );
   }
 
   return (
@@ -70,13 +75,20 @@ function OrderRow({ order }: { readonly order: OrderRecord }) {
   return (
     <View style={[styles.row, { borderColor: colors.hairline }]}>
       <View style={styles.rowMain}>
-        <Text numberOfLines={1} style={brand(colors.secondaryStrong)}>
+        <Text
+          numberOfLines={1}
+          variant="caption"
+          size="footnote"
+          weight={600}
+          color={colors.secondaryStrong}
+          style={styles.brand}
+        >
           {order.retailer.toUpperCase()}
         </Text>
-        <Text numberOfLines={2} style={body(colors.text)}>
+        <Text numberOfLines={2} variant="body" color={colors.text}>
           {order.title}
         </Text>
-        <Text style={caption(colors.secondaryStrong)}>
+        <Text variant="caption" size="footnote" color={colors.secondaryStrong}>
           {copy.orderStatus(order.status)}
           {total ? `  ·  ${total}` : ''}
         </Text>
@@ -87,7 +99,9 @@ function OrderRow({ order }: { readonly order: OrderRecord }) {
             onPress={openHandoff}
             style={styles.handoff}
           >
-            <Text style={handoffLabel(colors.accent)}>{checkoutCopy.finishAt(order.retailer)}</Text>
+            <Text variant="ui" size="footnote" weight={600} color={colors.accent}>
+              {checkoutCopy.finishAt(order.retailer)}
+            </Text>
           </Pressable>
         ) : null}
       </View>
@@ -104,44 +118,12 @@ function isHttpsUrl(value: string): boolean {
   }
 }
 
-function caption(color: string) {
-  return {
-    color,
-    fontSize: typeRamp.footnote.pt,
-    lineHeight: typeRamp.footnote.lineHeight,
-  } as const;
-}
-
-function brand(color: string) {
-  return {
-    color,
-    fontSize: typeRamp.footnote.pt,
-    lineHeight: typeRamp.footnote.lineHeight,
-    fontWeight: '600',
-    letterSpacing: 0.4,
-  } as const;
-}
-
-function body(color: string) {
-  return {
-    color,
-    fontSize: typeRamp.body.pt,
-    lineHeight: typeRamp.body.lineHeight,
-  } as const;
-}
-
-function handoffLabel(color: string) {
-  return {
-    color,
-    fontSize: typeRamp.footnote.pt,
-    lineHeight: typeRamp.footnote.lineHeight,
-    fontWeight: '600',
-  } as const;
-}
-
 const styles = StyleSheet.create({
   list: {
     gap: spacing.s3,
+  },
+  brand: {
+    letterSpacing: 0.4,
   },
   loading: {
     paddingVertical: spacing.s4,

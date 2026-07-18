@@ -8,9 +8,10 @@
  * target.
  */
 import { strings } from '@era/core/strings';
-import { layout, spacing, typeRamp } from '@era/tokens';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { layout, spacing } from '@era/tokens';
+import { Pressable, StyleSheet } from 'react-native';
 
+import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
 interface SettingsGearProps {
@@ -27,7 +28,7 @@ export function SettingsGear({ onPress }: SettingsGearProps) {
       onPress={onPress}
       style={styles.gear}
     >
-      <Text style={{ color: colors.text, fontSize: typeRamp.title2.pt }}>⚙</Text>
+      <Text variant="ui" size="title2" color={colors.text}>⚙</Text>
     </Pressable>
   );
 }

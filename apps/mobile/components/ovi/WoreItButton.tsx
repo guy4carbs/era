@@ -11,13 +11,14 @@
  * A proposal has no outfit id, so the Feed "Today" card logs by `itemIds`; a
  * saved-outfit surface can pass `outfitId` instead.
  */
-import { layout, motion as motionTokens, typeRamp } from '@era/tokens';
+import { layout, motion as motionTokens } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
+import { Text } from '@/components/Text';
 import { Button } from '@/components/Button';
 import { analytics } from '@/lib/analytics';
 import { useReducedMotionSafe } from '@/lib/motion';
@@ -84,15 +85,7 @@ export function WoreItButton({ itemIds, outfitId, via, onToast, lat, lon, onLogg
         entering={reduced ? undefined : FadeIn.duration(motionTokens.durations.minMs)}
         style={styles.confirmed}
       >
-        <Text
-          accessibilityRole="text"
-          style={{
-            color: colors.accent,
-            fontSize: typeRamp.footnote.pt,
-            lineHeight: typeRamp.footnote.lineHeight,
-            fontWeight: '600',
-          }}
-        >
+        <Text variant="ui" size="footnote" weight={600} color={colors.accent} accessibilityRole="text">
           {strings.ovi.woreItConfirmed}
         </Text>
       </Animated.View>

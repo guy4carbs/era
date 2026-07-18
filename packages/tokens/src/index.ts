@@ -12,7 +12,19 @@
 export { palette, type ThemeMode } from './colors.ts';
 export { baseUnit, spacing } from './spacing.ts';
 export { radii } from './radii.ts';
-export { typeRamp } from './typography.ts';
+export {
+  typeRamp,
+  fontFamilies,
+  typeRoles,
+  serifGuard,
+  isSerifVariant,
+  roleSizePx,
+  mobileSansFamily,
+  assertVariantAllowed,
+  type TypeRampStep,
+  type TypeVariant,
+  type VariantCheck,
+} from './typography.ts';
 export {
   elevation,
   boxShadows,

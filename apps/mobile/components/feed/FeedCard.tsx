@@ -13,11 +13,12 @@
  * {@link useFeed}; the pager owns the swipe + the double-tap heart burst.
  */
 import { strings } from '@era/core/strings';
-import { layout, radii, spacing, typeRamp, palette } from '@era/tokens';
+import { layout, radii, spacing, palette } from '@era/tokens';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
+import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 import { isHidden, type FeedSlot } from '@/lib/feed-store';
 
@@ -98,7 +99,7 @@ function FollowPill({ following, onPress }: FollowPillProps) {
       onPress={onPress}
       style={[styles.pill, following ? styles.pillFollowing : styles.pillFollow]}
     >
-      <Text style={[styles.pillLabel, following && styles.pillLabelFollowing]}>
+      <Text variant="ui" weight={following ? 400 : 600} color={ON_IMAGE}>
         {following ? strings.profile.followingState : strings.profile.followCta}
       </Text>
     </Pressable>
@@ -146,14 +147,5 @@ const styles = StyleSheet.create({
   pillFollowing: {
     backgroundColor: 'transparent',
     borderColor: 'rgba(255, 255, 255, 0.4)',
-  },
-  pillLabel: {
-    color: ON_IMAGE,
-    fontSize: typeRamp.subhead.pt,
-    lineHeight: typeRamp.subhead.lineHeight,
-    fontWeight: '600',
-  },
-  pillLabelFollowing: {
-    fontWeight: '400',
   },
 });

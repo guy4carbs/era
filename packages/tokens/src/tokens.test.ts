@@ -7,6 +7,13 @@ import {
   spacing,
   radii,
   typeRamp,
+  fontFamilies,
+  typeRoles,
+  serifGuard,
+  isSerifVariant,
+  roleSizePx,
+  mobileSansFamily,
+  assertVariantAllowed,
   elevation,
   boxShadows,
   rnShadow,
@@ -93,6 +100,86 @@ test('type ramp: sizes, rem = px/16, lineHeight = round(px * 1.3)', () => {
     assert.equal(entry.rem, `${px / 16}rem`, `${name} rem`);
     assert.equal(entry.lineHeight, Math.round(px * 1.3), `${name} lineHeight`);
   }
+});
+
+test('type roles: every role is well-formed and maps to a real ramp step', () => {
+  const variants = ['display', 'largeTitle', 'title', 'oviAccent', 'body', 'ui', 'caption'] as const;
+  assert.deepEqual(Object.keys(typeRoles).sort(), [...variants].sort());
+  for (const v of variants) {
+    const role = typeRoles[v];
+    assert.ok(role.family === 'serif' || role.family === 'sans', `${v} family`);
+    assert.equal(typeof role.weight, 'number', `${v} weight`);
+    assert.ok(role.leading > 0, `${v} leading`);
+    // defaultSize must be a real typeRamp step.
+    assert.ok(role.defaultSize in typeRamp, `${v} defaultSize is a ramp step`);
+  }
+});
+
+test('serif roles carry a Fraunces instance; sans roles a Geist instance', () => {
+  for (const v of ['display', 'largeTitle', 'title', 'oviAccent'] as const) {
+    assert.ok(isSerifVariant(v), `${v} is serif`);
+    assert.match(typeRoles[v].mobileFamily, /^Fraunces-/, `${v} mobile instance`);
+  }
+  for (const v of ['body', 'ui', 'caption'] as const) {
+    assert.equal(isSerifVariant(v), false, `${v} is sans`);
+    assert.match(typeRoles[v].mobileFamily, /^Geist-/, `${v} mobile instance`);
+  }
+});
+
+test('Ovi accent is the baked italic SOFT-60 signature; display is web-only at opsz 144', () => {
+  assert.equal(typeRoles.oviAccent.italic, true);
+  assert.equal(typeRoles.oviAccent.soft, 60);
+  assert.equal(typeRoles.oviAccent.mobileFamily, 'Fraunces-OviAccent');
+  assert.equal(typeRoles.display.webOnly, true);
+  assert.equal(typeRoles.display.opsz, 144);
+  assert.equal(typeRoles.display.webClamp, 'clamp(3rem, 8vw, 6.5rem)');
+});
+
+test('mobileSansFamily picks the nearest bundled Geist weight', () => {
+  assert.equal(mobileSansFamily(400), fontFamilies.mobileSans.regular);
+  assert.equal(mobileSansFamily(450), fontFamilies.mobileSans.regular);
+  assert.equal(mobileSansFamily(500), fontFamilies.mobileSans.medium);
+  assert.equal(mobileSansFamily(600), fontFamilies.mobileSans.semibold);
+  assert.equal(mobileSansFamily(700), fontFamilies.mobileSans.semibold);
+});
+
+test('roleSizePx resolves default step, ramp-step override, and raw px', () => {
+  assert.equal(roleSizePx('body'), typeRamp.body.px); // default step
+  assert.equal(roleSizePx('ui', 'footnote'), typeRamp.footnote.px); // step override
+  assert.equal(roleSizePx('title', 24), 24); // raw px
+});
+
+test('serif guard: refuses serif below 20px and any serif inside a control', () => {
+  // A serif title below the 20px floor is rejected.
+  assert.equal(assertVariantAllowed('title', { sizePx: 18, inControl: false }).ok, false);
+  // At/above the floor it passes.
+  assert.equal(assertVariantAllowed('title', { sizePx: 24, inControl: false }).ok, true);
+  // Serif inside a control is rejected regardless of size.
+  assert.equal(assertVariantAllowed('title', { sizePx: 34, inControl: true }).ok, false);
+  assert.equal(assertVariantAllowed('largeTitle', { sizePx: 40, inControl: true }).ok, false);
+  // Sans variants are always fine, even tiny and in a control.
+  assert.equal(assertVariantAllowed('ui', { sizePx: 13, inControl: true }).ok, true);
+  assert.equal(assertVariantAllowed('caption', { sizePx: 12, inControl: false }).ok, true);
+  // oviAccent is exempt from the size floor (inline editorial accent) but still barred from controls.
+  assert.equal(assertVariantAllowed('oviAccent', { sizePx: 17, inControl: false }).ok, true);
+  assert.equal(assertVariantAllowed('oviAccent', { sizePx: 17, inControl: true }).ok, false);
+  // The guard names why it failed.
+  assert.match(
+    assertVariantAllowed('title', { sizePx: 12, inControl: false }).reason ?? '',
+    /≥20px/,
+  );
+});
+
+test('font families: brand faces + CSS var contract', () => {
+  assert.equal(fontFamilies.serif, 'Fraunces');
+  assert.equal(fontFamilies.sans, 'Geist');
+  assert.deepEqual(fontFamilies.cssVar, { serif: '--font-era-serif', sans: '--font-era-sans' });
+  assert.deepEqual(fontFamilies.mobileSans, {
+    regular: 'Geist-Regular',
+    medium: 'Geist-Medium',
+    semibold: 'Geist-SemiBold',
+  });
+  assert.equal(serifGuard.minSerifPx, 20);
 });
 
 test('elevation numbers and prebuilt CSS shadows', () => {

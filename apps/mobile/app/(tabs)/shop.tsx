@@ -19,14 +19,15 @@
  */
 import type { RankedProduct, WardrobeGap } from '@era/core/shop';
 import { strings } from '@era/core/strings';
-import { layout, radii, spacing, typeRamp } from '@era/tokens';
+import { layout, radii, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import * as Linking from 'expo-linking';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
+import { Text } from '@/components/Text';
 import {
   EMPTY_FILTERS,
   filtersFromQuery,
@@ -299,7 +300,9 @@ export default function ShopScreen() {
       <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
         <View style={styles.centered}>
           <ActivityIndicator color={colors.text} />
-          <Text style={centerCopy(colors.secondaryStrong)}>{strings.shop.loading}</Text>
+          <Text variant="body" color={colors.secondaryStrong} style={styles.centerCopy}>
+            {strings.shop.loading}
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -309,7 +312,9 @@ export default function ShopScreen() {
     return (
       <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
         <View style={styles.centered}>
-          <Text style={centerCopy(colors.secondaryStrong)}>{strings.shop.error}</Text>
+          <Text variant="body" color={colors.secondaryStrong} style={styles.centerCopy}>
+            {strings.shop.error}
+          </Text>
           <Button label={strings.errors.retry} variant="secondary" onPress={loadReset} />
           <Button
             label={strings.shop.saved.tab}
@@ -372,14 +377,22 @@ export default function ShopScreen() {
         ListEmptyComponent={
           saved ? (
             savedLoaded ? (
-              <Text style={[centerCopy(colors.secondaryStrong), styles.empty]}>
+              <Text
+                variant="body"
+                color={colors.secondaryStrong}
+                style={[styles.centerCopy, styles.empty]}
+              >
                 {strings.shop.saved.empty}
               </Text>
             ) : (
               <ActivityIndicator color={colors.text} style={styles.footer} />
             )
           ) : (
-            <Text style={[centerCopy(colors.secondaryStrong), styles.empty]}>
+            <Text
+              variant="body"
+              color={colors.secondaryStrong}
+              style={[styles.centerCopy, styles.empty]}
+            >
               {strings.shop.empty}
             </Text>
           )
@@ -447,36 +460,16 @@ function ShopHeader({
   const saved = view === 'saved';
   return (
     <View style={styles.header}>
-      <Text
-        accessibilityRole="header"
-        style={{
-          color: colors.text,
-          fontSize: typeRamp.largeTitle.pt,
-          lineHeight: typeRamp.largeTitle.lineHeight,
-          fontWeight: '700',
-        }}
-      >
+      <Text accessibilityRole="header" variant="largeTitle" color={colors.text}>
         {strings.shop.title}
       </Text>
 
-      <Text
-        style={{
-          color: colors.secondaryStrong,
-          fontSize: typeRamp.body.pt,
-          lineHeight: typeRamp.body.lineHeight,
-        }}
-      >
+      <Text variant="body" color={colors.secondaryStrong}>
         {saved ? strings.shop.saved.intro : strings.shop.intro}
       </Text>
 
       {/* FTC-honest affiliate disclosure — visible above the picks, per Shield/Ledger. */}
-      <Text
-        style={{
-          color: colors.secondary,
-          fontSize: typeRamp.body.pt,
-          lineHeight: typeRamp.body.lineHeight,
-        }}
-      >
+      <Text variant="body" color={colors.secondary}>
         {strings.shop.affiliateDisclosure}
       </Text>
 
@@ -545,14 +538,7 @@ function HeaderPill({
         },
       ]}
     >
-      <Text
-        style={{
-          color: colors.text,
-          fontSize: typeRamp.footnote.pt,
-          lineHeight: typeRamp.footnote.lineHeight,
-          fontWeight: '600',
-        }}
-      >
+      <Text variant="ui" size="footnote" weight={600} color={colors.text}>
         {label}
       </Text>
     </Pressable>
@@ -575,16 +561,6 @@ function isHttpsUrl(value: string): boolean {
   } catch {
     return false;
   }
-}
-
-/** Centered secondary copy — shared by the loading / error / empty states. */
-function centerCopy(color: string) {
-  return {
-    color,
-    fontSize: typeRamp.body.pt,
-    lineHeight: typeRamp.body.lineHeight,
-    textAlign: 'center' as const,
-  };
 }
 
 /** Return a copy of `set` with `id` present (`member`) or absent. */
@@ -643,6 +619,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.s3,
     borderWidth: StyleSheet.hairlineWidth,
     borderCurve: 'continuous',
+  },
+  centerCopy: {
+    textAlign: 'center',
   },
   empty: {
     paddingVertical: spacing.s8,

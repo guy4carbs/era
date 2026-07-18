@@ -14,13 +14,14 @@
  * as premium whether or not the photo loads.
  */
 import type { RankedProduct } from '@era/core/shop';
-import { layout, radii, rnShadow, sheen, spacing, typeRamp } from '@era/tokens';
+import { layout, radii, rnShadow, sheen, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { Text } from '@/components/Text';
 import { strings } from '@era/core/strings';
 import { useTheme } from '@/lib/theme';
 
@@ -145,38 +146,22 @@ export function ShopCard({
       <View style={styles.info}>
         <Text
           numberOfLines={1}
-          style={{
-            color: colors.secondaryStrong,
-            fontSize: typeRamp.footnote.pt,
-            lineHeight: typeRamp.footnote.lineHeight,
-            fontWeight: '600',
-            letterSpacing: 0.4,
-          }}
+          variant="ui"
+          size="footnote"
+          weight={600}
+          color={colors.secondaryStrong}
+          style={{ letterSpacing: 0.4 }}
         >
           {product.brand.toUpperCase()}
         </Text>
 
-        <Text
-          numberOfLines={2}
-          style={{
-            color: colors.text,
-            fontSize: typeRamp.body.pt,
-            lineHeight: typeRamp.body.lineHeight,
-          }}
-        >
+        <Text numberOfLines={2} variant="body" color={colors.text}>
           {product.title}
         </Text>
 
-        <Text
-          style={{
-            color: colors.text,
-            fontSize: typeRamp.subhead.pt,
-            lineHeight: typeRamp.subhead.lineHeight,
-            fontWeight: '600',
-          }}
-        >
+        <Text variant="ui" size="subhead" weight={600} color={colors.text}>
           {formatPrice(product.price, product.currency)}
-          <Text style={{ color: colors.secondaryStrong, fontWeight: '400' }}>
+          <Text variant="ui" size="subhead" weight={400} color={colors.secondaryStrong}>
             {`   ${product.retailer}`}
           </Text>
         </Text>
@@ -194,12 +179,10 @@ export function ShopCard({
             {justAdded ? (
               <Text
                 accessibilityLiveRegion="polite"
-                style={{
-                  color: colors.secondaryStrong,
-                  fontSize: typeRamp.footnote.pt,
-                  lineHeight: typeRamp.footnote.lineHeight,
-                  textAlign: 'center',
-                }}
+                variant="caption"
+                size="footnote"
+                color={colors.secondaryStrong}
+                style={{ textAlign: 'center' }}
               >
                 {strings.shop.checkout.addedToCart}
               </Text>
@@ -263,23 +246,10 @@ function SaveToggle({ isSaved, onToggle }: { isSaved: boolean; onToggle: () => v
         },
       ]}
     >
-      <Text
-        style={{
-          color: isSaved ? colors.accent : colors.secondaryStrong,
-          fontSize: typeRamp.body.pt,
-          lineHeight: typeRamp.body.lineHeight,
-        }}
-      >
+      <Text variant="body" color={isSaved ? colors.accent : colors.secondaryStrong}>
         {isSaved ? '♥' : '♡'}
       </Text>
-      <Text
-        style={{
-          color: colors.text,
-          fontSize: typeRamp.body.pt,
-          lineHeight: typeRamp.body.lineHeight,
-          fontWeight: '600',
-        }}
-      >
+      <Text variant="ui" size="body" weight={600} color={colors.text}>
         {isSaved ? copy.savedState : copy.save}
       </Text>
     </Pressable>

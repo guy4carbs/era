@@ -1,5 +1,6 @@
 import { type CSSProperties } from 'react';
 import { typeRamp } from '@era/tokens';
+import { Text } from '../Text';
 
 /** One question/answer pair. Structurally matches the pillar/style `faqs` entries. */
 export interface FaqBlockEntry {
@@ -28,14 +29,18 @@ export function FaqBlock({ faqs, heading = 'Common questions' }: FaqBlockProps) 
   }
   return (
     <section style={sectionStyle} aria-labelledby="faq-heading">
-      <h2 id="faq-heading" style={headingStyle}>
+      <Text variant="largeTitle" as="h2" id="faq-heading" style={headingStyle}>
         {heading}
-      </h2>
+      </Text>
       <dl style={listStyle}>
         {faqs.map((entry) => (
           <div key={entry.q} style={itemStyle}>
-            <dt style={questionStyle}>{entry.q}</dt>
-            <dd style={answerStyle}>{entry.a}</dd>
+            <Text variant="title" as="dt" size="title3" style={questionStyle}>
+              {entry.q}
+            </Text>
+            <Text variant="body" as="dd" style={answerStyle}>
+              {entry.a}
+            </Text>
           </div>
         ))}
       </dl>
@@ -56,11 +61,8 @@ const sectionStyle: CSSProperties = {
 
 const headingStyle: CSSProperties = {
   margin: 0,
-  fontFamily: 'var(--font-era-serif), Georgia, serif',
-  fontWeight: 500,
   fontSize: `clamp(${typeRamp.title2.rem}, 4.5vw, ${typeRamp.largeTitle.rem})`,
   lineHeight: titleLineHeight,
-  letterSpacing: '-0.01em',
   color: 'var(--color-text)',
 };
 
@@ -81,19 +83,12 @@ const itemStyle: CSSProperties = {
 
 const questionStyle: CSSProperties = {
   margin: 0,
-  fontFamily: 'var(--font-era-serif), Georgia, serif',
-  fontWeight: 500,
-  fontSize: typeRamp.title3.rem,
-  lineHeight: `${typeRamp.title3.lineHeight}px`,
-  letterSpacing: '-0.01em',
   color: 'var(--color-text)',
 };
 
 const answerStyle: CSSProperties = {
   margin: 0,
   marginInlineStart: 0, // reset the default <dd> indent
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
   color: 'var(--color-secondary-strong)',
   maxWidth: '54ch',
 };

@@ -1,17 +1,18 @@
 /**
  * RecapStoryCard — "your month, worn" as a share card.
  *
- * A Georgia-serif "Month YYYY" header, the month's numbers as quiet stat rows, a
+ * An editorial-serif "Month YYYY" header, the month's numbers as quiet stat rows, a
  * row of the top-three pieces' cutouts with their wear counts, and the most-worn
  * category + best-value lines. Every value comes straight from the recap model —
  * nothing is invented, and a field the recap didn't return simply isn't drawn.
  * Rendered at 360×640 inside {@link ShareFrame} and captured to 1080×1920.
  */
 import { strings } from '@era/core/strings';
-import { palette, radii, spacing, typeRamp } from '@era/tokens';
+import { palette, radii, spacing } from '@era/tokens';
 import type { RefObject } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Text } from '@/components/Text';
 import { recapThumbUrls, type RecapShareItem, type RecapShareModel } from '@/lib/share-collage';
 
 import { ShareFrame } from './ShareFrame';
@@ -37,11 +38,15 @@ export function RecapStoryCard({ model, items, viewRef, onAllImagesLoaded }: Rec
   // MonthlyRecapCard keeps it — that surface is private.
   return (
     <ShareFrame viewRef={viewRef}>
-      <Text style={styles.header}>{strings.wear.recap.monthHeader(model.monthLabel)}</Text>
+      <Text variant="largeTitle" color={CREAM.text} style={styles.header}>
+        {strings.wear.recap.monthHeader(model.monthLabel)}
+      </Text>
 
       <View style={styles.stats}>
-        <Text style={styles.statLead}>{strings.wear.recap.totalWears(model.totalWears)}</Text>
-        <Text style={styles.statSub}>
+        <Text variant="ui" size="title3" weight={600} color={CREAM.text} style={styles.statLead}>
+          {strings.wear.recap.totalWears(model.totalWears)}
+        </Text>
+        <Text variant="caption" size="subhead" color={CREAM.secondaryStrong} style={styles.statSub}>
           {strings.wear.recap.daysDressed(model.distinctDaysWorn, model.daysInMonth)}
         </Text>
       </View>
@@ -56,7 +61,7 @@ export function RecapStoryCard({ model, items, viewRef, onAllImagesLoaded }: Rec
 
       <View style={styles.lines}>
         {model.mostWornCategory !== null ? (
-          <Text style={styles.line}>
+          <Text variant="caption" size="subhead" color={CREAM.secondaryStrong} style={styles.line}>
             {strings.wear.recap.mostWornCategory(categoryLower(model.mostWornCategory))}
           </Text>
         ) : null}
@@ -82,7 +87,9 @@ function TopThumb({
           <ShareImage uri={item.imageUrl} contentFit="contain" style={styles.thumbImage} onSettled={markLoaded} />
         ) : null}
       </View>
-      <Text style={styles.thumbCount}>{`×${wearCount}`}</Text>
+      <Text variant="ui" size="caption" weight={600} color={CREAM.secondaryStrong}>
+        {`×${wearCount}`}
+      </Text>
     </View>
   );
 }
@@ -94,11 +101,6 @@ function categoryLower(category: string): string {
 
 const styles = StyleSheet.create({
   header: {
-    color: CREAM.text,
-    fontFamily: 'Georgia',
-    fontSize: typeRamp.largeTitle.pt,
-    lineHeight: typeRamp.largeTitle.lineHeight,
-    fontWeight: '600',
     textAlign: 'center',
   },
   stats: {
@@ -106,16 +108,9 @@ const styles = StyleSheet.create({
     gap: spacing.s1,
   },
   statLead: {
-    color: CREAM.text,
-    fontSize: typeRamp.title3.pt,
-    lineHeight: typeRamp.title3.lineHeight,
-    fontWeight: '600',
     textAlign: 'center',
   },
   statSub: {
-    color: CREAM.secondaryStrong,
-    fontSize: typeRamp.subhead.pt,
-    lineHeight: typeRamp.subhead.lineHeight,
     textAlign: 'center',
   },
   thumbs: {
@@ -141,20 +136,11 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  thumbCount: {
-    color: CREAM.secondaryStrong,
-    fontSize: typeRamp.caption.pt,
-    lineHeight: typeRamp.caption.lineHeight,
-    fontWeight: '600',
-  },
   lines: {
     alignItems: 'center',
     gap: spacing.s2,
   },
   line: {
-    color: CREAM.secondaryStrong,
-    fontSize: typeRamp.subhead.pt,
-    lineHeight: typeRamp.subhead.lineHeight,
     textAlign: 'center',
   },
 });

@@ -5,13 +5,14 @@
  * title and tagline (from `strings.quiz.moods`, not the option label) on a hero
  * radius. A tap ticks a selection haptic and the flow moves to the reveal.
  */
-import { radii, rnShadow, spacing, typeRamp } from '@era/tokens';
+import { radii, rnShadow, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
 import { strings, type QuizMoodId } from '@era/core/strings';
 
+import { Text } from '@/components/Text';
 import { animate, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
 
@@ -85,11 +86,11 @@ function MoodCard({ option, selected, onSelect }: MoodCardProps) {
         animatedStyle,
       ]}
     >
-      <Text style={{ color: colors.text, fontSize: typeRamp.title3.pt, lineHeight: typeRamp.title3.lineHeight, fontWeight: '600' }}>
+      <Text variant="ui" size="title3" weight={600} color={colors.text}>
         {title}
       </Text>
       {tagline ? (
-        <Text style={{ color: colors.secondaryStrong, fontSize: typeRamp.subhead.pt, lineHeight: typeRamp.subhead.lineHeight }}>
+        <Text variant="body" size="subhead" color={colors.secondaryStrong}>
           {tagline}
         </Text>
       ) : null}

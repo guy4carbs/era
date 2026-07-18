@@ -8,12 +8,13 @@
  * card holds a quiet "saved" state (the parent clears a passed card). The card
  * eases in gently and pins static under reduced motion.
  */
-import { motion as motionTokens, radii, spacing, typeRamp } from '@era/tokens';
+import { motion as motionTokens, radii, spacing } from '@era/tokens';
 import type { ProposedOutfit } from '@era/core/ovi';
 import { strings } from '@era/core/strings';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
+import { Text } from '@/components/Text';
 import { Button } from '@/components/Button';
 import { Collage } from '@/components/design/Collage';
 import { useReducedMotionSafe } from '@/lib/motion';
@@ -54,37 +55,16 @@ export function OutfitProposalCard({
       </View>
 
       <View style={styles.meta}>
-        <Text
-          numberOfLines={1}
-          style={{
-            color: colors.text,
-            fontSize: typeRamp.title3.pt,
-            lineHeight: typeRamp.title3.lineHeight,
-            fontWeight: '600',
-          }}
-        >
+        <Text variant="oviAccent" color={colors.text} numberOfLines={1}>
           {outfit.name}
         </Text>
         {outfit.occasion ? (
-          <Text
-            numberOfLines={1}
-            style={{
-              color: colors.secondary,
-              fontSize: typeRamp.footnote.pt,
-              lineHeight: typeRamp.footnote.lineHeight,
-            }}
-          >
+          <Text variant="caption" size="footnote" color={colors.secondary} numberOfLines={1}>
             {outfit.occasion}
           </Text>
         ) : null}
         {outfit.rationale ? (
-          <Text
-            style={{
-              color: colors.text,
-              fontSize: typeRamp.subhead.pt,
-              lineHeight: typeRamp.subhead.lineHeight,
-            }}
-          >
+          <Text variant="body" size="subhead" color={colors.text}>
             {outfit.rationale}
           </Text>
         ) : null}
@@ -93,25 +73,21 @@ export function OutfitProposalCard({
       {saved ? (
         <View style={styles.savedRow}>
           <Text
+            variant="ui"
+            size="footnote"
+            weight={600}
+            color={tappable ? colors.accent : colors.secondary}
             accessibilityRole="text"
-            style={{
-              color: tappable ? colors.accent : colors.secondary,
-              fontSize: typeRamp.footnote.pt,
-              lineHeight: typeRamp.footnote.lineHeight,
-              fontWeight: '600',
-            }}
           >
             {strings.ovi.accepted}
           </Text>
           {tappable ? (
             <Text
+              variant="ui"
+              size="footnote"
+              weight={600}
+              color={colors.accent}
               importantForAccessibility="no"
-              style={{
-                color: colors.accent,
-                fontSize: typeRamp.footnote.pt,
-                lineHeight: typeRamp.footnote.lineHeight,
-                fontWeight: '600',
-              }}
             >
               →
             </Text>

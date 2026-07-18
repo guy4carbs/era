@@ -17,11 +17,12 @@
  */
 import { strings } from '@era/core/strings';
 import type { AvatarStatus } from '@era/core/tryon';
-import { spacing, typeRamp } from '@era/tokens';
+import { spacing } from '@era/tokens';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Text } from '@/components/Text';
 import { Button } from '@/components/Button';
 import { GlassSheet } from '@/components/GlassSheet';
 import { SettingRow } from '@/components/settings/SettingRow';
@@ -80,14 +81,12 @@ export function AvatarSection({ onToast }: AvatarSectionProps) {
   return (
     <View style={styles.section}>
       <Text
+        variant="caption"
+        size="footnote"
+        weight={600}
         accessibilityRole="header"
-        style={{
-          color: colors.secondaryStrong,
-          fontSize: typeRamp.footnote.pt,
-          lineHeight: typeRamp.footnote.lineHeight,
-          fontWeight: '600',
-          textTransform: 'uppercase',
-        }}
+        color={colors.secondaryStrong}
+        style={{ textTransform: 'uppercase' }}
       >
         {avatarCopy.settingsTitle}
       </Text>
@@ -125,14 +124,7 @@ export function AvatarSection({ onToast }: AvatarSectionProps) {
 /** A plain, non-tappable status line (creating / ready). */
 function StatusLine({ color, children }: { readonly color: string; readonly children: string }) {
   return (
-    <Text
-      style={{
-        color,
-        fontSize: typeRamp.body.pt,
-        lineHeight: typeRamp.body.lineHeight,
-        paddingVertical: spacing.s2,
-      }}
-    >
+    <Text variant="body" color={color} style={{ paddingVertical: spacing.s2 }}>
       {children}
     </Text>
   );
@@ -175,23 +167,15 @@ function DeleteAvatarSheet({ open, onClose, onDeleted, onFailed }: DeleteAvatarS
     <GlassSheet open={open} onClose={handleClose}>
       <View style={styles.sheetBody}>
         <Text
+          variant="ui"
+          size="title3"
+          weight={600}
           accessibilityRole="header"
-          style={{
-            color: colors.text,
-            fontSize: typeRamp.title3.pt,
-            lineHeight: typeRamp.title3.lineHeight,
-            fontWeight: '600',
-          }}
+          color={colors.text}
         >
           {avatarCopy.deleteTitle}
         </Text>
-        <Text
-          style={{
-            color: colors.secondaryStrong,
-            fontSize: typeRamp.body.pt,
-            lineHeight: typeRamp.body.lineHeight,
-          }}
-        >
+        <Text variant="body" color={colors.secondaryStrong}>
           {avatarCopy.deleteBody}
         </Text>
         <Button

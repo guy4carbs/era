@@ -18,14 +18,15 @@
  */
 import { strings } from '@era/core/strings';
 import { type TurnaroundRender, type TurnaroundState } from '@era/core/turnaround';
-import { layout, motion, radii, rnShadow, spacing, typeRamp } from '@era/tokens';
+import { layout, motion, radii, rnShadow, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { Button } from '@/components/Button';
 import { GlassSheet } from '@/components/GlassSheet';
+import { Text } from '@/components/Text';
 import { archiveItem, patchItem, type ItemUpdates, type ItemWithDisplay } from '@/components/items';
 import { WearStatsBlock } from '@/components/wear';
 import { useReducedMotionSafe } from '@/lib/motion';
@@ -206,24 +207,11 @@ function Detail({ item, active, busy, onConfirm, onEdit, onArchived, onClose, on
       )}
 
       <View style={styles.headings}>
-        <Text
-          style={{
-            color: colors.text,
-            fontSize: typeRamp.title1.pt,
-            lineHeight: typeRamp.title1.lineHeight,
-            fontWeight: '600',
-          }}
-        >
+        <Text variant="title" size="title1" color={colors.text}>
           {item.name}
         </Text>
         {item.brand ? (
-          <Text
-            style={{
-              color: colors.secondaryStrong,
-              fontSize: typeRamp.body.pt,
-              lineHeight: typeRamp.body.lineHeight,
-            }}
-          >
+          <Text variant="body" color={colors.secondaryStrong}>
             {item.brand}
           </Text>
         ) : null}
@@ -236,13 +224,7 @@ function Detail({ item, active, busy, onConfirm, onEdit, onArchived, onClose, on
               key={tag}
               style={[styles.tag, { backgroundColor: colors.surface, borderColor: colors.hairline }]}
             >
-              <Text
-                style={{
-                  color: colors.text,
-                  fontSize: typeRamp.footnote.pt,
-                  lineHeight: typeRamp.footnote.lineHeight,
-                }}
-              >
+              <Text variant="caption" size="footnote" color={colors.text}>
                 {tag}
               </Text>
             </View>
@@ -438,13 +420,15 @@ function TurnaroundHero({
       {phase === 'generating' ? (
         <View style={styles.turnaroundRow}>
           <ActivityIndicator color={colors.secondaryStrong} />
-          <Text style={[styles.turnaroundNote, { color: colors.secondaryStrong }]}>
+          <Text variant="caption" size="subhead" color={colors.secondaryStrong}>
             {strings.turnaround.generating}
           </Text>
         </View>
       ) : null}
       {notice ? (
-        <Text style={[styles.turnaroundNote, { color: colors.secondaryStrong }]}>{notice}</Text>
+        <Text variant="caption" size="subhead" color={colors.secondaryStrong}>
+          {notice}
+        </Text>
       ) : null}
       {phase === 'offer' ? (
         <Button label={strings.turnaround.viewAngles} variant="secondary" onPress={runGeneration} />
@@ -456,13 +440,7 @@ function TurnaroundHero({
 function MetaLine({ text }: { readonly text: string }) {
   const { colors } = useTheme();
   return (
-    <Text
-      style={{
-        color: colors.secondaryStrong,
-        fontSize: typeRamp.subhead.pt,
-        lineHeight: typeRamp.subhead.lineHeight,
-      }}
-    >
+    <Text variant="caption" size="subhead" color={colors.secondaryStrong}>
       {text}
     </Text>
   );
@@ -512,10 +490,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.s2,
-  },
-  turnaroundNote: {
-    fontSize: typeRamp.subhead.pt,
-    lineHeight: typeRamp.subhead.lineHeight,
   },
   headings: {
     gap: spacing.s1,

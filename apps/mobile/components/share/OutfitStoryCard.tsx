@@ -2,14 +2,15 @@
  * OutfitStoryCard — a saved look as a share card.
  *
  * The garment imagery leads: a composed cover, or up to four garment cutouts
- * collaged on the cream. The outfit name sits beneath in Georgia serif with the
+ * collaged on the cream. The outfit name sits beneath in the editorial serif with the
  * occasion as a footnote caption. Rendered at the 360×640 logical size inside
  * {@link ShareFrame}; the offscreen host captures it to 1080×1920.
  */
-import { palette, spacing, typeRamp } from '@era/tokens';
+import { palette, spacing } from '@era/tokens';
 import type { RefObject } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Text } from '@/components/Text';
 import { collageImageUrls, type OutfitShareInput } from '@/lib/share-collage';
 
 import { ShareFrame } from './ShareFrame';
@@ -37,12 +38,12 @@ export function OutfitStoryCard({ input, viewRef, onAllImagesLoaded }: OutfitSto
 
       <View style={styles.caption}>
         {input.name ? (
-          <Text style={styles.name} numberOfLines={2}>
+          <Text variant="largeTitle" size="title1" color={CREAM.text} style={styles.name} numberOfLines={2}>
             {input.name}
           </Text>
         ) : null}
         {input.occasion ? (
-          <Text style={styles.occasion} numberOfLines={1}>
+          <Text variant="caption" size="footnote" color={CREAM.secondaryStrong} style={styles.occasion} numberOfLines={1}>
             {input.occasion}
           </Text>
         ) : null}
@@ -61,17 +62,9 @@ const styles = StyleSheet.create({
     gap: spacing.s2,
   },
   name: {
-    color: CREAM.text,
-    fontFamily: 'Georgia',
-    fontSize: typeRamp.title1.pt,
-    lineHeight: typeRamp.title1.lineHeight,
-    fontWeight: '600',
     textAlign: 'center',
   },
   occasion: {
-    color: CREAM.secondaryStrong,
-    fontSize: typeRamp.footnote.pt,
-    lineHeight: typeRamp.footnote.lineHeight,
     textAlign: 'center',
   },
 });

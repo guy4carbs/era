@@ -10,13 +10,14 @@
  * tokens and strings only.
  */
 import { strings } from '@era/core/strings';
-import { layout, spacing, typeRamp } from '@era/tokens';
+import { layout, spacing } from '@era/tokens';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, SectionList, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, SectionList, StyleSheet, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
+import { Text } from '@/components/Text';
 import { ClosetHeader, CutoutTile, ItemDetailSheet, SettingsGear, Toast } from '@/components/closet';
 import { fetchItems, type ItemWithDisplay } from '@/components/items';
 import { CATEGORIES, type ItemCategory } from '@/components/items/constants';
@@ -124,7 +125,9 @@ export default function ClosetScreen() {
     return (
       <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
         <View style={styles.centered}>
-          <Text style={centerCopy(colors.secondaryStrong)}>{strings.errors.generic}</Text>
+          <Text variant="body" color={colors.secondaryStrong} style={styles.centerCopy}>
+            {strings.errors.generic}
+          </Text>
           <Button label={strings.errors.retry} variant="secondary" onPress={load} />
         </View>
       </SafeAreaView>
@@ -142,17 +145,15 @@ export default function ClosetScreen() {
         <View style={styles.empty}>
           <Text
             accessibilityRole="header"
-            style={{
-              color: colors.text,
-              fontSize: typeRamp.largeTitle.pt,
-              lineHeight: typeRamp.largeTitle.lineHeight,
-              fontWeight: '700',
-              textAlign: 'center',
-            }}
+            variant="largeTitle"
+            color={colors.text}
+            style={{ textAlign: 'center' }}
           >
             {strings.closet.emptyTitle}
           </Text>
-          <Text style={centerCopy(colors.secondaryStrong)}>{strings.closet.emptyBody}</Text>
+          <Text variant="body" color={colors.secondaryStrong} style={styles.centerCopy}>
+            {strings.closet.emptyBody}
+          </Text>
           <View style={styles.emptyActions}>
             <Button label={strings.closet.addCta} onPress={goAdd} haptic />
             <Button label={strings.closet.addFromLink} variant="secondary" onPress={goAdd} />
@@ -179,15 +180,10 @@ export default function ClosetScreen() {
         )}
         renderSectionHeader={({ section }) => (
           <Text
-            style={[
-              styles.sectionHeader,
-              {
-                color: colors.text,
-                backgroundColor: colors.bg,
-                fontSize: typeRamp.title3.pt,
-                lineHeight: typeRamp.title3.lineHeight,
-              },
-            ]}
+            variant="title"
+            size="title3"
+            color={colors.text}
+            style={[styles.sectionHeader, { backgroundColor: colors.bg }]}
           >
             {section.title}
           </Text>
@@ -244,16 +240,6 @@ function chunk<T>(list: readonly T[], size: number): T[][] {
   return rows;
 }
 
-/** Centered secondary copy — shared by the empty / error states. */
-function centerCopy(color: string) {
-  return {
-    color,
-    fontSize: typeRamp.body.pt,
-    lineHeight: typeRamp.body.lineHeight,
-    textAlign: 'center' as const,
-  };
-}
-
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
@@ -297,8 +283,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sectionHeader: {
-    fontWeight: '600',
     paddingTop: spacing.s4,
     paddingBottom: spacing.s3,
+  },
+  centerCopy: {
+    textAlign: 'center',
   },
 });

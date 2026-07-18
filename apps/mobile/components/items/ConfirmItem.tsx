@@ -17,14 +17,15 @@
  * re-runs the failed step — never blaming the user for the photo.
  */
 import { strings } from '@era/core/strings';
-import { layout, radii, rnShadow, spacing, typeRamp } from '@era/tokens';
+import { layout, radii, rnShadow, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
 import { Input } from '@/components/Input';
+import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
 import { fetchItems, patchItem, type ItemUpdates, type ItemWithDisplay } from './api';
@@ -155,15 +156,7 @@ export function ConfirmItem({ itemId, vision, onSaved }: ConfirmItemProps) {
         )}
       </View>
 
-      <Text
-        accessibilityRole="header"
-        style={{
-          color: colors.text,
-          fontSize: typeRamp.title2.pt,
-          lineHeight: typeRamp.title2.lineHeight,
-          fontWeight: '600',
-        }}
-      >
+      <Text accessibilityRole="header" variant="title" size="title2" color={colors.text}>
         {headingIsProcessed ? strings.closet.processedTitle : strings.closet.manualTitle}
       </Text>
 
@@ -305,14 +298,7 @@ function FailureNotice({ onRetry }: { readonly onRetry: () => void }) {
   const { colors } = useTheme();
   return (
     <View style={styles.centered}>
-      <Text
-        style={{
-          color: colors.text,
-          fontSize: typeRamp.body.pt,
-          lineHeight: typeRamp.body.lineHeight,
-          textAlign: 'center',
-        }}
-      >
+      <Text variant="body" color={colors.text} style={{ textAlign: 'center' }}>
         {strings.closet.addFailed}
       </Text>
       <Button label={strings.closet.retryCta} variant="secondary" onPress={onRetry} />

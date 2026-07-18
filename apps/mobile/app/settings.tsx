@@ -9,10 +9,10 @@
  * only; the delete flow lives in {@link DeleteAccountSheet}.
  */
 import { strings } from '@era/core/strings';
-import { spacing, typeRamp } from '@era/tokens';
+import { spacing } from '@era/tokens';
 import { Redirect, Stack, useRouter } from 'expo-router';
 import { useCallback, useState, type PropsWithChildren } from 'react';
-import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AvatarSection } from '@/components/settings/AvatarSection';
@@ -28,6 +28,7 @@ import {
   ThemeControl,
 } from '@/components/settings';
 import { checkoutCopy } from '@/components/checkout';
+import { Text } from '@/components/Text';
 import { eraAuth, useSession } from '@/lib/auth-client';
 import { eraCheckoutEnabled } from '@/lib/checkout-flag';
 import { eraPlusEnabled } from '@/lib/purchases';
@@ -211,13 +212,11 @@ function Section({ title, children }: PropsWithChildren<{ readonly title: string
     <View style={styles.section}>
       <Text
         accessibilityRole="header"
-        style={{
-          color: colors.secondaryStrong,
-          fontSize: typeRamp.footnote.pt,
-          lineHeight: typeRamp.footnote.lineHeight,
-          fontWeight: '600',
-          textTransform: 'uppercase',
-        }}
+        variant="ui"
+        size="footnote"
+        weight={600}
+        color={colors.secondaryStrong}
+        style={{ textTransform: 'uppercase' }}
       >
         {title}
       </Text>

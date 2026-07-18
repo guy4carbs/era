@@ -6,10 +6,11 @@
  * selection tick fires on press, matching the closet tile.
  */
 import { strings } from '@era/core/strings';
-import { layout, radii, spacing, typeRamp } from '@era/tokens';
+import { layout, radii, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
+import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
 import { Collage } from './Collage';
@@ -37,26 +38,11 @@ export function OutfitCard({ outfit, onPress }: OutfitCardProps) {
         <Collage cover={outfit.coverUrl} images={outfit.thumbnailUrls} />
       </View>
       {outfit.name ? (
-        <Text
-          numberOfLines={1}
-          style={{
-            color: colors.text,
-            fontSize: typeRamp.subhead.pt,
-            lineHeight: typeRamp.subhead.lineHeight,
-            fontWeight: '600',
-          }}
-        >
+        <Text numberOfLines={1} variant="ui" size="subhead" weight={600} color={colors.text}>
           {outfit.name}
         </Text>
       ) : null}
-      <Text
-        numberOfLines={1}
-        style={{
-          color: colors.secondaryStrong,
-          fontSize: typeRamp.footnote.pt,
-          lineHeight: typeRamp.footnote.lineHeight,
-        }}
-      >
+      <Text numberOfLines={1} variant="caption" size="footnote" color={colors.secondaryStrong}>
         {outfit.occasion
           ? `${outfit.occasion} · ${strings.design.outfitItemCount(outfit.itemCount)}`
           : strings.design.outfitItemCount(outfit.itemCount)}

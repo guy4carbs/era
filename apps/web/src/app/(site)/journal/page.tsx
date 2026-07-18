@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { typeRamp } from '@era/tokens';
 
-import { Container } from '../../../components';
+import { Container, Text } from '../../../components';
 import { JsonLd, blogSchema, breadcrumbSchema } from '../../../components/seo';
 import { getAllPostMeta, formatPostDate } from '../../../lib/journal';
 
@@ -62,22 +62,34 @@ export default function JournalIndexPage() {
       />
       <main style={mainStyle}>
         <header style={headerStyle}>
-          <h1 style={pageTitleStyle}>Journal</h1>
-          <p style={introStyle}>{DESCRIPTION}</p>
+          <Text variant="largeTitle" as="h1" style={pageTitleStyle}>
+            Journal
+          </Text>
+          <Text variant="body" as="p" style={introStyle}>
+            {DESCRIPTION}
+          </Text>
         </header>
         <ul style={listStyle}>
           {posts.map((post) => (
             <li key={post.slug} style={itemStyle}>
               <article style={cardStyle}>
-                <time dateTime={post.datePublished} style={dateStyle}>
+                <Text
+                  variant="caption"
+                  as="time"
+                  size="footnote"
+                  dateTime={post.datePublished}
+                  style={dateStyle}
+                >
                   {formatPostDate(post.datePublished)}
-                </time>
-                <h2 style={postTitleStyle}>
+                </Text>
+                <Text variant="title" as="h2" size="title2" style={postTitleStyle}>
                   <Link href={`/journal/${post.slug}`} style={postLinkStyle}>
                     {post.title}
                   </Link>
-                </h2>
-                <p style={postDescriptionStyle}>{post.description}</p>
+                </Text>
+                <Text variant="body" as="p" style={postDescriptionStyle}>
+                  {post.description}
+                </Text>
               </article>
             </li>
           ))}
@@ -103,21 +115,17 @@ const headerStyle: CSSProperties = {
   gap: 'var(--space-3)',
 };
 
+// Fluid head spanning title1→largeTitle; `largeTitle` supplies the serif face.
 const pageTitleStyle: CSSProperties = {
   margin: 0,
-  fontFamily: 'var(--font-era-serif), Georgia, serif',
-  fontWeight: 500,
   fontSize: `clamp(${typeRamp.title1.rem}, 5vw, ${typeRamp.largeTitle.rem})`,
   lineHeight: 1.1,
-  letterSpacing: '-0.01em',
   color: 'var(--color-text)',
 };
 
 const introStyle: CSSProperties = {
   margin: 0,
   maxWidth: '54ch',
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
   color: 'var(--color-secondary-strong)',
 };
 
@@ -142,19 +150,12 @@ const cardStyle: CSSProperties = {
 };
 
 const dateStyle: CSSProperties = {
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
   letterSpacing: '0.02em',
   color: 'var(--color-secondary)',
 };
 
 const postTitleStyle: CSSProperties = {
   margin: 0,
-  fontFamily: 'var(--font-era-serif), Georgia, serif',
-  fontWeight: 500,
-  fontSize: typeRamp.title2.rem,
-  lineHeight: `${typeRamp.title2.lineHeight}px`,
-  letterSpacing: '-0.01em',
 };
 
 const postLinkStyle: CSSProperties = {
@@ -165,7 +166,5 @@ const postLinkStyle: CSSProperties = {
 const postDescriptionStyle: CSSProperties = {
   margin: 0,
   maxWidth: '54ch',
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
   color: 'var(--color-secondary-strong)',
 };

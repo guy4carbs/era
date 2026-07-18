@@ -45,6 +45,40 @@ era/
 - Functional components only.
 - No default exports — use named exports.
 
+## Typography (the Fraunces + Geist type system)
+
+All text renders through a `<Text variant>` component — never raw font styling.
+The system is defined once in `@era/tokens` (`typeRoles`, `serifGuard`,
+`assertVariantAllowed`, `roleSizePx`, `mobileSansFamily` in
+`packages/tokens/src/typography.ts`) and implemented per platform:
+`apps/web/src/components/Text.tsx` and `apps/mobile/components/Text.tsx`.
+
+- **Seven roles:** `display` (marketing hero, web-only, opsz 144), `largeTitle`,
+  `title`, `oviAccent` (Fraunces Italic SOFT 60 — Ovi's name, era names), `body`,
+  `ui` (buttons/chips/nav/inputs), `caption`. Pass a `variant`; override the size
+  with `size` (a `typeRamp` step or px). The role fixes family/weight/leading/
+  tracking; `typeRamp` stays the size ramp.
+- **Two faces:** **Fraunces** (editorial serif, variable — axes opsz/wght/SOFT/
+  WONK; WONK stays 0) and **Geist** (sans, all UI/body). Web loads both at the
+  ROOT layout (`next/font/google` Fraunces with `axes:['opsz','SOFT','WONK']` +
+  the `geist` package) exposing `--font-era-serif` / `--font-era-sans`.
+- **Mobile can't drive variable-font axes** — React Native `Text` has no
+  `fontVariationSettings`. So `apps/mobile/assets/fonts/` bundles six **static**
+  instances (Geist 400/500/600 + baked Fraunces `LargeTitle`/`Title`/`OviAccent`),
+  loaded via `expo-font` `useFonts` and gated behind the splash in `_layout.tsx`.
+  `display` (opsz 144) is web-only; on mobile it falls back to `largeTitle`.
+- **Serif guard:** serif variants refuse to render below 20px (dev warning) and
+  are barred from Button/Chip/Input. `oviAccent` is the one size-floor exception
+  (the inline editorial accent, down to body size) — still never in a control.
+- **Enforcement:** a `no-restricted-syntax` ESLint rule bans raw `fontFamily`.
+  The only sanctioned exceptions carry an `eslint-disable-next-line ... -- reason`:
+  the two `<Text>` primitives, bare `<TextInput>`s that mirror a role, monospace
+  code/receipt/hex fields, `fontFamily:'inherit'` textareas, and the server-
+  rendered email HTML (system stack, in string literals — not linted).
+- **Premium swap path (Canela / GT Alpina):** repoint `fontFamilies.serif` + the
+  web `next/font` loader + the mobile static instances. Every role, size, weight,
+  leading and tracking is unchanged — the face moves, the scale does not.
+
 ## Commit convention
 
 Conventional commits: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, with an optional scope — e.g. `feat(closet): add garment tagging`.

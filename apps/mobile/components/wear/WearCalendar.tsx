@@ -12,10 +12,11 @@
  */
 import type { WearLogLike } from '@era/core/wear-stats';
 import { strings } from '@era/core/strings';
-import { radii, spacing, typeRamp } from '@era/tokens';
+import { radii, spacing } from '@era/tokens';
 import { useMemo, useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 
+import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
 import type { WearMonthItem } from './api';
@@ -62,14 +63,7 @@ export function WearCalendar({ month, daysInMonth, byDay, items }: WearCalendarP
       <View style={styles.weekRow}>
         {WEEKDAY_LABELS.map((label, index) => (
           <View key={index} style={styles.weekCell}>
-            <Text
-              style={{
-                color: colors.secondary,
-                fontSize: typeRamp.caption.pt,
-                lineHeight: typeRamp.caption.lineHeight,
-                fontWeight: '600',
-              }}
-            >
+            <Text variant="ui" size="caption" weight={600} color={colors.secondary}>
               {label}
             </Text>
           </View>
@@ -100,12 +94,10 @@ export function WearCalendar({ month, daysInMonth, byDay, items }: WearCalendarP
                 ]}
               >
                 <Text
-                  style={{
-                    color: count > 0 ? colors.text : colors.secondary,
-                    fontSize: typeRamp.footnote.pt,
-                    lineHeight: typeRamp.footnote.lineHeight,
-                    fontWeight: count > 0 ? '600' : '400',
-                  }}
+                  variant="ui"
+                  size="footnote"
+                  weight={count > 0 ? 600 : 400}
+                  color={count > 0 ? colors.text : colors.secondary}
                 >
                   {day}
                 </Text>
@@ -135,14 +127,7 @@ export function WearCalendar({ month, daysInMonth, byDay, items }: WearCalendarP
                   />
                 ) : null}
               </View>
-              <Text
-                numberOfLines={1}
-                style={{
-                  color: colors.secondaryStrong,
-                  fontSize: typeRamp.caption.pt,
-                  lineHeight: typeRamp.caption.lineHeight,
-                }}
-              >
+              <Text numberOfLines={1} variant="caption" color={colors.secondaryStrong}>
                 {item.name}
               </Text>
             </View>

@@ -8,8 +8,8 @@
  * feed. Under reduced motion the glow holds static and the swatches appear at
  * once — no bloom, no stagger.
  */
-import { glow, radii, rnShadow, spacing, typeRamp } from '@era/tokens';
-import { StyleSheet, Text, View } from 'react-native';
+import { glow, radii, rnShadow, spacing } from '@era/tokens';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -22,6 +22,7 @@ import { useEffect } from 'react';
 import { strings } from '@era/core/strings';
 
 import { Button } from '@/components/Button';
+import { Text } from '@/components/Text';
 import { springFromToken, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
 
@@ -43,23 +44,16 @@ export function QuizReveal({ profile, onStepIn }: QuizRevealProps) {
     <View style={styles.container}>
       <View style={styles.hero}>
         <GlowBloom color={colors.accent} mode={resolved} reduced={reduced} />
-        <Text
-          style={{
-            color: colors.secondaryStrong,
-            fontSize: typeRamp.subhead.pt,
-            lineHeight: typeRamp.subhead.lineHeight,
-            fontWeight: '600',
-            textAlign: 'center',
-          }}
-        >
+        <Text variant="ui" weight={600} color={colors.secondaryStrong} style={{ textAlign: 'center' }}>
           {strings.quiz.revealTitle}
         </Text>
         <Text
           accessibilityRole="header"
-          style={[
-            styles.archetype,
-            { color: colors.text, fontSize: typeRamp.largeTitle.pt ?? undefined, lineHeight: typeRamp.largeTitle.lineHeight },
-          ]}
+          variant="ui"
+          size="largeTitle"
+          weight={700}
+          color={colors.text}
+          style={styles.archetype}
         >
           {profile.archetypeName}
         </Text>
@@ -69,7 +63,7 @@ export function QuizReveal({ profile, onStepIn }: QuizRevealProps) {
         <View style={styles.keywords}>
           {profile.keywords.map((word) => (
             <View key={word} style={[styles.keyword, { backgroundColor: `${colors.accent}29`, borderColor: colors.accent }]}>
-              <Text style={{ color: colors.text, fontSize: typeRamp.footnote.pt, lineHeight: typeRamp.footnote.lineHeight }}>
+              <Text variant="ui" size="footnote" weight={400} color={colors.text}>
                 {word}
               </Text>
             </View>
@@ -90,15 +84,15 @@ export function QuizReveal({ profile, onStepIn }: QuizRevealProps) {
       ) : null}
 
       <View style={[styles.eraCard, rnShadow('e2'), { backgroundColor: colors.surface, borderColor: colors.hairline }]}>
-        <Text style={{ color: colors.text, fontFamily: 'Georgia', fontSize: typeRamp.title3.pt, lineHeight: typeRamp.title3.lineHeight, fontWeight: '600' }}>
+        <Text variant="oviAccent" color={colors.text}>
           {profile.eraTitle}
         </Text>
-        <Text style={{ color: colors.secondaryStrong, fontSize: typeRamp.body.pt, lineHeight: typeRamp.body.lineHeight }}>
+        <Text variant="body" color={colors.secondaryStrong}>
           {profile.eraDescription}
         </Text>
       </View>
 
-      <Text style={{ color: colors.secondaryStrong, fontSize: typeRamp.footnote.pt, lineHeight: typeRamp.footnote.lineHeight, textAlign: 'center' }}>
+      <Text variant="caption" size="footnote" color={colors.secondaryStrong} style={{ textAlign: 'center' }}>
         {strings.quiz.revealSubtitle}
       </Text>
 
@@ -186,7 +180,6 @@ const styles = StyleSheet.create({
   },
   archetype: {
     // Sans, per spec — the editorial serif is reserved for the era title only.
-    fontWeight: '700',
     textAlign: 'center',
   },
   keywords: {

@@ -7,12 +7,13 @@
  * last step the answers are sent to the server (authenticated); any failure
  * falls back to the local deterministic profile so the reveal always resolves.
  */
-import { motion, spacing, typeRamp } from '@era/tokens';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { motion, spacing } from '@era/tokens';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { strings } from '@era/core/strings';
 
+import { Text } from '@/components/Text';
 import { analytics } from '@/lib/analytics';
 import { useTheme } from '@/lib/theme';
 
@@ -137,7 +138,7 @@ export function QuizFlow({ onExit }: QuizFlowProps) {
     return (
       <View style={styles.center}>
         <ActivityIndicator color={colors.accent} />
-        <Text style={{ color: colors.secondaryStrong, fontSize: typeRamp.body.pt, lineHeight: typeRamp.body.lineHeight }}>
+        <Text variant="body" color={colors.secondaryStrong}>
           {strings.ovi.thinking}
         </Text>
       </View>

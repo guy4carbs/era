@@ -8,13 +8,14 @@
  * CTA opens a fresh canvas. Colour, layout, and copy come from tokens + strings.
  */
 import { strings } from '@era/core/strings';
-import { layout, spacing, typeRamp } from '@era/tokens';
+import { layout, spacing } from '@era/tokens';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
+import { Text } from '@/components/Text';
 import { Toast } from '@/components/closet';
 import {
   createEra,
@@ -98,7 +99,9 @@ export default function DesignScreen() {
   if (state === 'error') {
     return (
       <SafeAreaView style={[styles.screen, styles.centered, { backgroundColor: colors.bg }]} edges={['top']}>
-        <Text style={centerCopy(colors.secondaryStrong)}>{strings.errors.generic}</Text>
+        <Text variant="body" color={colors.secondaryStrong} style={styles.centerCopy}>
+          {strings.errors.generic}
+        </Text>
         <Button label={strings.errors.retry} variant="secondary" onPress={load} />
       </SafeAreaView>
     );
@@ -110,17 +113,15 @@ export default function DesignScreen() {
         <View style={styles.empty}>
           <Text
             accessibilityRole="header"
-            style={{
-              color: colors.text,
-              fontSize: typeRamp.largeTitle.pt,
-              lineHeight: typeRamp.largeTitle.lineHeight,
-              fontWeight: '700',
-              textAlign: 'center',
-            }}
+            variant="largeTitle"
+            color={colors.text}
+            style={{ textAlign: 'center' }}
           >
             {strings.design.tabEmptyTitle}
           </Text>
-          <Text style={centerCopy(colors.secondaryStrong)}>{strings.design.tabEmptyBody}</Text>
+          <Text variant="body" color={colors.secondaryStrong} style={styles.centerCopy}>
+            {strings.design.tabEmptyBody}
+          </Text>
           <Button label={strings.design.newOutfit} onPress={openCanvas} haptic />
         </View>
         <Toast message={toast} onHide={() => setToast(null)} bottom={layout.tabBarHeight + spacing.s6} />
@@ -136,15 +137,7 @@ export default function DesignScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <Text
-            accessibilityRole="header"
-            style={{
-              color: colors.text,
-              fontSize: typeRamp.largeTitle.pt,
-              lineHeight: typeRamp.largeTitle.lineHeight,
-              fontWeight: '700',
-            }}
-          >
+          <Text accessibilityRole="header" variant="largeTitle" color={colors.text}>
             Design
           </Text>
           <Button label={strings.design.newOutfit} onPress={openCanvas} haptic />
@@ -165,16 +158,6 @@ export default function DesignScreen() {
       <Toast message={toast} onHide={() => setToast(null)} bottom={layout.tabBarHeight + spacing.s6} />
     </SafeAreaView>
   );
-}
-
-/** Centered secondary copy — shared by the empty / error states. */
-function centerCopy(color: string) {
-  return {
-    color,
-    fontSize: typeRamp.body.pt,
-    lineHeight: typeRamp.body.lineHeight,
-    textAlign: 'center' as const,
-  };
 }
 
 const styles = StyleSheet.create({
@@ -211,5 +194,8 @@ const styles = StyleSheet.create({
   },
   cell: {
     flex: 1,
+  },
+  centerCopy: {
+    textAlign: 'center',
   },
 });

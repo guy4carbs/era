@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { ARCHETYPE_ORDER, ARCHETYPES } from '@era/core/quiz';
 import { typeRamp } from '@era/tokens';
 
-import { Container } from '../../../components';
+import { Container, Text } from '../../../components';
 import { PaletteSwatches, RelatedLinks } from '../../../components/site';
 import { JsonLd, itemListSchema, breadcrumbSchema } from '../../../components/seo';
 import { archetypeToSlug } from '../../../lib/style-pages';
@@ -66,16 +66,24 @@ export default function StylesHubPage() {
       />
       <main style={mainStyle}>
         <header style={headerStyle}>
-          <h1 style={titleStyle}>Style Guide</h1>
-          <p style={introStyle}>{DESCRIPTION}</p>
+          <Text variant="largeTitle" as="h1" style={titleStyle}>
+            Style Guide
+          </Text>
+          <Text variant="body" as="p" style={introStyle}>
+            {DESCRIPTION}
+          </Text>
         </header>
 
         <ul style={gridStyle}>
           {archetypes.map(({ id, slug, def }) => (
             <li key={id} style={cardItemStyle}>
               <Link href={`/styles/${slug}`} style={cardLinkStyle}>
-                <h2 style={cardTitleStyle}>{def.name}</h2>
-                <p style={keywordStyle}>{def.keywords.join(' · ')}</p>
+                <Text variant="title" as="h2" size="title3" style={cardTitleStyle}>
+                  {def.name}
+                </Text>
+                <Text variant="caption" as="p" size="footnote" style={keywordStyle}>
+                  {def.keywords.join(' · ')}
+                </Text>
                 <PaletteSwatches hexes={def.anchorHexes} size={28} label={`${def.name} palette`} />
               </Link>
             </li>
@@ -102,21 +110,17 @@ const headerStyle: CSSProperties = {
   maxWidth: '65ch',
 };
 
+// Fluid head spanning title1→largeTitle; `largeTitle` supplies the serif face.
 const titleStyle: CSSProperties = {
   margin: 0,
-  fontFamily: 'var(--font-era-serif), Georgia, serif',
-  fontWeight: 500,
   fontSize: `clamp(${typeRamp.title1.rem}, 5vw, ${typeRamp.largeTitle.rem})`,
   lineHeight: 1.1,
-  letterSpacing: '-0.01em',
   color: 'var(--color-text)',
 };
 
 const introStyle: CSSProperties = {
   margin: 0,
   maxWidth: '54ch',
-  fontSize: typeRamp.body.rem,
-  lineHeight: `${typeRamp.body.lineHeight}px`,
   color: 'var(--color-secondary-strong)',
 };
 
@@ -147,16 +151,10 @@ const cardLinkStyle: CSSProperties = {
 
 const cardTitleStyle: CSSProperties = {
   margin: 0,
-  fontSize: typeRamp.title3.rem,
-  lineHeight: `${typeRamp.title3.lineHeight}px`,
-  fontWeight: 700,
-  letterSpacing: '-0.01em',
   color: 'var(--color-text)',
 };
 
 const keywordStyle: CSSProperties = {
   margin: 0,
-  fontSize: typeRamp.footnote.rem,
-  lineHeight: `${typeRamp.footnote.lineHeight}px`,
   color: 'var(--color-secondary)',
 };

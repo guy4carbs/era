@@ -4,8 +4,10 @@ import { useEffect, useRef } from 'react';
 import { ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
+import { useFonts } from 'expo-font';
 import * as Linking from 'expo-linking';
 import * as SecureStore from 'expo-secure-store';
+import * as SplashScreen from 'expo-splash-screen';
 
 import { CollageExportHost } from '@/components/share';
 import { analytics } from '@/lib/analytics';
@@ -14,6 +16,10 @@ import { captureAuthSessionFromUrl } from '@/lib/auth-deeplink';
 import { logInPurchaser, logOutPurchaser } from '@/lib/purchases';
 import { wrapRoot } from '@/lib/reporting';
 import { ThemeProvider, useTheme } from '@/lib/theme';
+
+// Hold the native splash until fonts AND the auth session have both resolved
+// (see ThemedStack). Kept at module top so it runs before first paint.
+void SplashScreen.preventAutoHideAsync();
 
 // Route files require a default export — expo-router discovers layouts this way.
 // Wrapped with the error reporter so uncaught render errors reach Sentry when a
@@ -146,10 +152,32 @@ function PurchaserIdentity() {
  * would bounce an authed user to sign-in. So we hold on a themed splash until the
  * session resolves the first time, then keep the navigator mounted across any later
  * transient pending (e.g. a sign-out refetch) so nothing unmounts mid-session.
+ *
+ * Fonts are an additional precondition to that first render: the brand faces
+ * (Fraunces static instances + Geist) must be loaded before any `<Text>` paints
+ * — including the off-screen share cards captured for image export — so we hold
+ * the same splash until BOTH fonts are ready AND the session has resolved once,
+ * then hide the native splash and mount the navigator. Later transient session
+ * pending never unmounts it.
  */
 function ThemedStack() {
   const { colors, resolved } = useTheme();
   const { data, isPending } = useSession();
+
+  // Each key MUST match the internal family name of its TTF (the filename stem),
+  // which is also the name registered for use in `<Text>` via `role.mobileFamily`
+  // / `mobileSansFamily`. RN cannot drive variable-font axes, so these are baked
+  // static instances (Fraunces-OviAccent is already italic/opsz 40/SOFT 60).
+  /* eslint-disable @typescript-eslint/no-require-imports -- Metro requires static require() literals for bundled assets; useFonts takes module refs, not import paths. */
+  const [fontsLoaded, fontError] = useFonts({
+    'Geist-Regular': require('../assets/fonts/Geist-Regular.ttf'),
+    'Geist-Medium': require('../assets/fonts/Geist-Medium.ttf'),
+    'Geist-SemiBold': require('../assets/fonts/Geist-SemiBold.ttf'),
+    'Fraunces-LargeTitle': require('../assets/fonts/Fraunces-LargeTitle.ttf'),
+    'Fraunces-Title': require('../assets/fonts/Fraunces-Title.ttf'),
+    'Fraunces-OviAccent': require('../assets/fonts/Fraunces-OviAccent.ttf'),
+  });
+  /* eslint-enable @typescript-eslint/no-require-imports */
 
   // Latch the first resolution: only the initial load holds the splash; later
   // transient `isPending` ticks reuse the last-known session and never unmount.
@@ -158,7 +186,21 @@ function ThemedStack() {
     resolvedOnce.current = true;
   }
 
-  if (isPending && !resolvedOnce.current) {
+  // Fonts are ready when loaded, or on error (don't strand the user on a bad
+  // font file — RN falls back to the system face and the guard below still warns).
+  const fontsReady = fontsLoaded || fontError !== null;
+  const sessionReady = !isPending || resolvedOnce.current;
+  const ready = fontsReady && sessionReady;
+
+  // Hide the native splash once both preconditions are met and the navigator is
+  // about to mount underneath. Idempotent — hideAsync no-ops after the first call.
+  useEffect(() => {
+    if (ready) {
+      void SplashScreen.hideAsync();
+    }
+  }, [ready]);
+
+  if (!ready) {
     return (
       <SafeAreaView style={[styles.splash, { backgroundColor: colors.bg }]}>
         <StatusBar style={resolved === 'dark' ? 'light' : 'dark'} />

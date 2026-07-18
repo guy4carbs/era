@@ -9,9 +9,10 @@
  * from {@link strings.settings.receiptAddress.newDrafts}, so the card renders it
  * verbatim rather than re-deriving the count copy.
  */
-import { layout, radii, rnShadow, spacing, typeRamp } from '@era/tokens';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { layout, radii, rnShadow, spacing } from '@era/tokens';
+import { Pressable, StyleSheet } from 'react-native';
 
+import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
 import type { InAppNotification, ReceiptImportPayload } from './api';
@@ -41,24 +42,10 @@ export function ReceiptImportCard({ notification, onOpen }: ReceiptImportCardPro
         },
       ]}
     >
-      <Text
-        style={{
-          color: colors.text,
-          fontSize: typeRamp.body.pt,
-          lineHeight: typeRamp.body.lineHeight,
-          flex: 1,
-        }}
-      >
+      <Text variant="body" color={colors.text} style={{ flex: 1 }}>
         {message}
       </Text>
-      <Text
-        aria-hidden
-        style={{
-          color: colors.secondary,
-          fontSize: typeRamp.body.pt,
-          lineHeight: typeRamp.body.lineHeight,
-        }}
-      >
+      <Text variant="body" color={colors.secondary} aria-hidden>
         ›
       </Text>
     </Pressable>

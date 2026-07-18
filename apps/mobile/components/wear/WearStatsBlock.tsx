@@ -13,10 +13,11 @@
  */
 import { costPerWear } from '@era/core/wear-stats';
 import { strings } from '@era/core/strings';
-import { spacing, typeRamp } from '@era/tokens';
+import { spacing } from '@era/tokens';
 import { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { Text } from '@/components/Text';
 import { WoreItButton } from '@/components/ovi';
 import { useTheme } from '@/lib/theme';
 
@@ -77,25 +78,12 @@ export function WearStatsBlock({ itemId, currency, seedWearCount, seedPrice, onT
 
   return (
     <View style={styles.container}>
-      <Text
-        style={{
-          color: colors.text,
-          fontSize: typeRamp.subhead.pt,
-          lineHeight: typeRamp.subhead.lineHeight,
-          fontWeight: '600',
-        }}
-      >
+      <Text variant="ui" color={colors.text}>
         {strings.wear.count(wearCount)}
       </Text>
 
       {costLine ? (
-        <Text
-          style={{
-            color: colors.secondaryStrong,
-            fontSize: typeRamp.subhead.pt,
-            lineHeight: typeRamp.subhead.lineHeight,
-          }}
-        >
+        <Text variant="caption" size="subhead" color={colors.secondaryStrong}>
           {costLine}
         </Text>
       ) : null}

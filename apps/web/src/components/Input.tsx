@@ -2,6 +2,7 @@
 
 import { forwardRef, useId, type CSSProperties } from 'react';
 import { typeRamp, boxShadows } from '@era/tokens';
+import { Text, TextControlBoundary } from './Text';
 
 type NativeInputProps = Omit<React.ComponentPropsWithoutRef<'input'>, 'style'>;
 
@@ -58,30 +59,45 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   const errorId = `${inputId}-error`;
 
   return (
-    <div style={fieldStyle}>
-      {label ? (
-        <label htmlFor={inputId} style={labelStyle}>
-          {label}
-        </label>
-      ) : null}
-      <input
-        ref={ref}
-        id={inputId}
-        className="era-input"
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error ? errorId : undefined}
-        style={{
-          ...inputStyle,
-          borderColor: error ? 'var(--color-rust)' : 'var(--color-hairline)',
-          ...style,
-        }}
-        {...rest}
-      />
-      {error ? (
-        <span id={errorId} role="alert" style={errorStyle}>
-          {error}
-        </span>
-      ) : null}
-    </div>
+    <TextControlBoundary>
+      <div style={fieldStyle}>
+        {label ? (
+          <Text
+            variant="ui"
+            as="label"
+            size="footnote"
+            htmlFor={inputId}
+            style={labelStyle}
+          >
+            {label}
+          </Text>
+        ) : null}
+        <input
+          ref={ref}
+          id={inputId}
+          className="era-input"
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
+          style={{
+            ...inputStyle,
+            borderColor: error ? 'var(--color-rust)' : 'var(--color-hairline)',
+            ...style,
+          }}
+          {...rest}
+        />
+        {error ? (
+          <Text
+            variant="caption"
+            as="span"
+            size="footnote"
+            id={errorId}
+            role="alert"
+            style={errorStyle}
+          >
+            {error}
+          </Text>
+        ) : null}
+      </div>
+    </TextControlBoundary>
   );
 });

@@ -1,6 +1,7 @@
 import { type CSSProperties } from 'react';
 import { strings } from '@era/core/strings';
 import { typeRamp, boxShadows, sheen } from '@era/tokens';
+import { Text, TextControlBoundary } from '../Text';
 import { HeroGlow } from './HeroGlow';
 
 /**
@@ -42,21 +43,16 @@ const innerStyle: CSSProperties = {
 };
 
 const wordmarkStyle: CSSProperties = {
-  fontFamily: 'var(--font-era-serif), Georgia, serif',
-  fontSize: typeRamp.title3.rem,
-  lineHeight: `${typeRamp.title3.lineHeight}px`,
   letterSpacing: '0.08em',
   textTransform: 'uppercase',
   color: 'var(--color-secondary-strong)',
 };
 
+// Display headline: the `display` role's fluid clamp handles size (opsz 144);
+// only the bespoke bits — margin reset, color, and the measure — live here.
 const titleStyle: CSSProperties = {
   margin: 0,
-  fontFamily: 'var(--font-era-serif), Georgia, serif',
-  fontWeight: 500,
-  fontSize: `clamp(${typeRamp.title1.rem}, 7vw, ${typeRamp.display.rem})`,
   lineHeight: displayLineHeight,
-  letterSpacing: '-0.02em',
   color: 'var(--color-text)',
   maxWidth: '14ch',
 };
@@ -104,12 +100,22 @@ export function Hero() {
     <section style={sectionStyle}>
       <HeroGlow />
       <div style={innerStyle}>
-        <span style={wordmarkStyle}>Era</span>
-        <h1 style={titleStyle}>{strings.site.hero.title}</h1>
-        <p style={subStyle}>{strings.site.hero.sub}</p>
+        <Text variant="title" as="span" size="title3" style={wordmarkStyle}>
+          Era
+        </Text>
+        <Text variant="display" as="h1" style={titleStyle}>
+          {strings.site.hero.title}
+        </Text>
+        <Text variant="body" as="p" style={subStyle}>
+          {strings.site.hero.sub}
+        </Text>
         <a href="#waitlist" style={ctaStyle}>
           <span aria-hidden="true" style={ctaSheenStyle} />
-          <span style={{ position: 'relative', zIndex: 2 }}>{strings.site.hero.cta}</span>
+          <TextControlBoundary>
+            <Text variant="ui" as="span" style={{ position: 'relative', zIndex: 2 }}>
+              {strings.site.hero.cta}
+            </Text>
+          </TextControlBoundary>
         </a>
       </div>
     </section>

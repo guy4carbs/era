@@ -16,11 +16,12 @@
  */
 import { strings } from '@era/core/strings';
 import type { RankedProduct, WhyDetail, WhyItemRef } from '@era/core/shop';
-import { radii, spacing, typeRamp } from '@era/tokens';
+import { radii, spacing } from '@era/tokens';
 import { useEffect, useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, View } from 'react-native';
 
 import { GlassSheet } from '@/components/GlassSheet';
+import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
 interface WhyDetailSheetProps {
@@ -52,12 +53,10 @@ function WhyDetailBody({ detail }: { detail: WhyDetail }) {
     <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
       <Text
         accessibilityRole="header"
-        style={{
-          color: colors.text,
-          fontSize: typeRamp.title3.pt,
-          lineHeight: typeRamp.title3.lineHeight,
-          fontWeight: '700',
-        }}
+        variant="ui"
+        size="title3"
+        weight={700}
+        color={colors.text}
       >
         {strings.shop.whyDetail.title}
       </Text>
@@ -98,13 +97,7 @@ function WhyDetailBody({ detail }: { detail: WhyDetail }) {
 function Line({ text }: { text: string }) {
   const { colors } = useTheme();
   return (
-    <Text
-      style={{
-        color: colors.text,
-        fontSize: typeRamp.body.pt,
-        lineHeight: typeRamp.body.lineHeight,
-      }}
-    >
+    <Text variant="body" color={colors.text}>
       {text}
     </Text>
   );
@@ -134,14 +127,7 @@ function WhyItemRow({ item, line }: { item: WhyItemRef; line: string }) {
           />
         ) : null}
       </View>
-      <Text
-        style={{
-          flex: 1,
-          color: colors.text,
-          fontSize: typeRamp.body.pt,
-          lineHeight: typeRamp.body.lineHeight,
-        }}
-      >
+      <Text variant="body" color={colors.text} style={{ flex: 1 }}>
         {line}
       </Text>
     </View>

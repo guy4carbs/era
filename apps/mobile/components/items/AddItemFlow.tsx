@@ -22,16 +22,17 @@
  * `linkFailed` line and drops back to the picker, so the photo path stays open.
  */
 import { strings } from '@era/core/strings';
-import { radii, rnShadow, spacing, typeRamp } from '@era/tokens';
+import { radii, rnShadow, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
+import { Text } from '@/components/Text';
 import { trackOnce } from '@/lib/analytics';
 import { LimitReachedError } from '@/lib/rate-limit';
 import { useTheme } from '@/lib/theme';
@@ -299,14 +300,7 @@ function SourceCard({ label, onPress }: { readonly label: string; readonly onPre
         { backgroundColor: colors.surface, borderColor: colors.hairline },
       ]}
     >
-      <Text
-        style={{
-          color: colors.text,
-          fontSize: typeRamp.title3.pt,
-          lineHeight: typeRamp.title3.lineHeight,
-          fontWeight: '600',
-        }}
-      >
+      <Text variant="ui" size="title3" weight={600} color={colors.text}>
         {label}
       </Text>
     </Pressable>
@@ -319,14 +313,7 @@ function Progress({ line }: { readonly line: string }) {
   return (
     <View style={styles.centered}>
       <ActivityIndicator color={colors.text} />
-      <Text
-        style={{
-          color: colors.secondaryStrong,
-          fontSize: typeRamp.body.pt,
-          lineHeight: typeRamp.body.lineHeight,
-          textAlign: 'center',
-        }}
-      >
+      <Text variant="body" color={colors.secondaryStrong} style={{ textAlign: 'center' }}>
         {line}
       </Text>
     </View>
@@ -340,13 +327,10 @@ function Saved() {
     <View style={styles.centered}>
       <Text
         accessibilityRole="header"
-        style={{
-          color: colors.text,
-          fontSize: typeRamp.title3.pt,
-          lineHeight: typeRamp.title3.lineHeight,
-          fontWeight: '600',
-          textAlign: 'center',
-        }}
+        variant="title"
+        size="title3"
+        color={colors.text}
+        style={{ textAlign: 'center' }}
       >
         {strings.closet.saved}
       </Text>
@@ -364,12 +348,9 @@ function LimitReached({ line }: { readonly line: string }) {
     <View style={styles.centered}>
       <Text
         accessibilityRole="header"
-        style={{
-          color: colors.text,
-          fontSize: typeRamp.body.pt,
-          lineHeight: typeRamp.body.lineHeight,
-          textAlign: 'center',
-        }}
+        variant="body"
+        color={colors.text}
+        style={{ textAlign: 'center' }}
       >
         {line}
       </Text>
@@ -385,14 +366,7 @@ function Failure({ onRetry, line }: { readonly onRetry: () => void; readonly lin
   const { colors } = useTheme();
   return (
     <View style={styles.centered}>
-      <Text
-        style={{
-          color: colors.text,
-          fontSize: typeRamp.body.pt,
-          lineHeight: typeRamp.body.lineHeight,
-          textAlign: 'center',
-        }}
-      >
+      <Text variant="body" color={colors.text} style={{ textAlign: 'center' }}>
         {line ?? strings.closet.addFailed}
       </Text>
       <Button label={strings.closet.retryCta} variant="secondary" onPress={onRetry} />
