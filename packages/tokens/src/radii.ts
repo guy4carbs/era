@@ -13,4 +13,6 @@ export const radii = {
   card: 16,
   sheet: 20,
   hero: 24,
+  // full — orbs and pills (§3: "full on orb/pills"). 9999 saturates any box.
+  full: 9999,
 } as const;
