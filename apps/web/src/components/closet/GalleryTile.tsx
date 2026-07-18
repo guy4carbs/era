@@ -197,7 +197,7 @@ const dotStyle: CSSProperties = {
   right: 'var(--item-card-padding)',
   width: 'var(--space-2)',
   height: 'var(--space-2)',
-  borderRadius: '50%',
+  borderRadius: 'var(--radius-full)',
   background: 'var(--color-accent)',
   zIndex: 3,
 };

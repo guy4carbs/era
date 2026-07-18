@@ -304,7 +304,7 @@ const thumbImageStyle: CSSProperties = {
 const plainDotStyle: CSSProperties = {
   width: 'var(--space-2)',
   height: 'var(--space-2)',
-  borderRadius: '50%',
+  borderRadius: 'var(--radius-full)',
   background: 'var(--color-accent)',
 };
 

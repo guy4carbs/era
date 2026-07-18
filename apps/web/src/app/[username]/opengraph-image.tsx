@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 
-import { palette } from '@era/tokens';
+import { palette, radii } from '@era/tokens';
 
 import { createDbClient } from '@era/db';
 import { loadPublicProfile } from '../../lib/public-profile-server';
@@ -133,7 +133,7 @@ export default async function OpengraphImage({
                   width: '150px',
                   height: '188px',
                   padding: '12px',
-                  borderRadius: '18px',
+                  borderRadius: `${radii.sheet}px`,
                   background: COLORS.surface,
                   border: `1px solid ${COLORS.hairline}`,
                 }}

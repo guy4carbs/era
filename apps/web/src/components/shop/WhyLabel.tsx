@@ -81,7 +81,7 @@ const dotBase: CSSProperties = {
   flex: '0 0 auto',
   width: 'var(--space-1)',
   height: 'var(--space-1)',
-  borderRadius: '50%',
+  borderRadius: 'var(--radius-full)',
 };
 
 const positiveDotStyle: CSSProperties = { ...dotBase, background: 'var(--color-accent)' };

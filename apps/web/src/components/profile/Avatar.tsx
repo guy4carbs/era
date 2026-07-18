@@ -25,7 +25,7 @@ export function Avatar({ src, name, size }: AvatarProps): JSX.Element {
   const box: CSSProperties = {
     width: size,
     height: size,
-    borderRadius: '50%',
+    borderRadius: 'var(--radius-full)',
     flexShrink: 0,
     objectFit: 'cover',
     background: 'color-mix(in srgb, var(--color-hairline) 50%, transparent)',

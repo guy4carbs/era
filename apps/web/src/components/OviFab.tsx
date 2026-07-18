@@ -31,7 +31,7 @@ const fabStyle: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
-  borderRadius: '50%',
+  borderRadius: 'var(--radius-full)',
   border: 'none',
   cursor: 'pointer',
   background: 'var(--color-accent)',

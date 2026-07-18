@@ -317,7 +317,7 @@ const arrowStyle: CSSProperties = {
   width: 'var(--touch-target-min)',
   height: 'var(--touch-target-min)',
   border: 'var(--glass-border-width) solid var(--color-hairline)',
-  borderRadius: '50%',
+  borderRadius: 'var(--radius-full)',
   background: 'color-mix(in srgb, var(--color-surface) 82%, transparent)',
   color: 'var(--color-text)',
   fontSize: typeRamp.title3.rem,
@@ -336,7 +336,7 @@ const dotsStyle: CSSProperties = {
 const dotStyle: CSSProperties = {
   width: 'var(--space-2)',
   height: 'var(--space-2)',
-  borderRadius: '50%',
+  borderRadius: 'var(--radius-full)',
 };
 
 // Screen-reader-only live region — off-canvas, no layout impact.

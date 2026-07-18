@@ -707,7 +707,7 @@ const trackStyle: CSSProperties = {
 const thumbStyle: CSSProperties = {
   width: 'var(--space-4)',
   height: 'var(--space-4)',
-  borderRadius: '50%',
+  borderRadius: 'var(--radius-full)',
   background: 'var(--color-bg)',
 };
 
