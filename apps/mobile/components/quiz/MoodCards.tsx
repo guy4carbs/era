@@ -50,7 +50,7 @@ interface MoodCardProps {
 }
 
 function MoodCard({ option, selected, onSelect }: MoodCardProps) {
-  const { colors } = useTheme();
+  const { colors, resolved } = useTheme();
   const reduced = useReducedMotionSafe();
   const scale = useSharedValue(REST_SCALE);
   const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
@@ -76,7 +76,7 @@ function MoodCard({ option, selected, onSelect }: MoodCardProps) {
       }}
       style={[
         styles.card,
-        selected ? rnShadow('e3') : rnShadow('e2'),
+        selected ? rnShadow('e3', resolved) : rnShadow('e2', resolved),
         {
           borderRadius: radii.hero,
           backgroundColor: colors.surface,

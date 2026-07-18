@@ -2,7 +2,7 @@
 
 import { useState, type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, boxShadows } from '@era/tokens';
+import { motion as motionToken } from '@era/tokens';
 import { Text } from '../Text';
 import { strings } from '@era/core/strings';
 import { transitionFor } from '../../lib/motion';
@@ -147,7 +147,7 @@ const cardStyle: CSSProperties = {
   padding: 'var(--space-3)',
   background: 'var(--color-surface)',
   borderRadius: 'var(--radius-card)',
-  boxShadow: boxShadows.e1,
+  boxShadow: 'var(--shadow-e1)',
   isolation: 'isolate',
 };
 

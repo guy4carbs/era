@@ -33,7 +33,7 @@ interface ItemCardProps {
 }
 
 export function ItemCard({ item, onResume }: ItemCardProps) {
-  const { colors } = useTheme();
+  const { colors, resolved } = useTheme();
   const reduced = useReducedMotionSafe();
   const scale = useSharedValue(REST_SCALE);
 
@@ -62,7 +62,7 @@ export function ItemCard({ item, onResume }: ItemCardProps) {
         }}
         style={[
           styles.card,
-          rnShadow('e2'),
+          rnShadow('e2', resolved),
           {
             aspectRatio: layout.itemCard.ratio,
             borderRadius: radii.card,

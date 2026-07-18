@@ -285,7 +285,7 @@ function isImportableUrl(value: string): boolean {
 
 /** A single large source card with a selection tick on tap. */
 function SourceCard({ label, onPress }: { readonly label: string; readonly onPress: () => void }) {
-  const { colors } = useTheme();
+  const { colors, resolved } = useTheme();
   return (
     <Pressable
       accessibilityRole="button"
@@ -296,7 +296,7 @@ function SourceCard({ label, onPress }: { readonly label: string; readonly onPre
       }}
       style={[
         styles.sourceCard,
-        rnShadow('e2'),
+        rnShadow('e2', resolved),
         { backgroundColor: colors.surface, borderColor: colors.hairline },
       ]}
     >

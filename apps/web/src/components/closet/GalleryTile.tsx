@@ -4,10 +4,8 @@ import { useState, type CSSProperties, type PointerEvent } from 'react';
 import { motion, useReducedMotion, useSpring, useTransform } from 'framer-motion';
 import {
   motion as motionToken,
-  boxShadows,
   glow,
   layout,
-  sheen,
   spacing,
 } from '@era/tokens';
 import { useTheme } from '../../lib/theme';
@@ -96,7 +94,7 @@ export function GalleryTile({ item, onOpen }: GalleryTileProps) {
   // Hover shadow = a deeper ambient (e4) plus an accent glow at the per-mode
   // glow opacity scaled by the hover intensity — same recipe as the Button.
   const glowPercent = Math.round(glow.opacity[resolved] * layout.hover.glowIntensity * 100);
-  const hoverShadow = `${boxShadows.e4}, 0 0 var(--glow-blur) color-mix(in srgb, var(--color-accent) ${glowPercent}%, transparent)`;
+  const hoverShadow = `var(--shadow-e4), 0 0 var(--glow-blur) color-mix(in srgb, var(--color-accent) ${glowPercent}%, transparent)`;
 
   const unconfirmed = !item.tagsConfirmed;
   const label = unconfirmed ? `${item.name} — tap to confirm` : item.name;
@@ -119,7 +117,7 @@ export function GalleryTile({ item, onOpen }: GalleryTileProps) {
           rotateY,
           y: lift,
         }}
-        animate={{ boxShadow: canTilt && hovered ? hoverShadow : boxShadows.e3 }}
+        animate={{ boxShadow: canTilt && hovered ? hoverShadow : 'var(--shadow-e3)' }}
         transition={transitionFor(motionToken.springs.gentle, reduced)}
       >
         <motion.div style={{ ...frameStyle, x: parallaxX, y: parallaxY }}>
@@ -161,7 +159,7 @@ const cardStyle: CSSProperties = {
   padding: 'var(--item-card-padding)',
   background: 'var(--color-surface)',
   borderRadius: 'var(--radius-card)',
-  boxShadow: boxShadows.e3,
+  boxShadow: 'var(--shadow-e3)',
   overflow: 'hidden',
   isolation: 'isolate',
   willChange: 'transform',
@@ -188,7 +186,7 @@ const sheenStyle: CSSProperties = {
   position: 'absolute',
   inset: `calc(-1 * ${SHEEN_BLEED}px)`,
   pointerEvents: 'none',
-  background: `linear-gradient(${sheen.angleDeg}deg, ${sheen.from}, ${sheen.to})`,
+  background: 'var(--sheen-gradient)',
   zIndex: 2,
 };
 
@@ -199,7 +197,7 @@ const dotStyle: CSSProperties = {
   right: 'var(--item-card-padding)',
   width: 'var(--space-2)',
   height: 'var(--space-2)',
-  borderRadius: '50%',
+  borderRadius: 'var(--radius-full)',
   background: 'var(--color-accent)',
   zIndex: 3,
 };

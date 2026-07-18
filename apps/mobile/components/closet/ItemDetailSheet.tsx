@@ -271,12 +271,12 @@ function Detail({ item, active, busy, onConfirm, onEdit, onArchived, onClose, on
  * states, so both hero paths gain the same dimensionality.
  */
 function StaticHero({ item, active }: { readonly item: ItemWithDisplay; readonly active: boolean }) {
-  const { colors } = useTheme();
+  const { colors, resolved } = useTheme();
   return (
     <View
       style={[
         styles.hero,
-        rnShadow('e2'),
+        rnShadow('e2', resolved),
         { backgroundColor: colors.surface, borderColor: colors.hairline },
       ]}
     >

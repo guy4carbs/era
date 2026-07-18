@@ -341,7 +341,7 @@ function BatchConfirm({ items, failed, onDone }: BatchConfirmProps) {
 
 /** A single large source card with a selection tick on tap (mirrors the single add). */
 function SourceCard({ label, onPress }: { readonly label: string; readonly onPress: () => void }) {
-  const { colors } = useTheme();
+  const { colors, resolved } = useTheme();
   return (
     <Pressable
       accessibilityRole="button"
@@ -352,7 +352,7 @@ function SourceCard({ label, onPress }: { readonly label: string; readonly onPre
       }}
       style={[
         styles.sourceCard,
-        rnShadow('e2'),
+        rnShadow('e2', resolved),
         { backgroundColor: colors.surface, borderColor: colors.hairline },
       ]}
     >

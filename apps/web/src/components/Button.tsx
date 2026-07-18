@@ -5,8 +5,6 @@ import { motion, useReducedMotion } from 'framer-motion';
 import {
   motion as motionToken,
   typeRamp,
-  boxShadows,
-  sheen,
   glow,
   layout,
 } from '@era/tokens';
@@ -44,7 +42,7 @@ const baseStyle: CSSProperties = {
   overflow: 'hidden',
   isolation: 'isolate',
   userSelect: 'none',
-  boxShadow: boxShadows.e1,
+  boxShadow: 'var(--shadow-e1)',
 };
 
 const variantStyle: Record<ButtonVariant, CSSProperties> = {
@@ -63,7 +61,7 @@ const sheenOverlay: CSSProperties = {
   position: 'absolute',
   inset: 0,
   pointerEvents: 'none',
-  background: `linear-gradient(${sheen.angleDeg}deg, ${sheen.from}, ${sheen.to})`,
+  background: 'var(--sheen-gradient)',
   zIndex: 1,
 };
 

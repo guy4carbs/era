@@ -52,7 +52,7 @@ interface ConfirmItemProps {
 }
 
 export function ConfirmItem({ itemId, vision, onSaved }: ConfirmItemProps) {
-  const { colors } = useTheme();
+  const { colors, resolved } = useTheme();
   const [item, setItem] = useState<ItemWithDisplay | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   // colors is a multi-select array, kept apart from the single-value string draft.
@@ -143,7 +143,7 @@ export function ConfirmItem({ itemId, vision, onSaved }: ConfirmItemProps) {
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
-      <View style={[styles.hero, rnShadow('e2'), { backgroundColor: colors.surface, borderColor: colors.hairline }]}>
+      <View style={[styles.hero, rnShadow('e2', resolved), { backgroundColor: colors.surface, borderColor: colors.hairline }]}>
         {item.displayUrl ? (
           <Image
             source={{ uri: item.displayUrl }}

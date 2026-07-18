@@ -18,6 +18,9 @@ import {
   glass,
   glow,
   layout,
+  boxShadows,
+  boxShadowsDark,
+  sheen,
 } from '@era/tokens';
 
 /** Numbers become `px`; strings pass through (some tokens ship pre-unit'd). */
@@ -27,21 +30,59 @@ function unit(value: unknown): string {
 
 type ColorMode = 'light' | 'dark';
 
-/** The seven themed colour roles, mapped to `--color-*` custom properties. */
-function paletteVars(mode: ColorMode): string {
+/**
+ * The per-mode custom properties as a plain record: `--var` name → value. This
+ * is the single source of truth for everything that swaps with `data-theme` —
+ * both the CSS string (`paletteVars`) and the React inline-style object
+ * (`themeVarStyle`) are projections of this same record, so they can never
+ * drift. Add a mode-reactive var HERE and both consumers pick it up.
+ */
+function paletteVarRecord(mode: ColorMode): Record<string, string> {
   const p = palette[mode];
-  return [
-    `--color-bg:${p.bg}`,
-    `--color-surface:${p.surface}`,
-    `--color-text:${p.text}`,
-    `--color-secondary:${p.secondary}`,
-    `--color-secondary-strong:${p.secondaryStrong}`,
-    `--color-accent:${p.accent}`,
-    `--color-hairline:${p.hairline}`,
-    // Glass surface tint is mode-specific (light 0.7 / dark 0.6); expose it as a
-    // percentage so component color-mix() reads one var and stays mode-reactive.
-    `--glass-tint:${Math.round(glass.tintOpacity[mode] * 100)}%`,
-  ].join(';');
+  const shadows = mode === 'dark' ? boxShadowsDark : boxShadows;
+  return {
+    '--color-bg': p.bg,
+    '--color-surface': p.surface,
+    '--color-text': p.text,
+    '--color-secondary': p.secondary,
+    '--color-secondary-strong': p.secondaryStrong,
+    '--color-accent': p.accent,
+    '--color-hairline': p.hairline,
+    // Glass surface tint is mode-specific (light 0.72 / dark 0.62); expose it as
+    // a percentage so component color-mix() reads one var and stays reactive.
+    '--glass-tint': `${Math.round(glass.tintOpacity[mode] * 100)}%`,
+    // Glass frame + top-edge catch-light, per mode (§3): border warm ink/cream
+    // at 8%; highlight bright white on light, barely-there on dark.
+    '--glass-border': glass.border[mode],
+    '--glass-highlight': glass.innerHighlightColor[mode],
+    // Elevation — themed box-shadow strings. Dark uses the warm-ink +opacity
+    // recipes (e4 true black); light uses the base recipes.
+    '--shadow-e1': shadows.e1,
+    '--shadow-e2': shadows.e2,
+    '--shadow-e3': shadows.e3,
+    '--shadow-e4': shadows.e4,
+    // Sheen — the ready-made 135deg specular gradient for this mode.
+    '--sheen-gradient': sheen.gradient[mode],
+  };
+}
+
+/** The per-mode custom properties as a `;`-joined CSS declaration string. */
+function paletteVars(mode: ColorMode): string {
+  return Object.entries(paletteVarRecord(mode))
+    .map(([name, value]) => `${name}:${value}`)
+    .join(';');
+}
+
+/**
+ * The per-mode custom properties as a React inline-style object (keys are the
+ * `--var` names — React passes custom properties through untouched). Powers the
+ * Design Lab's side-by-side theme islands: a `<div style={themeVarStyle(mode)}>`
+ * re-scopes every mode-reactive var to that mode for its subtree, independent of
+ * the page's own `data-theme`. Shares `paletteVarRecord`, so it is byte-for-byte
+ * consistent with the CSS emitted for `data-theme`.
+ */
+export function themeVarStyle(mode: ColorMode): Record<string, string> {
+  return paletteVarRecord(mode);
 }
 
 /** Theme-independent tokens: semantic colours, radii, spacing, dimensions. */

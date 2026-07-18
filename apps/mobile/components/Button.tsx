@@ -47,7 +47,7 @@ export function Button({
   accessibilityLabel,
   style,
 }: ButtonProps) {
-  const { colors } = useTheme();
+  const { colors, resolved } = useTheme();
   const reduced = useReducedMotionSafe();
   const scale = useSharedValue(REST_SCALE);
 
@@ -94,7 +94,8 @@ export function Button({
       {variant === 'primary' ? (
         // Diagonal specular sheen (135°), item-card + primary only per spec.
         <LinearGradient
-          colors={[sheen.from, sheen.to]}
+          colors={[sheen.from[resolved], sheen.to]}
+          locations={[0, 0.6]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           pointerEvents="none"

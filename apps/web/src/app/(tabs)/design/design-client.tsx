@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { layout, motion as motionToken, typeRamp, boxShadows } from '@era/tokens';
+import { layout, motion as motionToken, typeRamp } from '@era/tokens';
 import { Text } from '../../../components/Text';
 import { strings } from '@era/core/strings';
 import { Button } from '../../../components';
@@ -69,7 +69,7 @@ const buildPillStyle: CSSProperties = {
   color: 'var(--color-ink)',
   fontSize: typeRamp.subhead.rem,
   fontWeight: 700,
-  boxShadow: boxShadows.e2,
+  boxShadow: 'var(--shadow-e2)',
 };
 
 const buildPillCss = [
@@ -88,7 +88,7 @@ const toastStyle: CSSProperties = {
   border: '1px solid var(--color-hairline)',
   color: 'var(--color-text)',
   fontSize: typeRamp.footnote.rem,
-  boxShadow: boxShadows.e3,
+  boxShadow: 'var(--shadow-e3)',
   zIndex: 70,
 };
 
@@ -103,7 +103,7 @@ function BuildPill({ onClick }: { onClick: () => void }) {
       className="era-build-pill"
       aria-label={strings.design.newOutfit}
       style={buildPillStyle}
-      whileHover={reduced ? undefined : { boxShadow: boxShadows.e3 }}
+      whileHover={reduced ? undefined : { boxShadow: 'var(--shadow-e3)' }}
       whileTap={reduced ? undefined : { scale: 0.96 }}
       onClick={onClick}
     >

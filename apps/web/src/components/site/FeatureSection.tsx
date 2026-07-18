@@ -1,5 +1,5 @@
 import { type CSSProperties } from 'react';
-import { typeRamp, boxShadows, glass } from '@era/tokens';
+import { typeRamp } from '@era/tokens';
 import { Text } from '../Text';
 import { ScrollReveal } from './ScrollReveal';
 
@@ -22,9 +22,9 @@ const panelStyle: CSSProperties = {
   background: 'color-mix(in srgb, var(--color-surface) var(--glass-tint), transparent)',
   backdropFilter: 'blur(var(--glass-blur))',
   WebkitBackdropFilter: 'blur(var(--glass-blur))',
-  border: 'var(--glass-border-width) solid var(--color-hairline)',
+  border: 'var(--glass-border-width) solid var(--glass-border)',
   borderRadius: 'var(--radius-hero)',
-  boxShadow: `${boxShadows.e3}, inset 0 1px 0 0 ${glass.innerHighlightColor}`,
+  boxShadow: 'var(--shadow-e3), inset 0 1px 0 0 var(--glass-highlight)',
   padding: 'var(--space-12)',
   display: 'flex',
   flexDirection: 'column',

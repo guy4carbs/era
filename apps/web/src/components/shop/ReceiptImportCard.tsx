@@ -3,7 +3,7 @@
 import { type CSSProperties } from 'react';
 import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
-import { motion as motionToken, boxShadows } from '@era/tokens';
+import { motion as motionToken } from '@era/tokens';
 import { Text } from '../Text';
 import { markRead, type ReceiptImportPayload } from '../../lib/notifications-client';
 import { transitionFor } from '../../lib/motion';
@@ -62,7 +62,7 @@ export function ReceiptImportCard({ id, payload, onResolve }: ReceiptImportCardP
 const cardStyle: CSSProperties = {
   background: 'var(--color-surface)',
   borderRadius: 'var(--radius-card)',
-  boxShadow: boxShadows.e1,
+  boxShadow: 'var(--shadow-e1)',
   isolation: 'isolate',
 };
 

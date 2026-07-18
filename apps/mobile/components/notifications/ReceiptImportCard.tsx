@@ -24,7 +24,7 @@ interface ReceiptImportCardProps {
 }
 
 export function ReceiptImportCard({ notification, onOpen }: ReceiptImportCardProps) {
-  const { colors } = useTheme();
+  const { colors, resolved } = useTheme();
   const { message } = notification.payload;
 
   return (
@@ -34,7 +34,7 @@ export function ReceiptImportCard({ notification, onOpen }: ReceiptImportCardPro
       onPress={() => onOpen(notification)}
       style={[
         styles.card,
-        rnShadow('e2'),
+        rnShadow('e2', resolved),
         {
           backgroundColor: colors.surface,
           borderColor: colors.hairline,

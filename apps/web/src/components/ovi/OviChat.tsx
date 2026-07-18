@@ -10,7 +10,7 @@ import {
 } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { motion as motionToken, typeRamp, boxShadows } from '@era/tokens';
+import { motion as motionToken, typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import type { OviIntent } from '@era/core/ovi';
 import { transitionFor } from '../../lib/motion';
@@ -102,7 +102,7 @@ const oviBubbleStyle: CSSProperties = {
   background: 'var(--color-surface)',
   border: '1px solid var(--color-hairline)',
   color: 'var(--color-text)',
-  boxShadow: boxShadows.e1,
+  boxShadow: 'var(--shadow-e1)',
 };
 
 const oviTurnStyle: CSSProperties = {

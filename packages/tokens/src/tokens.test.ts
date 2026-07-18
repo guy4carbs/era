@@ -7,6 +7,8 @@ import {
   spacing,
   radii,
   typeRamp,
+  elevationDark,
+  boxShadowsDark,
   fontFamilies,
   typeRoles,
   serifGuard,
@@ -72,8 +74,8 @@ test('spacing is a 4pt scale', () => {
   }
 });
 
-test('radii match the spec', () => {
-  assert.deepEqual(radii, { chip: 8, input: 12, card: 16, sheet: 20, hero: 24 });
+test('radii match the spec (full = orb/pill saturation)', () => {
+  assert.deepEqual(radii, { chip: 8, input: 12, card: 16, sheet: 20, hero: 24, full: 9999 });
 });
 
 test('type ramp: sizes, rem = px/16, lineHeight = round(px * 1.3)', () => {
@@ -216,19 +218,67 @@ test('rnShadow returns RN props with warm ink color; e3 uses ambient layer', () 
   assert.equal(e3.shadowOpacity, 0.1); // ambient.opacity
 });
 
-test('glass, glow, sheen', () => {
+test('dark elevation: +0.04/+0.06 opacities, e4 true black at 0.45 (§3)', () => {
+  assert.equal(elevationDark.e1.opacity, elevation.e1.opacity + 0.04);
+  assert.equal(elevationDark.e2.opacity, elevation.e2.opacity + 0.04);
+  assert.equal(
+    Math.round(elevationDark.e3.ambient.opacity * 100),
+    Math.round((elevation.e3.ambient.opacity + 0.06) * 100),
+  );
+  assert.equal(
+    Math.round(elevationDark.e3.key.opacity * 100),
+    Math.round((elevation.e3.key.opacity + 0.06) * 100),
+  );
+  assert.equal(elevationDark.e4.opacity, 0.45);
+  assert.equal(boxShadowsDark.e4, '0 16px 48px rgba(0, 0, 0, 0.45)'); // true black, not ink
+  assert.ok(boxShadowsDark.e1.includes('rgba(28, 27, 25')); // e1–e3 stay warm ink
+  assert.ok(boxShadowsDark.e3.includes('0.16') && boxShadowsDark.e3.includes('0.18'));
+
+  // rnShadow honours the mode: dark e4 casts black; dark e2 gets the +0.04.
+  assert.equal(rnShadow('e4', 'dark').shadowColor, '#000000');
+  assert.equal(rnShadow('e4', 'light').shadowColor, palette.ink);
+  assert.equal(rnShadow('e2', 'dark').shadowOpacity, 0.12);
+  // Default stays light — existing callers are unchanged.
+  assert.deepEqual(rnShadow('e2'), rnShadow('e2', 'light'));
+});
+
+test('glass, glow, sheen (§3 exact numbers)', () => {
   assert.equal(glass.blur, 20);
-  assert.deepEqual(glass.tintOpacity, { light: 0.7, dark: 0.6 });
+  assert.deepEqual(glass.tintOpacity, { light: 0.72, dark: 0.62 });
   assert.equal(glass.borderWidth, 1);
-  assert.deepEqual(glass.innerHighlight, { color: '#FFFFFF', opacity: 0.08, height: 1 });
+  assert.deepEqual(glass.border, {
+    light: 'rgba(28, 27, 25, 0.08)',
+    dark: 'rgba(245, 241, 232, 0.08)',
+  });
+  assert.deepEqual(glass.innerHighlight, {
+    color: '#FFFFFF',
+    opacity: { light: 0.55, dark: 0.06 },
+    height: 1,
+  });
+  assert.deepEqual(glass.innerHighlightColor, {
+    light: 'rgba(255, 255, 255, 0.55)',
+    dark: 'rgba(255, 255, 255, 0.06)',
+  });
 
   assert.equal(glow.blurRadius, 24);
   assert.deepEqual(glow.opacity, { light: 0.28, dark: 0.4 });
   assert.deepEqual(glow.pulse, { amount: 0.1, durationMs: 3000 });
 
   assert.equal(sheen.angleDeg, 135);
-  assert.equal(sheen.from, 'rgba(255, 255, 255, 0.05)');
+  assert.equal(sheen.stopPercent, 60);
+  assert.deepEqual(sheen.from, {
+    light: 'rgba(255, 255, 255, 0.05)',
+    dark: 'rgba(255, 255, 255, 0.04)',
+  });
   assert.equal(sheen.to, 'rgba(255, 255, 255, 0)');
+  assert.equal(
+    sheen.gradient.light,
+    'linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0) 60%)',
+  );
+  assert.equal(
+    sheen.gradient.dark,
+    'linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0) 60%)',
+  );
 });
 
 test('motion springs, easing, durations, tilt', () => {

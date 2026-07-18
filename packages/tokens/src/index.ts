@@ -27,7 +27,9 @@ export {
 } from './typography.ts';
 export {
   elevation,
+  elevationDark,
   boxShadows,
+  boxShadowsDark,
   rnShadow,
   type ElevationLevel,
   type RnShadow,

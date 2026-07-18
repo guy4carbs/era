@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { layout, motion as motionToken, boxShadows } from '@era/tokens';
+import { layout, motion as motionToken } from '@era/tokens';
 import { Text } from '../Text';
 import { strings } from '@era/core/strings';
 import { transitionFor } from '../../lib/motion';
@@ -67,7 +67,7 @@ const saveBtnStyle: CSSProperties = {
   color: 'var(--color-ink)',
   fontWeight: 700,
   cursor: 'pointer',
-  boxShadow: boxShadows.e1,
+  boxShadow: 'var(--shadow-e1)',
 };
 
 const controlSlotStyle: CSSProperties = {
@@ -94,7 +94,7 @@ const toastStyle: CSSProperties = {
   borderRadius: 'var(--radius-input)',
   background: 'var(--color-surface)',
   border: '1px solid var(--color-hairline)',
-  boxShadow: boxShadows.e3,
+  boxShadow: 'var(--shadow-e3)',
   zIndex: 70,
 };
 

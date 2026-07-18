@@ -2,7 +2,7 @@
 
 import { type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { boxShadows, glow } from '@era/tokens';
+import { glow } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { useTheme } from '../lib/theme';
 import { Text } from './Text';
@@ -15,7 +15,7 @@ export interface OviFabProps {
 /** Accent glow shadow at a given opacity, layered above the e3 lift. */
 function glowShadow(opacity: number): string {
   const clamped = Math.min(1, Math.max(0, opacity));
-  return `${boxShadows.e3}, 0 0 var(--glow-blur) color-mix(in srgb, var(--color-accent) ${Math.round(
+  return `var(--shadow-e3), 0 0 var(--glow-blur) color-mix(in srgb, var(--color-accent) ${Math.round(
     clamped * 100,
   )}%, transparent)`;
 }
@@ -31,7 +31,7 @@ const fabStyle: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
-  borderRadius: '50%',
+  borderRadius: 'var(--radius-full)',
   border: 'none',
   cursor: 'pointer',
   background: 'var(--color-accent)',

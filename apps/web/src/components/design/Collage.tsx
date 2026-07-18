@@ -1,7 +1,6 @@
 'use client';
 
 import { type CSSProperties } from 'react';
-import { boxShadows } from '@era/tokens';
 
 export interface CollageProps {
   /** A composed cover, preferred when present. */
@@ -19,7 +18,7 @@ const frameStyle: CSSProperties = {
   borderRadius: 'var(--radius-card)',
   background: 'var(--color-surface)',
   border: '1px solid var(--color-hairline)',
-  boxShadow: boxShadows.e2,
+  boxShadow: 'var(--shadow-e2)',
 };
 
 const coverImgStyle: CSSProperties = {

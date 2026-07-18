@@ -37,7 +37,7 @@ interface PriceDropCardProps {
 }
 
 export function PriceDropCard({ notification, onView, onDismiss }: PriceDropCardProps) {
-  const { colors } = useTheme();
+  const { colors, resolved } = useTheme();
   const { payload } = notification;
 
   // Cents → major units for the shared price formatter (fixtures are whole).
@@ -48,7 +48,7 @@ export function PriceDropCard({ notification, onView, onDismiss }: PriceDropCard
     <View
       style={[
         styles.card,
-        rnShadow('e2'),
+        rnShadow('e2', resolved),
         {
           backgroundColor: colors.surface,
           borderColor: colors.hairline,
@@ -71,7 +71,8 @@ export function PriceDropCard({ notification, onView, onDismiss }: PriceDropCard
         />
         {/* 135° specular sheen — the premium cue shared with the shop + closet tiles. */}
         <LinearGradient
-          colors={[sheen.from, sheen.to]}
+          colors={[sheen.from[resolved], sheen.to]}
+          locations={[0, 0.6]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           pointerEvents="none"
