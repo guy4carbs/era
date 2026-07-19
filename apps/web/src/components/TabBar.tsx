@@ -3,6 +3,7 @@
 import { type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { pressProps } from '../lib/motion';
+import { glassSurfaceStyle } from './GlassPanel';
 import { Text } from './Text';
 
 export type TabId = 'feed' | 'closet' | 'design' | 'shop';
@@ -29,6 +30,7 @@ export interface TabBarProps {
 }
 
 const barStyle: CSSProperties = {
+  ...glassSurfaceStyle(),
   position: 'fixed',
   left: 0,
   right: 0,
@@ -37,10 +39,13 @@ const barStyle: CSSProperties = {
   height: 'calc(var(--tabbar-height) + env(safe-area-inset-bottom))',
   paddingBottom: 'env(safe-area-inset-bottom)',
   alignItems: 'stretch',
-  background: `color-mix(in srgb, var(--color-surface) var(--glass-tint), transparent)`,
-  backdropFilter: 'blur(var(--glass-blur))',
-  WebkitBackdropFilter: 'blur(var(--glass-blur))',
-  borderTop: 'var(--glass-border-width) solid var(--color-hairline)',
+  // Frame only the top edge; drop the recipe's all-sides border, shadow and
+  // radius. The §3 top border replaces the old `--color-hairline` for
+  // consistency with every other glass surface.
+  border: undefined,
+  boxShadow: undefined,
+  borderRadius: undefined,
+  borderTop: 'var(--glass-border-width) solid var(--glass-border)',
   zIndex: 40,
 };
 

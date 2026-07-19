@@ -24,6 +24,7 @@ import {
   type TabId,
 } from '../../components';
 import { Text } from '../../components/Text';
+import { glassSurfaceStyle } from '../../components/GlassPanel';
 import { useTheme, type ThemeMode } from '../../lib/theme';
 import { themeVarStyle } from '../../lib/theme-css';
 import { springTransition } from '../../lib/motion';
@@ -198,12 +199,13 @@ const busyDataUri = `url("data:image/svg+xml,${encodeURIComponent(BUSY_SVG.trim(
 
 /** The §3 glass recipe panel — reused by the Glass and Busy-imagery sections. */
 const glassPanelStyle: CSSProperties = {
-  background: 'color-mix(in srgb, var(--color-surface) var(--glass-tint), transparent)',
-  backdropFilter: 'blur(var(--glass-blur))',
-  WebkitBackdropFilter: 'blur(var(--glass-blur))',
-  border: 'var(--glass-border-width) solid var(--glass-border)',
-  borderRadius: 'var(--radius-sheet)',
-  boxShadow: 'var(--shadow-e4), inset 0 1px 0 0 var(--glass-highlight)',
+  ...glassSurfaceStyle(),
+  padding: 'var(--space-4)',
+};
+
+/** The busy variant of the recipe — the AA-guaranteed minimum-contrast scrim. */
+const glassBusyPanelStyle: CSSProperties = {
+  ...glassSurfaceStyle({ busy: true }),
   padding: 'var(--space-4)',
 };
 
@@ -495,6 +497,10 @@ function ComponentsIsland({ chips, onToggleChip }: { chips: Record<string, boole
 }
 
 function BusyImageryIsland() {
+  // Two panels over the SAME busy backdrop: DEFAULT glass (everyday tint) and
+  // BUSY glass (the AA-guaranteed scrim). The dark-island busy panel is the
+  // visible proof the scrim holds — its default sibling can wash out over the
+  // brightest patch, the busy one stays legible. Sample text is body role.
   return (
     <div
       style={{
@@ -506,14 +512,24 @@ function BusyImageryIsland() {
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         display: 'grid',
-        placeItems: 'center',
+        gap: 'var(--space-4)',
         padding: 'var(--space-4)',
       }}
     >
       <div style={{ ...glassPanelStyle, maxWidth: 'var(--feed-col)' }}>
-        <Text variant="body" as="p" size="footnote" style={{ margin: 0, color: 'var(--color-text)' }}>
-          Legibility check — this text sits on the glass recipe over deliberately busy imagery. The tint + blur
-          must keep it readable in both modes.
+        <Text variant="caption" as="span" size="footnote" style={{ color: 'var(--color-secondary)', textTransform: 'uppercase', letterSpacing: '0.14em' }}>
+          default glass
+        </Text>
+        <Text variant="body" as="p" style={{ margin: 'var(--space-1) 0 0', color: 'var(--color-text)' }}>
+          The everyday tint, over deliberately busy imagery.
+        </Text>
+      </div>
+      <div style={{ ...glassBusyPanelStyle, maxWidth: 'var(--feed-col)' }}>
+        <Text variant="caption" as="span" size="footnote" style={{ color: 'var(--color-secondary)', textTransform: 'uppercase', letterSpacing: '0.14em' }}>
+          busy glass · AA scrim
+        </Text>
+        <Text variant="body" as="p" style={{ margin: 'var(--space-1) 0 0', color: 'var(--color-text)' }}>
+          The minimum-contrast scrim — legible over any backdrop.
         </Text>
       </div>
     </div>
@@ -624,7 +640,7 @@ export default function DesignLabPage() {
           <IslandPair content={() => <MotionPlayground />} />
         </Section>
 
-        <Section title="Glass over busy imagery" note="A deterministic feTurbulence + gradient background (no assets) with the glass panel floating over it — legibility of the tint + blur, verifiable in both modes.">
+        <Section title="Glass over busy imagery" note="A deterministic feTurbulence + gradient background (no assets) with TWO panels floating over it — default glass and the busy AA scrim. The dark busy panel is the visible proof the scrim keeps text legible over any backdrop.">
           <IslandPair content={() => <BusyImageryIsland />} />
         </Section>
 

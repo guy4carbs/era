@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken } from '@era/tokens';
 import { Container, OviFab, TabBar, TAB_ITEMS, type TabId } from '../../components';
+import { glassSurfaceStyle } from '../../components/GlassPanel';
 import { OviChatProvider, useOviChat } from '../../components/ovi';
 import { AnalyticsIdentity } from '../../components/system/AnalyticsIdentity';
 import { Text } from '../../components/Text';
@@ -33,7 +34,13 @@ function activeTabFrom(pathname: string): TabId {
 // `.era-rail` rule owns it (none below lg, flex at/above), so this inline style
 // must not override the toggle. Flex properties stay inert until the class turns
 // display on.
+//
+// The rail is glass too (consistency — the whole nav chrome is one material).
+// It takes the recipe's fill (tint + blur+saturate) but frames only its right
+// edge: radius 0 and no shadow (content never scrolls under a full-height rail,
+// so no lift is needed), the all-sides border replaced by a single §3 divider.
 const railStyle: CSSProperties = {
+  ...glassSurfaceStyle(),
   position: 'fixed',
   top: 0,
   left: 0,
@@ -43,8 +50,12 @@ const railStyle: CSSProperties = {
   gap: 'var(--space-2)',
   paddingTop: 'var(--space-8)',
   paddingInline: 'var(--space-2)',
-  borderRight: 'var(--glass-border-width) solid var(--color-hairline)',
-  background: 'var(--color-bg)',
+  // Frame only the right edge; drop the recipe's all-sides border, shadow and
+  // radius (content never scrolls under a full-height rail — no lift needed).
+  border: undefined,
+  boxShadow: undefined,
+  borderRight: 'var(--glass-border-width) solid var(--glass-border)',
+  borderRadius: 0,
   zIndex: 40,
 };
 
