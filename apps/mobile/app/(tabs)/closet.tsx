@@ -14,12 +14,14 @@ import { layout, spacing } from '@era/tokens';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, SectionList, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
 import { ScreenEntrance } from '@/components/ScreenEntrance';
 import { StaggerItem } from '@/components/StaggerItem';
 import { Text } from '@/components/Text';
+import { useTabBarVisibility } from '@/components/TabBarVisibility';
 import { ClosetHeader, CutoutTile, ItemDetailSheet, SettingsGear, Toast } from '@/components/closet';
 import { fetchItems, type ItemWithDisplay } from '@/components/items';
 import { CATEGORIES, type ItemCategory } from '@/components/items/constants';
@@ -28,11 +30,16 @@ import { useTheme } from '@/lib/theme';
 
 type LoadState = 'loading' | 'ready' | 'error';
 
+// The section list, reanimated-wrapped so its scroll can drive the tab bar's
+// hide-on-scroll via a UI-thread `useAnimatedScrollHandler` (no per-frame JS).
+const AnimatedSectionList = Animated.createAnimatedComponent(SectionList<ItemWithDisplay[]>);
+
 // Route files require a default export — expo-router discovers screens this way.
 export default function ClosetScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const visibility = useTabBarVisibility();
 
   const [items, setItems] = useState<readonly ItemWithDisplay[]>([]);
   const [state, setState] = useState<LoadState>('loading');
@@ -168,8 +175,10 @@ export default function ClosetScreen() {
   return (
     <ScreenEntrance>
       <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
-        <SectionList
+        <AnimatedSectionList
           sections={sections}
+          onScroll={visibility?.scrollHandler}
+          scrollEventThrottle={16}
           keyExtractor={(row, index) => `${row[0]?.id ?? 'row'}-${index}`}
           renderItem={({ item: row, index }) => (
             <StaggerItem index={index}>

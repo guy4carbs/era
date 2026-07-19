@@ -53,6 +53,7 @@
     "@babel/core": "^7.25.0",
     "@era/eslint-config": "workspace:*",
     "@era/typescript-config": "workspace:*",
+    "@expo/ngrok": "^4.1.0",
     "@types/react": "~19.2.0",
     "babel-preset-expo": "~57.0.1",
     "eas-cli": "^20.5.1",

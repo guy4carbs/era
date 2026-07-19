@@ -24,6 +24,7 @@ import * as Haptics from 'expo-haptics';
 import * as Linking from 'expo-linking';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
@@ -31,6 +32,7 @@ import { Press } from '@/components/Press';
 import { ScreenEntrance } from '@/components/ScreenEntrance';
 import { StaggerItem } from '@/components/StaggerItem';
 import { Text } from '@/components/Text';
+import { useTabBarVisibility } from '@/components/TabBarVisibility';
 import {
   EMPTY_FILTERS,
   filtersFromQuery,
@@ -63,10 +65,15 @@ type ShopView = 'forYou' | 'saved';
 // Load the next page a little before the very end so the grid feels continuous.
 const END_REACHED_THRESHOLD = 0.6;
 
+// The product list, reanimated-wrapped so its scroll drives the tab bar's
+// hide-on-scroll via a UI-thread `useAnimatedScrollHandler` (no per-frame JS).
+const AnimatedFlatList = Animated.createAnimatedComponent(FlatList<ShopCardProduct>);
+
 // Route files require a default export — expo-router discovers screens this way.
 export default function ShopScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const visibility = useTabBarVisibility();
 
   const [filters, setFilters] = useState<ShopFilterState>(EMPTY_FILTERS);
   const [products, setProducts] = useState<readonly RankedProduct[]>([]);
@@ -335,8 +342,10 @@ export default function ShopScreen() {
   return (
     <ScreenEntrance>
       <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
-      <FlatList
+      <AnimatedFlatList
         data={data}
+        onScroll={visibility?.scrollHandler}
+        scrollEventThrottle={16}
         keyExtractor={(product) => product.id}
         renderItem={({ item, index }) => (
           <StaggerItem index={index}>

@@ -11,12 +11,14 @@ import { strings } from '@era/core/strings';
 import { layout, spacing } from '@era/tokens';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
 import { ScreenEntrance } from '@/components/ScreenEntrance';
 import { Text } from '@/components/Text';
+import { useTabBarVisibility } from '@/components/TabBarVisibility';
 import { Toast } from '@/components/closet';
 import {
   createEra,
@@ -44,6 +46,7 @@ function chunk<T>(list: readonly T[], size: number): T[][] {
 export default function DesignScreen() {
   const { colors } = useTheme();
   const router = useRouter();
+  const visibility = useTabBarVisibility();
 
   const [outfits, setOutfits] = useState<readonly OutfitSummary[]>([]);
   const [eras, setEras] = useState<readonly EraSummary[]>([]);
@@ -133,8 +136,10 @@ export default function DesignScreen() {
   return (
     <ScreenEntrance>
       <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
-        <ScrollView
+        <Animated.ScrollView
           contentContainerStyle={styles.content}
+          onScroll={visibility?.scrollHandler}
+          scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
@@ -155,7 +160,7 @@ export default function DesignScreen() {
           ))}
 
           <EraSection eras={eras} busy={busy} onCreate={onCreateEra} />
-        </ScrollView>
+        </Animated.ScrollView>
 
         <Toast message={toast} onHide={() => setToast(null)} bottom={layout.tabBarHeight + spacing.s6} />
       </SafeAreaView>
