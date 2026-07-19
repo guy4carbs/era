@@ -334,6 +334,27 @@ function describePiece(item: OviItem): string {
   return `the ${item.category}`;
 }
 
+/**
+ * The reveal ritual's one editorial line (D9) — short enough to sit in italic
+ * under the composed card, e.g. "68° and sunny — the cream knit wants out."
+ * Deterministic, in Ovi's voice, degrading honestly: weatherless drops the
+ * clause, focal-less drops the piece. Never fabricates a condition or an item.
+ */
+export function composeRevealLine(weather: Weather | null, focal: OviItem | null): string {
+  const piece = focal ? describePiece(focal) : null;
+  if (weather && piece) {
+    return `${Math.round(weather.tempC)}° and ${weather.condition.toLowerCase()} — ${piece} wants out.`;
+  }
+  if (piece) {
+    const capitalized = piece.charAt(0).toUpperCase() + piece.slice(1);
+    return `${capitalized} wants out today.`;
+  }
+  if (weather) {
+    return `${Math.round(weather.tempC)}° and ${weather.condition.toLowerCase()} — today's look is ready.`;
+  }
+  return "Today's look is ready.";
+}
+
 /** A weather-aware clause when conditions are present, else empty. */
 function weatherClause(weather: Weather | null): string {
   if (!weather) {

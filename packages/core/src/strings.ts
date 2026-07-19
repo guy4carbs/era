@@ -2236,6 +2236,24 @@ export const strings = {
     watermarkDomain: 'era.style',
   },
 
+  /**
+   * The Today's Look reveal — the daily ritual (D9). One staged moment: the
+   * cream canvas, the look assembling piece by piece, the settle into a
+   * composed card with Ovi's one italic line.
+   */
+  reveal: {
+    /** The Fraunces line over the cream canvas. Just the day, nothing more. */
+    title: 'Today',
+    /** Primary quiet action on the composed card — saves the look AND logs the wear. */
+    wearCta: 'Wear it',
+    /** Secondary quiet action — declines today's look, calmly. */
+    elseCta: 'Something else',
+    /** Share affordance on the composed card (Stories-sized export). */
+    shareCta: 'Share',
+    /** A11y label on the reveal stage — a tap anywhere skips to the composed card. */
+    skipA11y: 'Skip to the finished look',
+  },
+
 } as const;
 
 /** The shape of the full copy deck — for typing consumers and adapters. */

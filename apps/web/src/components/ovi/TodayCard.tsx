@@ -2,14 +2,13 @@
 
 import { useEffect, useState, type CSSProperties } from 'react';
 import { AnimatePresence } from 'motion/react';
-import { useRouter } from 'next/navigation';
 import { strings } from '@era/core/strings';
 import type { ProposedOutfit } from '@era/core/ovi';
 import { useSession } from '../../lib/auth-client';
-import { viewTransition } from '../../lib/motion';
+import { localToday } from '../../lib/local-date';
 import { Text } from '../Text';
-import { OutfitCard } from './OutfitCard';
 import { OviToast, OVI_TOAST_MS } from './OviToast';
+import { RevealStage } from './RevealStage';
 import { fetchOviToday } from './ovi-actions';
 import { useOviChat } from './OviChatProvider';
 import type { OviWeather } from './types';
@@ -17,13 +16,41 @@ import type { OviWeather } from './types';
 type LoadState =
   | { status: 'loading' }
   | { status: 'error' }
-  | { status: 'ready'; reply: string; outfit: ProposedOutfit | null; weather: OviWeather | null };
+  | {
+      status: 'ready';
+      outfit: ProposedOutfit | null;
+      weather: OviWeather | null;
+      revealLine: string | null;
+    };
 
 const sectionStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: 'var(--space-3)',
 };
+
+/** localStorage key holding the LOCAL date the reveal was last seen (YYYY-MM-DD). */
+const REVEAL_SEEN_KEY = 'era-reveal-seen';
+
+/** SSR-safe read of the last-seen reveal date; null off-DOM or on any failure. */
+function readRevealSeen(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage.getItem(REVEAL_SEEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+/** SSR-safe write of today's date as the last-seen reveal day. Best-effort. */
+function markRevealSeen(day: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(REVEAL_SEEN_KEY, day);
+  } catch {
+    // Private mode / disabled storage: the reveal just re-stages next mount.
+  }
+}
 
 /** Round a coordinate to ~1 decimal (~11 km) before it leaves the device. */
 function coarse(value: number): number {
@@ -47,23 +74,33 @@ function getCoarseLocation(): Promise<{ lat: number; lon: number } | null> {
 }
 
 /**
- * The Feed's daily hero: Ovi's weather-aware suggestion for today. On mount it
- * asks for a coarse location (rounded before it ever leaves the device), fetches
- * today's look, and renders it as the same tappable OutfitCard the chat uses —
- * Save persists it, Not today records a soft reject and retreats gracefully.
- * A sparse closet (or a denied location) still resolves to an honest state.
+ * The Feed's daily hero — Era's signature Today ritual (D9). On mount it resolves
+ * a coarse location (rounded before it leaves the device), fetches today's look,
+ * and hands it to the {@link RevealStage}. The FIRST view of a given local day
+ * plays the staged assembly (cutouts landing one by one, then the settle); every
+ * later view that day opens straight on the composed card (`initiallySettled`),
+ * so there is ONE Today surface, not two. The once-per-day gate lives in
+ * `localStorage` (`era-reveal-seen` = the local YYYY-MM-DD), marked after the
+ * sequence settles or is skipped.
+ *
+ * A sparse closet (no look) or a hard fetch failure still resolves to an honest
+ * state: the hero simply doesn't render the stage.
  */
 export function TodayCard() {
   const { data: session, isPending } = useSession();
   const { itemsById } = useOviChat();
-  const router = useRouter();
 
   const [state, setState] = useState<LoadState>({ status: 'loading' });
   const [dismissed, setDismissed] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  // The coarse location resolved for the weather lookup, reused for the wear log
-  // so "Wore it today" captures the same weather snapshot without re-prompting.
   const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
+  // Whether today's reveal has already been seen — decides staged vs. settled.
+  // Read once on mount (SSR-safe); the stage marks it after it completes.
+  const [alreadySeen, setAlreadySeen] = useState(false);
+
+  useEffect(() => {
+    setAlreadySeen(readRevealSeen() === localToday());
+  }, []);
 
   useEffect(() => {
     if (isPending || !session) return;
@@ -75,7 +112,12 @@ export function TodayCard() {
       if (!active) return;
       setState(
         res
-          ? { status: 'ready', reply: res.reply, outfit: res.outfit, weather: res.weather }
+          ? {
+              status: 'ready',
+              outfit: res.outfit,
+              weather: res.weather,
+              revealLine: res.revealLine,
+            }
           : { status: 'error' },
       );
     })();
@@ -96,9 +138,8 @@ export function TodayCard() {
   if (state.status === 'loading') {
     return (
       <section style={sectionStyle} aria-busy="true">
-        {/* Ovi's daily editorial greeting — serif title (Fraunces) */}
-        <Text variant="title" as="h2">
-          {strings.ovi.todayTitle}
+        <Text variant="largeTitle" as="h2">
+          {strings.reveal.title}
         </Text>
         <Text variant="oviAccent" size="subhead" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
           {strings.ovi.thinking}
@@ -111,43 +152,29 @@ export function TodayCard() {
 
   return (
     <section style={sectionStyle}>
-      {/* Ovi's daily editorial greeting — serif title (Fraunces) */}
-      <Text variant="title" as="h2">
-        {strings.ovi.todayTitle}
-      </Text>
-
-      {hasOutfit ? (
-        <>
-          <Text variant="body" size="subhead" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
-            {state.reply}
-          </Text>
-          <AnimatePresence>
-            {state.outfit ? (
-              <OutfitCard
-                outfit={state.outfit}
-                itemsById={itemsById}
-                intent="today"
-                weatherLead={
-                  state.weather
-                    ? strings.ovi.weatherLine(state.weather.tempC, state.weather.condition)
-                    : null
-                }
-                onSaved={setToast}
-                onDismissed={() => {
-                  setToast(strings.ovi.rejected);
-                  setDismissed(true);
-                }}
-                onOpen={(outfitId) => viewTransition(() => router.push(`/design/canvas?outfit=${outfitId}`))}
-                wearSurface="today_card"
-                wearLocation={location}
-              />
-            ) : null}
-          </AnimatePresence>
-        </>
+      {hasOutfit && state.outfit ? (
+        <AnimatePresence>
+          <RevealStage
+            outfit={state.outfit}
+            itemsById={itemsById}
+            revealLine={state.revealLine}
+            weather={state.weather}
+            initiallySettled={alreadySeen}
+            wearLocation={location}
+            onRevealComplete={() => markRevealSeen(localToday())}
+            onToast={setToast}
+            onDismissed={() => setDismissed(true)}
+          />
+        </AnimatePresence>
       ) : (
-        <Text variant="body" size="subhead" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
-          {dismissed ? strings.ovi.suggestionDeclined : strings.ovi.todayEmpty}
-        </Text>
+        <>
+          <Text variant="largeTitle" as="h2">
+            {strings.reveal.title}
+          </Text>
+          <Text variant="body" size="subhead" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
+            {dismissed ? strings.ovi.suggestionDeclined : strings.ovi.todayEmpty}
+          </Text>
+        </>
       )}
 
       <AnimatePresence>{toast ? <OviToast message={toast} /> : null}</AnimatePresence>

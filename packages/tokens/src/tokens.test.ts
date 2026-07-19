@@ -305,6 +305,15 @@ test('motion choreography: press, stagger, pageRise (§3 exact)', () => {
   assert.deepEqual(motion.pageRise, { yPx: 6 });
   // D6 header choreography — title rises 8px, subtitle trails by 60ms.
   assert.deepEqual(motion.headerRise, { yPx: 8, subtitleDelayMs: 60 });
+  // D9 reveal ritual — the 5-slot worst case must fit the 2.5s gift-budget.
+  assert.deepEqual(motion.reveal, {
+    itemIntervalMs: 350,
+    shadowLagMs: 120,
+    settleMs: 400,
+    maxTotalMs: 2500,
+  });
+  assert.ok(5 * motion.reveal.itemIntervalMs + motion.reveal.settleMs <= motion.reveal.maxTotalMs);
+  assert.ok(motion.reveal.shadowLagMs < motion.reveal.itemIntervalMs);
   // The stagger delay must never let a long list exceed the 350ms feel-budget
   // for its FIRST page of items (~8 visible): 8 * 45 = 360 ≈ the ceiling.
   assert.ok(motion.stagger.delayMs * 8 <= motion.durations.maxMs + motion.stagger.delayMs);
