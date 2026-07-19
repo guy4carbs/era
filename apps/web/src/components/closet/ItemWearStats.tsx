@@ -32,6 +32,14 @@ const rowStyle: CSSProperties = {
   gap: 'var(--space-1)',
 };
 
+// The cost-per-wear figure: serif numerals stacked over their quiet label, held
+// tight so they read as one editorial unit within the wear-stats row.
+const cpwBlockStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-1)',
+};
+
 /**
  * The item-detail wear stats block: a natural-language wear count, the piece's
  * cost per wear (or a gentle invite to add its price), and a one-tap "Wore it
@@ -79,10 +87,18 @@ export function ItemWearStats({ item }: ItemWearStatsProps) {
           {strings.wear.count(stats.wearCount)}
         </Text>
         {priceUsable ? (
+          // A real cost per wear reads as an editorial figure: the amount in
+          // Fraunces numerals (title role) with a quiet "per wear" caption
+          // beneath. A null cpw renders NOTHING — absence over a dash.
           cpw !== null ? (
-            <Text variant="caption" size="subhead" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
-              {strings.wear.costPerWear(formatMoney(cpw, item.currency))}
-            </Text>
+            <div style={cpwBlockStyle}>
+              <Text variant="title" as="span" style={{ margin: 0, color: 'var(--color-text)' }}>
+                {formatMoney(cpw, item.currency)}
+              </Text>
+              <Text variant="caption" size="footnote" as="span" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
+                {strings.closet.costPerWearLabel}
+              </Text>
+            </div>
           ) : null
         ) : (
           <Text variant="caption" size="subhead" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>

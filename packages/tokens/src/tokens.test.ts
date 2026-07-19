@@ -323,10 +323,14 @@ test('layout: touch targets, grid, phi split, sheet peek, breakpoints', () => {
     lift: { yPx: -4, scale: 1.02 },
     warmToneOpacity: 0.01,
   });
+  // D8 editorial gutter — vertical ≈ phi × horizontal, on the 4pt grid.
+  assert.ok(Math.abs(layout.grid.gutterTall / layout.grid.gutter - layout.phi) < 0.05);
+  assert.equal(layout.grid.gutterTall % baseUnit, 0);
   assert.deepEqual(layout.grid, {
     mobileColumns: 2,
     mobileMargin: 16,
     gutter: 12,
+    gutterTall: 20,
     desktopColumnsMin: 4,
     desktopColumnsMax: 6,
   });

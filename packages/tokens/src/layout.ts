@@ -35,6 +35,10 @@ export const layout = {
     mobileColumns: 2,
     mobileMargin: 16,
     gutter: 12,
+    // gutterTall — the editorial vertical gutter (D8 closet gallery): rows
+    // breathe at ~phi × the horizontal gutter (12 × 1.618 ≈ 19.4 → 20 on the
+    // 4pt grid), so the spread reads like a magazine page, not a spreadsheet.
+    gutterTall: 20,
     desktopColumnsMin: 4,
     desktopColumnsMax: 6,
   },

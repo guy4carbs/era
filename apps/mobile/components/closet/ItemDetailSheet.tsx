@@ -477,7 +477,10 @@ const styles = StyleSheet.create({
     borderRadius: radii.hero,
     borderWidth: StyleSheet.hairlineWidth,
     borderCurve: 'continuous',
-    padding: spacing.s4,
+    // A slim cream margin (s2) rather than a thick frame (s4), so the piece reads
+    // LARGE on the cream surface — the detail's editorial hero. The aspect ratio
+    // is still reserved on the image below, so nothing shifts as it loads.
+    padding: spacing.s2,
     alignItems: 'center',
   },
   heroImage: {
