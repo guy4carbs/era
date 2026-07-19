@@ -10,7 +10,7 @@ import {
 } from 'react';
 import { motion as fmotion, useReducedMotion } from 'motion/react';
 import { useRouter } from 'next/navigation';
-import { motion as motionToken } from '@era/tokens';
+import { elevation, motion as motionToken, spacing } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { slotForCategory, type OutfitSlot, type ProposedOutfit } from '@era/core/ovi';
 
@@ -19,7 +19,6 @@ import { analytics, trackFirstOnce } from '../../lib/analytics';
 import { useSession } from '../../lib/auth-client';
 import { Text } from '../Text';
 import { Button } from '../Button';
-import { ItemSurface } from '../items/ItemSurface';
 import { acceptOutfit, logWear, rejectOutfit } from './ovi-actions';
 import { exportTodayStory } from './reveal-export';
 import type { ItemsById, OviWeather } from './types';
@@ -163,6 +162,29 @@ const actionsStyle: CSSProperties = {
   flexWrap: 'wrap',
 };
 
+// The soft ground shadow a piece lands on — warm ink squashed to an ellipse at
+// the e4 token opacity (the Stories export's grammar), softened by a
+// token-derived blur. A whisper of ground contact, never a painted smear.
+const groundShadowOpacity = elevation.e4.opacity;
+const groundShadowStyle: CSSProperties = {
+  position: 'absolute',
+  left: '19%',
+  right: '19%',
+  bottom: '2%',
+  height: '7%',
+  borderRadius: 'var(--radius-full)',
+  background: 'var(--color-ink)',
+  filter: `blur(${spacing.s3}px)`,
+};
+
+// The bare garment fills its reserved box — no card chrome on the stage.
+const cutoutImgStyle: CSSProperties = {
+  width: '100%',
+  height: '100%',
+  objectFit: 'contain',
+  display: 'block',
+};
+
 const pieceWrapStyle: CSSProperties = {
   position: 'absolute',
   inset: 0,
@@ -214,22 +236,20 @@ function StackPiece({
         transition={spring}
         style={{ position: 'relative', width: '78%', height: '78%' }}
       >
-        {/* The shadow lands a beat AFTER the piece: the token dual shadow (e4)
-            fading in under the card — never a painted dark shape (the original
-            blurred ink plate read as a smear; user-rejected 2026-07-19). */}
+        {/* The GARMENT layers, not a card — a stack of full ItemSurface cards
+            buried each other (user: "what is this for" at a blank card corner,
+            2026-07-19). The stage now matches the Stories export's grammar:
+            the bare cutout on the cream canvas, landing on a soft ground
+            shadow a beat later (ink at the e3-ambient token opacity — a
+            whisper, never the full-opacity smear that was rejected earlier). */}
         <fmotion.div
           aria-hidden="true"
           initial={{ opacity: 0 }}
-          animate={{ opacity: revealed ? 1 : 0 }}
+          animate={{ opacity: revealed ? groundShadowOpacity : 0 }}
           transition={{ ...spring, delay: revealed ? shadowDelay : 0 }}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            borderRadius: 'var(--radius-card)',
-            boxShadow: 'var(--shadow-e4)',
-          }}
+          style={groundShadowStyle}
         />
-        <ItemSurface src={piece.url} alt={piece.name} interactive="none" />
+        {piece.url ? <img src={piece.url} alt={piece.name} style={cutoutImgStyle} /> : null}
       </fmotion.div>
     </div>
   );
