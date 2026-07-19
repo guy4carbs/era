@@ -39,7 +39,10 @@ const ALLOWED_FILES: readonly RegExp[] = [
 const HEX_RE = /#[0-9a-fA-F]{3,8}\b/;
 const SHADOW_LINE_RE = /box-?[sS]hadow/;
 const SHADOW_LITERAL_RE = /rgba?\(|#[0-9a-fA-F]{3}/;
+// A literal radius is a violation UNLESS it is bare zero — "no rounding" is
+// the absence of a design value, not a hardcoded one (e.g. the glass rail).
 const RADIUS_LITERAL_RE = /border-?[rR]adius['"]?:\s*['"`]?\d/;
+const RADIUS_ZERO_RE = /border-?[rR]adius['"]?:\s*['"`]?0(?![.\d])/;
 
 function walk(dir: string, out: string[] = []): string[] {
   for (const entry of readdirSync(dir)) {
@@ -80,7 +83,7 @@ test('design tokens: no hardcoded hex / shadow / radius outside packages/tokens'
       if (SHADOW_LINE_RE.test(line) && SHADOW_LITERAL_RE.test(line)) {
         violations.push(`${rel}:${index + 1} shadow-literal → ${line.trim().slice(0, 90)}`);
       }
-      if (RADIUS_LITERAL_RE.test(line)) {
+      if (RADIUS_LITERAL_RE.test(line) && !RADIUS_ZERO_RE.test(line)) {
         violations.push(`${rel}:${index + 1} radius-literal → ${line.trim().slice(0, 90)}`);
       }
     });
