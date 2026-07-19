@@ -27,6 +27,8 @@ import {
 } from '../../components';
 import { Text } from '../../components/Text';
 import { glassSurfaceStyle } from '../../components/GlassPanel';
+import { RevealStage } from '../../components/ovi';
+import type { ProposedOutfit } from '@era/core/ovi';
 import { useTheme, type ThemeMode } from '../../lib/theme';
 import { themeVarStyle } from '../../lib/theme-css';
 import { springTransition } from '../../lib/motion';
@@ -599,6 +601,70 @@ function ItemLiveSpecimen({ category }: { category: (typeof ITEM_CATEGORIES)[num
   );
 }
 
+// -----------------------------------------------------------------------------
+// Reveal ritual specimen (D9) — a replayable Today's Look reveal on lab assets.
+// -----------------------------------------------------------------------------
+
+/**
+ * The five lab cutouts cast as a real ItemsById map, in the stylist's slot
+ * vocabulary (bag → the accessory slot). Ids are lab-scoped on purpose: the
+ * settled card's actions call the REAL endpoints, and since these ids are not
+ * in anyone's closet, "Wear it" declines honestly server-side — the specimen
+ * can never write fake data.
+ */
+const REVEAL_LAB_ITEMS: ReadonlyMap<string, { displayUrl: string; name: string; category: string }> =
+  new Map([
+    ['lab-shoes', { displayUrl: '/design-lab/cutouts/shoes.png', name: 'White leather sneakers', category: 'shoes' }],
+    ['lab-bottom', { displayUrl: '/design-lab/cutouts/bottom.png', name: 'Camel wool trousers', category: 'bottom' }],
+    ['lab-top', { displayUrl: '/design-lab/cutouts/top.png', name: 'Cream cashmere knit', category: 'top' }],
+    ['lab-outerwear', { displayUrl: '/design-lab/cutouts/outerwear.png', name: 'Camel overcoat', category: 'outerwear' }],
+    ['lab-accessory', { displayUrl: '/design-lab/cutouts/accessory.png', name: 'Tan leather tote', category: 'bag' }],
+  ]);
+
+const REVEAL_LAB_OUTFIT: ProposedOutfit = {
+  name: "Today's look",
+  occasion: 'today',
+  itemIds: ['lab-top', 'lab-bottom', 'lab-shoes', 'lab-outerwear', 'lab-accessory'],
+  rationale: 'A lab look — five pieces so the full slot order plays.',
+};
+
+const REVEAL_LAB_LINE = '18° and sunny — the cream cashmere knit wants out.';
+const REVEAL_LAB_WEATHER = { tempC: 18, condition: 'Sunny' };
+
+/**
+ * One replayable reveal per island: the full staged ritual (cream canvas →
+ * assembly → settle) on the lab cutouts, with no once-per-day gate — the
+ * Replay button remounts the stage via a key so the sequence runs again.
+ * Reduced motion shows the cross-fade version, exactly as in the app.
+ */
+function RevealRitualIsland() {
+  const [run, setRun] = useState(0);
+  const [note, setNote] = useState<string | null>(null);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+      <RevealStage
+        key={run}
+        outfit={REVEAL_LAB_OUTFIT}
+        itemsById={REVEAL_LAB_ITEMS}
+        revealLine={REVEAL_LAB_LINE}
+        weather={REVEAL_LAB_WEATHER}
+        onToast={(message) => setNote(message)}
+        onDismissed={() => setNote('Dismissed — replay to stage it again.')}
+      />
+      <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
+        <Button variant="secondary" onClick={() => { setNote(null); setRun((n) => n + 1); }}>
+          Replay the reveal
+        </Button>
+        {note ? (
+          <Text variant="caption" as="span" size="footnote" style={{ margin: 0, color: 'var(--color-secondary-strong)' }} role="status">
+            {note}
+          </Text>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 /**
  * The Item Engine matrix inside one mode island: rows = the six garment
  * categories, columns = the four forced states (rest / lift / tilt / selected),
@@ -779,6 +845,13 @@ export default function DesignLabPage() {
           note="The D7 hero object (ItemSurface): 4:5 cutout card with hairline + dual shadow + 135° sheen + 1% warm tone. Rows = six categories; columns = forced states (rest / lift / tilt / selected), rendered statically. One live full-tilt specimen per island. Cutouts fall back to quiz stand-ins until real PNGs land in public/design-lab/cutouts/."
         >
           <IslandPair content={() => <ItemEngineIsland />} />
+        </Section>
+
+        <Section
+          title="Reveal ritual"
+          note="The D9 Today's Look reveal on the lab cutouts: cream canvas → the look assembles slot by slot (gentle springs, each shadow landing 120ms behind its piece, ≤2.5s, tap to skip) → settles into the composed card with Ovi's italic line. Replay runs it again — no once-per-day gate here. The card's actions hit the real endpoints; the lab pieces aren't in a closet, so Wear it declines honestly."
+        >
+          <IslandPair content={() => <RevealRitualIsland />} />
         </Section>
 
         <Section title="Components" note="Button variants, Chip, Input, Card — in both islands.">
