@@ -246,7 +246,9 @@ test('dark elevation: +0.04/+0.06 opacities, e4 true black at 0.45 (§3)', () =>
 test('glass, glow, sheen (§3 exact numbers)', () => {
   assert.equal(glass.blur, 20);
   assert.equal(glass.saturate, 1.1); // garments glow slightly through glass
-  assert.deepEqual(glass.tintOpacity, { light: 0.72, dark: 0.62 });
+  // Tuned from the §3 doc's 0.72/0.62 per user taste (2026-07-18) — more
+  // translucent chrome glass; AA still guaranteed (asserted below).
+  assert.deepEqual(glass.tintOpacity, { light: 0.6, dark: 0.55 });
   assert.deepEqual(glass.busyTintOpacity, { light: 0.72, dark: 0.88 });
   assert.equal(glass.borderWidth, 1);
   assert.deepEqual(glass.border, {

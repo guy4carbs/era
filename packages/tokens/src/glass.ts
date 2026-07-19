@@ -14,9 +14,15 @@ export const glass = {
   // exposes no saturation control — iOS system materials already apply mild
   // vibrancy, so the divergence is cosmetic and documented, not hidden.
   saturate: 1.1,
+  // TUNED 2026-07-18 (user call, on-device): the §3 doc's 0.72/0.62 read as a
+  // heavy frosted strip over the app's own chrome — dialed more translucent so
+  // content ghosts through. Light 0.60 STILL clears AA over a worst-case black
+  // backdrop (5.46:1, asserted in tests), so default light glass keeps the
+  // any-backdrop guarantee; dark chrome glass is dark-on-dark (trivially AA).
+  // Imagery surfaces use busyTintOpacity below, which stays AA-locked.
   tintOpacity: {
-    light: 0.72,
-    dark: 0.62,
+    light: 0.6,
+    dark: 0.55,
   },
   // busyTintOpacity — the minimum-contrast scrim strength for glass floating
   // over BUSY backdrops (imagery: cutouts, try-on renders, photos). Surfaces
