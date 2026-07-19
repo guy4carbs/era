@@ -230,7 +230,9 @@ const cardStyle: CSSProperties = {
 
 const imageLinkStyle: CSSProperties = {
   display: 'block',
-  aspectRatio: '4 / 5',
+  // Reserve the 4:5 image box from the item-card token before the (lazy) product
+  // photo loads (D6 CLS): the grid never reflows as photos stream in.
+  aspectRatio: layout.itemCard.aspectRatio,
   background: 'var(--color-surface)',
   borderBottom: '1px solid var(--color-hairline)',
   // Belt-and-suspenders: even if a bare alt string ever surfaced here, it can

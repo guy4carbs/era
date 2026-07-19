@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties }
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken, layout } from '@era/tokens';
 import { Text } from '../Text';
+import { PageHeader } from '../PageHeader';
 import { strings } from '@era/core/strings';
 import type { RankedProduct, WardrobeGap } from '@era/core/shop';
 import { pressProps, transitionFor, useStagger } from '../../lib/motion';
@@ -174,42 +175,47 @@ export function ShopBrowser() {
     <main style={screenStyle}>
       <style>{gridCss}</style>
 
-      <header style={headerStyle}>
-        <Text variant="largeTitle" as="h1" weight={700} style={{ margin: 0 }}>{strings.shop.title}</Text>
-        <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-text)' }}>{strings.shop.intro}</Text>
-        {/* Affiliate disclosure — VISIBLE at the top of the tab at all times
-            (Shield/Ledger require it present and legible). */}
-        <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-secondary)' }}>{strings.shop.affiliateDisclosure}</Text>
-      </header>
+      <PageHeader title={strings.shop.title} subtitle={strings.shop.subtitle} />
 
-      <ViewToggle view={view} onChange={setView} />
+      <div style={sectionsStyle}>
+        <header style={headerStyle}>
+          <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-text)' }}>{strings.shop.intro}</Text>
+          {/* Affiliate disclosure — VISIBLE at the top of the tab at all times
+              (Shield/Ledger require it present and legible). */}
+          <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-secondary)' }}>{strings.shop.affiliateDisclosure}</Text>
+        </header>
 
-      {view === 'browse' ? (
-        <>
-          <GapsHero onFill={handleFillGap} />
+        <div style={browseSectionStyle}>
+          <ViewToggle view={view} onChange={setView} />
 
-          <ShopFilters filters={filters} onChange={setFilters} />
+          {view === 'browse' ? (
+            <>
+              <GapsHero onFill={handleFillGap} />
 
-          {status !== 'error' ? (
-            <Text variant="ui" as="p" size="footnote" weight={600} style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{strings.shop.sortRelevance}</Text>
-          ) : null}
+              <ShopFilters filters={filters} onChange={setFilters} />
 
-          <Body
-            status={status}
-            visible={visible}
-            saved={saved}
-            hasMore={hasMore}
-            loadingMore={loadingMore}
-            reduced={reduced}
-            onDismiss={handleDismiss}
-            onToggleSave={handleToggleSave}
-            onLoadMore={() => void load(page + 1, 'append')}
-            onRetry={() => void load(1, 'replace')}
-          />
-        </>
-      ) : (
-        <SavedView products={savedProducts} reduced={reduced} onUnsave={handleUnsave} />
-      )}
+              {status !== 'error' ? (
+                <Text variant="ui" as="p" size="footnote" weight={600} style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{strings.shop.sortRelevance}</Text>
+              ) : null}
+
+              <Body
+                status={status}
+                visible={visible}
+                saved={saved}
+                hasMore={hasMore}
+                loadingMore={loadingMore}
+                reduced={reduced}
+                onDismiss={handleDismiss}
+                onToggleSave={handleToggleSave}
+                onLoadMore={() => void load(page + 1, 'append')}
+                onRetry={() => void load(1, 'replace')}
+              />
+            </>
+          ) : (
+            <SavedView products={savedProducts} reduced={reduced} onUnsave={handleUnsave} />
+          )}
+        </div>
+      </div>
     </main>
   );
 }
@@ -441,8 +447,24 @@ function ResultsGrid({
 const screenStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: 'var(--space-6)',
   paddingBlock: 'var(--space-8)',
+};
+
+// The gapped section stack beneath the PageHeader (D6 52px section rhythm): the
+// trust-frame header and the browse body sit 52px apart. The header owns its
+// own 32px air below via its marginBottom, so it stays outside this stack.
+const sectionsStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--rhythm-section-above)',
+};
+
+// Inside the browse section the controls flow on the tighter within-section gap
+// (toggle → gaps → filters → sort → grid) — NOT the 52px section rhythm.
+const browseSectionStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-6)',
 };
 
 const headerStyle: CSSProperties = {

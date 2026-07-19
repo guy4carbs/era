@@ -11,7 +11,7 @@ import {
   type QuizAnswers,
   type StyleProfileResult,
 } from '@era/core/quiz';
-import { transitionFor } from '../../lib/motion';
+import { transitionFor, viewTransition } from '../../lib/motion';
 import { useTheme } from '../../lib/theme';
 import { Button, Text } from '../../components';
 
@@ -207,7 +207,7 @@ export function Reveal({ answers }: RevealProps) {
         {strings.quiz.revealSubtitle}
       </Text>
 
-      <Button onClick={() => router.push('/feed')}>{strings.quiz.revealCta}</Button>
+      <Button onClick={() => viewTransition(() => router.push('/feed'))}>{strings.quiz.revealCta}</Button>
     </motion.div>
   );
 }

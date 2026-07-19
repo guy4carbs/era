@@ -18,6 +18,7 @@ import Animated from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
+import { PageHeader } from '@/components/PageHeader';
 import { ScreenEntrance } from '@/components/ScreenEntrance';
 import { StaggerItem } from '@/components/StaggerItem';
 import { Text } from '@/components/Text';
@@ -203,15 +204,18 @@ export default function ClosetScreen() {
             </Text>
           )}
           ListHeaderComponent={
-            <ClosetHeader
-              search={search}
-              onSearch={setSearch}
-              categories={categories}
-              selected={category}
-              onSelect={setCategory}
-              onOpenSettings={() => router.push('/settings')}
-              onOpenWorn={() => router.push('/worn')}
-            />
+            <>
+              <PageHeader title="Closet" subtitle={strings.closet.subtitle} />
+              <ClosetHeader
+                search={search}
+                onSearch={setSearch}
+                categories={categories}
+                selected={category}
+                onSelect={setCategory}
+                onOpenSettings={() => router.push('/settings')}
+                onOpenWorn={() => router.push('/worn')}
+              />
+            </>
           }
           stickySectionHeadersEnabled={false}
           contentContainerStyle={[

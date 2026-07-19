@@ -7,29 +7,23 @@ import { motion, useReducedMotion } from 'motion/react';
 import { typeRamp, layout, motion as motionToken } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { ClosetEmpty, ClosetGallery, SettingsLink, type GalleryItem } from '../../../components/closet';
+import { PageHeader } from '../../../components/PageHeader';
 import { Text } from '../../../components/Text';
+import { viewTransition } from '../../../lib/motion';
 import { useSession } from '../../../lib/auth-client';
 
 const screenStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: 'var(--space-6)',
   paddingBlock: 'var(--space-8)',
 };
 
-// Screen title — the serif largeTitle role owns family/size/weight; only the
-// margin reset is layout, kept here.
-const titleStyle: CSSProperties = {
-  margin: 0,
-};
-
-// Empty-closet header: title left, Settings gear right (new users still need a
-// way into account controls before they've added a piece).
-const emptyHeaderStyle: CSSProperties = {
+// The gapped section stack beneath the header (D6 52px section rhythm). The
+// PageHeader owns its own 32px air below, so it sits outside this stack.
+const sectionsStyle: CSSProperties = {
   display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  gap: 'var(--space-4)',
+  flexDirection: 'column',
+  gap: 'var(--rhythm-section-above)',
 };
 
 const signInRowStyle: CSSProperties = {
@@ -38,6 +32,12 @@ const signInRowStyle: CSSProperties = {
   justifyContent: 'space-between',
   gap: 'var(--space-4)',
   minHeight: 'var(--touch-target-min)',
+};
+
+// Empty-closet: the settings gear sits right-aligned above the import prompt.
+const emptyActionsStyle: CSSProperties = {
+  display: 'flex',
+  justifyContent: 'flex-end',
 };
 
 // Add is a labeled pill floating bottom-LEFT at Ovi's height (Ovi owns the sole
@@ -119,7 +119,7 @@ export function ClosetScreen({ turnaroundEnabled }: { turnaroundEnabled: boolean
   }, [isPending, session]);
 
   function openAdd() {
-    router.push('/closet/add');
+    viewTransition(() => router.push('/closet/add'));
   }
 
   function handleArchived(id: string) {
@@ -136,13 +136,15 @@ export function ClosetScreen({ turnaroundEnabled }: { turnaroundEnabled: boolean
   if (!isPending && !session) {
     return (
       <main style={screenStyle}>
-        <Text variant="largeTitle" as="h1" style={titleStyle}>Closet</Text>
+        <PageHeader title="Closet" subtitle={strings.closet.subtitle} />
         <div style={signInRowStyle}>
           <Text variant="caption" style={{ color: 'var(--color-secondary-strong)' }}>
             {strings.closet.empty}
           </Text>
-          <Link className="link" href="/sign-in">
-            Sign in →
+          <Link href="/sign-in" style={{ textDecoration: 'none' }}>
+            <Text variant="ui" as="span" style={{ color: 'var(--color-accent)' }}>
+              Sign in →
+            </Text>
           </Link>
         </div>
       </main>
@@ -153,7 +155,7 @@ export function ClosetScreen({ turnaroundEnabled }: { turnaroundEnabled: boolean
   if (isPending || items === null) {
     return (
       <main style={screenStyle}>
-        <Text variant="largeTitle" as="h1" style={titleStyle}>Closet</Text>
+        <PageHeader title="Closet" subtitle={strings.closet.subtitle} />
         <Text variant="body" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>Loading…</Text>
       </main>
     );
@@ -162,11 +164,14 @@ export function ClosetScreen({ turnaroundEnabled }: { turnaroundEnabled: boolean
   if (items.length === 0) {
     return (
       <main style={screenStyle}>
-        <div style={emptyHeaderStyle}>
-          <Text variant="largeTitle" as="h1" style={titleStyle}>Closet</Text>
-          <SettingsLink />
+        <PageHeader title="Closet" subtitle={strings.closet.subtitle} />
+        <div style={sectionsStyle}>
+          {/* New users still need a way into account controls before adding a piece. */}
+          <div style={emptyActionsStyle}>
+            <SettingsLink />
+          </div>
+          <ClosetEmpty onAddPhoto={openAdd} onAddLink={openAdd} />
         </div>
-        <ClosetEmpty onAddPhoto={openAdd} onAddLink={openAdd} />
       </main>
     );
   }

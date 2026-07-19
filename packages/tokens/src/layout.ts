@@ -57,4 +57,12 @@ export const layout = {
     glowDotPx: 6,
     orbPx: 12,
   },
+  // rhythm — the page's vertical breathing (D6): the space above a section is
+  // ~phi times the space below the page header (52 / 32 = 1.625 ≈ 1.618),
+  // both snapped to the 4pt grid. Header sits 32px above its first section;
+  // each subsequent section opens 52px of air above itself.
+  rhythm: {
+    headerBelowPx: 32,
+    sectionAbovePx: 52,
+  },
 } as const;

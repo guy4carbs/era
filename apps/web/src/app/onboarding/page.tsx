@@ -1,7 +1,10 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
+import { Button, Container } from '../../components';
+import { Input } from '../../components/Input';
+import { Text } from '../../components/Text';
 import { useSession } from '../../lib/auth-client';
 
 type Availability = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
@@ -110,51 +113,98 @@ export default function OnboardingPage() {
   // Hold the form back until the auth gate above has resolved.
   if (isPending || !session) {
     return (
-      <main className="page">
-        <p>Loading…</p>
-      </main>
+      <Container>
+        <main style={screenStyle}>
+          <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>Loading…</Text>
+        </main>
+      </Container>
     );
   }
 
   const canSubmit = availability === 'available' && !submitting;
 
+  // A blocking hint (taken / invalid) recolours the field via the Input's error
+  // slot; the transient positive states (checking / available) read as sage/quiet
+  // captions below it so the field border isn't flagged for a non-error.
+  const fieldError =
+    availability === 'taken'
+      ? 'That username is taken.'
+      : availability === 'invalid'
+        ? '3–20 characters: letters, numbers, or underscores.'
+        : undefined;
+
   return (
-    <main className="page">
-      <h1>Pick a username</h1>
-      <p>This is how other people will find you on Era.</p>
+    <Container>
+      <main style={screenStyle}>
+        <header style={headerStyle}>
+          <Text variant="largeTitle" as="h1" style={{ margin: 0 }}>Pick a username</Text>
+          <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-secondary)' }}>
+            This is how other people will find you on Era.
+          </Text>
+        </header>
 
-      <form className="field" onSubmit={submit}>
-        <label htmlFor="username">Username</label>
-        <input
-          id="username"
-          className="input"
-          type="text"
-          autoComplete="off"
-          autoCapitalize="none"
-          spellCheck={false}
-          placeholder="yourname"
-          value={username}
-          onChange={(event) => setUsername(event.target.value)}
-        />
-        {availability === 'checking' ? <span className="hint">Checking…</span> : null}
-        {availability === 'available' ? <span className="hint hint-ok">Available</span> : null}
-        {availability === 'taken' ? (
-          <span className="hint hint-bad">That username is taken.</span>
+        <form style={formStyle} onSubmit={submit}>
+          <div style={fieldStyle}>
+            <Input
+              label="Username"
+              type="text"
+              autoComplete="off"
+              autoCapitalize="none"
+              spellCheck={false}
+              placeholder="yourname"
+              value={username}
+              error={fieldError}
+              onChange={(event) => setUsername(event.target.value)}
+            />
+            {availability === 'checking' ? (
+              <Text variant="caption" as="span" size="footnote" style={{ color: 'var(--color-secondary-strong)' }}>Checking…</Text>
+            ) : null}
+            {availability === 'available' ? (
+              <Text variant="caption" as="span" size="footnote" weight={600} style={{ color: 'var(--color-sage)' }}>Available</Text>
+            ) : null}
+          </div>
+
+          <Button type="submit" variant="primary" disabled={!canSubmit} style={fullWidthStyle}>
+            {submitting ? 'Saving…' : 'Claim username'}
+          </Button>
+        </form>
+
+        {error ? (
+          <Text variant="caption" as="p" size="footnote" role="alert" style={{ margin: 0, color: 'var(--color-rust)' }}>
+            {error}
+          </Text>
         ) : null}
-        {availability === 'invalid' ? (
-          <span className="hint hint-bad">3–20 characters: letters, numbers, or underscores.</span>
-        ) : null}
-
-        <button className="btn" type="submit" disabled={!canSubmit}>
-          {submitting ? 'Saving…' : 'Claim username'}
-        </button>
-      </form>
-
-      {error ? (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      ) : null}
-    </main>
+      </main>
+    </Container>
   );
 }
+
+const screenStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-8)',
+  paddingBlock: 'var(--space-8)',
+  maxWidth: 'var(--feed-col)',
+};
+
+const headerStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-2)',
+};
+
+const formStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-4)',
+};
+
+const fieldStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-2)',
+};
+
+const fullWidthStyle: CSSProperties = {
+  width: '100%',
+};

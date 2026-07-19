@@ -15,19 +15,22 @@ import {
   type EraSummary,
   type OutfitSummary,
 } from '../../../components/design';
-import { transitionFor } from '../../../lib/motion';
+import { transitionFor, viewTransition } from '../../../lib/motion';
+import { PageHeader } from '../../../components/PageHeader';
 import { useSession } from '../../../lib/auth-client';
 
 const screenStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: 'var(--space-8)',
   paddingBlock: 'var(--space-8)',
 };
 
-// Screen title — serif largeTitle role owns family/size/weight; margin only here.
-const titleStyle: CSSProperties = {
-  margin: 0,
+// The gapped section stack beneath the header (D6 52px section rhythm). The
+// PageHeader owns its own 32px air below, so it sits outside this stack.
+const sectionsStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--rhythm-section-above)',
 };
 
 const emptyWrapStyle: CSSProperties = {
@@ -170,7 +173,9 @@ export function DesignScreen({ feedEnabled }: { feedEnabled: boolean }) {
   }, [toast]);
 
   function openCanvas(outfitId?: string) {
-    router.push(outfitId ? `/design/canvas?outfit=${outfitId}` : '/design/canvas');
+    viewTransition(() =>
+      router.push(outfitId ? `/design/canvas?outfit=${outfitId}` : '/design/canvas'),
+    );
   }
 
   async function createEra(title: string, description: string) {
@@ -241,13 +246,15 @@ export function DesignScreen({ feedEnabled }: { feedEnabled: boolean }) {
   if (!isPending && !session) {
     return (
       <main style={screenStyle}>
-        <Text variant="largeTitle" as="h1" style={titleStyle}>Design</Text>
+        <PageHeader title="Design" subtitle={strings.design.subtitle} />
         <div style={signInRowStyle}>
           <Text variant="caption" style={{ color: 'var(--color-secondary-strong)' }}>
             {strings.design.tabEmptyBody}
           </Text>
-          <Link className="link" href="/sign-in">
-            Sign in →
+          <Link href="/sign-in" style={{ textDecoration: 'none' }}>
+            <Text variant="ui" as="span" style={{ color: 'var(--color-accent)' }}>
+              Sign in →
+            </Text>
           </Link>
         </div>
       </main>
@@ -257,7 +264,7 @@ export function DesignScreen({ feedEnabled }: { feedEnabled: boolean }) {
   if (isPending || outfits === null || eras === null) {
     return (
       <main style={screenStyle}>
-        <Text variant="largeTitle" as="h1" style={titleStyle}>Design</Text>
+        <PageHeader title="Design" subtitle={strings.design.subtitle} />
         <Text variant="body" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>Loading…</Text>
       </main>
     );
@@ -266,28 +273,30 @@ export function DesignScreen({ feedEnabled }: { feedEnabled: boolean }) {
   return (
     <main style={screenStyle}>
       <style>{buildPillCss}</style>
-      <Text variant="largeTitle" as="h1" size="title1" style={titleStyle}>Design</Text>
+      <PageHeader title="Design" subtitle={strings.design.subtitle} />
 
-      {outfits.length === 0 ? (
-        <div style={emptyWrapStyle}>
-          <Text variant="largeTitle" as="h2" size="title1" style={emptyTitleStyle}>
-            {strings.design.tabEmptyTitle}
-          </Text>
-          <Text variant="body" style={emptyBodyStyle}>{strings.design.tabEmptyBody}</Text>
-          <Button variant="primary" onClick={() => openCanvas()}>
-            {strings.design.newOutfit}
-          </Button>
-        </div>
-      ) : (
-        <OutfitGrid
-          outfits={outfits}
-          feedEnabled={feedEnabled}
-          onOpen={(id) => openCanvas(id)}
-          onAssign={setAssignTarget}
-        />
-      )}
+      <div style={sectionsStyle}>
+        {outfits.length === 0 ? (
+          <div style={emptyWrapStyle}>
+            <Text variant="largeTitle" as="h2" size="title1" style={emptyTitleStyle}>
+              {strings.design.tabEmptyTitle}
+            </Text>
+            <Text variant="body" style={emptyBodyStyle}>{strings.design.tabEmptyBody}</Text>
+            <Button variant="primary" onClick={() => openCanvas()}>
+              {strings.design.newOutfit}
+            </Button>
+          </div>
+        ) : (
+          <OutfitGrid
+            outfits={outfits}
+            feedEnabled={feedEnabled}
+            onOpen={(id) => openCanvas(id)}
+            onAssign={setAssignTarget}
+          />
+        )}
 
-      <EraList eras={eras} creating={busy} feedEnabled={feedEnabled} onCreate={createEra} />
+        <EraList eras={eras} creating={busy} feedEnabled={feedEnabled} onCreate={createEra} />
+      </div>
 
       <BuildPill onClick={() => openCanvas()} />
 

@@ -7,18 +7,23 @@ import { eraAuth, useSession } from '../../../lib/auth-client';
 import { TodayCard } from '../../../components/ovi';
 import { NotificationFeed } from '../../../components/shop';
 import { FeedList } from '../../../components/feed';
+import { Button } from '../../../components/Button';
+import { PageHeader } from '../../../components/PageHeader';
 import { Text } from '../../../components/Text';
 
 const screenStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: 'var(--space-6)',
   paddingBlock: 'var(--space-8)',
 };
 
-// Screen title — serif largeTitle role at the title1 step (matches mobile feed).
-const titleStyle: CSSProperties = {
-  margin: 0,
+// The gapped section stack beneath the header: sections open on the 52px D6
+// section rhythm. The header owns its own 32px air below (its marginBottom), so
+// it sits OUTSIDE this stack.
+const sectionsStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--rhythm-section-above)',
 };
 
 const emptyStyle: CSSProperties = {
@@ -48,8 +53,10 @@ function SessionHeader() {
         <Text variant="caption" style={{ color: 'var(--color-secondary)' }}>
           Your wardrobe, reimagined.
         </Text>
-        <Link className="link" href="/sign-in">
-          Sign in →
+        <Link href="/sign-in" style={{ textDecoration: 'none' }}>
+          <Text variant="ui" as="span" style={{ color: 'var(--color-accent)' }}>
+            Sign in →
+          </Text>
         </Link>
       </div>
     );
@@ -63,15 +70,14 @@ function SessionHeader() {
       <Text variant="body" style={{ color: 'var(--color-secondary)' }}>
         Hi {greeting}
       </Text>
-      <button
-        type="button"
-        className="btn btn-secondary"
+      <Button
+        variant="secondary"
         onClick={() => {
           void eraAuth.signOut();
         }}
       >
         Sign out
-      </button>
+      </Button>
     </div>
   );
 }
@@ -87,11 +93,13 @@ function SessionHeader() {
 export function FeedScreen({ feedEnabled }: { feedEnabled: boolean }) {
   return (
     <main style={screenStyle}>
-      <SessionHeader />
-      <TodayCard />
-      <NotificationFeed />
-      <Text variant="largeTitle" as="h1" size="title1" style={titleStyle}>Feed</Text>
-      {feedEnabled ? <FeedList /> : <Text variant="body" style={emptyStyle}>{strings.feed.empty}</Text>}
+      <PageHeader title="Feed" subtitle={strings.feed.subtitle} />
+      <div style={sectionsStyle}>
+        <SessionHeader />
+        <TodayCard />
+        <NotificationFeed />
+        {feedEnabled ? <FeedList /> : <Text variant="body" style={emptyStyle}>{strings.feed.empty}</Text>}
+      </div>
     </main>
   );
 }

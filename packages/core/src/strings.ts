@@ -278,6 +278,8 @@ export const strings = {
 
   /** The Closet tab — everything the user owns, plus the add-a-piece flow. */
   closet: {
+    /** One-line page-header subtitle — the tab's calm register (D6 PageHeader). */
+    subtitle: 'Everything you own, in one place.',
     /** Canonical empty-closet line. Warm, low-effort framing. */
     empty: "Let's get your first pieces in — it takes a minute.",
     /** After the very first item lands in the closet. */
@@ -711,6 +713,8 @@ export const strings = {
    * pieces — so here we don't soft-pedal).
    */
   design: {
+    /** One-line page-header subtitle — the tab's calm register (D6 PageHeader). */
+    subtitle: 'Compose looks from what you have.',
     /**
      * Design-tab empty title — shown when the user has no outfits yet. Invites
      * the first build; pairs with {@link strings.design.tabEmptyBody}.
@@ -799,6 +803,8 @@ export const strings = {
    * deck's single-exclamation budget is spent elsewhere.
    */
   feed: {
+    /** One-line page-header subtitle — the tab's calm register (D6 PageHeader). */
+    subtitle: 'Today, from your own closet.',
     /** Empty feed — invitational, not a scold; no fake social pressure. */
     empty: 'Nothing in your feed yet. Follow a few people and their looks land here.',
     /** Shown at the very end of the feed — a quiet stop, not a nudge to keep scrolling. */
@@ -1204,6 +1210,8 @@ export const strings = {
   shop: {
     /** Tab title. */
     title: 'Shop',
+    /** One-line page-header subtitle — the tab's calm register (D6 PageHeader). */
+    subtitle: 'Only what your closet is missing.',
     /**
      * Sets the trust frame the moment the tab opens: this is gap-driven, not a
      * scroll. Read together with {@link strings.shop.empty}.

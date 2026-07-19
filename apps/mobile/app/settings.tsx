@@ -9,7 +9,7 @@
  * only; the delete flow lives in {@link DeleteAccountSheet}.
  */
 import { strings } from '@era/core/strings';
-import { spacing } from '@era/tokens';
+import { layout, spacing } from '@era/tokens';
 import { Redirect, Stack, useRouter } from 'expo-router';
 import { useCallback, useState, type PropsWithChildren } from 'react';
 import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet, View } from 'react-native';
@@ -28,6 +28,7 @@ import {
   ThemeControl,
 } from '@/components/settings';
 import { checkoutCopy } from '@/components/checkout';
+import { ScreenEntrance } from '@/components/ScreenEntrance';
 import { Text } from '@/components/Text';
 import { eraAuth, useSession } from '@/lib/auth-client';
 import { eraCheckoutEnabled } from '@/lib/checkout-flag';
@@ -98,7 +99,8 @@ export default function SettingsScreen() {
     <View style={[styles.screen, { backgroundColor: colors.bg }]}>
       <Stack.Screen options={{ headerShown: true, title: strings.settings.title }} />
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScreenEntrance>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Section title={strings.settings.appearance}>
           <ThemeControl />
         </Section>
@@ -186,7 +188,8 @@ export default function SettingsScreen() {
             <SettingRow label="Trigger test error" onPress={triggerTestError} />
           </Section>
         ) : null}
-      </ScrollView>
+        </ScrollView>
+      </ScreenEntrance>
 
       <DeleteAccountSheet
         open={deleteOpen}
@@ -238,7 +241,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.s6,
     paddingTop: spacing.s6,
     paddingBottom: spacing.s8,
-    gap: spacing.s8,
+    // Setting groups open on the D6 section rhythm (52px between major sections).
+    gap: layout.rhythm.sectionAbovePx,
   },
   section: {
     gap: spacing.s3,

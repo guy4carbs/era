@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation';
 import { motion as motionToken, typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import type { OviIntent } from '@era/core/ovi';
-import { pressProps, transitionFor, useStagger } from '../../lib/motion';
+import { pressProps, transitionFor, useStagger, viewTransition } from '../../lib/motion';
 import { track } from '../../lib/analytics';
 import { GlassSheet } from '../GlassSheet';
 import { Chip } from '../Chip';
@@ -260,7 +260,7 @@ export function OviChat({ itemContext, itemsById, onClose }: OviChatProps) {
   }
 
   function openSavedOutfit(outfitId: string) {
-    router.push(`/design/canvas?outfit=${outfitId}`);
+    viewTransition(() => router.push(`/design/canvas?outfit=${outfitId}`));
     onClose();
   }
 

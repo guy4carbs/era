@@ -1,3 +1,4 @@
+import { motion } from '@era/tokens';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef } from 'react';
@@ -220,6 +221,12 @@ function ThemedStack() {
           contentStyle: { backgroundColor: colors.bg },
           headerStyle: { backgroundColor: colors.bg },
           headerTintColor: colors.text,
+          // D0.3 grammar: pushed screens cross-fade rather than native-slide, so a
+          // push matches the app's fade-and-rise feel (ScreenEntrance adds the 6px
+          // rise inside each screen). Capped at the motion ceiling. `modal` screens
+          // opt back into the OS sheet presentation below.
+          animation: 'fade',
+          animationDuration: motion.durations.maxMs,
         }}
       >
         {/* Public anchor — self-routes to /feed or /sign-in by session. */}

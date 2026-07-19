@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { strings } from '@era/core/strings';
 import { Text } from '../Text';
 import { Button } from '../Button';
-import { pressProps } from '../../lib/motion';
+import { pressProps, viewTransition } from '../../lib/motion';
 import { BulkCapture } from './BulkCapture';
 import { ConfirmItem } from './ConfirmItem';
 import { PhotoPicker } from './PhotoPicker';
@@ -264,7 +264,7 @@ export function AddItemFlow({ resumeItemId = null }: AddItemFlowProps) {
       // from empty to one item, and at most once per user (guarded in the helper).
       void maybeTrackFirstItem(confirmData.item.category);
       setStage('saved');
-      router.push('/closet');
+      viewTransition(() => router.push('/closet'));
     } catch {
       setSaving(false);
       setFailedStage('confirm');
@@ -328,7 +328,7 @@ export function AddItemFlow({ resumeItemId = null }: AddItemFlowProps) {
       <div style={columnStyle}>
         <div style={topRowStyle}>
           {showCancel ? (
-            <motion.button type="button" style={cancelStyle} onClick={() => router.push('/closet')} {...pressProps(reduced)}>
+            <motion.button type="button" style={cancelStyle} onClick={() => viewTransition(() => router.push('/closet'))} {...pressProps(reduced)}>
               <Text variant="ui" size="footnote" weight={600} style={{ color: 'var(--color-secondary-strong)' }}>
                 {strings.common.cancel}
               </Text>
@@ -356,12 +356,12 @@ export function AddItemFlow({ resumeItemId = null }: AddItemFlowProps) {
         ) : null}
 
         {stage === 'receipt' ? (
-          <ReceiptImport onReview={() => router.push('/closet')} />
+          <ReceiptImport onReview={() => viewTransition(() => router.push('/closet'))} />
         ) : null}
 
         {stage === 'bulk' ? (
           <BulkCapture
-            onDone={() => router.push('/closet')}
+            onDone={() => viewTransition(() => router.push('/closet'))}
             onBack={() => setStage('picker')}
           />
         ) : null}

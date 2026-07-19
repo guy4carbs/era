@@ -176,10 +176,14 @@ const frameStyle: CSSProperties = {
   zIndex: 1,
 };
 
+// The cutout fills its (aspect-reserved) frame and never drives layout: explicit
+// 100% box + object-fit contain, so image load can't reflow the tile (D6 CLS).
+// The frame keeps the cutout centred; `contain` preserves the garment silhouette.
 const imageStyle: CSSProperties = {
-  maxWidth: '100%',
-  maxHeight: '100%',
+  width: '100%',
+  height: '100%',
   objectFit: 'contain',
+  display: 'block',
 };
 
 // 135° specular wash (sheen tokens), inset negative so it can slide with the

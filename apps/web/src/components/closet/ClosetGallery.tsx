@@ -6,7 +6,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken, layout, spacing } from '@era/tokens';
 import { Text } from '../Text';
 import { strings } from '@era/core/strings';
-import { transitionFor, useStagger } from '../../lib/motion';
+import { transitionFor, useStagger, viewTransition } from '../../lib/motion';
 import { Chip } from '../Chip';
 import { Input } from '../Input';
 import { CATEGORY_OPTIONS } from '../items';
@@ -136,7 +136,7 @@ export function ClosetGallery({ items, turnaroundEnabled, onArchived, onUpdated 
     if (item.tagsConfirmed) {
       setSelectedId(item.id);
     } else {
-      router.push(`/closet/add?item=${item.id}`);
+      viewTransition(() => router.push(`/closet/add?item=${item.id}`));
     }
   }
 
@@ -146,7 +146,12 @@ export function ClosetGallery({ items, turnaroundEnabled, onArchived, onUpdated 
 
       <header style={headerStyle}>
         <div style={titleRowStyle}>
-          <Text variant="largeTitle" as="h1" style={{ margin: 0 }}>Closet</Text>
+          <div style={titleBlockStyle}>
+            <Text variant="largeTitle" as="h1" style={{ margin: 0 }}>Closet</Text>
+            <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-secondary)' }}>
+              {strings.closet.subtitle}
+            </Text>
+          </div>
           <div style={headerActionsStyle}>
             <WornLink />
             <SettingsLink />
@@ -261,7 +266,9 @@ export function ClosetGallery({ items, turnaroundEnabled, onArchived, onUpdated 
 const screenStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: 'var(--space-8)',
+  // D6 section rhythm — 52px between the header and each category section, and
+  // between sections. Spacing INSIDE the header stays on its own smaller gap.
+  gap: 'var(--rhythm-section-above)',
   paddingBlock: 'var(--space-8)',
 };
 
@@ -269,6 +276,14 @@ const headerStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: 'var(--space-4)',
+};
+
+// The title + its one-line subtitle group tightly on the left of the header row,
+// with the action cluster (worn / settings / privacy) held to the right.
+const titleBlockStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-1)',
 };
 
 const titleRowStyle: CSSProperties = {

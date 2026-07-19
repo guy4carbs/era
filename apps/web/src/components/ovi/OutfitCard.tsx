@@ -2,7 +2,7 @@
 
 import { useState, type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { motion as motionToken } from '@era/tokens';
+import { layout, motion as motionToken } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import type { OviIntent, ProposedOutfit } from '@era/core/ovi';
 import { transitionFor } from '../../lib/motion';
@@ -62,7 +62,9 @@ const gridStyle: CSSProperties = {
 
 const tileStyle: CSSProperties = {
   position: 'relative',
-  aspectRatio: '4 / 5',
+  // Fixed 4:5 aspect box from the item-card token reserves each tile BEFORE its
+  // cutout loads (D6 CLS): image load can't change the outfit grid's layout.
+  aspectRatio: layout.itemCard.aspectRatio,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
