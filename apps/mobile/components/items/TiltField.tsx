@@ -33,7 +33,7 @@ import { AccessibilityInfo } from 'react-native';
 import {
   SensorType,
   useAnimatedSensor,
-  useDerivedValue,
+  useFrameCallback,
   useSharedValue,
   type SharedValue,
 } from 'react-native-reanimated';
@@ -92,18 +92,27 @@ export function TiltFieldProvider({ active, children }: PropsWithChildren<TiltFi
 
   const inert = reduced || !motionKnownOk || !active;
 
-  // A single frozen-zero shared value backs the whole field when inert (no
-  // sensor mounted). The live provider swaps in its own sensor-driven value.
-  const flat = useSharedValue<TiltFieldValue>(FLAT);
+  // ONE field value for the provider's whole life; the childless SensorDriver
+  // below mounts/unmounts to start/stop the gyro. Children stay OUTSIDE that
+  // swap — wrapping them in a different element per state would remount the
+  // entire grid on every focus flip / motion-resolve tick.
+  const field = useSharedValue<TiltFieldValue>(FLAT);
 
-  if (inert) {
-    return <TiltFieldContext.Provider value={flat}>{children}</TiltFieldContext.Provider>;
-  }
+  // Settle the field back to flat whenever the sensor is gated off.
+  useEffect(() => {
+    if (inert) field.value = FLAT;
+  }, [inert, field]);
 
-  return <ActiveTiltField>{children}</ActiveTiltField>;
+  return (
+    <TiltFieldContext.Provider value={field}>
+      {inert ? null : <SensorDriver field={field} />}
+      {children}
+    </TiltFieldContext.Provider>
+  );
 }
 
-function ActiveTiltField({ children }: PropsWithChildren) {
+/** Childless gyro driver — mounting it starts the sensor, unmounting stops it. */
+function SensorDriver({ field }: { readonly field: SharedValue<TiltFieldValue> }) {
   // Rotation sensor at ~60Hz (interval 16ms) — deliberately under Android 12's
   // 200Hz HIGH_SAMPLING_RATE_SENSORS threshold so neither platform prompts for a
   // permission; iOS never requires one for device-motion at this rate.
@@ -114,17 +123,20 @@ function ActiveTiltField({ children }: PropsWithChildren) {
   const baseRoll = useSharedValue(0);
   const baselineReady = useSharedValue(false);
 
-  // The derived field pose every surface reads. Seeds the baseline on the first
-  // reading, then drifts it slowly toward the live pose, and maps the delta to a
-  // HALF-amplitude tilt + a matching parallax. A sensor-less device reads zero,
-  // so the pose stays flat. All on the UI thread — zero per-frame JS.
-  const field = useDerivedValue<TiltFieldValue>(() => {
+  // Drive the caller's field from a frame callback — the same pattern as
+  // DimensionalHero. The baseline seed/drift WRITES shared values, so it must
+  // live in useFrameCallback: putting it inside useDerivedValue makes the
+  // derivation write its own dependency and re-invalidate itself forever (a
+  // UI-thread reactive loop — this crashed the closet tab on device). Frame
+  // callbacks are plain per-frame worklets with no dependency tracking, so
+  // side-effect writes are safe. A sensor-less device reads zero → flat pose.
+  useFrameCallback(() => {
     const r = sensor.value;
     if (!baselineReady.value) {
       basePitch.value = r.pitch;
       baseRoll.value = r.roll;
       baselineReady.value = true;
-      return FLAT;
+      return;
     }
     basePitch.value = driftBaseline(basePitch.value, r.pitch, BASELINE_ALPHA);
     baseRoll.value = driftBaseline(baseRoll.value, r.roll, BASELINE_ALPHA);
@@ -133,7 +145,7 @@ function ActiveTiltField({ children }: PropsWithChildren) {
     // Parallax floats AGAINST the tilt, scaled to the field's half parallax —
     // rotateY drives the horizontal shift, rotateX the vertical (matching the
     // hero's parallaxFor grammar, kept inline so this stays one worklet).
-    return {
+    field.value = {
       rotateX: tilt.rotateX,
       rotateY: tilt.rotateY,
       parallaxX: -(tilt.rotateY / FIELD_MAX_DEG) * FIELD_PARALLAX_PX,
@@ -141,5 +153,5 @@ function ActiveTiltField({ children }: PropsWithChildren) {
     };
   });
 
-  return <TiltFieldContext.Provider value={field}>{children}</TiltFieldContext.Provider>;
+  return null;
 }
