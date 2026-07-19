@@ -28,12 +28,12 @@
  * one Today surface; TodayCard delegates to it. Share exports through the existing
  * offscreen collage host via {@link TodayStoryCard}.
  */
-import { motion, radii, rnShadow, spacing } from '@era/tokens';
+import { elevation, motion, palette, radii, spacing } from '@era/tokens';
 import { slotForCategory, type OutfitSlot, type ProposedOutfit } from '@era/core/ovi';
 import { strings } from '@era/core/strings';
 import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -45,7 +45,6 @@ import Animated, {
 import { Text } from '@/components/Text';
 import { Button } from '@/components/Button';
 import { Press } from '@/components/Press';
-import { ItemSurface } from '@/components/items';
 import { springFromToken, tokenEasing, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
 
@@ -107,6 +106,10 @@ export function revealInterval(count: number): number {
 }
 
 /** Editorial offsets (fraction of the stage) per slot — an overlapped stack, not a grid. */
+// Ground-shadow strength — the e4 elevation token's opacity, so the whisper of
+// ground contact under each bare cutout stays in the shadow system's range.
+const GROUND_SHADOW_OPACITY = elevation.e4.opacity;
+
 const SLOT_OFFSET: Record<OutfitSlot, { x: number; y: number }> = {
   shoes: { x: 0.16, y: 0.62 },
   bottom: { x: -0.14, y: 0.28 },
@@ -297,7 +300,6 @@ export function RevealStage({
 
 /** One cutout in the assembly — springs in (opacity + scale + rise) with its shadow lagging. */
 function RevealCutout({ piece, shown }: { readonly piece: RevealPiece; readonly shown: boolean }) {
-  const { colors, resolved } = useTheme();
   const progress = useSharedValue(0);
   const shadow = useSharedValue(0);
 
@@ -323,18 +325,19 @@ function RevealCutout({ piece, shown }: { readonly piece: RevealPiece; readonly 
     ],
   }));
 
-  const shadowStyle = useAnimatedStyle(() => ({ opacity: shadow.value }));
+  const shadowStyle = useAnimatedStyle(() => ({ opacity: shadow.value * GROUND_SHADOW_OPACITY }));
 
   return (
     <Animated.View style={[styles.cutout, style]}>
-      {/* The shadow lands a beat after the piece: a surface-colored caster
-          carrying the token e4 shadow, hidden under the card so only its CAST
-          shadow reads — never a painted ink slab (the original tinted slab
-          read as a smear; user-rejected 2026-07-19). */}
-      <Animated.View
-        style={[styles.cutoutShadow, { backgroundColor: colors.surface }, rnShadow('e4', resolved), shadowStyle]}
-      />
-      <ItemSurface uri={piece.url} accessibilityLabel="" interactive="none" fill />
+      {/* The GARMENT layers, not a card — full ItemSurface cards buried each
+          other in the stack (user-flagged 2026-07-19). Matches the Stories
+          export's grammar: the bare cutout on the canvas, landing a beat later
+          on a soft squashed ground ellipse at the e4 token opacity — a whisper
+          of ground contact, never a painted slab. */}
+      <Animated.View style={[styles.groundShadow, { backgroundColor: palette.ink }, shadowStyle]} />
+      {piece.url ? (
+        <Image source={{ uri: piece.url }} style={styles.cutoutImage} resizeMode="contain" accessible={false} />
+      ) : null}
     </Animated.View>
   );
 }
@@ -443,7 +446,10 @@ function StaticCutout({ piece }: { readonly piece: RevealPiece }) {
         { transform: [{ translateX: `${offset.x * 100}%` }, { translateY: `${offset.y * 100}%` }] },
       ]}
     >
-      <ItemSurface uri={piece.url} accessibilityLabel="" interactive="none" fill />
+      <View style={[styles.groundShadow, { backgroundColor: palette.ink, opacity: GROUND_SHADOW_OPACITY }]} />
+      {piece.url ? (
+        <Image source={{ uri: piece.url }} style={styles.cutoutImage} resizeMode="contain" accessible={false} />
+      ) : null}
     </View>
   );
 }
@@ -472,17 +478,20 @@ const styles = StyleSheet.create({
     width: '52%',
     aspectRatio: 0.8,
   },
-  // The e4 shadow caster under each cutout: matches the card's bounds so the
-  // card covers its fill and only the CAST token shadow reads (bg + rnShadow
-  // are applied theme-aware at render).
-  cutoutShadow: {
+  // The soft ground ellipse a piece lands on — squashed, full-radius, ink at
+  // the e4 token opacity (applied at render). The export's grammar, whispered.
+  groundShadow: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: radii.card,
-    borderCurve: 'continuous',
+    left: '19%',
+    right: '19%',
+    bottom: '2%',
+    height: '7%',
+    borderRadius: radii.full,
+  },
+  // The bare garment fills its reserved box — no card chrome on the stage.
+  cutoutImage: {
+    width: '100%',
+    height: '100%',
   },
   composed: {
     gap: spacing.s3,
