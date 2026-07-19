@@ -28,7 +28,7 @@
  * one Today surface; TodayCard delegates to it. Share exports through the existing
  * offscreen collage host via {@link TodayStoryCard}.
  */
-import { motion, palette, radii, spacing } from '@era/tokens';
+import { motion, radii, rnShadow, spacing } from '@era/tokens';
 import { slotForCategory, type OutfitSlot, type ProposedOutfit } from '@era/core/ovi';
 import { strings } from '@era/core/strings';
 import * as Haptics from 'expo-haptics';
@@ -297,6 +297,7 @@ export function RevealStage({
 
 /** One cutout in the assembly — springs in (opacity + scale + rise) with its shadow lagging. */
 function RevealCutout({ piece, shown }: { readonly piece: RevealPiece; readonly shown: boolean }) {
+  const { colors, resolved } = useTheme();
   const progress = useSharedValue(0);
   const shadow = useSharedValue(0);
 
@@ -322,11 +323,17 @@ function RevealCutout({ piece, shown }: { readonly piece: RevealPiece; readonly 
     ],
   }));
 
-  const shadowStyle = useAnimatedStyle(() => ({ opacity: shadow.value * 0.5 }));
+  const shadowStyle = useAnimatedStyle(() => ({ opacity: shadow.value }));
 
   return (
     <Animated.View style={[styles.cutout, style]}>
-      <Animated.View style={[styles.cutoutShadow, shadowStyle]} />
+      {/* The shadow lands a beat after the piece: a surface-colored caster
+          carrying the token e4 shadow, hidden under the card so only its CAST
+          shadow reads — never a painted ink slab (the original tinted slab
+          read as a smear; user-rejected 2026-07-19). */}
+      <Animated.View
+        style={[styles.cutoutShadow, { backgroundColor: colors.surface }, rnShadow('e4', resolved), shadowStyle]}
+      />
       <ItemSurface uri={piece.url} accessibilityLabel="" interactive="none" fill />
     </Animated.View>
   );
@@ -465,17 +472,17 @@ const styles = StyleSheet.create({
     width: '52%',
     aspectRatio: 0.8,
   },
-  // A soft warm shadow behind each cutout, opacity-animated in a beat after the
-  // piece (no true view blur on RN, so this is a tinted rounded slab).
+  // The e4 shadow caster under each cutout: matches the card's bounds so the
+  // card covers its fill and only the CAST token shadow reads (bg + rnShadow
+  // are applied theme-aware at render).
   cutoutShadow: {
     position: 'absolute',
-    top: '6%',
-    left: '4%',
-    right: '-4%',
-    bottom: '-6%',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     borderRadius: radii.card,
     borderCurve: 'continuous',
-    backgroundColor: palette.ink,
   },
   composed: {
     gap: spacing.s3,

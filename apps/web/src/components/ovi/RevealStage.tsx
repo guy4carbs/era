@@ -200,23 +200,6 @@ function StackPiece({
         transform: `translate(${offset.x}%, ${offset.y}%) scale(${offset.scale})`,
       }}
     >
-      {/* Paired shadow plate — lands a beat AFTER the cutout, its own opacity tween. */}
-      <fmotion.div
-        aria-hidden="true"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: revealed ? 1 : 0 }}
-        transition={{ ...spring, delay: revealed ? shadowDelay : 0 }}
-        style={{
-          position: 'absolute',
-          width: '62%',
-          height: '10%',
-          bottom: '4%',
-          borderRadius: 'var(--radius-full)',
-          background: 'var(--color-ink)',
-          filter: 'blur(10px)',
-          opacity: 0,
-        }}
-      />
       <fmotion.div
         initial={reduced ? { opacity: 0 } : { opacity: 0, y: 18, scale: 0.96 }}
         animate={
@@ -229,8 +212,23 @@ function StackPiece({
               : { opacity: 0, y: 18, scale: 0.96 }
         }
         transition={spring}
-        style={{ width: '78%', height: '78%' }}
+        style={{ position: 'relative', width: '78%', height: '78%' }}
       >
+        {/* The shadow lands a beat AFTER the piece: the token dual shadow (e4)
+            fading in under the card — never a painted dark shape (the original
+            blurred ink plate read as a smear; user-rejected 2026-07-19). */}
+        <fmotion.div
+          aria-hidden="true"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: revealed ? 1 : 0 }}
+          transition={{ ...spring, delay: revealed ? shadowDelay : 0 }}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            borderRadius: 'var(--radius-card)',
+            boxShadow: 'var(--shadow-e4)',
+          }}
+        />
         <ItemSurface src={piece.url} alt={piece.name} interactive="none" />
       </fmotion.div>
     </div>
