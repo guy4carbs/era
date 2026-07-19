@@ -64,7 +64,8 @@ export function WhyDetailSheet({ whyDetail, onClose }: WhyDetailSheetProps) {
         transition={transitionFor(motionToken.springs.gentle, reduced)}
         onClick={onClose}
       />
-      <GlassSheet labelledBy="shop-why-title">
+      {/* busy: floats over shop product imagery — use the AA scrim. */}
+      <GlassSheet labelledBy="shop-why-title" busy>
         <div style={rootStyle}>
           <header style={headerStyle}>
             <Text variant="title" size="title3" as="h2" id="shop-why-title" weight={700} style={{ margin: 0, color: 'var(--color-text)' }}>

@@ -130,7 +130,10 @@ export function ItemDetailSheet({
   const priceLine = formatPrice(item.purchasePrice, item.currency);
 
   return (
-    <GlassSheet peek>
+    // busy: floats over the item's cutout hero imagery — use the AA scrim. (The
+    // literal `busy` prop here is the glass scrim, distinct from the local
+    // `busy` save-in-flight state above — the JSX literal never reads that var.)
+    <GlassSheet peek busy>
       <motion.div
         style={bodyStyle}
         drag="y"

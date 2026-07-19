@@ -1,15 +1,18 @@
 /**
  * GlassSheet — a frosted bottom sheet.
  *
- * Blurs the content behind it (expo-blur), tinted per theme. Springs up to a
- * "peek" height, then a handle tap expands it (peek × φ). A LinearGradient
- * along the top edge approximates the spec's glass inner-highlight / sheen —
- * the only place expo-linear-gradient is used. Reduced motion swaps the slide
- * spring for a short fade. Drag-to-dismiss is deferred (needs gesture-handler).
+ * The frosted material is GlassPanel (the shared §3 recipe) filling the sheet;
+ * this component owns only the MOTION — the spring/fade slide up to a "peek"
+ * height, the handle-tap expand (peek × φ), and the backdrop scrim. Reduced
+ * motion swaps the slide spring for a short fade. Drag-to-dismiss is deferred
+ * (needs gesture-handler).
+ *
+ * `busy` passes through to GlassPanel: sheets floating over IMAGERY (the cutout
+ * hero, try-on renders, feed photos) swap to the AA scrim tint so their text
+ * stays legible. The glass LAYERS stay STATIC — only the sheet's transform and
+ * the scrim opacity animate.
  */
 import { glass, layout, motion, radii, spacing } from '@era/tokens';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState, type PropsWithChildren } from 'react';
 import {
   Pressable,
@@ -24,6 +27,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { GlassPanel } from '@/components/GlassPanel';
 import { Press } from '@/components/Press';
 import { springFromToken, tokenEasing, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
@@ -31,9 +35,11 @@ import { useTheme } from '@/lib/theme';
 interface GlassSheetProps {
   readonly open: boolean;
   readonly onClose: () => void;
+  /** Float over imagery → GlassPanel swaps to the AA scrim tint. */
+  readonly busy?: boolean;
 }
 
-export function GlassSheet({ open, onClose, children }: PropsWithChildren<GlassSheetProps>) {
+export function GlassSheet({ open, onClose, busy = false, children }: PropsWithChildren<GlassSheetProps>) {
   const { colors, resolved } = useTheme();
   const reduced = useReducedMotionSafe();
   const { height } = useWindowDimensions();
@@ -83,31 +89,14 @@ export function GlassSheet({ open, onClose, children }: PropsWithChildren<GlassS
 
       <Animated.View
         accessibilityViewIsModal={open}
-        style={[
-          styles.sheet,
-          {
-            height: expandedHeight,
-            borderTopLeftRadius: radii.sheet,
-            borderTopRightRadius: radii.sheet,
-            borderColor: glass.border[resolved],
-            borderWidth: glass.borderWidth,
-          },
-          sheetStyle,
-        ]}
+        style={[styles.sheet, { height: expandedHeight }, sheetStyle]}
       >
-        <BlurView
-          intensity={glass.blur}
-          tint={resolved === 'dark' ? 'dark' : 'light'}
-          style={StyleSheet.absoluteFill}
-        />
-        <View
-          style={[StyleSheet.absoluteFill, { backgroundColor: colors.surface, opacity: glass.tintOpacity[resolved] }]}
-        />
-        <LinearGradient
-          colors={[glass.innerHighlightColor[resolved], 'transparent']}
-          style={styles.innerHighlight}
-          pointerEvents="none"
-        />
+        {/* Shared §3 glass recipe (BlurView + tint + highlight + border), static
+            per the perf contract — only the sheet's transform/scrim animate. The
+            panel extends one radius below the sheet so its rounded BOTTOM corners
+            fall off-screen (a bottom sheet rounds only its top); the container's
+            top-only radii + overflow:hidden clip the visible shape. */}
+        <GlassPanel busy={busy} radius={radii.sheet} style={styles.glass} />
 
         <Press
           accessibilityRole="button"
@@ -130,15 +119,21 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+    // Match GlassPanel's rounded top so the sheet's own children (handle/body)
+    // clip to the same corner; GlassPanel behind carries the border + material.
+    borderTopLeftRadius: radii.sheet,
+    borderTopRightRadius: radii.sheet,
     borderCurve: 'continuous',
     overflow: 'hidden',
   },
-  innerHighlight: {
+  // The glass fills the sheet and hangs one radius past the bottom so only the
+  // top corners round (see the render comment); the parent clips the overflow.
+  glass: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: spacing.s8,
+    bottom: -radii.sheet,
   },
   handleTap: {
     alignItems: 'center',

@@ -4,6 +4,7 @@ import { type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken } from '@era/tokens';
 import { transitionFor } from '../../lib/motion';
+import { glassSurfaceStyle } from '../GlassPanel';
 import { Text } from '../Text';
 
 export interface OviToastProps {
@@ -11,17 +12,17 @@ export interface OviToastProps {
   message: string | null;
 }
 
+// A toast floats over arbitrary content (whatever surface is underneath), so it
+// takes the glass recipe with `busy` — the AA-guaranteed scrim keeps its text
+// legible over any backdrop — at e3 elevation and the input radius.
 const toastStyle: CSSProperties = {
+  ...glassSurfaceStyle({ busy: true, shadow: 'e3', radius: 'var(--radius-input)' }),
   position: 'fixed',
   left: '50%',
   bottom: 'calc(var(--space-16) + env(safe-area-inset-bottom))',
   paddingInline: 'var(--space-4)',
   paddingBlock: 'var(--space-3)',
-  borderRadius: 'var(--radius-input)',
-  background: 'var(--color-surface)',
-  border: '1px solid var(--color-hairline)',
   color: 'var(--color-text)',
-  boxShadow: 'var(--shadow-e3)',
   zIndex: 70,
 };
 

@@ -124,7 +124,8 @@ export function ItemDetailSheet({ item, open, onClose, onUpdated, onArchived, on
   }
 
   return (
-    <GlassSheet open={open} onClose={onClose}>
+    // busy: floats over the closet's cutout hero imagery → AA scrim tint.
+    <GlassSheet open={open} onClose={onClose} busy>
       {item ? (
         editing ? (
           <ItemEditor

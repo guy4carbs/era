@@ -52,6 +52,11 @@ function paletteVarRecord(mode: ColorMode): Record<string, string> {
     // Glass surface tint is mode-specific (light 0.72 / dark 0.62); expose it as
     // a percentage so component color-mix() reads one var and stays reactive.
     '--glass-tint': `${Math.round(glass.tintOpacity[mode] * 100)}%`,
+    // Busy tint — the AA-guaranteed scrim strength for glass floating over BUSY
+    // imagery (cutouts / try-on renders / photos). Surfaces opt in via a `busy`
+    // prop and swap `--glass-tint` → this. Dark rises 0.62 → 0.88 (AA over any
+    // backdrop); light is already AA at 0.72, so it is unchanged.
+    '--glass-tint-busy': `${Math.round(glass.busyTintOpacity[mode] * 100)}%`,
     // Glass frame + top-edge catch-light, per mode (§3): border warm ink/cream
     // at 8%; highlight bright white on light, barely-there on dark.
     '--glass-border': glass.border[mode],
@@ -124,6 +129,9 @@ function baseVars(): string {
     `--hover-lift:${unit(layout.hover.liftPx)}`,
     `--glass-blur:${unit(glass.blur)}`,
     `--glass-border-width:${unit(glass.borderWidth)}`,
+    // Saturation boost behind glass so garments glow through it (§3). Unitless —
+    // feeds `backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate))`.
+    `--glass-saturate:${glass.saturate}`,
     `--glow-blur:${unit(glow.blurRadius)}`,
   ];
 

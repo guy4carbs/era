@@ -58,7 +58,7 @@ export function MoreMenuSheet({ post, onClose, onReported, onBlocked }: MoreMenu
   }, [post?.id]);
 
   if (!post) {
-    return <GlassSheet open={false} onClose={onClose} />;
+    return <GlassSheet open={false} onClose={onClose} busy />;
   }
 
   const creatorName = post.creator.displayName ?? post.creator.username;
@@ -97,7 +97,10 @@ export function MoreMenuSheet({ post, onClose, onReported, onBlocked }: MoreMenu
   };
 
   return (
-    <GlassSheet open={post !== null} onClose={onClose}>
+    // busy: floats over feed photo imagery → AA scrim tint. (Note: the `busy`
+    // attribute here is the glass scrim, distinct from the local submit-in-flight
+    // `busy` state above.)
+    <GlassSheet open={post !== null} onClose={onClose} busy>
       {view === 'root' ? (
         <View style={styles.rootActions}>
           <Button
