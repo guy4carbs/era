@@ -18,6 +18,18 @@ export const layout = {
     aspectRatio: '4 / 5', // CSS value
     ratio: 0.8, // 4 / 5, for numeric contexts (RN)
     padding: 12,
+    // lift — the HERO interaction (D7 Item Engine): hover/press raises the
+    // card toward the viewer (−4px, ×1.02) with the shadow deepening a step.
+    // Deliberate divergence from motion.press.scale (0.97): every other
+    // tappable compresses; the item card is the product — it rises.
+    lift: {
+      yPx: -4,
+      scale: 1.02,
+    },
+    // warmToneOpacity — a 1% accent-hued wash over the cutout so mixed-source
+    // photos harmonize on the cream surface. Imperceptible alone; the grid
+    // reads as one collection instead of many cameras.
+    warmToneOpacity: 0.01,
   },
   grid: {
     mobileColumns: 2,

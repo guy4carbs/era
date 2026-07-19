@@ -5,6 +5,12 @@ export { Container, type ContainerProps } from './Container';
 export { GlassPanel, glassSurfaceStyle, type GlassPanelProps } from './GlassPanel';
 export { GlassSheet, type GlassSheetProps } from './GlassSheet';
 export { Input, type InputProps } from './Input';
+export {
+  ItemSurface,
+  type ItemSurfaceProps,
+  type ItemSurfaceInteraction,
+  type ItemSurfaceForcedState,
+} from './items/ItemSurface';
 export { NavRail } from './NavRail';
 export { OviFab, type OviFabProps } from './OviFab';
 export { PageHeader, type PageHeaderProps } from './PageHeader';

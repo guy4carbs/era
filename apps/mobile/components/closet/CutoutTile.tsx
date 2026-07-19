@@ -1,66 +1,40 @@
 /**
  * CutoutTile — one 2.5D piece in the closet gallery.
  *
- * The cutout floats on a cream/charcoal surface (theme) with the e3 dual shadow
- * (approximated by RN's single ambient layer per the established note), a uniform
- * inset, and an iOS squircle (`borderCurve: 'continuous'`). A 135° specular sheen
- * overlays the image for the "premium" cue.
+ * A thin closet wrapper over the shared {@link ItemSurface} engine: the surface
+ * owns the premium treatment (hairline squircle, e3→e4 shadow, accent-glow
+ * underlay, sheen, warm-tone wash, the hero press-lift), and this wrapper adds
+ * the two closet-only behaviours the surface leaves to its consumers:
  *
- * TILT-ON-DRAG: a PanResponder (gesture-handler isn't a dependency) tilts the
- * card up to `motion.tilt.maxDeg` around both axes and parallax-shifts the image
- * up to `motion.tilt.parallaxPx`, springing back on release. The responder only
- * claims a horizontal-dominant drag, so the gallery still scrolls vertically and
- * a plain tap falls through to the inner Pressable (which opens the detail sheet
- * with a selection haptic). Under reduced motion the responder never claims and
- * the tile is static.
+ *   - TILT-ON-DRAG: a PanResponder (gesture-handler isn't a dependency here)
+ *     claims a horizontal-dominant drag past a 4px slop and feeds −1..1 per-axis
+ *     fractions into the surface's `dragX`/`dragY`, which the engine maps to its
+ *     tilt + image parallax. A `dragActive` (0..1) blooms the surface's shadow +
+ *     glow while the drag is live. A pure tap never claims — it falls through to
+ *     the surface's own Pressable (which fires the selection haptic + opens the
+ *     detail sheet). Under reduced motion the responder never claims and the
+ *     tile is static.
+ *   - The DRAFT DOT (`badge`): an unconfirmed piece gets a quiet accent dot so
+ *     the tap-to-review path is discoverable; decorative, never intercepts taps.
  *
- * COME-ALIVE ON TOUCH: with no hover on touch, the press (tap) and the active
- * tilt-drag are the trigger. On either, the card's ink shadow deepens e3 → e4 and
- * an accent glow blooms behind it — the halo is a separate underlay carrying an
- * accent-hued shadow at the per-mode `glow.opacity`, since RN renders one shadow
- * per view (this mirrors the web tile's dual box-shadow). Both spring in on
- * press/drag and out on release. Under reduced motion neither fires: the card
- * holds a static e3 with no glow.
+ * The optional device-tilt FIELD ({@link useTiltField}) sums a subtle drift under
+ * the drag — the whole grid breathing with the wrist, the touched tile leaning
+ * fully on top.
  */
 import { strings } from '@era/core/strings';
-import { elevation, elevationDark, glow, layout, motion, radii, rnShadow, sheen, spacing } from '@era/tokens';
-import * as Haptics from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
+import { layout, motion, spacing } from '@era/tokens';
 import { useRef } from 'react';
-import {
-  PanResponder,
-  Pressable,
-  StyleSheet,
-  View,
-  type LayoutChangeEvent,
-} from 'react-native';
-import Animated, {
-  interpolate,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
+import { PanResponder, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
 import { Text } from '@/components/Text';
-import type { ItemWithDisplay } from '@/components/items';
-import { PRESS_SCALE, springFromToken, useReducedMotionSafe } from '@/lib/motion';
+import { ItemSurface, useTiltField, type ItemWithDisplay } from '@/components/items';
+import { springFromToken, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
 
-const { maxDeg, parallaxPx } = motion.tilt;
-// Depth for the 3D rotation, derived from spacing tokens (s16 × 12 = 768) to
-// match the web tile — a mid-depth field where the 7° tilt reads as a lean, not
-// a fold. A unitless multiple of a token, never a raw px literal.
-const PERSPECTIVE = spacing.s16 * 12;
-const REST_SCALE = 1;
 // Horizontal travel (px) past which a drag is treated as an intentional tilt and
 // the responder is claimed from the scroll list.
 const CLAIM_SLOP = 4;
-
-// The ink shadow deepens from e3's ambient layer toward e4 as the tile activates.
-// Per-mode: dark carries the heavier opacities (e4-dark is near-black at 0.45).
-const REST_SHADOW = { light: elevation.e3.ambient, dark: elevationDark.e3.ambient } as const;
-const ACTIVE_SHADOW = { light: elevation.e4, dark: elevationDark.e4 } as const;
 
 interface CutoutTileProps {
   readonly item: ItemWithDisplay;
@@ -72,16 +46,15 @@ function clamp(value: number, lo: number, hi: number): number {
 }
 
 export function CutoutTile({ item, onPress }: CutoutTileProps) {
-  const { colors, resolved } = useTheme();
+  const { colors } = useTheme();
   const reduced = useReducedMotionSafe();
+  const tiltField = useTiltField();
 
-  // -1..1 drag fractions per axis; drive both the tilt and the image parallax.
+  // −1..1 drag fractions per axis, fed to the surface engine. `dragActive`
+  // (0..1) blooms the surface shadow + glow while the drag is live.
   const dragX = useSharedValue(0);
   const dragY = useSharedValue(0);
-  const pressScale = useSharedValue(REST_SCALE);
-  // 0 at rest, 1 while pressed or actively tilt-dragging — drives the shadow
-  // deepen and the accent-glow bloom. Never leaves 0 under reduced motion.
-  const active = useSharedValue(0);
+  const dragActive = useSharedValue(0);
 
   // The PanResponder is created once; its handlers read live props/flags through
   // this ref so a recycled row or a reduced-motion toggle never uses stale values.
@@ -91,16 +64,15 @@ export function CutoutTile({ item, onPress }: CutoutTileProps) {
 
   const responder = useRef(
     PanResponder.create({
-      // A pure tap never claims — it falls through to the inner Pressable.
+      // A pure tap never claims — it falls through to the surface's Pressable.
       onStartShouldSetPanResponder: () => false,
       // Claim only a horizontal-dominant drag, so vertical scrolls pass through.
       onMoveShouldSetPanResponder: (_event, gesture) =>
         !latest.current.reduced &&
         Math.abs(gesture.dx) > Math.abs(gesture.dy) &&
         Math.abs(gesture.dx) > CLAIM_SLOP,
-      // The drag was claimed (only ever when motion is allowed) — bloom the tile.
       onPanResponderGrant: () => {
-        active.value = withSpring(1, springFromToken('snappy'));
+        dragActive.value = withSpring(1, springFromToken('snappy'));
       },
       onPanResponderMove: (_event, gesture) => {
         const { w, h } = size.current;
@@ -115,7 +87,7 @@ export function CutoutTile({ item, onPress }: CutoutTileProps) {
   ).current;
 
   // Spring the tilt back to rest (a short fade under reduced motion) and fade the
-  // active bloom out. `active` only ever rose when motion is allowed.
+  // active bloom out. `dragActive` only ever rose when motion is allowed.
   function settle() {
     const back = (): number =>
       latest.current.reduced
@@ -123,135 +95,40 @@ export function CutoutTile({ item, onPress }: CutoutTileProps) {
         : withSpring(0, springFromToken('snappy'));
     dragX.value = back();
     dragY.value = back();
-    active.value = withSpring(0, springFromToken('snappy'));
+    dragActive.value = withSpring(0, springFromToken('snappy'));
   }
 
-  const rest = REST_SHADOW[resolved];
-  const activeShadow = ACTIVE_SHADOW[resolved];
-  const tileStyle = useAnimatedStyle(() => ({
-    transform: [
-      { perspective: PERSPECTIVE },
-      { rotateY: `${dragX.value * maxDeg}deg` },
-      { rotateX: `${-dragY.value * maxDeg}deg` },
-      { scale: pressScale.value },
-    ],
-    // Deepen the ink shadow e3 → e4 as the tile activates (base props come from
-    // rnShadow('e3', resolved) below; these two override toward the e4 values).
-    shadowRadius: interpolate(active.value, [0, 1], [rest.blur, activeShadow.blur]),
-    shadowOpacity: interpolate(active.value, [0, 1], [rest.opacity, activeShadow.opacity]),
-  }));
-
-  // The accent glow lives on its own underlay (RN casts one shadow per view); its
-  // opacity blooms with `active`, so the halo fades in on press/drag and out on
-  // release. Held at 0 under reduced motion.
-  const glowStyle = useAnimatedStyle(() => ({ opacity: active.value }));
-
-  const imageStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: dragX.value * parallaxPx },
-      { translateY: dragY.value * parallaxPx },
-    ],
-  }));
-
-  const pressTo = (to: number): number =>
-    reduced ? withTiming(to, { duration: motion.durations.reducedFadeMs }) : withSpring(to, springFromToken('snappy'));
+  const draftBadge = !item.tagsConfirmed ? (
+    <View
+      pointerEvents="none"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={[styles.draftDot, { backgroundColor: colors.accent, borderColor: colors.surface }]}
+    />
+  ) : undefined;
 
   return (
     <View style={styles.cell}>
       <View
-        style={styles.cardWrap}
+        {...responder.panHandlers}
         onLayout={(event: LayoutChangeEvent) => {
           const { width, height } = event.nativeEvent.layout;
           size.current = { w: width, h: height };
         }}
       >
-        {/* Accent-glow underlay — hidden behind the card; only its halo shows. */}
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.glow,
-            {
-              backgroundColor: colors.surface,
-              borderRadius: radii.card,
-              shadowColor: colors.accent,
-              shadowOffset: GLOW_OFFSET,
-              shadowRadius: glow.blurRadius,
-              shadowOpacity: glow.opacity[resolved],
-            },
-            glowStyle,
-          ]}
+        <ItemSurface
+          uri={item.displayUrl ?? null}
+          accessibilityLabel={
+            item.tagsConfirmed ? item.name : strings.closet.draftTileA11y(item.name)
+          }
+          interactive="press"
+          onPress={() => latest.current.onPress(latest.current.item)}
+          badge={draftBadge}
+          tiltField={tiltField}
+          dragX={dragX}
+          dragY={dragY}
+          dragActive={dragActive}
         />
-        <Animated.View
-          {...responder.panHandlers}
-          style={[
-            styles.card,
-            rnShadow('e3', resolved),
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.hairline,
-              borderRadius: radii.card,
-              padding: layout.itemCard.padding,
-            },
-            tileStyle,
-          ]}
-        >
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={
-              item.tagsConfirmed ? item.name : strings.closet.draftTileA11y(item.name)
-            }
-            onPressIn={() => {
-              pressScale.value = pressTo(PRESS_SCALE);
-              if (!reduced) active.value = withSpring(1, springFromToken('snappy'));
-            }}
-            onPressOut={() => {
-              pressScale.value = pressTo(REST_SCALE);
-              if (!reduced) active.value = withSpring(0, springFromToken('snappy'));
-            }}
-            onPress={() => {
-              void Haptics.selectionAsync();
-              onPress(item);
-            }}
-            style={[styles.inner, { borderRadius: radii.card - spacing.s1 }]}
-          >
-            {item.displayUrl ? (
-              <Animated.Image
-                source={{ uri: item.displayUrl }}
-                style={[styles.image, imageStyle]}
-                resizeMode="contain"
-                accessible={false}
-              />
-            ) : (
-              <LinearGradient
-                colors={[colors.surface, colors.hairline]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.image}
-              />
-            )}
-            {/* 135° specular sheen — item-card + primary button only, per spec. */}
-            <LinearGradient
-              colors={[sheen.from[resolved], sheen.to]}
-              locations={[0, 0.6]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              pointerEvents="none"
-              style={StyleSheet.absoluteFill}
-            />
-          </Pressable>
-        </Animated.View>
-        {/* Draft flag: an unconfirmed piece (backed-out add-flow, receipt import)
-            gets a quiet accent dot so the tap-to-review path is discoverable. The
-            a11y state lives on the Pressable's label; this dot is decorative and
-            never intercepts the tap. Confirmed pieces show nothing. */}
-        {!item.tagsConfirmed ? (
-          <View
-            pointerEvents="none"
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-            style={[styles.draftDot, { backgroundColor: colors.accent, borderColor: colors.surface }]}
-          />
-        ) : null}
       </View>
       <Text
         variant="caption"
@@ -266,47 +143,15 @@ export function CutoutTile({ item, onPress }: CutoutTileProps) {
   );
 }
 
-// A centered (offsetless) shadow so the accent glow reads as an even halo.
-const GLOW_OFFSET = { width: 0, height: 0 } as const;
-
 const styles = StyleSheet.create({
   cell: {
     flex: 1,
     gap: spacing.s2,
   },
-  // Sizes the tile; the card and its glow underlay fill it, so the halo can
-  // spill past the card edges.
-  cardWrap: {
-    width: '100%',
-    aspectRatio: layout.itemCard.ratio,
-  },
-  glow: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderCurve: 'continuous',
-  },
-  card: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderCurve: 'continuous',
-  },
-  inner: {
-    flex: 1,
-    overflow: 'hidden',
-    borderCurve: 'continuous',
-  },
   // A small accent dot pinned to the card's top-right, ringed in the surface
-  // colour so it reads over any cutout (a mobile-only addition — web tiles have a
-  // consistent light backing). Diameter + inset match web's GalleryTile for
-  // parity (spacing.s2 = 8px dot, itemCard.padding = 12px in); the radius equals
-  // the diameter so it renders fully round.
+  // colour so it reads over any cutout. Diameter + inset match web's GalleryTile
+  // for parity (spacing.s2 = 8px dot, itemCard.padding = 12px in); the radius
+  // equals the diameter so it renders fully round.
   draftDot: {
     position: 'absolute',
     top: layout.itemCard.padding,
@@ -315,10 +160,6 @@ const styles = StyleSheet.create({
     height: spacing.s2,
     borderRadius: spacing.s2,
     borderWidth: StyleSheet.hairlineWidth,
-  },
-  image: {
-    flex: 1,
-    width: '100%',
   },
   caption: {
     paddingHorizontal: spacing.s1,

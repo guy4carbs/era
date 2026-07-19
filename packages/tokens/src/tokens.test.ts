@@ -314,7 +314,15 @@ test('layout: touch targets, grid, phi split, sheet peek, breakpoints', () => {
   assert.deepEqual(layout.touchTarget, { ios: 44, webMin: 44, webPreferred: 48 });
   assert.equal(layout.tabBarHeight, 49);
   assert.equal(layout.headerHeight, 44);
-  assert.deepEqual(layout.itemCard, { aspectRatio: '4 / 5', ratio: 0.8, padding: 12 });
+  assert.deepEqual(layout.itemCard, {
+    aspectRatio: '4 / 5',
+    ratio: 0.8,
+    padding: 12,
+    // D7 hero interaction — the item card rises (deliberate divergence from
+    // the universal 0.97 press) and carries the 1% harmonizing warm tone.
+    lift: { yPx: -4, scale: 1.02 },
+    warmToneOpacity: 0.01,
+  });
   assert.deepEqual(layout.grid, {
     mobileColumns: 2,
     mobileMargin: 16,

@@ -5,7 +5,7 @@
  * An AnimatedPressable that scales to `PRESS_SCALE` on press-in (snappy spring,
  * a short fade under reduced motion) and springs back on release. Wrap any
  * otherwise-inert tappable (plain Pressable / TouchableOpacity) so it gains the
- * same press feel as Button / Chip / ItemCard.
+ * same press feel as Button / Chip / ItemSurface.
  *
  * Haptics default OFF (`haptic={null}`) — this component gives visual feedback
  * to surfaces that previously had none; it must NOT start buzzing sites that

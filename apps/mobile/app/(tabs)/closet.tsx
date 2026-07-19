@@ -24,7 +24,7 @@ import { StaggerItem } from '@/components/StaggerItem';
 import { Text } from '@/components/Text';
 import { useTabBarVisibility } from '@/components/TabBarVisibility';
 import { ClosetHeader, CutoutTile, ItemDetailSheet, SettingsGear, Toast } from '@/components/closet';
-import { fetchItems, type ItemWithDisplay } from '@/components/items';
+import { fetchItems, TiltFieldProvider, type ItemWithDisplay } from '@/components/items';
 import { CATEGORIES, type ItemCategory } from '@/components/items/constants';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { useTheme } from '@/lib/theme';
@@ -49,6 +49,10 @@ export default function ClosetScreen() {
   const [selected, setSelected] = useState<ItemWithDisplay | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  // True only while this tab is focused — gates the device-tilt field's sensor
+  // so the gyro stops the moment the user leaves the closet (tab screens stay
+  // mounted, so unmount alone never would).
+  const [focused, setFocused] = useState(false);
 
   const query = useDebouncedValue(search.trim().toLowerCase(), 200);
 
@@ -67,6 +71,8 @@ export default function ClosetScreen() {
   useFocusEffect(
     useCallback(() => {
       void load();
+      setFocused(true);
+      return () => setFocused(false);
     }, [load]),
   );
 
@@ -176,6 +182,10 @@ export default function ClosetScreen() {
   return (
     <ScreenEntrance>
       <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
+        {/* One device-tilt sensor for the whole grid — the tiles breathe with
+            the wrist at half strength; the touched tile's drag-tilt sums on top.
+            Gated on focus so the sensor stops when the tab is left. */}
+        <TiltFieldProvider active={focused}>
         <AnimatedSectionList
           sections={sections}
           onScroll={visibility?.scrollHandler}
@@ -236,6 +246,7 @@ export default function ClosetScreen() {
         />
 
         <Toast message={toast} onHide={() => setToast(null)} bottom={toastBottom} />
+        </TiltFieldProvider>
       </SafeAreaView>
     </ScreenEntrance>
   );
