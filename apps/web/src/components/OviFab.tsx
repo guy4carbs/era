@@ -16,7 +16,8 @@ export interface OviFabProps {
 const fabStyle: CSSProperties = {
   position: 'fixed',
   right: 'var(--space-4)',
-  bottom: 'calc(var(--tabbar-height) + var(--space-4) + env(safe-area-inset-bottom))',
+  // No tab bar on web (the rail is the nav) — the FAB hugs the corner.
+  bottom: 'calc(var(--space-4) + env(safe-area-inset-bottom))',
   width: 'var(--touch-target-web)',
   height: 'var(--touch-target-web)',
   minWidth: 'var(--touch-target-min)',
