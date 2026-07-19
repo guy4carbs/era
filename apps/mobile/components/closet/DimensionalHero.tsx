@@ -23,6 +23,7 @@
  * surface is unchanged from the static image.
  */
 import { motion, sheen, spacing } from '@era/tokens';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useMemo, useState } from 'react';
@@ -70,6 +71,11 @@ const SHEEN_PEAK = { light: 1, dark: 0.6 } as const;
 // it never chases an intentional tilt.
 const BASELINE_ALPHA = 0.02;
 
+// `useAnimatedSensor` aborts natively inside the Expo Go client on this stack
+// (see TiltField.tsx — confirmed by on-sim crash bisect 2026-07-19). Static in
+// Expo Go; the full tilt lives in dev-client / release builds.
+const IS_EXPO_GO = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+
 export interface DimensionalHeroProps {
   readonly uri: string;
   readonly accessibilityLabel: string;
@@ -105,10 +111,13 @@ export function DimensionalHero({ uri, active, accessibilityLabel, style }: Dime
     };
   }, []);
 
-  // Reduced motion, setting unresolved, or sheet dismissed: the exact static
-  // image, flat in its hero box — the sensor-bearing tilt tree is not mounted
-  // (no subscription, no gestures, no sheen).
-  if (reduced || !motionKnownOk || !active) {
+  // Reduced motion, setting unresolved, sheet dismissed, or EXPO GO: the exact
+  // static image, flat in its hero box — the sensor-bearing tilt tree is not
+  // mounted (no subscription, no gestures, no sheen). The Expo Go gate exists
+  // because `useAnimatedSensor` aborts the app natively on this stack
+  // (reanimated 4.5 in the Expo Go client — confirmed by the TiltField crash
+  // bisect 2026-07-19, same hook); dev-client / release builds keep the tilt.
+  if (IS_EXPO_GO || reduced || !motionKnownOk || !active) {
     return (
       <View style={style}>
         <Image
