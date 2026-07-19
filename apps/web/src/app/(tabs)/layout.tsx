@@ -1,13 +1,13 @@
 'use client';
 
 import { type ReactNode } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken } from '@era/tokens';
-import { Container, NavRail, OviFab, TabBar, TAB_ITEMS, type TabId } from '../../components';
+import { Container, NavRail, OviFab } from '../../components';
 import { OviChatProvider, useOviChat } from '../../components/ovi';
 import { AnalyticsIdentity } from '../../components/system/AnalyticsIdentity';
-import { transitionFor, viewTransition } from '../../lib/motion';
+import { transitionFor } from '../../lib/motion';
 
 /**
  * True when the browser lacks the View Transitions API, so the keyed page-
@@ -18,28 +18,19 @@ function needsPageEnterFallback(): boolean {
   return typeof document !== 'undefined' && document.startViewTransition === undefined;
 }
 
-/** Resolve the active tab from the first path segment; default to feed. */
-function activeTabFrom(pathname: string): TabId {
-  const segment = pathname.split('/')[1];
-  return TAB_ITEMS.find((tab) => tab.id === segment)?.id ?? 'feed';
-}
-
 /**
  * The tab shell body. Split out from the layout so it sits inside
  * {@link OviChatProvider} and the FAB can summon the chat sheet via
  * {@link useOviChat}.
+ *
+ * Navigation is the rail, at every width (user decree 2026-07-19): the web app
+ * carries NO floating tab bar — the pill is a native-app gesture. The rail owns
+ * tab switches (View-Transition-wrapped inside NavRail).
  */
 function TabsShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
   const reduced = useReducedMotion();
-  const active = activeTabFrom(pathname);
   const { openChat, isOpen } = useOviChat();
-
-  // Tab switches route through the View Transitions API for a cross-fade + rise
-  // (styled in globals.css). It degrades to a plain push where VT / motion is
-  // unavailable — see viewTransition.
-  const navigate = (id: TabId) => viewTransition(() => router.push(`/${id}`));
 
   const content = <Container>{children}</Container>;
 
@@ -62,7 +53,6 @@ function TabsShell({ children }: { children: ReactNode }) {
         content
       )}
 
-      <TabBar active={active} onChange={navigate} />
       {isOpen ? null : <OviFab onClick={() => openChat()} />}
     </div>
   );

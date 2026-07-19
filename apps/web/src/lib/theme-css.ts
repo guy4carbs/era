@@ -179,14 +179,10 @@ export const themeVarsCss = [
  */
 export const responsiveCss = [
   `.era-container{width:100%;margin-inline:auto;max-width:var(--content-max);padding-inline:var(--space-4)}`,
-  `.era-tabbar{display:flex}`,
-  `.era-rail{display:none}`,
-  `.era-tabs-shell{padding-bottom:calc(var(--tabbar-height) + var(--space-16))}`,
-  `@media (min-width:${layout.breakpoints.lg}px){` +
-    `.era-tabbar{display:none}` +
-    `.era-rail{display:flex}` +
-    `.era-tabs-shell{padding-bottom:var(--space-8);padding-left:var(--rail-width)}` +
-    `}`,
+  // The rail is the web app's ONLY nav, at every width (user decree 2026-07-19:
+  // no floating tab bar on the website — the pill is a native-app gesture).
+  `.era-rail{display:flex}`,
+  `.era-tabs-shell{padding-bottom:var(--space-8);padding-left:var(--rail-width)}`,
 ].join('\n');
 
 /**
