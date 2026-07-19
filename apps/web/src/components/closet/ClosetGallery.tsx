@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken, layout, spacing } from '@era/tokens';
@@ -161,16 +161,18 @@ export function ClosetGallery({ items, turnaroundEnabled, onArchived, onUpdated 
 
   const selected = selectedId ? (items.find((item) => item.id === selectedId) ?? null) : null;
 
-  // Stagger the tiles on the first stocked render of the SESSION only. The closet
-  // re-mounts on every visit, so a per-instance ref re-ran the cascade each time;
-  // the module-level flag fires it once, then later visits reveal instantly. The
-  // in-instance ref still guards filter/search re-renders from re-staggering in
-  // place (AnimatePresence keeps the opacity dance below).
+  // Stagger the tiles on the first stocked render of the SESSION only. The flag
+  // is FROZEN per instance (useState initializer, not a per-render read): the
+  // old `!didMount.current && !hasCascaded` recomputed every render, so the
+  // first re-render after mount ripped the variants off tiles mid-cascade —
+  // opacity recovered via the fallback animate target, but the entrance
+  // `filter: blur(4px)` and rise had no new target and FROZE (the stuck-blur
+  // closet bug on prod, 2026-07-19). With the flag constant, variants stay
+  // attached until unmount and the cascade completes; later closet visits this
+  // session skip the cascade entirely (plain opacity fade below).
   const stagger = useStagger(reduced);
-  const didMount = useRef(false);
-  const staggerOnMount = !didMount.current && !hasCascadedThisSession;
+  const [staggerOnMount] = useState(() => !hasCascadedThisSession);
   useEffect(() => {
-    didMount.current = true;
     hasCascadedThisSession = true;
   }, []);
 
