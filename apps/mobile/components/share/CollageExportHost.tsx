@@ -44,16 +44,19 @@ import {
   type OutfitShareInput,
   type RecapShareItem,
   type RecapShareModel,
+  type TodayShareInput,
 } from '@/lib/share-collage';
 
 import { EraStoryCard } from './EraStoryCard';
 import { OutfitStoryCard } from './OutfitStoryCard';
 import { RecapStoryCard } from './RecapStoryCard';
+import { TodayStoryCard } from './TodayStoryCard';
 
 interface CollageExportApi {
   readonly exportOutfit: (input: OutfitShareInput) => void;
   readonly exportEra: (input: EraShareInput) => void;
   readonly exportRecap: (recap: MonthlyRecap, monthLabel: string, items: readonly RecapShareItem[]) => void;
+  readonly exportToday: (input: TodayShareInput) => void;
   readonly busy: boolean;
 }
 
@@ -63,7 +66,8 @@ const CollageExportContext = createContext<CollageExportApi | null>(null);
 type ExportRequest =
   | { readonly kind: 'outfit'; readonly input: OutfitShareInput }
   | { readonly kind: 'era'; readonly input: EraShareInput }
-  | { readonly kind: 'recap'; readonly model: RecapShareModel; readonly items: readonly RecapShareItem[] };
+  | { readonly kind: 'recap'; readonly model: RecapShareModel; readonly items: readonly RecapShareItem[] }
+  | { readonly kind: 'today'; readonly input: TodayShareInput };
 
 export function CollageExportHost({ children }: PropsWithChildren) {
   const [request, setRequest] = useState<ExportRequest | null>(null);
@@ -161,12 +165,19 @@ export function CollageExportHost({ children }: PropsWithChildren) {
     [begin],
   );
 
+  const exportToday = useCallback(
+    (input: TodayShareInput) => {
+      begin({ kind: 'today', input }, collageImageUrls({ tileUrls: input.cutoutUrls }));
+    },
+    [begin],
+  );
+
   // Never leave a timer running if the host unmounts mid-export.
   useEffect(() => clearTimer, [clearTimer]);
 
   const api = useMemo<CollageExportApi>(
-    () => ({ exportOutfit, exportEra, exportRecap, busy }),
-    [exportOutfit, exportEra, exportRecap, busy],
+    () => ({ exportOutfit, exportEra, exportRecap, exportToday, busy }),
+    [exportOutfit, exportEra, exportRecap, exportToday, busy],
   );
 
   return (
@@ -178,6 +189,8 @@ export function CollageExportHost({ children }: PropsWithChildren) {
             <OutfitStoryCard input={request.input} viewRef={viewRef} onAllImagesLoaded={() => void runCapture()} />
           ) : request.kind === 'era' ? (
             <EraStoryCard input={request.input} viewRef={viewRef} onAllImagesLoaded={() => void runCapture()} />
+          ) : request.kind === 'today' ? (
+            <TodayStoryCard input={request.input} viewRef={viewRef} onAllImagesLoaded={() => void runCapture()} />
           ) : (
             <RecapStoryCard
               model={request.model}

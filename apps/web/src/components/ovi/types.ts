@@ -36,6 +36,12 @@ export interface OviTodayApiResponse {
   reply: string;
   outfit: ProposedOutfit | null;
   weather: OviWeather | null;
+  /**
+   * Ovi's one editorial line for the reveal ritual (D9), composed server-side
+   * (`composeRevealLine` in `@era/core/ovi`) — e.g. "18° and sunny — the cream
+   * knit wants out." Null when there's no look to reveal.
+   */
+  revealLine: string | null;
 }
 
 /** The slice of a closet item the outfit card needs to render a cutout tile. */

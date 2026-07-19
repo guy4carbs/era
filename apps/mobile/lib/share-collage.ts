@@ -57,6 +57,12 @@ export interface OutfitShareInput {
   readonly occasion: string | null;
 }
 
+/** What the Today reveal share card renders — the day, the look's cutouts, Ovi's line. */
+export interface TodayShareInput {
+  readonly cutoutUrls: readonly (string | null)[];
+  readonly revealLine: string | null;
+}
+
 /** What the era share card renders — a title, up to four outfit covers, a season. */
 export interface EraShareInput {
   readonly title: string;

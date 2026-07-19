@@ -62,6 +62,12 @@ export interface OviTodayResult {
   readonly reply: string;
   readonly outfit: ProposedOutfit | null;
   readonly weather: OviWeather | null;
+  /**
+   * Ovi's one italic line for the reveal ritual (D9) — composed server-side from
+   * the look's focal piece and today's conditions, deterministically. Null when
+   * there is no look to reveal.
+   */
+  readonly revealLine: string | null;
 }
 
 /** The proposal context echoed back to the accept/reject events. */

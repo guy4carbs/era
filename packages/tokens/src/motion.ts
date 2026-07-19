@@ -59,4 +59,16 @@ export const motion = {
     yPx: 8,
     subtitleDelayMs: 60,
   },
+  // reveal — the Today's Look ritual (D9): cutouts assemble one by one on the
+  // gentle spring, each shadow landing a beat after its piece; the whole
+  // sequence must fit the 2.5s gift-budget and is skippable by tap. With the
+  // stylist's 5-slot cap: 5 × 350 + 400 settle = 2150ms ≤ maxTotalMs (asserted
+  // in tokens.test). Consumers must compress itemIntervalMs if a longer list
+  // ever appears: interval = min(itemIntervalMs, (maxTotalMs - settleMs) / n).
+  reveal: {
+    itemIntervalMs: 350,
+    shadowLagMs: 120,
+    settleMs: 400,
+    maxTotalMs: 2500,
+  },
 } as const;

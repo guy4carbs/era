@@ -16,6 +16,7 @@
 import { NextResponse } from 'next/server';
 
 import { type AuthContext, AuthzError, requireUser } from '@era/core';
+import { composeRevealLine } from '@era/core/ovi';
 import { createDbClient } from '@era/db';
 
 import { auth } from '../../../../lib/auth.ts';
@@ -73,9 +74,15 @@ export async function GET(request: Request): Promise<NextResponse> {
     itemContext: null,
   });
 
+  // The reveal ritual's one italic line (D9) — composed from the look's focal
+  // piece (its first item) + today's conditions, deterministically.
+  const focal = response.outfit ? (closet.find((item) => item.id === response.outfit?.itemIds[0]) ?? null) : null;
+  const revealLine = response.outfit ? composeRevealLine(weather, focal) : null;
+
   return NextResponse.json({
     reply: response.reply,
     outfit: response.outfit,
     weather: weather ? { tempC: weather.tempC, condition: weather.condition } : null,
+    revealLine,
   });
 }
