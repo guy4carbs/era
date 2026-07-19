@@ -10,7 +10,7 @@ import {
 } from 'react';
 import { motion as fmotion, useReducedMotion } from 'motion/react';
 import { useRouter } from 'next/navigation';
-import { elevation, motion as motionToken, spacing } from '@era/tokens';
+import { motion as motionToken } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { slotForCategory, type OutfitSlot, type ProposedOutfit } from '@era/core/ovi';
 
@@ -162,21 +162,6 @@ const actionsStyle: CSSProperties = {
   flexWrap: 'wrap',
 };
 
-// The soft ground shadow a piece lands on — warm ink squashed to an ellipse at
-// the e4 token opacity (the Stories export's grammar), softened by a
-// token-derived blur. A whisper of ground contact, never a painted smear.
-const groundShadowOpacity = elevation.e4.opacity;
-const groundShadowStyle: CSSProperties = {
-  position: 'absolute',
-  left: '19%',
-  right: '19%',
-  bottom: '2%',
-  height: '7%',
-  borderRadius: 'var(--radius-full)',
-  background: 'var(--color-ink)',
-  filter: `blur(${spacing.s3}px)`,
-};
-
 // The bare garment fills its reserved box — no card chrome on the stage.
 const cutoutImgStyle: CSSProperties = {
   width: '100%',
@@ -194,10 +179,9 @@ const pieceWrapStyle: CSSProperties = {
 };
 
 /**
- * One layered cutout in the assembling stack. The piece springs in on the gentle
- * spring; its shadow follows `shadowLagMs` behind via a second, delayed opacity
- * tween on a paired shadow element (so the drop reads as a piece landing, then
- * casting). Once revealed (or under reduced motion) both sit at rest.
+ * One layered cutout in the assembling stack: the bare garment springing in on
+ * the gentle spring — no card chrome, no cast shadow (both user-rejected
+ * 2026-07-19; the garments alone are the composition, matching the export).
  */
 function StackPiece({
   piece,
@@ -212,7 +196,6 @@ function StackPiece({
 }) {
   const offset = piece.slot ? SLOT_OFFSET[piece.slot] : { x: 0, y: 0, scale: 0.8 };
   const spring = transitionFor(motionToken.springs.gentle, reduced);
-  const shadowDelay = reduced ? 0 : motionToken.reveal.shadowLagMs / 1000;
 
   return (
     <div
@@ -236,19 +219,6 @@ function StackPiece({
         transition={spring}
         style={{ position: 'relative', width: '78%', height: '78%' }}
       >
-        {/* The GARMENT layers, not a card — a stack of full ItemSurface cards
-            buried each other (user: "what is this for" at a blank card corner,
-            2026-07-19). The stage now matches the Stories export's grammar:
-            the bare cutout on the cream canvas, landing on a soft ground
-            shadow a beat later (ink at the e3-ambient token opacity — a
-            whisper, never the full-opacity smear that was rejected earlier). */}
-        <fmotion.div
-          aria-hidden="true"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: revealed ? groundShadowOpacity : 0 }}
-          transition={{ ...spring, delay: revealed ? shadowDelay : 0 }}
-          style={groundShadowStyle}
-        />
         {piece.url ? <img src={piece.url} alt={piece.name} style={cutoutImgStyle} /> : null}
       </fmotion.div>
     </div>

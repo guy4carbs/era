@@ -70,9 +70,13 @@ test('reveal motion: RevealStage timings come from motion.reveal, no literal eas
       /motionToken\.reveal\.itemIntervalMs/.test(src),
     'RevealStage must read itemIntervalMs from motionToken.reveal',
   );
+  // The shadow-lag cue was removed by user decree (2026-07-19: no shadows under
+  // the reveal pieces — the bare garments are the composition). The token stays
+  // in motion.reveal for a possible future return; the stage must NOT paint any
+  // shadow shape, so we assert the ground-shadow code stays gone.
   assert.ok(
-    /motionToken\.reveal\.shadowLagMs/.test(src),
-    'RevealStage must read motionToken.reveal.shadowLagMs',
+    !/groundShadow/i.test(src),
+    'RevealStage must not reintroduce a painted ground shadow (user-rejected)',
   );
   assert.ok(
     /motionToken\.reveal\.settleMs/.test(src) || /\bsettleMs\b/.test(src),

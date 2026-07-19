@@ -28,7 +28,7 @@
  * one Today surface; TodayCard delegates to it. Share exports through the existing
  * offscreen collage host via {@link TodayStoryCard}.
  */
-import { elevation, motion, palette, radii, spacing } from '@era/tokens';
+import { motion, radii, spacing } from '@era/tokens';
 import { slotForCategory, type OutfitSlot, type ProposedOutfit } from '@era/core/ovi';
 import { strings } from '@era/core/strings';
 import * as Haptics from 'expo-haptics';
@@ -37,7 +37,6 @@ import { Image, StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withDelay,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
@@ -106,10 +105,6 @@ export function revealInterval(count: number): number {
 }
 
 /** Editorial offsets (fraction of the stage) per slot — an overlapped stack, not a grid. */
-// Ground-shadow strength — the e4 elevation token's opacity, so the whisper of
-// ground contact under each bare cutout stays in the shadow system's range.
-const GROUND_SHADOW_OPACITY = elevation.e4.opacity;
-
 const SLOT_OFFSET: Record<OutfitSlot, { x: number; y: number }> = {
   shoes: { x: 0.16, y: 0.62 },
   bottom: { x: -0.14, y: 0.28 },
@@ -298,20 +293,18 @@ export function RevealStage({
   );
 }
 
-/** One cutout in the assembly — springs in (opacity + scale + rise) with its shadow lagging. */
+/**
+ * One cutout in the assembly — the bare garment springing in (opacity + scale
+ * + rise). No card chrome, no cast/ground shadow: both were user-rejected
+ * (2026-07-19); the garments alone are the composition, matching the export.
+ */
 function RevealCutout({ piece, shown }: { readonly piece: RevealPiece; readonly shown: boolean }) {
   const progress = useSharedValue(0);
-  const shadow = useSharedValue(0);
 
   useEffect(() => {
     if (!shown) return;
     progress.value = withSpring(1, springFromToken('gentle'));
-    // The shadow lands a beat after its piece — the depth cue the spec calls for.
-    shadow.value = withDelay(
-      motion.reveal.shadowLagMs,
-      withTiming(1, { duration: motion.durations.minMs, easing: tokenEasing }),
-    );
-  }, [shown, progress, shadow]);
+  }, [shown, progress]);
 
   const offset = SLOT_OFFSET[piece.slot];
 
@@ -325,16 +318,8 @@ function RevealCutout({ piece, shown }: { readonly piece: RevealPiece; readonly 
     ],
   }));
 
-  const shadowStyle = useAnimatedStyle(() => ({ opacity: shadow.value * GROUND_SHADOW_OPACITY }));
-
   return (
     <Animated.View style={[styles.cutout, style]}>
-      {/* The GARMENT layers, not a card — full ItemSurface cards buried each
-          other in the stack (user-flagged 2026-07-19). Matches the Stories
-          export's grammar: the bare cutout on the canvas, landing a beat later
-          on a soft squashed ground ellipse at the e4 token opacity — a whisper
-          of ground contact, never a painted slab. */}
-      <Animated.View style={[styles.groundShadow, { backgroundColor: palette.ink }, shadowStyle]} />
       {piece.url ? (
         <Image source={{ uri: piece.url }} style={styles.cutoutImage} resizeMode="contain" accessible={false} />
       ) : null}
@@ -446,7 +431,6 @@ function StaticCutout({ piece }: { readonly piece: RevealPiece }) {
         { transform: [{ translateX: `${offset.x * 100}%` }, { translateY: `${offset.y * 100}%` }] },
       ]}
     >
-      <View style={[styles.groundShadow, { backgroundColor: palette.ink, opacity: GROUND_SHADOW_OPACITY }]} />
       {piece.url ? (
         <Image source={{ uri: piece.url }} style={styles.cutoutImage} resizeMode="contain" accessible={false} />
       ) : null}
@@ -477,16 +461,6 @@ const styles = StyleSheet.create({
     left: '10%',
     width: '52%',
     aspectRatio: 0.8,
-  },
-  // The soft ground ellipse a piece lands on — squashed, full-radius, ink at
-  // the e4 token opacity (applied at render). The export's grammar, whispered.
-  groundShadow: {
-    position: 'absolute',
-    left: '19%',
-    right: '19%',
-    bottom: '2%',
-    height: '7%',
-    borderRadius: radii.full,
   },
   // The bare garment fills its reserved box — no card chrome on the stage.
   cutoutImage: {
