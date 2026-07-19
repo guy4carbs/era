@@ -1,14 +1,21 @@
 /**
  * Collage — cover imagery for an outfit or era card.
  *
- * Prefers a single composed cover; with none, it tiles up to four member images
+ * Prefers a single composed cover; with none, it tiles up to four member cutouts
  * (outfit thumbnails, or an era's member-outfit covers) into a 2×2 grid. With no
  * imagery at all it falls back to a plain surface fill. Sized by the caller.
+ *
+ * The member tiles render through the shared {@link ItemSurface} engine in
+ * `interactive:'none'` `fill` mode, so a collage carries the same hairline /
+ * sheen / warm-tone / padding treatment as a closet tile — the whole app reads
+ * as one material. The tiles are composition, not controls: the CARD they sit in
+ * is what presses. The composed-cover path stays a plain cover-cropped image (it
+ * is a single finished picture, not a cutout collage).
  */
 import { radii, spacing } from '@era/tokens';
 import { Image, StyleSheet, View } from 'react-native';
 
-import { useTheme } from '@/lib/theme';
+import { ItemSurface } from '@/components/items';
 
 interface CollageProps {
   readonly cover: string | null;
@@ -16,8 +23,6 @@ interface CollageProps {
 }
 
 export function Collage({ cover, images }: CollageProps) {
-  const { colors } = useTheme();
-
   if (cover) {
     return (
       <Image
@@ -32,20 +37,14 @@ export function Collage({ cover, images }: CollageProps) {
   const tiles = images.slice(0, 4);
 
   return (
-    <View
-      style={[
-        styles.grid,
-        { backgroundColor: colors.surface, borderRadius: radii.card, borderColor: colors.hairline },
-      ]}
-    >
+    <View style={styles.grid}>
       {tiles.map((uri, index) => (
-        <Image
+        <View
           key={`${uri}-${index}`}
-          source={{ uri }}
           style={[styles.tile, tiles.length === 1 ? styles.single : null]}
-          resizeMode="cover"
-          accessible={false}
-        />
+        >
+          <ItemSurface uri={uri} accessibilityLabel="" interactive="none" fill />
+        </View>
       ))}
     </View>
   );
@@ -62,10 +61,8 @@ const styles = StyleSheet.create({
     height: '100%',
     flexDirection: 'row',
     flexWrap: 'wrap',
-    overflow: 'hidden',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderCurve: 'continuous',
-    padding: spacing.s1,
+    // The surface tiles carry their own hairline + rounding; the grid is just a
+    // wrapping flex row now (no border/fill of its own — each tile is a card).
     gap: spacing.s1,
   },
   tile: {

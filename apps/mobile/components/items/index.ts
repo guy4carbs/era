@@ -1,7 +1,8 @@
 /** Closet item components + API. */
 export { AddItemFlow } from './AddItemFlow';
 export { ConfirmItem } from './ConfirmItem';
-export { ItemCard } from './ItemCard';
+export { ItemSurface, type ForcedState, type ItemSurfaceProps, type TiltFieldValue } from './ItemSurface';
+export { TiltFieldProvider, useTiltField } from './TiltField';
 export {
   archiveItem,
   fetchItems,

@@ -19,8 +19,10 @@ import {
   Container,
   GlassSheet,
   Input,
+  ItemSurface,
   OviFab,
   TabBar,
+  type ItemSurfaceForcedState,
   type TabId,
 } from '../../components';
 import { Text } from '../../components/Text';
@@ -61,6 +63,38 @@ const PALETTE_ROLES = [
 ] as const;
 
 const SPRING_NAMES = ['gentle', 'snappy', 'fluid'] as const;
+
+// ---------------------------------------------------------------------------
+// Item Engine specimen assets
+// ---------------------------------------------------------------------------
+
+/** The six garment categories the specimen matrix rows through. */
+const ITEM_CATEGORIES = ['top', 'bottom', 'shoes', 'outerwear', 'dress', 'accessory'] as const;
+
+/** The four forced visual states the specimen matrix columns through. */
+const ITEM_STATES: readonly ItemSurfaceForcedState[] = ['rest', 'lift', 'tilt', 'selected'];
+
+// The real cutouts (transparent-PNG garments on no ground) live at
+// /design-lab/cutouts/{category}.png but are NOT generated yet (blocked on an
+// expired connector). Until they land, each specimen falls back to a distinct
+// existing quiz image as a stand-in via <img onError>. Swap-in path: drop the
+// six PNGs into apps/web/public/design-lab/cutouts/ — no code change.
+const CUTOUT_SRC: Record<(typeof ITEM_CATEGORIES)[number], string> = {
+  top: '/design-lab/cutouts/top.png',
+  bottom: '/design-lab/cutouts/bottom.png',
+  shoes: '/design-lab/cutouts/shoes.png',
+  outerwear: '/design-lab/cutouts/outerwear.png',
+  dress: '/design-lab/cutouts/dress.png',
+  accessory: '/design-lab/cutouts/accessory.png',
+};
+const CUTOUT_FALLBACK: Record<(typeof ITEM_CATEGORIES)[number], string> = {
+  top: '/quiz/s1_minimal.jpg',
+  bottom: '/quiz/s3_relaxed.jpg',
+  shoes: '/quiz/s6_loafers.jpg',
+  outerwear: '/quiz/s10_longcoat.jpg',
+  dress: '/quiz/s4_soft.jpg',
+  accessory: '/quiz/s7_signature.jpg',
+};
 
 // ---------------------------------------------------------------------------
 // Theme islands
@@ -496,6 +530,114 @@ function ComponentsIsland({ chips, onToggleChip }: { chips: Record<string, boole
   );
 }
 
+// ---------------------------------------------------------------------------
+// Item Engine — the D7 hero object specimen matrix.
+// ---------------------------------------------------------------------------
+
+/**
+ * Resolve a category's cutout src with a graceful fallback: attempt the real
+ * cutout PNG, and on load error fall back to a distinct quiz stand-in. A hidden
+ * probe <img> does the error detection so the ItemSurface always renders a src
+ * that exists.
+ */
+function useCutoutSrc(category: (typeof ITEM_CATEGORIES)[number]): {
+  src: string;
+  probe: ReactNode;
+} {
+  const [errored, setErrored] = useState(false);
+  const primary = CUTOUT_SRC[category];
+  const probe = errored ? null : (
+    <img
+      src={primary}
+      alt=""
+      aria-hidden="true"
+      width={1}
+      height={1}
+      onError={() => setErrored(true)}
+      style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none' }}
+    />
+  );
+  return { src: errored ? CUTOUT_FALLBACK[category] : primary, probe };
+}
+
+/** One specimen cell — a forced-state ItemSurface for a category, with a label. */
+function ItemSpecimen({
+  category,
+  state,
+}: {
+  category: (typeof ITEM_CATEGORIES)[number];
+  state: ItemSurfaceForcedState;
+}) {
+  const { src, probe } = useCutoutSrc(category);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', position: 'relative' }}>
+      {probe}
+      <ItemSurface src={src} alt={`${category} — ${state}`} forcedState={state} />
+      <Text variant="caption" as="span" size="footnote" style={{ color: 'var(--color-secondary)' }}>
+        {state}
+      </Text>
+    </div>
+  );
+}
+
+/** The live, fully-interactive (full tilt) specimen — one per mode island. */
+function ItemLiveSpecimen({ category }: { category: (typeof ITEM_CATEGORIES)[number] }) {
+  const { src, probe } = useCutoutSrc(category);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', position: 'relative', maxWidth: 'var(--space-16)' }}>
+      {probe}
+      <ItemSurface
+        src={src}
+        alt={`${category} — live, hover to tilt`}
+        interactive="full"
+        onPress={() => {}}
+      />
+      <Text variant="caption" as="span" size="footnote" style={{ color: 'var(--color-secondary)' }}>
+        live · hover
+      </Text>
+    </div>
+  );
+}
+
+/**
+ * The Item Engine matrix inside one mode island: rows = the six garment
+ * categories, columns = the four forced states (rest / lift / tilt / selected),
+ * plus one live full-tilt specimen. Cutouts fall back to quiz stand-ins until
+ * the real PNGs land in public/design-lab/cutouts/.
+ */
+function ItemEngineIsland() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+      {ITEM_CATEGORIES.map((category) => (
+        <div key={category} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+          <Text variant="caption" as="h3" size="footnote" style={{ margin: 0, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--color-secondary)' }}>
+            {category}
+          </Text>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: `repeat(${ITEM_STATES.length}, minmax(0, 1fr))`,
+              gap: 'var(--space-3)',
+            }}
+          >
+            {ITEM_STATES.map((state) => (
+              <ItemSpecimen key={state} category={category} state={state} />
+            ))}
+          </div>
+        </div>
+      ))}
+      <div style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'flex-start', paddingTop: 'var(--space-2)', borderTop: '1px solid var(--color-hairline)' }}>
+        <ItemLiveSpecimen category="outerwear" />
+        <Text variant="body" as="p" size="footnote" style={{ margin: 0, color: 'var(--color-secondary)', flex: 1 }}>
+          Live specimen — move a pointer over it to tilt ≤7° + parallax + sheen slide; hover/press
+          raises it (the hero lift). Cutouts are quiz-image stand-ins; real garment PNGs swap in via{' '}
+          <code>public/design-lab/cutouts/</code>.
+        </Text>
+      </div>
+    </div>
+  );
+}
+
 function BusyImageryIsland() {
   // Two panels over the SAME busy backdrop: DEFAULT glass (everyday tint) and
   // BUSY glass (the AA-guaranteed scrim). The dark-island busy panel is the
@@ -630,6 +772,13 @@ export default function DesignLabPage() {
 
         <Section title="Sheen" note="var(--sheen-gradient) laid over an accent surface.">
           <IslandPair content={() => <SheenIsland />} />
+        </Section>
+
+        <Section
+          title="Item Engine"
+          note="The D7 hero object (ItemSurface): 4:5 cutout card with hairline + dual shadow + 135° sheen + 1% warm tone. Rows = six categories; columns = forced states (rest / lift / tilt / selected), rendered statically. One live full-tilt specimen per island. Cutouts fall back to quiz stand-ins until real PNGs land in public/design-lab/cutouts/."
+        >
+          <IslandPair content={() => <ItemEngineIsland />} />
         </Section>
 
         <Section title="Components" note="Button variants, Chip, Input, Card — in both islands.">

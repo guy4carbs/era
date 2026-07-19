@@ -2,7 +2,7 @@
 
 import { useState, type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { layout, motion as motionToken } from '@era/tokens';
+import { motion as motionToken } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import type { OviIntent, ProposedOutfit } from '@era/core/ovi';
 import { transitionFor } from '../../lib/motion';
@@ -11,6 +11,7 @@ import { useSession } from '../../lib/auth-client';
 import { Card } from '../Card';
 import { Button } from '../Button';
 import { Text } from '../Text';
+import { ItemSurface } from '../items/ItemSurface';
 import { acceptOutfit, logWear, rejectOutfit } from './ovi-actions';
 import type { ItemsById } from './types';
 
@@ -60,27 +61,6 @@ const gridStyle: CSSProperties = {
   gap: 'var(--space-2)',
 };
 
-const tileStyle: CSSProperties = {
-  position: 'relative',
-  // Fixed 4:5 aspect box from the item-card token reserves each tile BEFORE its
-  // cutout loads (D6 CLS): image load can't change the outfit grid's layout.
-  aspectRatio: layout.itemCard.aspectRatio,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: 'var(--space-2)',
-  borderRadius: 'var(--radius-card)',
-  background: 'var(--color-surface)',
-  border: '1px solid var(--color-hairline)',
-  boxShadow: 'var(--shadow-e1)',
-};
-
-const tileImageStyle: CSSProperties = {
-  maxWidth: '100%',
-  maxHeight: '100%',
-  objectFit: 'contain',
-};
-
 const actionsStyle: CSSProperties = {
   display: 'flex',
   gap: 'var(--space-3)',
@@ -93,13 +73,15 @@ const savedRowStyle: CSSProperties = {
   gap: 'var(--space-2)',
 };
 
-/** A single cutout tile on cream/charcoal, mirroring the closet item frame. */
+/**
+ * A single cutout tile in the look collage, rendered through the shared
+ * {@link ItemSurface} engine at `interactive:'none'` — it inherits the item
+ * card's padding, hairline, dual shadow, warm tone, and resting sheen, but stays
+ * inert (the whole outfit card, not the individual tile, is the tap target). No
+ * tilt here — restraint on the small collage tiles.
+ */
 function CutoutTile({ url, name }: { url: string | null; name: string }) {
-  return (
-    <div style={tileStyle}>
-      {url ? <img src={url} alt={name} style={tileImageStyle} /> : null}
-    </div>
-  );
+  return <ItemSurface src={url} alt={name} interactive="none" />;
 }
 
 /**

@@ -128,6 +128,10 @@ function baseVars(): string {
     `--rail-dot:${unit(layout.rail.glowDotPx)}`,
     `--rail-orb:${unit(layout.rail.orbPx)}`,
     `--item-card-padding:${unit(itemCardPadding)}`,
+    // D7 Item Engine — hero lift + the 1% harmonizing warm tone.
+    `--item-lift:${unit(layout.itemCard.lift.yPx)}`,
+    `--item-lift-scale:${layout.itemCard.lift.scale}`,
+    `--item-warm-tone:${layout.itemCard.warmToneOpacity}`,
     // D6 spatial rhythm — section air ≈ phi × header-below air (52/32).
     `--rhythm-header-below:${unit(layout.rhythm.headerBelowPx)}`,
     `--rhythm-section-above:${unit(layout.rhythm.sectionAbovePx)}`,

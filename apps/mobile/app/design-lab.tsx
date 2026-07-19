@@ -47,12 +47,34 @@ import { GlassPanel } from '@/components/GlassPanel';
 import { Input } from '@/components/Input';
 import { OviFab } from '@/components/OviFab';
 import { Text } from '@/components/Text';
+import { ItemSurface, type ForcedState } from '@/components/items';
 import { animate, useReducedMotionSafe } from '@/lib/motion';
 import { ThemeScope, useTheme } from '@/lib/theme';
 
 const MODES: readonly ThemeMode[] = ['light', 'dark'];
 const ELEVATIONS: readonly ElevationLevel[] = ['e1', 'e2', 'e3', 'e4'];
 const SPRINGS = ['gentle', 'snappy', 'fluid'] as const;
+
+// The six garment categories shown in the Item Engine matrix, each mapped to its
+// reference cutout (transparent PNG, 515×640, in assets/design-lab). The value is
+// the `number` `require()` returns — passed straight to ItemSurface's `uri`. A
+// `null` here falls back to the surface's token-gradient placeholder, so a future
+// category with no asset still degrades gracefully.
+/* eslint-disable @typescript-eslint/no-require-imports -- Metro requires static require() literals for bundled assets; ItemSurface's uri takes the module ref, not an import path. */
+const ITEM_LAB_ASSETS: Readonly<Record<string, string | number | null>> = {
+  top: require('@/assets/design-lab/top.png'),
+  bottom: require('@/assets/design-lab/bottom.png'),
+  shoes: require('@/assets/design-lab/shoes.png'),
+  outerwear: require('@/assets/design-lab/outerwear.png'),
+  dress: require('@/assets/design-lab/dress.png'),
+  accessory: require('@/assets/design-lab/accessory.png'),
+};
+/* eslint-enable @typescript-eslint/no-require-imports */
+
+const ITEM_LAB_CATEGORIES = Object.keys(ITEM_LAB_ASSETS);
+
+// The forced states painted per row, plus the live pressable specimen column.
+const ITEM_LAB_STATES: readonly ForcedState[] = ['rest', 'lift', 'tilt', 'selected'];
 
 // The seven type roles, in visual-weight order. `display` is web-only (opsz 144)
 // and falls back to largeTitle on mobile — labelled so the fallback is legible.
@@ -120,6 +142,10 @@ export default function DesignLabScreen() {
 
         <Section title="Sheen">
           <TwoUp render={(mode) => <SheenColumn mode={mode} />} />
+        </Section>
+
+        <Section title="Item Engine">
+          <ItemEngineMatrix />
         </Section>
 
         <Section title="Components">
@@ -365,6 +391,98 @@ function ComponentsColumn() {
 }
 
 /**
+ * ItemEngineMatrix — the ItemSurface engine across its full state space.
+ *
+ * BOTH modes as light|dark ThemeScope islands; within each, the six garment
+ * categories (rows) × the four forced states (rest / lift / tilt / selected,
+ * columns), plus one LIVE pressable specimen per category so the hero press-lift
+ * can be felt, not just seen. The forced columns are static poses (no handlers),
+ * so a screenshot captures the whole matrix at rest.
+ *
+ * Assets: each specimen's cutout comes from ITEM_LAB_ASSETS (real transparent
+ * cutouts in assets/design-lab). A `null` manifest entry would fall back to the
+ * surface's token-gradient placeholder, so an undrawn category degrades
+ * gracefully. Add/swap path documented above the manifest + in the asset README.
+ */
+function ItemEngineMatrix() {
+  return (
+    <View style={styles.stack}>
+      <View style={styles.twoUp}>
+        {MODES.map((mode) => (
+          <ThemeScope key={mode} mode={mode}>
+            <ItemEngineIsland mode={mode} />
+          </ThemeScope>
+        ))}
+      </View>
+      <ItemEngineCaption />
+    </View>
+  );
+}
+
+function ItemEngineIsland({ mode }: { mode: ThemeMode }) {
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.island, { backgroundColor: colors.bg, borderColor: colors.hairline }]}>
+      <Text variant="ui" size="footnote" weight={600} color={colors.secondaryStrong} style={styles.islandLabel}>
+        {mode.toUpperCase()}
+      </Text>
+      {/* Column headers: the four forced states, then the live specimen. */}
+      <View style={styles.itemLabHeaderRow}>
+        <View style={styles.itemLabRowLabel} />
+        {ITEM_LAB_STATES.map((state) => (
+          <Text key={state} variant="caption" color={colors.secondary} style={styles.itemLabColLabel}>
+            {state}
+          </Text>
+        ))}
+        <Text variant="caption" color={colors.secondary} style={styles.itemLabColLabel}>
+          live
+        </Text>
+      </View>
+      {ITEM_LAB_CATEGORIES.map((category) => {
+        const asset = ITEM_LAB_ASSETS[category] ?? null;
+        return (
+          <View key={category} style={styles.itemLabRow}>
+            <Text variant="caption" size="footnote" color={colors.text} style={styles.itemLabRowLabel} numberOfLines={1}>
+              {category}
+            </Text>
+            {ITEM_LAB_STATES.map((state) => (
+              <View key={state} style={styles.itemLabCell}>
+                <ItemSurface
+                  uri={asset}
+                  accessibilityLabel={`${category} ${state}`}
+                  interactive="none"
+                  forcedState={state}
+                />
+              </View>
+            ))}
+            {/* Live specimen — a real pressable surface; press to feel the lift. */}
+            <View style={styles.itemLabCell}>
+              <ItemSurface
+                uri={asset}
+                accessibilityLabel={`${category} live`}
+                interactive="press"
+                onPress={() => undefined}
+              />
+            </View>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+function ItemEngineCaption() {
+  const { colors } = useTheme();
+  return (
+    <Text variant="caption" color={colors.secondary}>
+      Rows = categories, columns = forced states; the last column is a live
+      pressable surface. Specimens: assets/design-lab/&lt;category&gt;.png (a null
+      manifest entry falls back to a token placeholder).
+    </Text>
+  );
+}
+
+/**
  * MotionPlayground — the springs demo (gentle/snappy/fluid) plus the live
  * reduced-motion state. Not mode-split: motion reads identically in both.
  */
@@ -606,6 +724,29 @@ const styles = StyleSheet.create({
   busyGlass: {
     flex: 1,
     justifyContent: 'center',
+  },
+  // Item Engine matrix — a header row + one row per category, each a label plus
+  // the forced-state cells and the live specimen. Cells are small so all five
+  // fit an island column; each ItemSurface keeps its own 4:5 aspect.
+  itemLabHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: spacing.s1,
+  },
+  itemLabRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.s1,
+  },
+  itemLabRowLabel: {
+    width: spacing.s12,
+  },
+  itemLabColLabel: {
+    flex: 1,
+    textAlign: 'center',
+  },
+  itemLabCell: {
+    flex: 1,
   },
   auditGroup: { gap: spacing.s1 },
   contrastRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.s2 },
