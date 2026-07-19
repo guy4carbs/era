@@ -42,6 +42,7 @@ export { layout } from './layout.ts';
 export {
   relativeLuminance,
   contrastRatio,
+  compositeOver,
   contrastPairs,
   runContrastAudit,
   type ContrastUsage,

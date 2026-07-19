@@ -21,6 +21,7 @@
  */
 
 import { palette, type ThemeMode } from './colors.ts';
+import { glass } from './glass.ts';
 
 export type ContrastUsage = 'body' | 'large' | 'ui';
 
@@ -64,8 +65,48 @@ export function contrastRatio(hexA: string, hexB: string): number {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
+/**
+ * The effective color of `topHex` laid over `bottomHex` at `alpha` — plain
+ * per-channel sRGB source-over compositing, the same math the browser runs for
+ * a translucent tint. This is how a glass surface's REAL backdrop color is
+ * derived (tint over what's behind it), so text-on-glass pairs can be audited
+ * with the ordinary contrast machinery. (Blur redistributes the backdrop but
+ * cannot change its average luminance, so auditing against the un-blurred
+ * composite is the conservative, correct bound.)
+ */
+export function compositeOver(topHex: string, bottomHex: string, alpha: number): string {
+  const parse = (hex: string): [number, number, number] => {
+    const h = hex.replace('#', '');
+    return [
+      Number.parseInt(h.slice(0, 2), 16),
+      Number.parseInt(h.slice(2, 4), 16),
+      Number.parseInt(h.slice(4, 6), 16),
+    ];
+  };
+  const [tr, tg, tb] = parse(topHex);
+  const [br, bg, bb] = parse(bottomHex);
+  const mix = (t: number, b: number) => Math.round(t * alpha + b * (1 - alpha));
+  const toHex = (v: number) => v.toString(16).padStart(2, '0').toUpperCase();
+  return `#${toHex(mix(tr, br))}${toHex(mix(tg, bg))}${toHex(mix(tb, bb))}`;
+}
+
 const light = palette.light;
 const dark = palette.dark;
+
+// Glass backdrops for the text-on-glass pairs (see the glass token's
+// busyTintOpacity doc for the derivation). "default" composites the mode's
+// tint over its own bg (the chrome case); "busy-worst" composites the BUSY
+// tint over the worst-case backdrop for that mode — pure white behind dark
+// glass, pure black behind light glass. If the busy-worst pair passes, glass
+// text passes over ANY backdrop.
+const glassDefaultBg = {
+  light: compositeOver(light.surface, light.bg, glass.tintOpacity.light),
+  dark: compositeOver(dark.surface, dark.bg, glass.tintOpacity.dark),
+} as const;
+const glassBusyWorstBg = {
+  light: compositeOver(light.surface, '#000000', glass.busyTintOpacity.light),
+  dark: compositeOver(dark.surface, '#FFFFFF', glass.busyTintOpacity.dark),
+} as const;
 
 export const contrastPairs = [
   // --- light mode ---
@@ -86,6 +127,13 @@ export const contrastPairs = [
   { id: 'dark-secondaryStrong-surface', mode: 'dark', fgKey: 'secondaryStrong', fg: dark.secondaryStrong, bgKey: 'surface', bg: dark.surface, usage: 'body', required: 4.5 },
   // accent is a foreground hint in dark mode only (see file header note).
   { id: 'dark-accent-bg', mode: 'dark', fgKey: 'accent', fg: dark.accent, bgKey: 'bg', bg: dark.bg, usage: 'ui', required: 3 },
+  // --- text on glass (D4) ---
+  // default = tint over the mode's own bg (chrome); busy-worst = the busy tint
+  // over the worst-case backdrop — passing here guarantees AA over ANYTHING.
+  { id: 'light-glass-text-default', mode: 'light', fgKey: 'text', fg: light.text, bgKey: 'glass(bg)', bg: glassDefaultBg.light, usage: 'body', required: 4.5 },
+  { id: 'light-glass-text-busy-worst', mode: 'light', fgKey: 'text', fg: light.text, bgKey: 'glass-busy(black)', bg: glassBusyWorstBg.light, usage: 'body', required: 4.5 },
+  { id: 'dark-glass-text-default', mode: 'dark', fgKey: 'text', fg: dark.text, bgKey: 'glass(bg)', bg: glassDefaultBg.dark, usage: 'body', required: 4.5 },
+  { id: 'dark-glass-text-busy-worst', mode: 'dark', fgKey: 'text', fg: dark.text, bgKey: 'glass-busy(white)', bg: glassBusyWorstBg.dark, usage: 'body', required: 4.5 },
 ] as const satisfies readonly ContrastPair[];
 
 /** Measure every declared pair. `pass` is true iff ratio >= required. */

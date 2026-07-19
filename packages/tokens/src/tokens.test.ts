@@ -26,6 +26,7 @@ import {
   layout,
   relativeLuminance,
   contrastRatio,
+  compositeOver,
   contrastPairs,
   runContrastAudit,
 } from './index.ts';
@@ -244,7 +245,9 @@ test('dark elevation: +0.04/+0.06 opacities, e4 true black at 0.45 (§3)', () =>
 
 test('glass, glow, sheen (§3 exact numbers)', () => {
   assert.equal(glass.blur, 20);
+  assert.equal(glass.saturate, 1.1); // garments glow slightly through glass
   assert.deepEqual(glass.tintOpacity, { light: 0.72, dark: 0.62 });
+  assert.deepEqual(glass.busyTintOpacity, { light: 0.72, dark: 0.88 });
   assert.equal(glass.borderWidth, 1);
   assert.deepEqual(glass.border, {
     light: 'rgba(28, 27, 25, 0.08)',
@@ -358,4 +361,43 @@ test('secondary #8A857C on bg #FAF7F0 is large-only (between 3 and 4.5)', () => 
   const ratio = contrastRatio('#8A857C', '#FAF7F0');
   assert.ok(ratio > 3, `expected > 3, got ${ratio}`);
   assert.ok(ratio < 4.5, `expected < 4.5, got ${ratio}`);
+});
+
+test('compositeOver: source-over sRGB mix, exact at the extremes', () => {
+  assert.equal(compositeOver('#FFFFFF', '#000000', 1), '#FFFFFF'); // fully opaque top
+  assert.equal(compositeOver('#FFFFFF', '#000000', 0), '#000000'); // fully transparent top
+  assert.equal(compositeOver('#FFFFFF', '#000000', 0.5), '#808080'); // even mix (rounds up)
+});
+
+test('glass AA guarantee: busy tint passes worst-case; default dark honestly fails it', () => {
+  const { light, dark } = palette;
+  // The busy-worst pairs (declared in contrastPairs) — passing here means text
+  // on busy glass clears AA over ANY backdrop.
+  const lightBusyWorst = contrastRatio(
+    light.text,
+    compositeOver(light.surface, '#000000', glass.busyTintOpacity.light),
+  );
+  const darkBusyWorst = contrastRatio(
+    dark.text,
+    compositeOver(dark.surface, '#FFFFFF', glass.busyTintOpacity.dark),
+  );
+  assert.ok(lightBusyWorst >= 4.5, `light busy worst-case ${lightBusyWorst} >= 4.5`);
+  assert.ok(darkBusyWorst >= 4.5, `dark busy worst-case ${darkBusyWorst} >= 4.5`);
+
+  // The honest negative — WHY busyTintOpacity exists: the default dark tint
+  // (0.62) over a worst-case white backdrop does NOT clear AA. If this ever
+  // starts passing (palette change), busy may be reducible — revisit.
+  const darkDefaultOverWhite = contrastRatio(
+    dark.text,
+    compositeOver(dark.surface, '#FFFFFF', glass.tintOpacity.dark),
+  );
+  assert.ok(darkDefaultOverWhite < 4.5, `dark default over white ${darkDefaultOverWhite} < 4.5 (the busy scrim's reason to exist)`);
+
+  // Light glass needs no busy bump: the DEFAULT light tint already clears AA
+  // over a worst-case black backdrop.
+  const lightDefaultOverBlack = contrastRatio(
+    light.text,
+    compositeOver(light.surface, '#000000', glass.tintOpacity.light),
+  );
+  assert.ok(lightDefaultOverBlack >= 4.5, `light default over black ${lightDefaultOverBlack} >= 4.5`);
 });

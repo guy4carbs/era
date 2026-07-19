@@ -9,9 +9,26 @@
 
 export const glass = {
   blur: 20,
+  // saturate — a slight saturation boost behind glass so garments glow through
+  // it (§3). Web: `backdrop-filter: blur(20px) saturate(1.1)`. Mobile BlurView
+  // exposes no saturation control — iOS system materials already apply mild
+  // vibrancy, so the divergence is cosmetic and documented, not hidden.
+  saturate: 1.1,
   tintOpacity: {
     light: 0.72,
     dark: 0.62,
+  },
+  // busyTintOpacity — the minimum-contrast scrim strength for glass floating
+  // over BUSY backdrops (imagery: cutouts, try-on renders, photos). Surfaces
+  // declare `busy` and swap to this tint. The DARK value is AA-derived: cream
+  // text on the 0.62 dark tint composited over a worst-case WHITE backdrop
+  // measures ~4.0:1 (FAILS 4.5); at 0.88 it measures ~9.4:1 — guaranteed AA
+  // over ANY backdrop. Light already guarantees AA at 0.72 (ink text over the
+  // tint on pure black ≈ 7.7:1), so busy leaves it unchanged. Asserted with
+  // the real WCAG math in tokens.test.ts — the guarantee is machine-checked.
+  busyTintOpacity: {
+    light: 0.72,
+    dark: 0.88,
   },
   borderWidth: 1,
   // border — the 1px frame, per mode: warm ink at 8% on light, warm cream at 8%
