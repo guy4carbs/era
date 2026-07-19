@@ -1,6 +1,12 @@
 /**
  * Toast — a brief, self-dismissing status line pinned above the tab bar.
  *
+ * A BUSY glass pill (GlassPanel): it floats above the tab bar, potentially over
+ * feed/closet imagery, so the AA scrim tint guarantees the label stays legible.
+ * On busy glass the tint IS the surface colour, so the label renders in
+ * `colors.text` — exactly the text-on-glass pair the contrast audit certifies
+ * (previously an opaque inverted pill, `colors.text` bg / `colors.bg` text).
+ *
  * Fades in when `message` is set and auto-clears after a short beat (the parent
  * owns the message state and clears it via `onHide`). Reduced motion collapses
  * the fade to an instant show/hide. Used for the "archived" confirmation.
@@ -14,6 +20,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { GlassPanel } from '@/components/GlassPanel';
 import { Text } from '@/components/Text';
 import { tokenEasing, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
@@ -52,15 +59,14 @@ export function Toast({ message, onHide, bottom }: ToastProps) {
     <Animated.View
       accessibilityRole="alert"
       pointerEvents="none"
-      style={[
-        styles.toast,
-        style,
-        { bottom, backgroundColor: colors.text, borderColor: colors.hairline },
-      ]}
+      style={[styles.toast, style, { bottom }]}
     >
-      <Text variant="caption" size="subhead" color={colors.bg} style={{ textAlign: 'center' }}>
-        {message}
-      </Text>
+      {/* busy glass: AA scrim over imagery; e3 lifts the pill off the content. */}
+      <GlassPanel busy radius={radii.input} shadow="e3" style={styles.pill}>
+        <Text variant="caption" size="subhead" color={colors.text} style={styles.label}>
+          {message}
+        </Text>
+      </GlassPanel>
     </Animated.View>
   );
 }
@@ -70,10 +76,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: spacing.s4,
     right: spacing.s4,
-    borderRadius: radii.input,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderCurve: 'continuous',
+  },
+  pill: {
     paddingVertical: spacing.s3,
     paddingHorizontal: spacing.s4,
   },
+  label: { textAlign: 'center' },
 });

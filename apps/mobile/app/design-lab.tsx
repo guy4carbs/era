@@ -31,7 +31,6 @@ import {
   type ElevationLevel,
   type ThemeMode,
 } from '@era/tokens';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, ScrollView, View } from 'react-native';
@@ -44,6 +43,7 @@ import Animated, {
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Chip } from '@/components/Chip';
+import { GlassPanel } from '@/components/GlassPanel';
 import { Input } from '@/components/Input';
 import { OviFab } from '@/components/OviFab';
 import { Text } from '@/components/Text';
@@ -298,28 +298,12 @@ function GlassColumn({ mode }: { mode: ThemeMode }) {
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
         />
-        <View
-          style={[
-            styles.glassPanel,
-            { borderColor: glass.border[mode], borderWidth: glass.borderWidth, borderRadius: radii.sheet },
-          ]}
-        >
-          <BlurView intensity={glass.blur} tint={mode === 'dark' ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-          {/* Mode tint at glass.tintOpacity[mode]. */}
-          <View
-            style={[StyleSheet.absoluteFill, { backgroundColor: colors.surface, opacity: glass.tintOpacity[mode] }]}
-          />
-          {/* Top-edge inner highlight, per mode. */}
-          <LinearGradient
-            colors={[glass.innerHighlightColor[mode], 'transparent']}
-            style={styles.glassHighlight}
-            pointerEvents="none"
-          />
+        <GlassPanel radius={radii.sheet} style={styles.glassPanel}>
           <View style={styles.glassLabel}>
             <Text variant="body" color={colors.text}>Frosted glass</Text>
             <Text variant="caption" color={colors.secondary}>tint {glass.tintOpacity[mode]}</Text>
           </View>
-        </View>
+        </GlassPanel>
       </View>
     </View>
   );
@@ -413,33 +397,36 @@ function MotionPlayground() {
 }
 
 /**
- * BusyImageryColumn — the glass recipe floated over a deliberately busy scene.
- * The scene is built from layered RN Views + expo-linear-gradient stripes at
- * varying angles (no SVG, no new deps), so the frosted panel has real high-
- * frequency colour to blur against.
+ * BusyImageryColumn — the glass recipe floated over a deliberately busy scene,
+ * shown TWICE per island: the DEFAULT tint next to the BUSY (AA-scrim) tint. On
+ * dark, the busy panel is the scrim PROOF — the default tint drops below 4.5:1
+ * over bright noise while the busy tint stays legible. Each panel carries sample
+ * body text so the difference is read directly, not inferred.
+ *
+ * The scene is layered RN Views + expo-linear-gradient stripes at varying angles
+ * (no SVG, no new deps), so the frosted panels have real high-frequency colour
+ * to blur against.
  */
 function BusyImageryColumn({ mode }: { mode: ThemeMode }) {
   const { colors } = useTheme();
   return (
     <View style={[styles.busyStage, { borderRadius: radii.card, borderColor: colors.hairline }]}>
       <BusyBackground />
-      <View
-        style={[
-          styles.busyGlass,
-          { borderColor: glass.border[mode], borderWidth: glass.borderWidth, borderRadius: radii.sheet },
-        ]}
-      >
-        <BlurView intensity={glass.blur} tint={mode === 'dark' ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surface, opacity: glass.tintOpacity[mode] }]} />
-        <LinearGradient
-          colors={[glass.innerHighlightColor[mode], 'transparent']}
-          style={styles.glassHighlight}
-          pointerEvents="none"
-        />
-        <View style={styles.glassLabel}>
-          <Text variant="body" color={colors.text}>Glass over noise</Text>
-          <Text variant="caption" color={colors.secondary}>readable through the blur</Text>
-        </View>
+      <View style={styles.busyRow}>
+        <GlassPanel radius={radii.sheet} style={styles.busyGlass}>
+          <View style={styles.glassLabel}>
+            <Text variant="ui" size="footnote" weight={600} color={colors.secondaryStrong}>DEFAULT</Text>
+            <Text variant="body" size="footnote" color={colors.text}>The quick brown fox reads clearly.</Text>
+            <Text variant="caption" color={colors.secondary}>tint {glass.tintOpacity[mode]}</Text>
+          </View>
+        </GlassPanel>
+        <GlassPanel busy radius={radii.sheet} style={styles.busyGlass}>
+          <View style={styles.glassLabel}>
+            <Text variant="ui" size="footnote" weight={600} color={colors.secondaryStrong}>BUSY (AA scrim)</Text>
+            <Text variant="body" size="footnote" color={colors.text}>The quick brown fox reads clearly.</Text>
+            <Text variant="caption" color={colors.secondary}>tint {glass.busyTintOpacity[mode]}</Text>
+          </View>
+        </GlassPanel>
       </View>
     </View>
   );
@@ -590,14 +577,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  // GlassPanel owns radius/border/overflow; these just size + centre content.
   glassPanel: {
     width: '80%',
     height: '60%',
-    overflow: 'hidden',
-    borderCurve: 'continuous',
     justifyContent: 'center',
   },
-  glassHighlight: { position: 'absolute', top: 0, left: 0, right: 0, height: spacing.s8 },
   glassLabel: { padding: spacing.s3, gap: spacing.s1 },
   sheenStage: {
     height: spacing.s16,
@@ -612,11 +597,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  // Two panels side by side (DEFAULT vs BUSY) over the busy backdrop.
+  busyRow: {
+    flexDirection: 'row',
+    gap: spacing.s2,
+    paddingHorizontal: spacing.s3,
+  },
   busyGlass: {
-    width: '82%',
-    height: '58%',
-    overflow: 'hidden',
-    borderCurve: 'continuous',
+    flex: 1,
     justifyContent: 'center',
   },
   auditGroup: { gap: spacing.s1 },

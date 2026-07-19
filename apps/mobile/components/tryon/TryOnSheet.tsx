@@ -172,7 +172,8 @@ export function TryOnSheet({ open, onClose, outfitId, onNeedsPlus, onNeedsAvatar
   }, [open, outfitId, alive, startRender]);
 
   return (
-    <GlassSheet open={open} onClose={onClose}>
+    // busy: floats over try-on render imagery → AA scrim tint.
+    <GlassSheet open={open} onClose={onClose} busy>
       <Body
         phase={phase}
         result={result}

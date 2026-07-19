@@ -75,7 +75,8 @@ export function ShopSimilarSheet({ postId, onClose }: ShopSimilarSheetProps) {
   const empty = load.kind === 'ready' && load.matches.length === 0;
 
   return (
-    <GlassSheet open={postId !== null} onClose={onClose}>
+    // busy: floats over feed photo imagery → AA scrim tint.
+    <GlassSheet open={postId !== null} onClose={onClose} busy>
       <Text variant="ui" size="title3" weight={600} color={colors.text} accessibilityRole="header">
         {strings.feed.shopSimilarTitle}
       </Text>

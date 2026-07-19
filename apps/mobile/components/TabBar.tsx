@@ -1,16 +1,18 @@
 /**
  * TabBar — the app's bottom navigation.
  *
- * A glass (blurred) bar of fixed height plus the device's bottom safe-area
- * inset. Four tabs; the active one is tinted with the accent colour. Rendered
- * as a controlled component so it can live in the design lab now and be wired
- * into expo-router later (icons are labels-only until an icon set lands).
+ * A glass bar of fixed height plus the device's bottom safe-area inset. The
+ * frosted material is the shared GlassPanel recipe (blur + tint + top-edge
+ * highlight + border), radius 0 for the full-width bar; this file owns only the
+ * tab layout, labels, and active-accent tint. Rendered as a controlled component
+ * so it can live in the design lab now and be wired into expo-router later
+ * (icons are labels-only until an icon set lands).
  */
-import { glass, layout } from '@era/tokens';
-import { BlurView } from 'expo-blur';
+import { layout } from '@era/tokens';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { GlassPanel } from '@/components/GlassPanel';
 import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
@@ -30,19 +32,15 @@ interface TabBarProps {
 }
 
 export function TabBar({ active, onChange }: TabBarProps) {
-  const { colors, resolved } = useTheme();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.container, { borderTopColor: colors.hairline }]}>
-      <BlurView
-        intensity={glass.blur}
-        tint={resolved === 'dark' ? 'dark' : 'light'}
-        style={StyleSheet.absoluteFill}
-      />
-      <View
-        style={[StyleSheet.absoluteFill, { backgroundColor: colors.surface, opacity: glass.tintOpacity[resolved] }]}
-      />
+    <View style={styles.container}>
+      {/* Shared §3 glass recipe (blur + tint + top-edge highlight + border),
+          radius 0 for the full-width bar. Static — the feed/closet/shop lists
+          scroll UNDER this without re-rendering the glass. */}
+      <GlassPanel radius={0} style={StyleSheet.absoluteFill} />
       <View
         style={[
           styles.row,
@@ -78,7 +76,8 @@ export function TabBar({ active, onChange }: TabBarProps) {
 
 const styles = StyleSheet.create({
   container: {
-    borderTopWidth: StyleSheet.hairlineWidth,
+    // GlassPanel (absoluteFill) carries the top-edge glass border; the bar just
+    // clips its own row to that edge.
     overflow: 'hidden',
   },
   row: {
