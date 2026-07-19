@@ -28,6 +28,7 @@
  *     constant zero, so the field simply contributes nothing — no special-casing.
  */
 import { motion } from '@era/tokens';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { createContext, useContext, useEffect, useState, type PropsWithChildren } from 'react';
 import { AccessibilityInfo } from 'react-native';
 import {
@@ -55,6 +56,15 @@ const FIELD_PARALLAX_PX = parallaxPx / 2;
 const BASELINE_ALPHA = 0.02;
 
 const FLAT: TiltFieldValue = { rotateX: 0, rotateY: 0, parallaxX: 0, parallaxY: 0 };
+
+// HARD GATE (2026-07-19, crash bisect on-sim): mounting reanimated's
+// `useAnimatedSensor` inside EXPO GO on this stack (reanimated 4.5 / SDK 57)
+// throws inside the UI-thread worklet runtime and aborts the app natively —
+// nothing reaches Metro. Confirmed by A/B bisect: sensor off → closet loads;
+// sensor on → SIGABRT via WorkletsReentrancyCheck. The field is therefore
+// inert in Expo Go (StoreClient) and live only in dev-client / release builds,
+// where the sensor path must still be device-verified before relying on it.
+const IS_EXPO_GO = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
 const TiltFieldContext = createContext<SharedValue<TiltFieldValue> | null>(null);
 
@@ -90,7 +100,7 @@ export function TiltFieldProvider({ active, children }: PropsWithChildren<TiltFi
     };
   }, []);
 
-  const inert = reduced || !motionKnownOk || !active;
+  const inert = IS_EXPO_GO || reduced || !motionKnownOk || !active;
 
   // ONE field value for the provider's whole life; the childless SensorDriver
   // below mounts/unmounts to start/stop the gyro. Children stay OUTSIDE that
