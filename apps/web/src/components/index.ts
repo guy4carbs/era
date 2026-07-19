@@ -7,6 +7,7 @@ export { GlassSheet, type GlassSheetProps } from './GlassSheet';
 export { Input, type InputProps } from './Input';
 export { NavRail } from './NavRail';
 export { OviFab, type OviFabProps } from './OviFab';
+export { PageHeader, type PageHeaderProps } from './PageHeader';
 export { Press, type PressProps, type PressAs } from './Press';
 export { TabBar, TAB_ITEMS, type TabBarProps, type TabId, type TabDef } from './TabBar';
 export { Text, TextControlBoundary, type TextProps } from './Text';

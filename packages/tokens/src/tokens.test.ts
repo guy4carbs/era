@@ -303,6 +303,8 @@ test('motion choreography: press, stagger, pageRise (§3 exact)', () => {
   assert.deepEqual(motion.stagger, { delayMs: 45, riseYPx: 12, blurPx: 4 });
   // page/tab content cross-fade rises 6px on the gentle spring
   assert.deepEqual(motion.pageRise, { yPx: 6 });
+  // D6 header choreography — title rises 8px, subtitle trails by 60ms.
+  assert.deepEqual(motion.headerRise, { yPx: 8, subtitleDelayMs: 60 });
   // The stagger delay must never let a long list exceed the 350ms feel-budget
   // for its FIRST page of items (~8 visible): 8 * 45 = 360 ≈ the ceiling.
   assert.ok(motion.stagger.delayMs * 8 <= motion.durations.maxMs + motion.stagger.delayMs);
@@ -329,6 +331,15 @@ test('layout: touch targets, grid, phi split, sheet peek, breakpoints', () => {
   assert.deepEqual(layout.hover, { liftPx: -2, glowIntensity: 0.6 });
   // D5 nav rail — 232px quiet-luxury rail, 6px glow dot, 12px wordmark orb.
   assert.deepEqual(layout.rail, { width: 232, glowDotPx: 6, orbPx: 12 });
+  // D6 rhythm — section air ≈ phi × header-below air, on the 4pt grid.
+  assert.deepEqual(layout.rhythm, { headerBelowPx: 32, sectionAbovePx: 52 });
+  const rhythmRatio = layout.rhythm.sectionAbovePx / layout.rhythm.headerBelowPx;
+  assert.ok(
+    Math.abs(rhythmRatio - layout.phi) < 0.01,
+    `rhythm ratio ${rhythmRatio} should approximate phi ${layout.phi}`,
+  );
+  assert.equal(layout.rhythm.headerBelowPx % baseUnit, 0);
+  assert.equal(layout.rhythm.sectionAbovePx % baseUnit, 0);
 });
 
 test('WCAG math: known references', () => {

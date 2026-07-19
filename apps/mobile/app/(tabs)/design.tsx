@@ -16,6 +16,7 @@ import Animated from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
+import { PageHeader } from '@/components/PageHeader';
 import { ScreenEntrance } from '@/components/ScreenEntrance';
 import { Text } from '@/components/Text';
 import { useTabBarVisibility } from '@/components/TabBarVisibility';
@@ -143,23 +144,26 @@ export default function DesignScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.header}>
-            <Text accessibilityRole="header" variant="largeTitle" color={colors.text}>
-              Design
-            </Text>
+          <PageHeader title="Design" subtitle={strings.design.subtitle} />
+          <View style={styles.cta}>
             <Button label={strings.design.newOutfit} onPress={openCanvas} haptic />
           </View>
 
-          {rows.map((row, index) => (
-            <View key={`row-${index}`} style={styles.row}>
-              {row.map((outfit) => (
-                <OutfitCard key={outfit.id} outfit={outfit} onPress={openOutfit} />
-              ))}
-              {row.length === 1 ? <View style={styles.cell} /> : null}
-            </View>
-          ))}
+          <View style={styles.grid}>
+            {rows.map((row, index) => (
+              <View key={`row-${index}`} style={styles.row}>
+                {row.map((outfit) => (
+                  <OutfitCard key={outfit.id} outfit={outfit} onPress={openOutfit} />
+                ))}
+                {row.length === 1 ? <View style={styles.cell} /> : null}
+              </View>
+            ))}
+          </View>
 
-          <EraSection eras={eras} busy={busy} onCreate={onCreateEra} />
+          {/* The eras section opens on the D6 section rhythm (52px) below the grid. */}
+          <View style={styles.section}>
+            <EraSection eras={eras} busy={busy} onCreate={onCreateEra} />
+          </View>
         </Animated.ScrollView>
 
         <Toast message={toast} onHide={() => setToast(null)} bottom={layout.tabBarHeight + spacing.s6} />
@@ -190,11 +194,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: layout.grid.mobileMargin,
     paddingTop: spacing.s8,
     paddingBottom: layout.tabBarHeight + spacing.s16,
+  },
+  // The build CTA sits just under the header, above the outfit grid.
+  cta: {
+    paddingBottom: spacing.s4,
+  },
+  // The outfit grid: rows share the grid gutter both across and down.
+  grid: {
     gap: layout.grid.gutter,
   },
-  header: {
-    gap: spacing.s4,
-    paddingBottom: spacing.s4,
+  // Major sections open on the D6 section rhythm below the grid.
+  section: {
+    marginTop: layout.rhythm.sectionAbovePx,
   },
   row: {
     flexDirection: 'row',

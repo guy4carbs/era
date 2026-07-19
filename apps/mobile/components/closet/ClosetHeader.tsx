@@ -1,10 +1,11 @@
 /**
- * ClosetHeader — the gallery's sticky top matter.
+ * ClosetHeader — the gallery's top chrome (below the PageHeader).
  *
- * A large "Closet" title, the public/private toggle, a debounced search field,
- * and a horizontal row of category filter chips ("All" plus every category the
- * closet actually holds). Search and filter are lifted to the screen; this is a
- * controlled presenter. Rendered as the SectionList header.
+ * The wear-history + settings toolbar, the public/private toggle, a debounced
+ * search field, and a horizontal row of category filter chips ("All" plus every
+ * category the closet actually holds). The screen's PageHeader (title + subtitle)
+ * sits ABOVE this. Search and filter are lifted to the screen; this is a
+ * controlled presenter. Rendered inside the SectionList header.
  */
 import { strings } from '@era/core/strings';
 import { spacing } from '@era/tokens';
@@ -12,9 +13,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Chip } from '@/components/Chip';
 import { Input } from '@/components/Input';
-import { Text } from '@/components/Text';
 import type { ItemCategory } from '@/components/items/constants';
-import { useTheme } from '@/lib/theme';
 
 import { PrivacyToggle } from './PrivacyToggle';
 import { SettingsGear } from './SettingsGear';
@@ -28,7 +27,7 @@ interface ClosetHeaderProps {
   /** The active category filter, or null for "All". */
   readonly selected: ItemCategory | null;
   readonly onSelect: (category: ItemCategory | null) => void;
-  /** Open the settings screen (the gear beside the title). */
+  /** Open the settings screen (the gear in the toolbar). */
   readonly onOpenSettings: () => void;
   /** Open the wear calendar (the glyph beside the gear). */
   readonly onOpenWorn: () => void;
@@ -43,18 +42,11 @@ export function ClosetHeader({
   onOpenSettings,
   onOpenWorn,
 }: ClosetHeaderProps) {
-  const { colors } = useTheme();
-
   return (
     <View style={styles.container}>
-      <View style={styles.titleRow}>
-        <Text accessibilityRole="header" variant="largeTitle" color={colors.text}>
-          Closet
-        </Text>
-        <View style={styles.actions}>
-          <WearHistoryButton onPress={onOpenWorn} />
-          <SettingsGear onPress={onOpenSettings} />
-        </View>
+      <View style={styles.actions}>
+        <WearHistoryButton onPress={onOpenWorn} />
+        <SettingsGear onPress={onOpenSettings} />
       </View>
 
       <PrivacyToggle />
@@ -93,14 +85,10 @@ const styles = StyleSheet.create({
     gap: spacing.s4,
     paddingBottom: spacing.s4,
   },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
   actions: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-end',
     gap: spacing.s2,
   },
   chips: {

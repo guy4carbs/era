@@ -296,10 +296,13 @@ const thumbDotStyle: CSSProperties = {
   background: 'var(--color-bg)',
 };
 
+// Thumbs sit in fixed-size square boxes (thumbDot / panelThumb), so the image
+// fills its reserved box and never reflows the calendar as thumbs load (D6 CLS).
 const thumbImageStyle: CSSProperties = {
-  maxWidth: '100%',
-  maxHeight: '100%',
+  width: '100%',
+  height: '100%',
   objectFit: 'contain',
+  display: 'block',
 };
 
 const plainDotStyle: CSSProperties = {

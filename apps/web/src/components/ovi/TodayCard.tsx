@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { strings } from '@era/core/strings';
 import type { ProposedOutfit } from '@era/core/ovi';
 import { useSession } from '../../lib/auth-client';
+import { viewTransition } from '../../lib/motion';
 import { Text } from '../Text';
 import { OutfitCard } from './OutfitCard';
 import { OviToast, OVI_TOAST_MS } from './OviToast';
@@ -136,7 +137,7 @@ export function TodayCard() {
                   setToast(strings.ovi.rejected);
                   setDismissed(true);
                 }}
-                onOpen={(outfitId) => router.push(`/design/canvas?outfit=${outfitId}`)}
+                onOpen={(outfitId) => viewTransition(() => router.push(`/design/canvas?outfit=${outfitId}`))}
                 wearSurface="today_card"
                 wearLocation={location}
               />

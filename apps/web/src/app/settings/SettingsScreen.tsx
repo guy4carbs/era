@@ -22,7 +22,7 @@ import {
   updatePreferences,
   type NotificationPreferences,
 } from '../../lib/notifications-client';
-import { Container } from '../../components';
+import { Container, PageHeader } from '../../components';
 import { Text } from '../../components/Text';
 import { DeleteAccountDialog } from './DeleteAccountDialog';
 import { SETTINGS_COPY, SUPPORT_MAILTO } from './copy';
@@ -58,14 +58,15 @@ export function SettingsScreen({ accountEmail, initialIsPrivate, username }: Set
   return (
     <Container>
       <main style={screenStyle}>
-        <header style={headerStyle}>
-          <Link href="/closet" aria-label={`Back to ${SETTINGS_COPY.back}`} style={backStyle}>
-            <span aria-hidden="true">←</span>
-            {SETTINGS_COPY.back}
-          </Link>
-          <Text variant="largeTitle" as="h1" style={{ margin: 0 }}>{SETTINGS_COPY.title}</Text>
-        </header>
+        {/* Back link stays its own row above the header; PageHeader carries the
+            title + subtitle and owns the 32px air below it. */}
+        <Link href="/closet" aria-label={`Back to ${SETTINGS_COPY.back}`} style={backStyle}>
+          <span aria-hidden="true">←</span>
+          {SETTINGS_COPY.back}
+        </Link>
+        <PageHeader title={SETTINGS_COPY.title} subtitle={SETTINGS_COPY.subtitle} />
 
+        <div style={sectionsStyle}>
         <Section title={SETTINGS_COPY.appearance}>
           <Row label={SETTINGS_COPY.themeLabel}>
             <ThemeControl />
@@ -141,6 +142,7 @@ export function SettingsScreen({ accountEmail, initialIsPrivate, username }: Set
           </motion.button>
           <DeleteAccountDialog accountEmail={accountEmail} />
         </Section>
+        </div>
       </main>
     </Container>
   );
@@ -568,9 +570,18 @@ function ReceiptAddressControl() {
 const screenStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: 'var(--space-8)',
+  // Back link → PageHeader on a small gap; the PageHeader owns the 32px air to
+  // the section stack below (its marginBottom).
+  gap: 'var(--space-3)',
   paddingBlock: 'var(--space-8)',
   maxWidth: 'var(--feed-col)',
+};
+
+// The settings sections open on the D6 52px section rhythm.
+const sectionsStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--rhythm-section-above)',
 };
 
 // The price-alerts group stacks its explain line, the master toggle, the indented
@@ -589,12 +600,6 @@ const channelsStyle: CSSProperties = {
   paddingLeft: 'var(--space-3)',
   borderLeft: '1px solid var(--color-hairline)',
   marginLeft: 'var(--space-1)',
-};
-
-const headerStyle: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 'var(--space-3)',
 };
 
 const backStyle: CSSProperties = {

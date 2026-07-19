@@ -128,6 +128,9 @@ function baseVars(): string {
     `--rail-dot:${unit(layout.rail.glowDotPx)}`,
     `--rail-orb:${unit(layout.rail.orbPx)}`,
     `--item-card-padding:${unit(itemCardPadding)}`,
+    // D6 spatial rhythm — section air ≈ phi × header-below air (52/32).
+    `--rhythm-header-below:${unit(layout.rhythm.headerBelowPx)}`,
+    `--rhythm-section-above:${unit(layout.rhythm.sectionAbovePx)}`,
     `--hover-lift:${unit(layout.hover.liftPx)}`,
     `--glass-blur:${unit(glass.blur)}`,
     `--glass-border-width:${unit(glass.borderWidth)}`,

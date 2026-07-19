@@ -6,7 +6,7 @@ import { motion, useReducedMotion } from 'motion/react';
 import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { type QuizAnswers } from '@era/core/quiz';
-import { pressProps } from '../../lib/motion';
+import { pressProps, viewTransition } from '../../lib/motion';
 import { Button, Card } from '../../components';
 import { QuizFlow, Reveal } from '../../components/quiz';
 import { useSession } from '../../lib/auth-client';
@@ -70,7 +70,7 @@ export default function QuizPage() {
     if (!session) router.replace('/sign-in');
   }, [isPending, session, router]);
 
-  const goToFeed = () => router.push('/feed');
+  const goToFeed = () => viewTransition(() => router.push('/feed'));
 
   if (isPending || !session) {
     return (

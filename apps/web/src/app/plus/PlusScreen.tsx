@@ -7,7 +7,7 @@ import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { pressProps } from '../../lib/motion';
 import { useTheme } from '../../lib/theme';
-import { Button, Container } from '../../components';
+import { Button, Container, PageHeader } from '../../components';
 import { Text } from '../../components/Text';
 
 /** A Stripe redirect can return `?status=success|canceled`; null when neither. */
@@ -103,14 +103,16 @@ export function PlusScreen({ isPlus, status, prices }: PlusScreenProps) {
   return (
     <Container>
       <main style={screenStyle}>
-        <header style={headerStyle}>
-          <Link href="/settings" aria-label={`Back to ${copy.back}`} style={backStyle}>
-            <span aria-hidden="true">←</span>
-            {copy.back}
-          </Link>
-          <Text variant="largeTitle" as="h1" style={{ margin: 0 }}>{copy.paywallTitle}</Text>
-          <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{isPlus ? copy.alreadyPlus : copy.paywallSubtitle}</Text>
-        </header>
+        {/* Back link stays its own row; PageHeader carries the title + subtitle
+            (the subtitle swaps by subscription state) and owns the air below. */}
+        <Link href="/settings" aria-label={`Back to ${copy.back}`} style={backStyle}>
+          <span aria-hidden="true">←</span>
+          {copy.back}
+        </Link>
+        <PageHeader
+          title={copy.paywallTitle}
+          subtitle={isPlus ? copy.alreadyPlus : copy.paywallSubtitle}
+        />
 
         {isPlus ? (
           <ManageState busy={busy} errored={errored} onPortal={portal} />
@@ -328,15 +330,11 @@ function ErrorLine({ show }: { show: boolean }): ReactNode {
 const screenStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: 'var(--space-8)',
+  // Back link → PageHeader on a small gap; the PageHeader owns the 32px air to
+  // the content section below (its marginBottom).
+  gap: 'var(--space-3)',
   paddingBlock: 'var(--space-8)',
   maxWidth: 'var(--feed-col)',
-};
-
-const headerStyle: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 'var(--space-3)',
 };
 
 const backStyle: CSSProperties = {

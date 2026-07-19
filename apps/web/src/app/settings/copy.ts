@@ -20,6 +20,8 @@ export const SUPPORT_MAILTO = `mailto:${SUPPORT_EMAIL}?subject=Era%20Support`;
 export const SETTINGS_COPY = {
   /** Screen title + document <title> stem. */
   title: 'Settings',
+  /** One calm page-header line beneath the Settings title (D6 PageHeader). */
+  subtitle: 'Your account, your rules.',
   /** Back affordance label (returns to the closet). */
   back: 'Closet',
 

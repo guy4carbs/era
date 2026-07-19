@@ -2,7 +2,7 @@
 
 import { useState, type CSSProperties } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { motion as motionToken } from '@era/tokens';
+import { layout, motion as motionToken } from '@era/tokens';
 import { Text } from '../Text';
 import { strings } from '@era/core/strings';
 import { pressProps, transitionFor } from '../../lib/motion';
@@ -156,7 +156,9 @@ const thumbLinkStyle: CSSProperties = {
   display: 'block',
   flexShrink: 0,
   width: 'var(--space-16)',
-  aspectRatio: '4 / 5',
+  // Reserved 4:5 box from the item-card token so the thumbnail can't reflow the
+  // notification row as it loads (D6 CLS).
+  aspectRatio: layout.itemCard.aspectRatio,
   borderRadius: 'var(--radius-input)',
   overflow: 'hidden',
   background: 'var(--color-bg)',

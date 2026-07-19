@@ -6,7 +6,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { layout, motion as motionToken } from '@era/tokens';
 import { Text } from '../Text';
 import { strings } from '@era/core/strings';
-import { pressProps, transitionFor } from '../../lib/motion';
+import { pressProps, transitionFor, viewTransition } from '../../lib/motion';
 import { trackFirstOnce } from '../../lib/analytics';
 import { useSession } from '../../lib/auth-client';
 import type { ItemWithDisplay } from '../items';
@@ -284,7 +284,7 @@ export function OutfitCanvas({ outfitId }: OutfitCanvasProps) {
       setSaving(false);
       setSaveOpen(false);
       setToast(strings.design.outfitSaved);
-      setTimeout(() => router.push('/design'), 900);
+      setTimeout(() => viewTransition(() => router.push('/design')), 900);
     } catch {
       setSaving(false);
       setToast(strings.errors.generic);
@@ -298,7 +298,7 @@ export function OutfitCanvas({ outfitId }: OutfitCanvasProps) {
   return (
     <main style={rootStyle}>
       <header style={topBarStyle}>
-        <motion.button type="button" aria-label={strings.common.cancel} style={iconBtnStyle} onClick={() => router.push('/design')} {...pressProps(reduced)}>
+        <motion.button type="button" aria-label={strings.common.cancel} style={iconBtnStyle} onClick={() => viewTransition(() => router.push('/design'))} {...pressProps(reduced)}>
           <span aria-hidden="true">←</span>
         </motion.button>
         <motion.button

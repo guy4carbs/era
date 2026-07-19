@@ -1,4 +1,4 @@
-import { spacing, typeRamp } from '@era/tokens';
+import { spacing } from '@era/tokens';
 import * as Linking from 'expo-linking';
 import { Link } from 'expo-router';
 import { useState } from 'react';
@@ -118,11 +118,11 @@ export default function SignInScreen() {
           }}
         />
 
-        <Link
-          href="/design-lab"
-          style={[styles.labLink, { color: colors.secondary, fontSize: typeRamp.footnote.pt }]}
-        >
-          Design lab
+        {/* Link carries navigation; Text carries the type (footnote on the ramp). */}
+        <Link href="/design-lab">
+          <Text variant="ui" size="footnote" color={colors.secondary} style={styles.labLink}>
+            Design lab
+          </Text>
         </Link>
       </View>
     </SafeAreaView>

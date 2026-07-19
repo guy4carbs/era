@@ -28,6 +28,7 @@ import Animated from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
+import { PageHeader } from '@/components/PageHeader';
 import { Press } from '@/components/Press';
 import { ScreenEntrance } from '@/components/ScreenEntrance';
 import { StaggerItem } from '@/components/StaggerItem';
@@ -476,15 +477,17 @@ function ShopHeader({
   const saved = view === 'saved';
   return (
     <View style={styles.header}>
-      <Text accessibilityRole="header" variant="largeTitle" color={colors.text}>
-        {strings.shop.title}
-      </Text>
+      {/* Title + intro carry the D6 header choreography. The intro is the subtitle
+          (it swaps with the Saved view). The 32px header-below rhythm is trimmed to
+          the tight header gap here so the disclosure stays grouped with the intro. */}
+      <PageHeader
+        title={strings.shop.title}
+        subtitle={saved ? strings.shop.saved.intro : strings.shop.intro}
+        style={styles.pageHeader}
+      />
 
-      <Text variant="body" color={colors.secondaryStrong}>
-        {saved ? strings.shop.saved.intro : strings.shop.intro}
-      </Text>
-
-      {/* FTC-honest affiliate disclosure — visible above the picks, per Shield/Ledger. */}
+      {/* FTC-honest affiliate disclosure — visible above the picks, per Shield/Ledger.
+          Unchanged: `secondary` hue at body size (17pt), the one disclosure exception. */}
       <Text variant="body" color={colors.secondary}>
         {strings.shop.affiliateDisclosure}
       </Text>
@@ -621,6 +624,12 @@ const styles = StyleSheet.create({
   header: {
     gap: spacing.s3,
     paddingBottom: spacing.s6,
+  },
+  // The PageHeader's built-in 32px header-below rhythm is dropped here so the
+  // affiliate disclosure and controls stay tight under the intro (the header
+  // block's own `gap` spaces them); the header's paddingBottom leads to the picks.
+  pageHeader: {
+    marginBottom: 0,
   },
   controls: {
     flexDirection: 'row',

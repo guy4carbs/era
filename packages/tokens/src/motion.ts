@@ -52,4 +52,11 @@ export const motion = {
   pageRise: {
     yPx: 6,
   },
+  // headerRise — the page-header entrance (D6): the title rises 8px with a
+  // fade, and the one-line subtitle follows on a 60ms delay. Reduced motion
+  // collapses both to the standard fade, simultaneous.
+  headerRise: {
+    yPx: 8,
+    subtitleDelayMs: 60,
+  },
 } as const;

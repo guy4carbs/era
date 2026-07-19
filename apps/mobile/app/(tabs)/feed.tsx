@@ -9,12 +9,13 @@
  * off), so a mis-set client flag can never actually open the feed.
  */
 import { strings } from '@era/core/strings';
-import { spacing, typeRamp } from '@era/tokens';
+import { layout, spacing } from '@era/tokens';
 import { Link } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { PageHeader } from '@/components/PageHeader';
 import { ScreenEntrance } from '@/components/ScreenEntrance';
 import { Text } from '@/components/Text';
 import { FeedPager, FeedProvider, FpsOverlay } from '@/components/feed';
@@ -54,42 +55,39 @@ function FeedStub() {
 
   const user = data?.user;
   const greetingName = user ? (user.name ?? user.email.split('@')[0] ?? user.email) : null;
+  // A personalized greeting when we know the name; otherwise the tab's calm line.
+  const subtitle = greetingName ? `Hello, ${greetingName}` : strings.feed.subtitle;
 
   return (
     <ScreenEntrance>
       <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <View style={styles.header}>
-            <Text variant="largeTitle" size="title1" color={colors.text}>
-              Feed
+          <PageHeader title="Feed" subtitle={subtitle} />
+
+          {/* Sections open on the D6 section rhythm (52px). The header's own
+              marginBottom sets the tighter header→first-section air (32px). */}
+          <View style={styles.sections}>
+            {/* Ovi's daily suggestion. Renders nothing until it has a look to show. */}
+            <TodayCard />
+
+            {/* Price-drop cards for saved pieces. Quiet — renders nothing when empty. */}
+            <PriceDropList />
+
+            {/* Forwarded-receipt drafts landed. Quiet — renders nothing when empty. */}
+            <ReceiptImportList />
+
+            <Text variant="body" color={colors.secondary} style={{ textAlign: 'center' }}>
+              {FEED_EMPTY}
             </Text>
-            {greetingName ? (
-              <Text variant="body" color={colors.secondary}>
-                Hello, {greetingName}
-              </Text>
-            ) : null}
-          </View>
 
-          {/* Ovi's daily suggestion. Renders nothing until it has a look to show. */}
-          <TodayCard />
-
-          {/* Price-drop cards for saved pieces. Quiet — renders nothing when empty. */}
-          <PriceDropList />
-
-          {/* Forwarded-receipt drafts landed. Quiet — renders nothing when empty. */}
-          <ReceiptImportList />
-
-          <Text variant="body" color={colors.secondary} style={{ textAlign: 'center' }}>
-            {FEED_EMPTY}
-          </Text>
-
-          <View style={styles.footer}>
-            <Link
-              href="/design-lab"
-              style={{ color: colors.secondary, fontSize: typeRamp.footnote.pt }}
-            >
-              Design lab
-            </Link>
+            <View style={styles.footer}>
+              {/* Link carries navigation; Text carries the type (footnote on the ramp). */}
+              <Link href="/design-lab">
+                <Text variant="ui" size="footnote" color={colors.secondary}>
+                  Design lab
+                </Text>
+              </Link>
+            </View>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -108,11 +106,10 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.s4,
   },
   content: {
-    gap: spacing.s6,
     paddingBottom: spacing.s8,
   },
-  header: {
-    gap: spacing.s2,
+  sections: {
+    gap: layout.rhythm.sectionAbovePx,
   },
   footer: {
     gap: spacing.s3,

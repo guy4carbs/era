@@ -1,6 +1,7 @@
 'use client';
 
 import { type CSSProperties } from 'react';
+import { layout } from '@era/tokens';
 
 export interface CollageProps {
   /** A composed cover, preferred when present. */
@@ -12,7 +13,9 @@ export interface CollageProps {
 
 const frameStyle: CSSProperties = {
   position: 'relative',
-  aspectRatio: '4 / 5',
+  // The cover frame reserves its box BEFORE the image loads (D6 CLS): a fixed
+  // 4:5 aspect from the item-card token, so a cover load never reflows the grid.
+  aspectRatio: layout.itemCard.aspectRatio,
   width: '100%',
   overflow: 'hidden',
   borderRadius: 'var(--radius-card)',
