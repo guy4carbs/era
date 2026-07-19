@@ -170,7 +170,7 @@ export function ClosetScreen({ turnaroundEnabled }: { turnaroundEnabled: boolean
           <div style={emptyActionsStyle}>
             <SettingsLink />
           </div>
-          <ClosetEmpty onAddPhoto={openAdd} onAddLink={openAdd} />
+          <ClosetEmpty onAddPhoto={openAdd} />
         </div>
       </main>
     );

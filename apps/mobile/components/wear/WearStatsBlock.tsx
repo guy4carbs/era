@@ -70,11 +70,6 @@ export function WearStatsBlock({ itemId, currency, seedWearCount, seedPrice, onT
   // shows the gentle invite, never a blank — Gauge usability gate.
   const priceUsable = costPerWear(price, 1) !== null;
   const cpw = costPerWear(price, wearCount);
-  const costLine = priceUsable
-    ? cpw !== null
-      ? strings.wear.costPerWear(formatMoney(cpw, currency))
-      : null
-    : strings.wear.costPerWearUnknown;
 
   return (
     <View style={styles.container}>
@@ -82,11 +77,27 @@ export function WearStatsBlock({ itemId, currency, seedWearCount, seedPrice, onT
         {strings.wear.count(wearCount)}
       </Text>
 
-      {costLine ? (
+      {/* Editorial cost-per-wear: when we have a real number, the amount reads in
+          Fraunces numerals (serif `title`, clearing the 20px floor) with the
+          quiet "per wear" caption beneath — a magazine stat, not a data row. A
+          known-but-unpriced piece keeps the gentle invite; a null value (no
+          usable price) renders NOTHING. */}
+      {priceUsable ? (
+        cpw !== null ? (
+          <View style={styles.cost}>
+            <Text variant="title" color={colors.text}>
+              {formatMoney(cpw, currency)}
+            </Text>
+            <Text variant="caption" size="subhead" color={colors.secondaryStrong}>
+              {strings.closet.costPerWearLabel}
+            </Text>
+          </View>
+        ) : null
+      ) : (
         <Text variant="caption" size="subhead" color={colors.secondaryStrong}>
-          {costLine}
+          {strings.wear.costPerWearUnknown}
         </Text>
-      ) : null}
+      )}
 
       <WoreItButton itemIds={[itemId]} via="item_detail" onToast={onToast} onLogged={onLogged} />
     </View>
@@ -96,5 +107,10 @@ export function WearStatsBlock({ itemId, currency, seedWearCount, seedPrice, onT
 const styles = StyleSheet.create({
   container: {
     gap: spacing.s2,
+  },
+  // Amount over its label as a tight stat block, so the serif numerals lead and
+  // "per wear" sits quietly beneath.
+  cost: {
+    gap: spacing.s1,
   },
 });

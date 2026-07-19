@@ -559,6 +559,25 @@ export const strings = {
      */
     emptyTitle: 'Your closet is a blank canvas',
     /**
+     * The editorial empty-state line (signature decision #13) — ONE Fraunces
+     * sentence beside Ovi's orb and a single primary action. An invitation,
+     * not an instruction.
+     */
+    emptySignature: 'Your closet, about to begin.',
+    /**
+     * The gallery header's piece count, rendered in secondary under the
+     * LargeTitle — the closet introduces itself by its size.
+     */
+    pieceCount: (count: number): string => (count === 1 ? '1 piece' : `${count} pieces`),
+    /** Label under the cost-per-wear numerals on the item detail. */
+    costPerWearLabel: 'per wear',
+    /** Group label for the gallery's grid-density toggle (comfortable | compact). */
+    densityLabel: 'Grid density',
+    /** The roomier default density — fewer columns, more air between pieces. */
+    densityComfortable: 'Comfortable',
+    /** The packed density — one more column per breakpoint, tighter rows. */
+    densityCompact: 'Compact',
+    /**
      * Empty-gallery body. Names both import paths plainly so the two Add
      * affordances make sense at a glance.
      */

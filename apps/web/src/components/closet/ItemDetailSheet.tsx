@@ -405,12 +405,16 @@ const bodyStyle: CSSProperties = {
   paddingBottom: 'var(--space-8)',
 };
 
+// The detail hero: the piece large on the cream surface. The aspect ratio is
+// reserved (CLS discipline) and the padding is trimmed to --space-4 so the
+// garment reads bigger against the surface than the gallery tile shows it.
 const imageWrapStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
+  width: '100%',
   aspectRatio: layout.itemCard.aspectRatio,
-  padding: 'var(--space-6)',
+  padding: 'var(--space-4)',
   background: 'var(--color-surface)',
   borderRadius: 'var(--radius-card)',
 };

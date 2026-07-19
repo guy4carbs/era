@@ -34,14 +34,53 @@ export interface ClosetGalleryProps {
 /** Debounce (ms) before the typed query is applied to the client-side filter. */
 const SEARCH_DEBOUNCE_MS = 120;
 
-// Responsive grid: 2 up on phones widening to 5 in the container. Media queries
-// can't read CSS vars, so the rule is built from the token breakpoints + gutter.
+/** Grid density: comfortable is the editorial default; compact adds a column. */
+type Density = 'comfortable' | 'compact';
+
+const DENSITY_STORAGE_KEY = 'era-closet-density';
+
+/**
+ * Editorial-spread grid. Column-gap holds the 12px horizontal gutter; row-gap
+ * opens to the phi-scaled VERTICAL gutter (20px) so rows read like a magazine
+ * page. Media queries can't read CSS vars, so the rule is built from the token
+ * breakpoints + the grid gutters. Two density variants ship as sibling rules
+ * toggled by a `data-density` attribute on the grid:
+ *   comfortable — 2 / 3 / 4 (lg=desktopColumnsMin) / 5, row-gap gutterTall.
+ *   compact     — +1 column per step: 3 / 4 / 5 / 6 (desktopColumnsMax), row-gap gutter.
+ * No new breakpoint is introduced — the 6th column arrives via compact density at
+ * xl rather than a hardcoded 1536px query.
+ */
 const gridCss = [
-  `.era-closet-grid{display:grid;gap:${layout.grid.gutter}px;grid-template-columns:repeat(2,minmax(0,1fr))}`,
-  `@media(min-width:${layout.breakpoints.md}px){.era-closet-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}`,
-  `@media(min-width:${layout.breakpoints.lg}px){.era-closet-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}`,
-  `@media(min-width:${layout.breakpoints.xl}px){.era-closet-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}`,
+  `.era-closet-grid{display:grid;column-gap:${layout.grid.gutter}px;row-gap:${layout.grid.gutterTall}px;grid-template-columns:repeat(2,minmax(0,1fr))}`,
+  `.era-closet-grid[data-density="compact"]{row-gap:${layout.grid.gutter}px;grid-template-columns:repeat(3,minmax(0,1fr))}`,
+  `@media(min-width:${layout.breakpoints.md}px){.era-closet-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.era-closet-grid[data-density="compact"]{grid-template-columns:repeat(4,minmax(0,1fr))}}`,
+  `@media(min-width:${layout.breakpoints.lg}px){.era-closet-grid{grid-template-columns:repeat(${layout.grid.desktopColumnsMin},minmax(0,1fr))}.era-closet-grid[data-density="compact"]{grid-template-columns:repeat(5,minmax(0,1fr))}}`,
+  `@media(min-width:${layout.breakpoints.xl}px){.era-closet-grid{grid-template-columns:repeat(5,minmax(0,1fr))}.era-closet-grid[data-density="compact"]{grid-template-columns:repeat(${layout.grid.desktopColumnsMax},minmax(0,1fr))}}`,
 ].join('\n');
+
+/**
+ * Cascade the entrance stagger once per JS session, not once per mount. The
+ * closet re-mounts on every visit (tab switch, route change), and a per-instance
+ * ref re-ran the 45ms cascade each time; this module-level flag lets only the
+ * first stocked render of the session stagger. Reduced motion is unaffected
+ * (the stagger variants collapse to a fade regardless).
+ */
+let hasCascadedThisSession = false;
+
+/**
+ * Read the persisted density once, SSR-safe, mirroring lib/theme.tsx's storage
+ * pattern (try/catch, unknown values fall back to the default).
+ */
+function readStoredDensity(): Density {
+  if (typeof window === 'undefined') return 'comfortable';
+  try {
+    const raw = localStorage.getItem(DENSITY_STORAGE_KEY);
+    if (raw === 'comfortable' || raw === 'compact') return raw;
+  } catch {
+    // Storage unavailable (private mode / SSR mismatch) — keep the default.
+  }
+  return 'comfortable';
+}
 
 /**
  * The stocked closet: a header (title + privacy toggle, search, category
@@ -58,6 +97,21 @@ export function ClosetGallery({ items, turnaroundEnabled, onArchived, onUpdated 
   const [category, setCategory] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [density, setDensity] = useState<Density>('comfortable');
+
+  // Hydrate the stored density after mount to stay SSR-safe (read once).
+  useEffect(() => {
+    setDensity(readStoredDensity());
+  }, []);
+
+  const changeDensity = (next: Density) => {
+    setDensity(next);
+    try {
+      localStorage.setItem(DENSITY_STORAGE_KEY, next);
+    } catch {
+      // Non-fatal: the choice simply won't persist across reloads.
+    }
+  };
 
   useEffect(() => {
     const handle = setTimeout(() => setDebounced(query), SEARCH_DEBOUNCE_MS);
@@ -107,14 +161,17 @@ export function ClosetGallery({ items, turnaroundEnabled, onArchived, onUpdated 
 
   const selected = selectedId ? (items.find((item) => item.id === selectedId) ?? null) : null;
 
-  // Stagger the tiles on first mount only. Filter/search re-renders keep the
-  // AnimatePresence opacity dance (below) but must NOT re-stagger in place — so
-  // after the first paint the container drops back to an immediate reveal.
+  // Stagger the tiles on the first stocked render of the SESSION only. The closet
+  // re-mounts on every visit, so a per-instance ref re-ran the cascade each time;
+  // the module-level flag fires it once, then later visits reveal instantly. The
+  // in-instance ref still guards filter/search re-renders from re-staggering in
+  // place (AnimatePresence keeps the opacity dance below).
   const stagger = useStagger(reduced);
   const didMount = useRef(false);
-  const staggerOnMount = !didMount.current;
+  const staggerOnMount = !didMount.current && !hasCascadedThisSession;
   useEffect(() => {
     didMount.current = true;
+    hasCascadedThisSession = true;
   }, []);
 
   function handleArchived(id: string) {
@@ -148,8 +205,10 @@ export function ClosetGallery({ items, turnaroundEnabled, onArchived, onUpdated 
         <div style={titleRowStyle}>
           <div style={titleBlockStyle}>
             <Text variant="largeTitle" as="h1" style={{ margin: 0 }}>Closet</Text>
+            {/* The stocked closet introduces itself by its size — the live piece
+                count replaces the static subtitle. */}
             <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-secondary)' }}>
-              {strings.closet.subtitle}
+              {strings.closet.pieceCount(items.length)}
             </Text>
           </div>
           <div style={headerActionsStyle}>
@@ -166,29 +225,59 @@ export function ClosetGallery({ items, turnaroundEnabled, onArchived, onUpdated 
           onChange={(event) => setQuery(event.target.value)}
         />
 
-        <div style={filterRowStyle} role="group" aria-label={strings.closet.filterAll}>
-          <Chip selected={category === null} onClick={() => setCategory(null)}>
-            {strings.closet.filterAll}
-          </Chip>
-          {presentCategories.map((cat) => (
-            <Chip
-              key={cat}
-              selected={category === cat}
-              onClick={() => setCategory((prev) => (prev === cat ? null : cat))}
-            >
-              {strings.closet.categoryLabel(cat)}
+        <div style={filterBarStyle}>
+          <div style={filterRowStyle} role="group" aria-label={strings.closet.filterAll}>
+            <Chip glass selected={category === null} onClick={() => setCategory(null)}>
+              {strings.closet.filterAll}
             </Chip>
-          ))}
+            {presentCategories.map((cat) => (
+              <Chip
+                glass
+                key={cat}
+                selected={category === cat}
+                onClick={() => setCategory((prev) => (prev === cat ? null : cat))}
+              >
+                {strings.closet.categoryLabel(cat)}
+              </Chip>
+            ))}
+          </div>
+
+          {/* Quiet two-state density control: comfortable adds air, compact packs
+              one more column per breakpoint. aria-pressed marks the active choice. */}
+          <div style={densityRowStyle} role="group" aria-label={strings.closet.densityLabel}>
+            <Chip
+              glass
+              selected={density === 'comfortable'}
+              aria-label={strings.closet.densityComfortable}
+              onClick={() => changeDensity('comfortable')}
+            >
+              {strings.closet.densityComfortable}
+            </Chip>
+            <Chip
+              glass
+              selected={density === 'compact'}
+              aria-label={strings.closet.densityCompact}
+              onClick={() => changeDensity('compact')}
+            >
+              {strings.closet.densityCompact}
+            </Chip>
+          </div>
         </div>
       </header>
 
       {groups.map((group) => (
         <section key={group.category} style={sectionStyle}>
-          <Text variant="title" size="title3" as="h2" style={{ margin: 0 }}>
-            {strings.closet.categoryLabel(group.category)}
-          </Text>
+          {/* Editorial section label: Fraunces Italic (oviAccent) at its default
+              size, then a hairline rule filling the row to the right. */}
+          <div style={sectionHeadingStyle}>
+            <Text variant="oviAccent" as="h2" style={{ margin: 0 }}>
+              {strings.closet.categoryLabel(group.category)}
+            </Text>
+            <span aria-hidden="true" style={hairlineStyle} />
+          </div>
           <motion.div
             className="era-closet-grid"
+            data-density={density}
             // First paint: orchestrate the entrance stagger across the tiles.
             // Subsequent filter renders skip it (empty variants) so the grid
             // reveals immediately and only the presence opacity below animates.
@@ -301,17 +390,47 @@ const headerActionsStyle: CSSProperties = {
   gap: 'var(--space-3)',
 };
 
+// The filter row and the density toggle share one bar: filters flow and scroll
+// on the left, the density control holds to the right and never wraps.
+const filterBarStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 'var(--space-3)',
+};
+
 const filterRowStyle: CSSProperties = {
   display: 'flex',
   gap: 'var(--space-2)',
   overflowX: 'auto',
   paddingBottom: 'var(--space-1)',
+  minWidth: 0,
+};
+
+const densityRowStyle: CSSProperties = {
+  display: 'flex',
+  gap: 'var(--space-2)',
+  flex: 'none',
 };
 
 const sectionStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: 'var(--space-4)',
+};
+
+// Editorial section heading: the italic serif label sits left, a hairline rule
+// fills the rest of the row, both vertically centred with a --space-3 gap.
+const sectionHeadingStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 'var(--space-3)',
+};
+
+const hairlineStyle: CSSProperties = {
+  flex: 1,
+  height: 'var(--glass-border-width)',
+  background: 'var(--color-hairline)',
 };
 
 // Scrim behind the detail sheet; warm ink at partial opacity, below the sheet.

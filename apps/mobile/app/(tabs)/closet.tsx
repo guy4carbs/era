@@ -1,20 +1,28 @@
 /**
- * Closet tab — the premium 2.5D gallery of everything the user owns.
+ * Closet tab — the premium editorial gallery of everything the user owns.
  *
  * Fetches the user's items (re-fetching on focus, so a piece added, edited, or
- * archived elsewhere is reflected on return). An empty closet shows the warm
- * empty state with both add affordances; a stocked one shows a category-grouped,
- * 2-column gallery of tilt-on-drag cutout tiles beneath a header (title, privacy
- * toggle, search, filter chips). Tapping a tile opens the detail sheet, where a
- * piece can be edited or archived. Colour, layout, motion, and copy come from
- * tokens and strings only.
+ * archived elsewhere is reflected on return). An empty closet shows the signature
+ * empty state — Ovi's glow orb + a single line + one primary add; a stocked one
+ * shows a category-grouped gallery of tilt-on-drag cutout tiles beneath a header
+ * (title + piece count, privacy toggle, search, filter chips, a density toggle).
+ * The grid density (comfortable | compact) is persisted; the entrance cascade
+ * fires once per app SESSION so a re-focus never replays it. Tapping a tile opens
+ * the detail sheet, where a piece can be edited or archived. Colour, layout,
+ * motion, and copy come from tokens and strings only.
  */
 import { strings } from '@era/core/strings';
-import { layout, spacing } from '@era/tokens';
+import { glow, layout, radii, spacing } from '@era/tokens';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, SectionList, StyleSheet, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, {
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
@@ -23,13 +31,35 @@ import { ScreenEntrance } from '@/components/ScreenEntrance';
 import { StaggerItem } from '@/components/StaggerItem';
 import { Text } from '@/components/Text';
 import { useTabBarVisibility } from '@/components/TabBarVisibility';
-import { ClosetHeader, CutoutTile, ItemDetailSheet, SettingsGear, Toast } from '@/components/closet';
+import {
+  ClosetHeader,
+  CutoutTile,
+  ItemDetailSheet,
+  SettingsGear,
+  Toast,
+  type ClosetDensity,
+} from '@/components/closet';
 import { fetchItems, TiltFieldProvider, type ItemWithDisplay } from '@/components/items';
 import { CATEGORIES, type ItemCategory } from '@/components/items/constants';
+import { tokenEasing, useReducedMotionSafe } from '@/lib/motion';
+import { readClosetDensity, writeClosetDensity } from '@/lib/closet-density';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { useTheme } from '@/lib/theme';
 
 type LoadState = 'loading' | 'ready' | 'error';
+
+// Once-per-app-SESSION cascade guard. StaggerItem's rise+fade is delightful the
+// first time the gallery appears, but replaying it on every tab focus/mount
+// reads as jitter. This module-level flag flips true after the first stocked
+// render, so subsequent visits render the rows plainly (no entrance wrapper).
+// Reduced motion is unaffected — StaggerItem already collapses to a fade there.
+let hasCascadedThisSession = false;
+
+/** Columns + row gap per density. Compact packs 3-up on the tight gutter. */
+const DENSITY_GRID = {
+  comfortable: { columns: 2, rowGap: layout.grid.gutterTall },
+  compact: { columns: 3, rowGap: layout.grid.gutter },
+} as const;
 
 // The section list, reanimated-wrapped so its scroll can drive the tab bar's
 // hide-on-scroll via a UI-thread `useAnimatedScrollHandler` (no per-frame JS).
@@ -46,6 +76,7 @@ export default function ClosetScreen() {
   const [state, setState] = useState<LoadState>('loading');
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<ItemCategory | null>(null);
+  const [density, setDensity] = useState<ClosetDensity>('comfortable');
   const [selected, setSelected] = useState<ItemWithDisplay | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -55,6 +86,36 @@ export default function ClosetScreen() {
   const [focused, setFocused] = useState(false);
 
   const query = useDebouncedValue(search.trim().toLowerCase(), 200);
+
+  // Hydrate the persisted density once on mount (read-on-mount, mirroring
+  // lib/theme.tsx); the toggle writes on change.
+  useEffect(() => {
+    let active = true;
+    void readClosetDensity().then((stored) => {
+      if (active) setDensity(stored);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const onDensity = useCallback((next: ClosetDensity) => {
+    setDensity(next);
+    writeClosetDensity(next);
+  }, []);
+
+  // Whether this render's rows should carry the entrance cascade: only the FIRST
+  // stocked appearance in the app session does. Captured before the flip effect
+  // runs so the very first render still animates, then held false thereafter.
+  const [cascade] = useState(() => !hasCascadedThisSession);
+
+  // Flip the session guard once the gallery has actually rendered stocked, so a
+  // later focus/mount renders plainly (no replayed 45ms cascade).
+  useEffect(() => {
+    if (state === 'ready' && items.length > 0) {
+      hasCascadedThisSession = true;
+    }
+  }, [state, items.length]);
 
   const load = useCallback(async () => {
     try {
@@ -110,7 +171,10 @@ export default function ClosetScreen() {
     [items, category, query],
   );
 
-  // Group the visible items by category (enum order), each chunked into rows of 2.
+  const { columns, rowGap } = DENSITY_GRID[density];
+
+  // Group the visible items by category (enum order), each chunked into rows of
+  // `columns` (2 comfortable, 3 compact — the chunk size follows the density).
   const sections = useMemo(() => {
     const byCategory = new Map<ItemCategory, ItemWithDisplay[]>();
     for (const item of visible) {
@@ -121,9 +185,9 @@ export default function ClosetScreen() {
     return CATEGORIES.flatMap((cat) => {
       const list = byCategory.get(cat);
       if (!list || list.length === 0) return [];
-      return [{ title: strings.closet.categoryLabel(cat), data: chunk(list, 2) }];
+      return [{ title: strings.closet.categoryLabel(cat), data: chunk(list, columns) }];
     });
-  }, [visible]);
+  }, [visible, columns]);
 
   const toastBottom = layout.tabBarHeight + insets.bottom + spacing.s3;
 
@@ -159,20 +223,21 @@ export default function ClosetScreen() {
           <SettingsGear onPress={() => router.push('/settings')} />
         </View>
         <View style={styles.empty}>
+          {/* Signature decision #13: Ovi's glow orb greets the blank closet — a
+              small decorative accent circle carrying OviFab's exact glow (tinted
+              iOS shadow), breathing on the 3s pulse, static under reduced motion.
+              Purely ornamental, so it's hidden from assistive tech. */}
+          <OviOrb />
           <Text
             accessibilityRole="header"
             variant="largeTitle"
             color={colors.text}
-            style={{ textAlign: 'center' }}
+            style={styles.centerCopy}
           >
-            {strings.closet.emptyTitle}
-          </Text>
-          <Text variant="body" color={colors.secondaryStrong} style={styles.centerCopy}>
-            {strings.closet.emptyBody}
+            {strings.closet.emptySignature}
           </Text>
           <View style={styles.emptyActions}>
             <Button label={strings.closet.addCta} onPress={goAdd} haptic />
-            <Button label={strings.closet.addFromLink} variant="secondary" onPress={goAdd} />
           </View>
         </View>
       </SafeAreaView>
@@ -192,36 +257,29 @@ export default function ClosetScreen() {
           scrollEventThrottle={16}
           keyExtractor={(row, index) => `${row[0]?.id ?? 'row'}-${index}`}
           renderItem={({ item: row, index }) => (
-            <StaggerItem index={index}>
-              <View style={styles.row}>
-                {row.map((tile) => (
-                  <View key={tile.id} style={styles.cell}>
-                    <CutoutTile item={tile} onPress={openDetail} />
-                  </View>
-                ))}
-                {row.length === 1 ? <View style={styles.cell} /> : null}
-              </View>
-            </StaggerItem>
+            <GalleryRow
+              row={row}
+              index={index}
+              rowGap={rowGap}
+              columns={columns}
+              cascade={cascade}
+              onPress={openDetail}
+            />
           )}
           renderSectionHeader={({ section }) => (
-            <Text
-              variant="title"
-              size="title3"
-              color={colors.text}
-              style={[styles.sectionHeader, { backgroundColor: colors.bg }]}
-            >
-              {section.title}
-            </Text>
+            <SectionLabel title={section.title} />
           )}
           ListHeaderComponent={
             <>
-              <PageHeader title="Closet" subtitle={strings.closet.subtitle} />
+              <PageHeader title="Closet" subtitle={strings.closet.pieceCount(items.length)} />
               <ClosetHeader
                 search={search}
                 onSearch={setSearch}
                 categories={categories}
                 selected={category}
                 onSelect={setCategory}
+                density={density}
+                onDensity={onDensity}
                 onOpenSettings={() => router.push('/settings')}
                 onOpenWorn={() => router.push('/worn')}
               />
@@ -249,6 +307,108 @@ export default function ClosetScreen() {
         </TiltFieldProvider>
       </SafeAreaView>
     </ScreenEntrance>
+  );
+}
+
+/**
+ * One gallery row of up to `columns` tiles. On the first stocked render of the
+ * session (`cascade`) it wraps in StaggerItem for the 45ms rise-in; afterwards it
+ * renders the plain row so a re-focus is instant. Short rows pad with empty cells
+ * so a trailing tile keeps its column width instead of stretching.
+ */
+function GalleryRow({
+  row,
+  index,
+  rowGap,
+  columns,
+  cascade,
+  onPress,
+}: {
+  readonly row: readonly ItemWithDisplay[];
+  readonly index: number;
+  readonly rowGap: number;
+  readonly columns: number;
+  readonly cascade: boolean;
+  readonly onPress: (item: ItemWithDisplay) => void;
+}) {
+  const body = (
+    <View style={[styles.row, { marginBottom: rowGap }]}>
+      {row.map((tile) => (
+        <View key={tile.id} style={styles.cell}>
+          <CutoutTile item={tile} onPress={onPress} />
+        </View>
+      ))}
+      {row.length < columns
+        ? Array.from({ length: columns - row.length }, (_, i) => <View key={`pad-${i}`} style={styles.cell} />)
+        : null}
+    </View>
+  );
+  return cascade ? <StaggerItem index={index}>{body}</StaggerItem> : body;
+}
+
+/**
+ * An editorial category label: the plural heading in Fraunces Italic (oviAccent,
+ * at its title3 default = 20px, clearing the serif floor) followed by a 1px
+ * hairline rule that fills the rest of the row — a magazine section marker, not a
+ * spreadsheet header. Sticky headers stay OFF (set on the list), and the label
+ * carries the page background so scrolled content never bleeds behind it.
+ */
+function SectionLabel({ title }: { readonly title: string }) {
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.sectionHeader, { backgroundColor: colors.bg }]}>
+      <Text variant="oviAccent" color={colors.text}>
+        {title}
+      </Text>
+      <View style={[styles.sectionRule, { backgroundColor: colors.hairline }]} />
+    </View>
+  );
+}
+
+/**
+ * OviOrb — the empty closet's signature greeting (decision #13). A small accent
+ * circle carrying OviFab's exact glow composition (a tinted, centred iOS shadow
+ * at `glow.blurRadius`) sized to `spacing.s6`, breathing on the shared 3s pulse
+ * (scale + shadow opacity, ±`glow.pulse.amount`). Reduced motion pins it static.
+ * Purely decorative — `aria-hidden` so assistive tech skips straight to the copy.
+ */
+function OviOrb() {
+  const { colors, resolved } = useTheme();
+  const reduced = useReducedMotionSafe();
+  const baseOpacity = glow.opacity[resolved];
+  const pulse = useSharedValue(0);
+
+  useEffect(() => {
+    if (reduced) {
+      pulse.value = 0;
+      return;
+    }
+    pulse.value = withRepeat(
+      withTiming(1, { duration: glow.pulse.durationMs / 2, easing: tokenEasing }),
+      -1,
+      true,
+    );
+  }, [reduced, pulse]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 + pulse.value * glow.pulse.amount }],
+    shadowOpacity: interpolate(pulse.value, [0, 1], [baseOpacity, baseOpacity * (1 + glow.pulse.amount)]),
+  }));
+
+  return (
+    <Animated.View
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={[
+        styles.orb,
+        {
+          backgroundColor: colors.accent,
+          shadowColor: colors.accent,
+          shadowRadius: glow.blurRadius,
+        },
+        animatedStyle,
+      ]}
+    />
   );
 }
 
@@ -305,16 +465,34 @@ const styles = StyleSheet.create({
     paddingTop: spacing.s8,
   },
   row: {
+    // Horizontal gap stays the comfortable gutter (12) at both densities; the
+    // vertical row gap is applied per-row from the density (`rowGap`).
     flexDirection: 'row',
     gap: layout.grid.gutter,
-    marginBottom: layout.grid.gutter,
   },
   cell: {
     flex: 1,
   },
   sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.s3,
     paddingTop: spacing.s4,
     paddingBottom: spacing.s3,
+  },
+  // The hairline rule that runs from the label to the row's edge — 1px,
+  // vertically centred with the italic label, filling the remaining width.
+  sectionRule: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+  },
+  orb: {
+    width: spacing.s6,
+    height: spacing.s6,
+    borderRadius: radii.full,
+    // iOS glow: a coloured, centred shadow (mirrors OviFab). Android shows no
+    // tinted glow — the accent circle stands on its own there.
+    shadowOffset: { width: 0, height: 0 },
   },
   centerCopy: {
     textAlign: 'center',
