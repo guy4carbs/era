@@ -15,13 +15,12 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Button } from '@/components/Button';
 import { ScreenEntrance } from '@/components/ScreenEntrance';
 import { Text } from '@/components/Text';
 import { FeedPager, FeedProvider, FpsOverlay } from '@/components/feed';
 import { PriceDropList, ReceiptImportList } from '@/components/notifications';
 import { TodayCard } from '@/components/ovi';
-import { eraAuth, useSession } from '@/lib/auth-client';
+import { useSession } from '@/lib/auth-client';
 import { eraFeedEnabled } from '@/lib/feed-flag';
 import { useTheme } from '@/lib/theme';
 
@@ -85,13 +84,6 @@ function FeedStub() {
           </Text>
 
           <View style={styles.footer}>
-            <Button
-              label="Sign out"
-              variant="secondary"
-              onPress={() => {
-                void eraAuth.signOut();
-              }}
-            />
             <Link
               href="/design-lab"
               style={{ color: colors.secondary, fontSize: typeRamp.footnote.pt }}

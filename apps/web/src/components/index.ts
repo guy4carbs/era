@@ -5,6 +5,7 @@ export { Container, type ContainerProps } from './Container';
 export { GlassPanel, glassSurfaceStyle, type GlassPanelProps } from './GlassPanel';
 export { GlassSheet, type GlassSheetProps } from './GlassSheet';
 export { Input, type InputProps } from './Input';
+export { NavRail } from './NavRail';
 export { OviFab, type OviFabProps } from './OviFab';
 export { Press, type PressProps, type PressAs } from './Press';
 export { TabBar, TAB_ITEMS, type TabBarProps, type TabId, type TabDef } from './TabBar';

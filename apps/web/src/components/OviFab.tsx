@@ -5,19 +5,12 @@ import { motion, useReducedMotion } from 'motion/react';
 import { glow, motion as motionToken } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { useTheme } from '../lib/theme';
+import { glowShadow } from '../lib/glow';
 import { Text } from './Text';
 
 export interface OviFabProps {
   onClick?: () => void;
   style?: CSSProperties;
-}
-
-/** Accent glow shadow at a given opacity, layered above the e3 lift. */
-function glowShadow(opacity: number): string {
-  const clamped = Math.min(1, Math.max(0, opacity));
-  return `var(--shadow-e3), 0 0 var(--glow-blur) color-mix(in srgb, var(--color-accent) ${Math.round(
-    clamped * 100,
-  )}%, transparent)`;
 }
 
 const fabStyle: CSSProperties = {

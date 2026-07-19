@@ -327,6 +327,8 @@ test('layout: touch targets, grid, phi split, sheet peek, breakpoints', () => {
   assert.equal(layout.feedColumnWidth, 480);
   assert.deepEqual(layout.breakpoints, { sm: 640, md: 768, lg: 1024, xl: 1280 });
   assert.deepEqual(layout.hover, { liftPx: -2, glowIntensity: 0.6 });
+  // D5 nav rail — 232px quiet-luxury rail, 6px glow dot, 12px wordmark orb.
+  assert.deepEqual(layout.rail, { width: 232, glowDotPx: 6, orbPx: 12 });
 });
 
 test('WCAG math: known references', () => {

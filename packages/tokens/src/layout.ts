@@ -48,4 +48,13 @@ export const layout = {
     liftPx: -2,
     glowIntensity: 0.6,
   },
+  // rail — the desktop web left rail (D5 nav): a slim 232px column sitting
+  // directly on the app background (no glass, no borders — quiet luxury).
+  // glowDotPx is the active/hover indicator dot; orbPx is Ovi's small
+  // decorative orb beside the wordmark (one-quarter of the 48px FAB).
+  rail: {
+    width: 232,
+    glowDotPx: 6,
+    orbPx: 12,
+  },
 } as const;

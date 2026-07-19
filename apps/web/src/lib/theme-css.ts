@@ -123,8 +123,10 @@ function baseVars(): string {
     `--header-height:${unit(layout.headerHeight)}`,
     `--content-max:${unit(layout.contentMaxWidth)}`,
     `--feed-col:${unit(layout.feedColumnWidth)}`,
-    // Desktop left-rail width — composed from spacing tokens (no literal px).
-    `--rail-width:calc(var(--space-16) + var(--space-8))`,
+    // Desktop left-rail width — the D5 nav rail token (232px).
+    `--rail-width:${unit(layout.rail.width)}`,
+    `--rail-dot:${unit(layout.rail.glowDotPx)}`,
+    `--rail-orb:${unit(layout.rail.orbPx)}`,
     `--item-card-padding:${unit(itemCardPadding)}`,
     `--hover-lift:${unit(layout.hover.liftPx)}`,
     `--glass-blur:${unit(glass.blur)}`,
