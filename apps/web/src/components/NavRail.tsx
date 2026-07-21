@@ -9,6 +9,7 @@ import { useTheme } from '../lib/theme';
 import { glowShadow } from '../lib/glow';
 import { pressProps, transitionFor, viewTransition } from '../lib/motion';
 import { TAB_ITEMS, type TabId } from './TabBar';
+import { OviOrb } from './ovi/OviOrb';
 import { Text } from './Text';
 
 /** Press-enabled rail row — Link with the token tap affordance. */
@@ -44,16 +45,6 @@ const wordmarkStyle: CSSProperties = {
   textDecoration: 'none',
   color: 'var(--color-text)',
   marginBottom: 'var(--space-8)',
-};
-
-// Ovi's small orb beside the wordmark — a quarter of the FAB, carrying the same
-// accent glow recipe and breathing on the 3s pulse loop.
-const orbStyle: CSSProperties = {
-  width: 'var(--rail-orb)',
-  height: 'var(--rail-orb)',
-  borderRadius: 'var(--radius-full)',
-  background: 'var(--color-accent)',
-  flex: 'none',
 };
 
 const navGroupStyle: CSSProperties = {
@@ -111,27 +102,10 @@ export function NavRail() {
 
   const navigate = (id: TabId) => viewTransition(() => router.push(`/${id}`));
 
-  // Orb pulse — mirrors OviFab exactly: scale + glow between rest and peak on
-  // the 3s loop, static at base opacity under reduced motion.
+  // The rail's glow dots rest at the mode's base glow opacity when active, or
+  // fade to 40% on hover of an inactive row (0 otherwise). The wordmark orb is
+  // now the shared OviOrb (idle, non-interactive) rather than a bespoke pulse.
   const baseOpacity = glow.opacity[resolved];
-  const restShadow = glowShadow(baseOpacity);
-  const peakShadow = glowShadow(baseOpacity + glow.pulse.amount);
-  const orbAnimate = reduced
-    ? { boxShadow: restShadow }
-    : {
-        scale: [1, 1 + glow.pulse.amount, 1],
-        boxShadow: [restShadow, peakShadow, restShadow],
-      };
-  const orbTransition = reduced
-    ? undefined
-    : {
-        duration: glow.pulse.durationMs / 1000,
-        repeat: Infinity,
-        ease: motionToken.easing.bezier,
-      };
-
-  // The dot rests at the mode's base glow opacity when active, or fades to 40%
-  // on hover of an inactive row (0 otherwise).
   const dotShadow = glowShadow(baseOpacity);
 
   return (
@@ -140,12 +114,7 @@ export function NavRail() {
         <Text variant="title" as="span">
           era
         </Text>
-        <motion.span
-          aria-hidden="true"
-          style={{ ...orbStyle, boxShadow: restShadow }}
-          animate={orbAnimate}
-          transition={orbTransition}
-        />
+        <OviOrb size={{ cssVar: 'var(--rail-orb)' }} state="idle" />
       </MotionLink>
 
       <div style={navGroupStyle}>

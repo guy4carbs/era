@@ -30,7 +30,7 @@ function needsPageEnterFallback(): boolean {
 function TabsShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const reduced = useReducedMotion();
-  const { openChat, isOpen } = useOviChat();
+  const { openChat, isOpen, oviState } = useOviChat();
 
   const content = <Container>{children}</Container>;
 
@@ -53,7 +53,7 @@ function TabsShell({ children }: { children: ReactNode }) {
         content
       )}
 
-      {isOpen ? null : <OviFab onClick={() => openChat()} />}
+      {isOpen ? null : <OviFab onClick={() => openChat()} state={oviState} />}
     </div>
   );
 }

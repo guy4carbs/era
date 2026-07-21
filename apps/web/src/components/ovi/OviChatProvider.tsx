@@ -12,6 +12,7 @@ import {
 import { AnimatePresence } from 'motion/react';
 import { useSession } from '../../lib/auth-client';
 import { OviChat } from './OviChat';
+import type { OviOrbState } from './OviOrb';
 import type { CutoutInfo, ItemsById } from './types';
 
 /** What a closet row from `GET /api/items` carries that the outfit card needs. */
@@ -25,6 +26,13 @@ interface OviChatContextValue {
   itemContext: string | null;
   /** Resolves an outfit's item ids to their cutouts, shared by every surface. */
   itemsById: ItemsById;
+  /**
+   * Ovi's living state, surfaced so orbs rendered OUTSIDE the chat (the corner
+   * orb) breathe/shimmer/pulse in sync: `thinking` while a reply is in flight,
+   * `speaking` for a bounded window as the reply lands, `idle` otherwise.
+   */
+  oviState: OviOrbState;
+  setOviState: (state: OviOrbState) => void;
   openChat: (opts?: { itemContext?: string }) => void;
   closeChat: () => void;
 }
@@ -42,6 +50,7 @@ export function OviChatProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [itemContext, setItemContext] = useState<string | null>(null);
   const [itemsById, setItemsById] = useState<ItemsById>(() => new Map());
+  const [oviState, setOviState] = useState<OviOrbState>('idle');
 
   // Load the closet once a session exists, so both the chat and the Today card
   // can resolve real cutouts without each hitting /api/items themselves.
@@ -80,11 +89,12 @@ export function OviChatProvider({ children }: { children: ReactNode }) {
   const closeChat = useCallback(() => {
     setIsOpen(false);
     setItemContext(null);
+    setOviState('idle');
   }, []);
 
   const value = useMemo<OviChatContextValue>(
-    () => ({ isOpen, itemContext, itemsById, openChat, closeChat }),
-    [isOpen, itemContext, itemsById, openChat, closeChat],
+    () => ({ isOpen, itemContext, itemsById, oviState, setOviState, openChat, closeChat }),
+    [isOpen, itemContext, itemsById, oviState, openChat, closeChat],
   );
 
   return (

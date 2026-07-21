@@ -42,6 +42,8 @@ import { useTheme } from '@/lib/theme';
 
 import { chatWithOvi, acceptOutfit, rejectOutfit, type OviChatMessage } from './api';
 import { OutfitProposalCard, type ProposalStatus } from './OutfitProposalCard';
+import { OviOrb } from './OviOrb';
+import { useOviState } from './OviState';
 
 /** A rendered turn in the thread — text plus, for Ovi's styling turns, a look. */
 interface ChatEntry {
@@ -82,6 +84,8 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
   const reduced = useReducedMotionSafe();
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
+  // Ovi's shared living state — drives the panel orb here and the corner FAB.
+  const ovi = useOviState();
 
   const [entries, setEntries] = useState<readonly ChatEntry[]>([]);
   const [draft, setDraft] = useState('');
@@ -113,6 +117,8 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
       });
     return () => {
       active = false;
+      // Leaving the panel settles Ovi so the corner orb never stays mid-thought.
+      ovi.setThinking(false);
     };
   }, [open]);
 
@@ -148,6 +154,7 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
       setDraft('');
       setPendingIntent(null);
       setThinking(true);
+      ovi.setThinking(true);
 
       void chatWithOvi({
         messages: payload,
@@ -168,16 +175,19 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
               status: outfit ? 'idle' : undefined,
             },
           ]);
+          // The reply landed — open a bounded SPEAKING pulse, then settle to idle.
+          ovi.speak();
         })
         .catch(() => {
           setEntries((prev) => [
             ...prev,
             { id: nextId(), role: 'assistant', content: CHAT_ERROR },
           ]);
+          ovi.setThinking(false);
         })
         .finally(() => setThinking(false));
     },
-    [thinking, itemContext, resolveImages],
+    [thinking, itemContext, resolveImages, ovi],
   );
 
   /** "Style me for…" arms the intent and prefills the sentence for the user to finish. */
@@ -252,6 +262,17 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
         style={styles.root}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
+        {/* Panel presence: the 64px living orb bound to Ovi's state — minimal,
+            just the character, nothing loud. Decorative; the thread carries the
+            accessible content. */}
+        <View
+          style={styles.panelHeader}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          <OviOrb state={ovi.state} size="panelPx" />
+        </View>
+
         <ScrollView
           ref={scrollRef}
           style={styles.thread}
@@ -378,6 +399,10 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     gap: spacing.s3,
+  },
+  panelHeader: {
+    alignItems: 'center',
+    paddingTop: spacing.s1,
   },
   thread: {
     flex: 1,

@@ -10,7 +10,7 @@ import {
 } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { useRouter } from 'next/navigation';
-import { motion as motionToken, typeRamp } from '@era/tokens';
+import { motion as motionToken, orb, typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import type { OviIntent } from '@era/core/ovi';
 import { pressProps, transitionFor, useStagger, viewTransition } from '../../lib/motion';
@@ -21,7 +21,9 @@ import { Input } from '../Input';
 import { Button } from '../Button';
 import { Text } from '../Text';
 import { OutfitCard } from './OutfitCard';
+import { OviOrb } from './OviOrb';
 import { OviToast, OVI_TOAST_MS } from './OviToast';
+import { useOviChat } from './OviChatProvider';
 import { sendOviChat } from './ovi-actions';
 import type { ChatEntry, ItemsById } from './types';
 
@@ -57,6 +59,12 @@ const headerStyle: CSSProperties = {
   justifyContent: 'space-between',
   gap: 'var(--space-3)',
   paddingBottom: 'var(--space-3)',
+};
+
+const titleGroupStyle: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 'var(--space-3)',
 };
 
 const closeStyle: CSSProperties = {
@@ -146,10 +154,30 @@ function entryId(): string {
  * renders inline in Ovi's turn — the payoff, built from the wearer's own
  * cutouts, with Save / Not today. Opens over a tap-to-dismiss backdrop.
  */
+/** Cap the SPEAKING pulse window: the speaking cadence × 3, extended a touch for
+ *  longer replies but never runaway (§3: "gentle pulse synced to the reply text
+ *  landing"). Read off the token cadence so nothing is inlined. */
+function speakingWindowMs(replyLength: number): number {
+  const base = orb.speaking.pulseMs * 3;
+  // Roughly one extra beat per ~80 chars, capped at three extra beats.
+  const extraBeats = Math.min(3, Math.floor(replyLength / 80));
+  return base + extraBeats * orb.speaking.pulseMs;
+}
+
 export function OviChat({ itemContext, itemsById, onClose }: OviChatProps) {
   const reduced = useReducedMotion();
   const router = useRouter();
   const stagger = useStagger(reduced);
+  const { oviState, setOviState } = useOviChat();
+  const speakTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear any in-flight SPEAKING window on unmount so a late settle never fires
+  // against a closed sheet.
+  useEffect(() => {
+    return () => {
+      if (speakTimer.current) clearTimeout(speakTimer.current);
+    };
+  }, []);
 
   const [messages, setMessages] = useState<ChatEntry[]>(() => [
     { id: entryId(), role: 'assistant', content: strings.ovi.chatOpener },
@@ -209,6 +237,9 @@ export function OviChat({ itemContext, itemsById, onClose }: OviChatProps) {
       };
       setMessages((prev) => [...prev, userEntry, pendingEntry]);
       setBusy(true);
+      // The orb shimmers while the reply is in flight — including the corner orb,
+      // which reads this same state off the provider.
+      setOviState('thinking');
 
       const res = await sendOviChat({
         messages: outgoing,
@@ -217,6 +248,7 @@ export function OviChat({ itemContext, itemsById, onClose }: OviChatProps) {
       });
 
       setBusy(false);
+      const reply = res ? res.reply : strings.errors.generic;
       setMessages((prev) =>
         prev.map((entry) =>
           entry.id === pendingEntry.id
@@ -233,8 +265,14 @@ export function OviChat({ itemContext, itemsById, onClose }: OviChatProps) {
             : entry,
         ),
       );
+
+      // SPEAKING pulse: the reply landed as one blob (no streaming), so pulse for
+      // a bounded window scaled to the reply length, then settle to IDLE.
+      if (speakTimer.current) clearTimeout(speakTimer.current);
+      setOviState('speaking');
+      speakTimer.current = setTimeout(() => setOviState('idle'), speakingWindowMs(reply.length));
     },
-    [busy, messages, itemContext],
+    [busy, messages, itemContext, setOviState],
   );
 
   function onSubmit(event: FormEvent) {
@@ -277,9 +315,14 @@ export function OviChat({ itemContext, itemsById, onClose }: OviChatProps) {
       <GlassSheet labelledBy="ovi-chat-title">
         <div style={rootStyle}>
           <header style={headerStyle}>
-            <Text variant="title" size="title3" weight={700} as="h2" id="ovi-chat-title">
-              {strings.ovi.fabLabel}
-            </Text>
+            <div style={titleGroupStyle}>
+              {/* The panel's hero presence — the 64px orb, state-bound so it
+                  shimmers while thinking and pulses as the reply lands. */}
+              <OviOrb size="panel" state={oviState} />
+              <Text variant="title" size="title3" weight={700} as="h2" id="ovi-chat-title">
+                {strings.ovi.fabLabel}
+              </Text>
+            </div>
             <motion.button type="button" style={closeStyle} aria-label={strings.common.cancel} onClick={onClose} {...pressProps(reduced)}>
               <span aria-hidden="true">×</span>
             </motion.button>
