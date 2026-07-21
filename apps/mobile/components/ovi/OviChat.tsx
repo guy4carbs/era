@@ -56,6 +56,7 @@ import { Toast } from '@/components/closet/Toast';
 import { fetchItems } from '@/components/items/api';
 import { tokenEasing, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { chatWithOvi, acceptOutfit, rejectOutfit, type OviChatMessage } from './api';
 import { OutfitProposalCard, type ProposalStatus } from './OutfitProposalCard';
@@ -105,6 +106,7 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
   const { colors } = useTheme();
   const reduced = useReducedMotionSafe();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
   // Ovi's shared living state — drives the panel orb here and the corner FAB.
   const ovi = useOviState();
@@ -356,7 +358,9 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
       dismissAffordance="none"
     >
       <KeyboardAvoidingView
-        style={styles.root}
+        // The sheet is bottom-attached, so the composer must clear the home
+        // indicator: the safe-area bottom inset plus one rhythm step of air.
+        style={[styles.root, { paddingBottom: insets.bottom + spacing.s3 }]}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         {/* Header: the 28px living orb bound to Ovi's state, her name in the serif
