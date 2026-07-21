@@ -19,6 +19,16 @@
  * — the app stays visible behind the glass, and a transparent layer only catches
  * the tap-outside. With `glowBloom` on, a soft accent glow warms in from the
  * bottom-right (the FAB corner the sheet grew from). Reduced motion fades both.
+ *
+ * The chat also mirrors the web panel's opening/close CHOREOGRAPHY (D3.2): where
+ * a plain sheet just slides, `bloomFromCorner` layers the web's bloom-from-orb —
+ * the sheet scales up from `motion.stagger.bloomScale` with its transform-origin
+ * pinned to the bottom-right FAB corner and fades in on the gentle spring; closing reverses
+ * it (fade + settle back down and in). Reduced motion collapses both to a flat
+ * `reducedFadeMs` opacity fade with no scale (matching web's `reducedFadeMs`).
+ * `dismissAffordance: 'none'` drops the grab handle entirely (the chat dismisses
+ * via its own close button + the tap-outside catcher) — every other consumer keeps
+ * the default handle.
  */
 import { glass, glow, layout, motion, radii, spacing } from '@era/tokens';
 import { useEffect, useState, type PropsWithChildren } from 'react';
@@ -29,6 +39,7 @@ import {
   View,
 } from 'react-native';
 import Animated, {
+  interpolate,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -63,6 +74,22 @@ interface GlassSheetProps {
    * sheet rises — the opening bloom. Reduced motion still fades it in flat.
    */
   readonly glowBloom?: boolean;
+  /**
+   * Mirror the web panel's bloom-from-orb choreography: on open the sheet scales
+   * up from `motion.stagger.bloomScale` pivoted at the bottom-right FAB corner and fades
+   * in; on close it fades + settles back. Layered ON TOP of the slide, so it reads
+   * as growing from the corner rather than just rising. Reduced motion drops the
+   * scale and runs a flat fade. Off ⇒ the plain slide every other sheet uses.
+   */
+  readonly bloomFromCorner?: boolean;
+  /**
+   * The grab affordance at the sheet's top. `'handle'` (default) shows the pill —
+   * a toggle on the default sheet, a static grip on a custom-height one. `'none'`
+   * drops it entirely: the chat dismisses via its own close button + the
+   * tap-outside catcher, so the handle would be dead chrome. Scoped here so the
+   * removal never touches the other GlassSheet consumers.
+   */
+  readonly dismissAffordance?: 'handle' | 'none';
 }
 
 export function GlassSheet({
@@ -72,11 +99,13 @@ export function GlassSheet({
   heightFraction,
   transparentScrim = false,
   glowBloom = false,
+  bloomFromCorner = false,
+  dismissAffordance = 'handle',
   children,
 }: PropsWithChildren<GlassSheetProps>) {
   const { colors, resolved } = useTheme();
   const reduced = useReducedMotionSafe();
-  const { height } = useWindowDimensions();
+  const { height, width } = useWindowDimensions();
   const [expanded, setExpanded] = useState(false);
 
   // A `heightFraction` sheet rises straight to that height (no peek/expand step);
@@ -92,6 +121,10 @@ export function GlassSheet({
   const peekY = expandedHeight - peekHeight;
   const translateY = useSharedValue(hiddenY);
   const scrim = useSharedValue(0);
+  // The bloom-from-corner progress: 0 = closed (small + transparent), 1 = open
+  // (full scale + opaque). Drives the web-parity scale/fade; inert unless
+  // `bloomFromCorner` is set.
+  const bloom = useSharedValue(0);
 
   useEffect(() => {
     // A custom-height sheet has one open pose (fully risen); the default sheet
@@ -107,17 +140,42 @@ export function GlassSheet({
       duration: motion.durations.reducedFadeMs,
       easing: tokenEasing,
     });
+    // The bloom scale/fade shares the sheet's gentle spring (a flat fade under
+    // reduced motion) so it settles in lock-step with the rise — the web panel's
+    // `springs.gentle` on open, `reducedFadeMs` when reduced.
+    bloom.value = reduced
+      ? withTiming(open ? 1 : 0, { duration: motion.durations.reducedFadeMs, easing: tokenEasing })
+      : withSpring(open ? 1 : 0, springFromToken('gentle'));
     if (!open) {
       setExpanded(false);
     }
-  }, [open, expanded, custom, hiddenY, peekY, reduced, translateY, scrim]);
+  }, [open, expanded, custom, hiddenY, peekY, reduced, translateY, scrim, bloom]);
 
-  const sheetStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
-    // The opening bloom: the glow shadow warms in as the sheet rises, reading as
-    // light coming from the FAB corner. Held off entirely when glowBloom is unset.
-    shadowOpacity: glowBloom ? scrim.value * glow.opacity[resolved] : 0,
-  }));
+  const sheetStyle = useAnimatedStyle(() => {
+    // Web parity: the panel scales up from `motion.stagger.bloomScale` pivoted at
+    // the bottom-right corner (the FAB it grew from). RN scales about the view centre,
+    // so we emulate transform-origin bottom-right by compensating the scale with a
+    // translate of half the collapsed gap toward that corner — keeping the bottom
+    // and right edges pinned while the top-left grows in. Reduced motion holds the
+    // scale at 1 (flat fade only), matching web's reducedFadeMs path.
+    const scale = reduced || !bloomFromCorner
+      ? 1
+      : interpolate(bloom.value, [0, 1], [motion.stagger.bloomScale, 1]);
+    const originX = (width / 2) * (1 - scale); // + shifts toward the right edge
+    const originY = (expandedHeight / 2) * (1 - scale); // + shifts toward the bottom
+    return {
+      opacity: bloomFromCorner ? bloom.value : 1,
+      transform: [
+        { translateY: translateY.value },
+        { translateX: originX },
+        { translateY: originY },
+        { scale },
+      ],
+      // The opening bloom: the glow shadow warms in as the sheet rises, reading as
+      // light coming from the FAB corner. Held off entirely when glowBloom is unset.
+      shadowOpacity: glowBloom ? scrim.value * glow.opacity[resolved] : 0,
+    };
+  });
   const scrimStyle = useAnimatedStyle(() => ({
     // A transparent scrim keeps the app visible — only its tap-catcher matters, so
     // opacity stays flat; the tinted scrim fades to the mode tint as before.
@@ -154,9 +212,12 @@ export function GlassSheet({
             top-only radii + overflow:hidden clip the visible shape. */}
         <GlassPanel busy={busy} radius={radii.sheet} style={styles.glass} />
 
-        {/* A custom-height sheet has no handle-expand step, so the handle becomes
-            a static grip rather than a toggle. */}
-        {custom ? (
+        {/* The grab affordance. `dismissAffordance: 'none'` (the chat) drops it
+            entirely — the close button + tap-outside carry dismissal, so a handle
+            would be dead chrome. A custom-height sheet has no handle-expand step,
+            so its handle is a static grip; the default sheet's handle toggles the
+            expand. */}
+        {dismissAffordance === 'none' ? null : custom ? (
           <View style={styles.handleTap} pointerEvents="none">
             <View style={[styles.handle, { backgroundColor: colors.secondary }]} />
           </View>

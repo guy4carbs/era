@@ -300,8 +300,9 @@ test('motion springs, easing, durations, tilt', () => {
 test('motion choreography: press, stagger, pageRise (§3 exact)', () => {
   // "scale 0.97 on press-in ... every tappable element — nothing is inert"
   assert.deepEqual(motion.press, { scale: 0.97 });
-  // "stagger children delay 45ms; y 12→0; opacity 0→1; blur 4→0"
-  assert.deepEqual(motion.stagger, { delayMs: 45, riseYPx: 12, blurPx: 4 });
+  // "stagger children delay 45ms; y 12→0; opacity 0→1; blur 4→0"; bloomScale is
+  // the shared bloom-from-point start scale (Ovi panel/sheet, reveal stage).
+  assert.deepEqual(motion.stagger, { delayMs: 45, riseYPx: 12, blurPx: 4, bloomScale: 0.96 });
   // page/tab content cross-fade rises 6px on the gentle spring
   assert.deepEqual(motion.pageRise, { yPx: 6 });
   // D6 header choreography — title rises 8px, subtitle trails by 60ms.

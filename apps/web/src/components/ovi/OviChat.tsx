@@ -448,9 +448,14 @@ export function OviChat({ itemContext, itemsById, onClose }: OviChatProps) {
         exit: { opacity: 0 },
       }
     : {
-        initial: { opacity: 0, scale: 0.96, y: motionToken.stagger.riseYPx, boxShadow: restShadow },
+        initial: {
+          opacity: 0,
+          scale: motionToken.stagger.bloomScale,
+          y: motionToken.stagger.riseYPx,
+          boxShadow: restShadow,
+        },
         animate: { opacity: 1, scale: 1, y: 0, boxShadow: bloomShadow },
-        exit: { opacity: 0, scale: 0.96, y: motionToken.stagger.riseYPx },
+        exit: { opacity: 0, scale: motionToken.stagger.bloomScale, y: motionToken.stagger.riseYPx },
       };
 
   return (
@@ -619,7 +624,7 @@ function OviReply({
           <motion.span
             aria-hidden="true"
             style={cursorStyle}
-            animate={{ opacity: [1, 0.3, 1] }}
+            animate={{ opacity: [1, glow.caretDimOpacity, 1] }}
             transition={{
               duration: motionToken.stream.wordMs / 1000,
               repeat: Infinity,

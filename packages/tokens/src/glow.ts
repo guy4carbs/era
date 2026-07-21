@@ -17,4 +17,8 @@ export const glow = {
     amount: 0.1, // +/-10% around the base opacity
     durationMs: 3000, // 3s idle loop
   },
+  // caretDimOpacity — the low point of Ovi's streaming-caret blink (D3.2): the
+  // accent caret pulses full → this → full on the `stream.wordMs` cadence, so the
+  // insertion point breathes while words land. Shared by web and mobile.
+  caretDimOpacity: 0.3,
 } as const;
