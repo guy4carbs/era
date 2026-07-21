@@ -21,6 +21,7 @@ import {
   rnShadow,
   glass,
   glow,
+  orb,
   sheen,
   motion,
   layout,
@@ -317,6 +318,30 @@ test('motion choreography: press, stagger, pageRise (§3 exact)', () => {
   // The stagger delay must never let a long list exceed the 350ms feel-budget
   // for its FIRST page of items (~8 visible): 8 * 45 = 360 ≈ the ceiling.
   assert.ok(motion.stagger.delayMs * 8 <= motion.durations.maxMs + motion.stagger.delayMs);
+});
+
+test('orb: Ovi living-presence contract — sizes, breath, shimmer, lean', () => {
+  // The three canonical sizes; the corner orb must stay a legal touch target.
+  assert.deepEqual(orb.size, { cornerPx: 44, headerPx: 28, panelPx: 64 });
+  assert.ok(orb.size.cornerPx >= layout.touchTarget.webMin);
+  assert.ok(orb.size.cornerPx >= layout.touchTarget.ios);
+  // Dimensional rendering — hairline rim + highlight arc, both 1px, quiet.
+  assert.deepEqual(orb.rim, { widthPx: 1 });
+  assert.deepEqual(orb.highlight, { widthPx: 1, opacity: 0.55 });
+  assert.ok(orb.highlight.opacity < 1);
+  // IDLE breath shares the glow heartbeat; THINKING breathes quicker.
+  assert.deepEqual(orb.breath, { scaleAmount: 0.03, idleMs: 3000, thinkingMs: 2200 });
+  assert.equal(orb.breath.idleMs, glow.pulse.durationMs);
+  assert.ok(orb.breath.thinkingMs < orb.breath.idleMs);
+  // THINKING shimmer rotates slower than the breath — atmosphere, not a spinner.
+  assert.ok(orb.shimmer.rotateMs > orb.breath.thinkingMs);
+  // SPEAKING pulses a touch harder and faster than the breath.
+  assert.deepEqual(orb.speaking, { scaleAmount: 0.04, pulseMs: 900 });
+  assert.ok(orb.speaking.scaleAmount > orb.breath.scaleAmount);
+  assert.ok(orb.speaking.pulseMs < orb.breath.idleMs);
+  // Hover/press lean stays within the generic hover lift magnitude.
+  assert.deepEqual(orb.lean, { px: 2 });
+  assert.ok(orb.lean.px <= Math.abs(layout.hover.liftPx));
 });
 
 test('layout: touch targets, grid, phi split, sheet peek, breakpoints', () => {

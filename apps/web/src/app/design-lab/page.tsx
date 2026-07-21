@@ -27,7 +27,7 @@ import {
 } from '../../components';
 import { Text } from '../../components/Text';
 import { glassSurfaceStyle } from '../../components/GlassPanel';
-import { RevealStage } from '../../components/ovi';
+import { RevealStage, OviOrb, type OviOrbState } from '../../components/ovi';
 import type { ProposedOutfit } from '@era/core/ovi';
 import { useTheme, type ThemeMode } from '../../lib/theme';
 import { themeVarStyle } from '../../lib/theme-css';
@@ -500,6 +500,34 @@ function GlowIsland({ mode }: { mode: PaletteMode }) {
   );
 }
 
+/** The three canonical sizes and three living states of Ovi's orb, side by side. */
+const ORB_SIZES = ['corner', 'header', 'panel'] as const;
+const ORB_STATES: readonly OviOrbState[] = ['idle', 'thinking', 'speaking'];
+
+function OviOrbIsland() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
+      {ORB_STATES.map((state) => (
+        <div key={state} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+          <Text variant="caption" as="span" size="footnote" style={{ color: 'var(--color-secondary)' }}>
+            {state}
+          </Text>
+          <div style={{ display: 'flex', gap: 'var(--space-5)', alignItems: 'center', flexWrap: 'wrap' }}>
+            {ORB_SIZES.map((size) => (
+              <div key={size} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', alignItems: 'center' }}>
+                <OviOrb size={size} state={state} />
+                <Text variant="caption" as="span" size="footnote" style={{ color: 'var(--color-secondary)' }}>
+                  {size}
+                </Text>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function SheenIsland() {
   return (
     <div style={{ position: 'relative', width: '100%', height: 'var(--space-16)', borderRadius: 'var(--radius-card)', overflow: 'hidden', background: 'var(--color-accent)' }}>
@@ -834,6 +862,13 @@ export default function DesignLabPage() {
 
         <Section title="Glow + pulse" note="Accent halo at the per-mode glow opacity, breathing on the idle loop.">
           <IslandPair content={(m) => <GlowIsland mode={m} />} />
+        </Section>
+
+        <Section
+          title="Ovi orb"
+          note="Ovi's living presence — a dimensional warm-cream sphere (radial core, 1px taupe rim, lit highlight arc) carrying the §3 glow. Three sizes (corner 44 / header 28 / panel 64) × three states: IDLE breathes on the 3s heartbeat, THINKING adds a slow rotating glow shimmer with a quicker breath, SPEAKING pulses a touch larger on the reply cadence. Interactive orbs (the corner FAB, the panel) also lean toward the pointer. Under reduced motion every orb holds static at base glow opacity — no breath, shimmer, pulse, or lean."
+        >
+          <IslandPair content={() => <OviOrbIsland />} />
         </Section>
 
         <Section title="Sheen" note="var(--sheen-gradient) laid over an accent surface.">

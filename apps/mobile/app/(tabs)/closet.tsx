@@ -12,17 +12,11 @@
  * motion, and copy come from tokens and strings only.
  */
 import { strings } from '@era/core/strings';
-import { glow, layout, radii, spacing } from '@era/tokens';
+import { layout, spacing } from '@era/tokens';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, SectionList, StyleSheet, View } from 'react-native';
-import Animated, {
-  interpolate,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
@@ -41,7 +35,7 @@ import {
 } from '@/components/closet';
 import { fetchItems, TiltFieldProvider, type ItemWithDisplay } from '@/components/items';
 import { CATEGORIES, type ItemCategory } from '@/components/items/constants';
-import { tokenEasing, useReducedMotionSafe } from '@/lib/motion';
+import { OviOrb } from '@/components/ovi';
 import { readClosetDensity, writeClosetDensity } from '@/lib/closet-density';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { useTheme } from '@/lib/theme';
@@ -223,11 +217,10 @@ export default function ClosetScreen() {
           <SettingsGear onPress={() => router.push('/settings')} />
         </View>
         <View style={styles.empty}>
-          {/* Signature decision #13: Ovi's glow orb greets the blank closet — a
-              small decorative accent circle carrying OviFab's exact glow (tinted
-              iOS shadow), breathing on the 3s pulse, static under reduced motion.
-              Purely ornamental, so it's hidden from assistive tech. */}
-          <OviOrb />
+          {/* Signature decision #13: Ovi's living orb greets the blank closet —
+              the shared dimensional sphere at idle breath, static under reduced
+              motion. Purely ornamental, so it's hidden from assistive tech. */}
+          <ClosetGreetingOrb />
           <Text
             accessibilityRole="header"
             variant="largeTitle"
@@ -366,49 +359,16 @@ function SectionLabel({ title }: { readonly title: string }) {
 }
 
 /**
- * OviOrb — the empty closet's signature greeting (decision #13). A small accent
- * circle carrying OviFab's exact glow composition (a tinted, centred iOS shadow
- * at `glow.blurRadius`) sized to `spacing.s6`, breathing on the shared 3s pulse
- * (scale + shadow opacity, ±`glow.pulse.amount`). Reduced motion pins it static.
- * Purely decorative — `aria-hidden` so assistive tech skips straight to the copy.
+ * ClosetGreetingOrb — the empty closet's signature greeting (decision #13). The
+ * shared living {@link OviOrb} at rest (idle breath), kept at its historical
+ * `spacing.s6` size. Purely decorative, so it is hidden from assistive tech and
+ * the copy beneath carries the meaning.
  */
-function OviOrb() {
-  const { colors, resolved } = useTheme();
-  const reduced = useReducedMotionSafe();
-  const baseOpacity = glow.opacity[resolved];
-  const pulse = useSharedValue(0);
-
-  useEffect(() => {
-    if (reduced) {
-      pulse.value = 0;
-      return;
-    }
-    pulse.value = withRepeat(
-      withTiming(1, { duration: glow.pulse.durationMs / 2, easing: tokenEasing }),
-      -1,
-      true,
-    );
-  }, [reduced, pulse]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: 1 + pulse.value * glow.pulse.amount }],
-    shadowOpacity: interpolate(pulse.value, [0, 1], [baseOpacity, baseOpacity * (1 + glow.pulse.amount)]),
-  }));
-
+function ClosetGreetingOrb() {
   return (
-    <Animated.View
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-      style={[
-        styles.orb,
-        {
-          backgroundColor: colors.accent,
-          shadowColor: colors.accent,
-          shadowRadius: glow.blurRadius,
-        },
-        animatedStyle,
-      ]}
-    />
+    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <OviOrb state="idle" sizePx={spacing.s6} />
+    </View>
   );
 }
 
@@ -485,14 +445,6 @@ const styles = StyleSheet.create({
   sectionRule: {
     flex: 1,
     height: StyleSheet.hairlineWidth,
-  },
-  orb: {
-    width: spacing.s6,
-    height: spacing.s6,
-    borderRadius: radii.full,
-    // iOS glow: a coloured, centred shadow (mirrors OviFab). Android shows no
-    // tinted glow — the accent circle stands on its own there.
-    shadowOffset: { width: 0, height: 0 },
   },
   centerCopy: {
     textAlign: 'center',

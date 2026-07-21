@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { OviFab } from '@/components/OviFab';
 import { OviChat } from '@/components/ovi';
+import { OviStateProvider } from '@/components/ovi/OviState';
 import { TabBar, type TabKey } from '@/components/TabBar';
 import { TabBarVisibilityProvider, useTabBarVisibility } from '@/components/TabBarVisibility';
 
@@ -34,22 +35,26 @@ export default function TabsLayout() {
 
   return (
     <TabBarVisibilityProvider>
-      <View style={styles.root}>
-        <Tabs
-          screenOptions={{ headerShown: false }}
-          tabBar={(props) => <TabBarAdapter {...props} />}
-        >
-          <Tabs.Screen name="feed" />
-          <Tabs.Screen name="closet" />
-          <Tabs.Screen name="design" />
-          <Tabs.Screen name="shop" />
-        </Tabs>
-        <OviFab
-          style={[styles.fab, { bottom: fabBottom, right: spacing.s4 }]}
-          onPress={() => setOviOpen(true)}
-        />
-        <OviChat open={oviOpen} onClose={() => setOviOpen(false)} />
-      </View>
+      {/* Ovi's living state is shared: the corner orb reflects what the panel is
+          doing (thinking / speaking), so both surfaces breathe as one character. */}
+      <OviStateProvider>
+        <View style={styles.root}>
+          <Tabs
+            screenOptions={{ headerShown: false }}
+            tabBar={(props) => <TabBarAdapter {...props} />}
+          >
+            <Tabs.Screen name="feed" />
+            <Tabs.Screen name="closet" />
+            <Tabs.Screen name="design" />
+            <Tabs.Screen name="shop" />
+          </Tabs>
+          <OviFab
+            style={[styles.fab, { bottom: fabBottom, right: spacing.s4 }]}
+            onPress={() => setOviOpen(true)}
+          />
+          <OviChat open={oviOpen} onClose={() => setOviOpen(false)} />
+        </View>
+      </OviStateProvider>
     </TabBarVisibilityProvider>
   );
 }

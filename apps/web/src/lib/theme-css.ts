@@ -17,6 +17,7 @@ import {
   spacing,
   glass,
   glow,
+  orb,
   layout,
   boxShadows,
   boxShadowsDark,
@@ -142,6 +143,12 @@ function baseVars(): string {
     // feeds `backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate))`.
     `--glass-saturate:${glass.saturate}`,
     `--glow-blur:${unit(glow.blurRadius)}`,
+    // Ovi's living orb — the three canonical sizes plus its dimensional trims.
+    `--orb-corner:${unit(orb.size.cornerPx)}`,
+    `--orb-header:${unit(orb.size.headerPx)}`,
+    `--orb-panel:${unit(orb.size.panelPx)}`,
+    `--orb-rim:${unit(orb.rim.widthPx)}`,
+    `--orb-highlight:${unit(orb.highlight.widthPx)}`,
   ];
 
   // Motion vars consumed by the CSS View Transitions in globals.css (CSS can't

@@ -21,6 +21,7 @@ import {
   elevationDark,
   glass,
   glow,
+  orb,
   radii,
   rnShadow,
   runContrastAudit,
@@ -46,6 +47,7 @@ import { Chip } from '@/components/Chip';
 import { GlassPanel } from '@/components/GlassPanel';
 import { Input } from '@/components/Input';
 import { OviFab } from '@/components/OviFab';
+import { OviOrb, type OviOrbState } from '@/components/ovi';
 import { Text } from '@/components/Text';
 import { ItemSurface, type ForcedState } from '@/components/items';
 import { animate, useReducedMotionSafe } from '@/lib/motion';
@@ -138,6 +140,10 @@ export default function DesignLabScreen() {
 
         <Section title="Glow + Ovi pulse">
           <TwoUp render={() => <GlowColumn />} />
+        </Section>
+
+        <Section title="Ovi orb">
+          <TwoUp render={() => <OviOrbColumn />} />
         </Section>
 
         <Section title="Sheen">
@@ -345,6 +351,39 @@ function GlowColumn() {
       </View>
       <Text variant="caption" color={colors.secondary}>
         3s breathing pulse · glow {glow.opacity.light}/{glow.opacity.dark} · static under reduce ({reduced ? 'on' : 'off'})
+      </Text>
+    </View>
+  );
+}
+
+/**
+ * OviOrbColumn — the living orb across its full matrix: the three canonical
+ * sizes (corner / header / panel) × the three states (idle / thinking /
+ * speaking), each forced via the orb's `state` prop so the assembly reads at a
+ * glance. Painted inside the island's ThemeScope so light/dark both show.
+ */
+const ORB_STATES: readonly OviOrbState[] = ['idle', 'thinking', 'speaking'];
+const ORB_SIZES: readonly (keyof typeof orb.size)[] = ['cornerPx', 'headerPx', 'panelPx'];
+
+function OviOrbColumn() {
+  const { colors } = useTheme();
+  const reduced = useReducedMotionSafe();
+  return (
+    <View style={styles.stack}>
+      {ORB_STATES.map((state) => (
+        <View key={state} style={styles.orbStateRow}>
+          <Text variant="caption" size="footnote" color={colors.secondary} style={styles.orbStateLabel}>
+            {state}
+          </Text>
+          <View style={styles.orbSizeRow}>
+            {ORB_SIZES.map((size) => (
+              <OviOrb key={size} state={state} size={size} />
+            ))}
+          </View>
+        </View>
+      ))}
+      <Text variant="caption" color={colors.secondary}>
+        corner {orb.size.cornerPx} · header {orb.size.headerPx} · panel {orb.size.panelPx} · static under reduce ({reduced ? 'on' : 'off'})
       </Text>
     </View>
   );
@@ -659,6 +698,9 @@ const styles = StyleSheet.create({
   islandBody: { gap: spacing.s2 },
   stack: { gap: spacing.s2 },
   rowWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.s2, alignItems: 'center' },
+  orbStateRow: { gap: spacing.s1 },
+  orbStateLabel: { textTransform: 'uppercase', letterSpacing: 1 },
+  orbSizeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.s4 },
   paletteRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.s2 },
   paletteSwatch: {
     width: spacing.s8,

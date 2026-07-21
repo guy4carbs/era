@@ -1,5 +1,6 @@
 export { OviChatProvider, useOviChat } from './OviChatProvider';
 export { OviChat, type OviChatProps } from './OviChat';
+export { OviOrb, type OviOrbProps, type OviOrbSize, type OviOrbState } from './OviOrb';
 export { OutfitCard, type OutfitCardProps } from './OutfitCard';
 export { RevealStage, type RevealStageProps } from './RevealStage';
 export { TodayCard } from './TodayCard';

@@ -36,6 +36,7 @@ export {
 } from './elevation.ts';
 export { glass } from './glass.ts';
 export { glow } from './glow.ts';
+export { orb } from './orb.ts';
 export { sheen } from './sheen.ts';
 export { motion } from './motion.ts';
 export { layout } from './layout.ts';
