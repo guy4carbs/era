@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -10,12 +11,14 @@ import {
 } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { useRouter } from 'next/navigation';
-import { motion as motionToken, orb, typeRamp } from '@era/tokens';
+import { glow, motion as motionToken, typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import type { OviIntent } from '@era/core/ovi';
 import { pressProps, transitionFor, useStagger, viewTransition } from '../../lib/motion';
+import { glowShadow } from '../../lib/glow';
+import { useTheme } from '../../lib/theme';
 import { track } from '../../lib/analytics';
-import { GlassSheet } from '../GlassSheet';
+import { glassSurfaceStyle } from '../GlassPanel';
 import { Chip } from '../Chip';
 import { Input } from '../Input';
 import { Button } from '../Button';
@@ -28,7 +31,7 @@ import { sendOviChat } from './ovi-actions';
 import type { ChatEntry, ItemsById } from './types';
 
 export interface OviChatProps {
-  /** A focal item id when the sheet was opened to style a specific piece. */
+  /** A focal item id when the panel was opened to style a specific piece. */
   itemContext: string | null;
   /** Shared cutout lookup for resolving proposed outfits. */
   itemsById: ItemsById;
@@ -38,18 +41,43 @@ export interface OviChatProps {
 /** Cap the transcript we send, matching the server's own bound. */
 const MAX_HISTORY = 20;
 
-const backdropStyle: CSSProperties = {
+/** Split a reply into stream tokens: words plus their trailing whitespace, so
+ *  spacing survives the word-by-word reveal without extra layout work. */
+function streamTokens(reply: string): string[] {
+  return reply.match(/\S+\s*/g) ?? [];
+}
+
+/**
+ * The floating glass panel — 420px wide, anchored bottom-right above the corner
+ * orb's spot, capped at 72vh. Reuses the D0.4 glass recipe (`glassSurfaceStyle`)
+ * so blur/tint/border/highlight never drift; e4 elevation, sheet radius. No
+ * backdrop, no scrim — the page stays visible behind it. Bottom-anchored so it
+ * blooms up from the corner where the orb lives.
+ */
+const panelStyle: CSSProperties = {
+  ...glassSurfaceStyle(),
   position: 'fixed',
-  inset: 0,
-  background: 'color-mix(in srgb, var(--color-ink) 45%, transparent)',
-  zIndex: 45,
+  right: 'var(--space-4)',
+  bottom: 'calc(var(--space-4) + env(safe-area-inset-bottom))',
+  // Fixed 420 on desktop; on narrow viewports it spans the width minus the
+  // corner margins but never full width. Height is content-driven, capped at
+  // 72vh — never full-screen.
+  width: 'min(var(--ovi-panel-width), calc(100vw - var(--space-4) * 2))',
+  maxHeight: 'var(--ovi-panel-max-height)',
+  display: 'flex',
+  flexDirection: 'column',
+  minHeight: 0,
+  overflow: 'hidden',
+  paddingInline: 'var(--space-4)',
+  paddingBottom: 'var(--space-4)',
+  zIndex: 60,
 };
 
 const rootStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  height: '100%',
   minHeight: 0,
+  flex: 1,
   paddingTop: 'var(--space-2)',
 };
 
@@ -96,23 +124,13 @@ const userBubbleStyle: CSSProperties = {
   paddingInline: 'var(--space-3)',
   paddingBlock: 'var(--space-2)',
   borderRadius: 'var(--radius-card)',
-  background: 'color-mix(in srgb, var(--color-accent) 16%, transparent)',
-  border: '1px solid var(--color-accent)',
-  color: 'var(--color-text)',
-};
-
-const oviBubbleStyle: CSSProperties = {
-  alignSelf: 'flex-start',
-  maxWidth: '90%',
-  paddingInline: 'var(--space-3)',
-  paddingBlock: 'var(--space-2)',
-  borderRadius: 'var(--radius-card)',
   background: 'var(--color-surface)',
   border: '1px solid var(--color-hairline)',
   color: 'var(--color-text)',
-  boxShadow: 'var(--shadow-e1)',
 };
 
+// Ovi's replies are NOT bubbles — clean editorial text blocks straight on the
+// glass, comfortable measure, no chrome.
 const oviTurnStyle: CSSProperties = {
   alignSelf: 'stretch',
   display: 'flex',
@@ -120,7 +138,16 @@ const oviTurnStyle: CSSProperties = {
   gap: 'var(--space-3)',
 };
 
-const pendingColorStyle: CSSProperties = { color: 'var(--color-secondary-strong)' };
+const oviTextStyle: CSSProperties = {
+  margin: 0,
+  maxWidth: '62ch',
+  color: 'var(--color-text)',
+};
+
+const pendingTextStyle: CSSProperties = {
+  ...oviTextStyle,
+  color: 'var(--color-secondary-strong)',
+};
 
 const footerStyle: CSSProperties = {
   display: 'flex',
@@ -142,42 +169,43 @@ const formStyle: CSSProperties = {
   gap: 'var(--space-2)',
 };
 
+/** The soft cursor caret at the streaming insertion point — a thin accent bar
+ *  carrying the glow, so the words look like they're landing under Ovi's light. */
+const cursorStyle: CSSProperties = {
+  display: 'inline-block',
+  width: 'var(--glass-border-width)',
+  height: '1em',
+  marginLeft: 'var(--space-1)',
+  verticalAlign: 'text-bottom',
+  borderRadius: 'var(--radius-chip)',
+  background: 'var(--color-accent)',
+};
+
 /** A fresh id for a transcript entry. */
 function entryId(): string {
   return crypto.randomUUID();
 }
 
-/**
- * The surface where Ovi actually speaks. A frosted full-height sheet with a
- * scrolling transcript (user right, Ovi left in a soft card), the four intent
- * quick-starts, and a text input. When a reply carries a look, its OutfitCard
- * renders inline in Ovi's turn — the payoff, built from the wearer's own
- * cutouts, with Save / Not today. Opens over a tap-to-dismiss backdrop.
- */
-/** Cap the SPEAKING pulse window: the speaking cadence × 3, extended a touch for
- *  longer replies but never runaway (§3: "gentle pulse synced to the reply text
- *  landing"). Read off the token cadence so nothing is inlined. */
-function speakingWindowMs(replyLength: number): number {
-  const base = orb.speaking.pulseMs * 3;
-  // Roughly one extra beat per ~80 chars, capped at three extra beats.
-  const extraBeats = Math.min(3, Math.floor(replyLength / 80));
-  return base + extraBeats * orb.speaking.pulseMs;
-}
+/** Selector for the corner summon orb, used to restore focus when the panel
+ *  closes (the FAB re-mounts on close, so we re-find it by its label). */
+const CORNER_ORB_SELECTOR = `[aria-label="${strings.ovi.fabLabel}"]`;
 
+/**
+ * The floating glass panel where Ovi speaks. A frosted card anchored bottom-
+ * right that blooms up from the corner orb — a scrolling transcript (user turns
+ * as quiet bubbles, Ovi's replies as editorial text on the glass, streamed word
+ * by word), the canonical intent chips, and a glass input row. When a reply
+ * carries a look, its OutfitCard renders inline. The page stays visible behind
+ * it — no backdrop, no scrim. Esc / the close button / a click outside dismiss;
+ * focus is trapped while open and returns to the orb on close.
+ */
 export function OviChat({ itemContext, itemsById, onClose }: OviChatProps) {
   const reduced = useReducedMotion();
   const router = useRouter();
   const stagger = useStagger(reduced);
+  const { resolved } = useTheme();
   const { oviState, setOviState } = useOviChat();
-  const speakTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Clear any in-flight SPEAKING window on unmount so a late settle never fires
-  // against a closed sheet.
-  useEffect(() => {
-    return () => {
-      if (speakTimer.current) clearTimeout(speakTimer.current);
-    };
-  }, []);
+  const streamTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [messages, setMessages] = useState<ChatEntry[]>(() => [
     { id: entryId(), role: 'assistant', content: strings.ovi.chatOpener },
@@ -186,15 +214,20 @@ export function OviChat({ itemContext, itemsById, onClose }: OviChatProps) {
   const [pendingIntent, setPendingIntent] = useState<OviIntent | null>(null);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  // Which entry is mid-stream, and how many words of it have landed so far.
+  const [streaming, setStreaming] = useState<{ id: string; shown: number } | null>(null);
 
+  const panelRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Keep the newest turn in view as the transcript grows.
+  const baseOpacity = glow.opacity[resolved];
+
+  // Keep the newest turn in view as the transcript grows or the stream advances.
   useEffect(() => {
     const node = listRef.current;
     if (node) node.scrollTop = node.scrollHeight;
-  }, [messages]);
+  }, [messages, streaming]);
 
   // Auto-dismiss the toast, matching the shared timing.
   useEffect(() => {
@@ -203,7 +236,7 @@ export function OviChat({ itemContext, itemsById, onClose }: OviChatProps) {
     return () => clearTimeout(handle);
   }, [toast]);
 
-  // Escape closes the sheet, as expected of a modal dialog.
+  // Escape closes the panel, as expected of a modal-ish dialog.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
@@ -211,6 +244,116 @@ export function OviChat({ itemContext, itemsById, onClose }: OviChatProps) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
+
+  // Click-outside closes — via a plain document listener (no tinted layer), so
+  // the page behind stays fully visible and interactive right up to the tap.
+  useEffect(() => {
+    const onPointerDown = (event: PointerEvent) => {
+      const root = panelRef.current;
+      if (root && !root.contains(event.target as Node)) onClose();
+    };
+    // Defer binding a tick so the opening tap doesn't immediately close it.
+    const handle = setTimeout(
+      () => document.addEventListener('pointerdown', onPointerDown),
+      0,
+    );
+    return () => {
+      clearTimeout(handle);
+      document.removeEventListener('pointerdown', onPointerDown);
+    };
+  }, [onClose]);
+
+  // Move focus into the panel on open, and return it to the corner orb on close
+  // (the FAB re-mounts on close, so it's re-found by its label).
+  useEffect(() => {
+    inputRef.current?.focus();
+    return () => {
+      const orb = document.querySelector<HTMLElement>(CORNER_ORB_SELECTOR);
+      orb?.focus();
+    };
+  }, []);
+
+  // Trap Tab focus within the panel while it's open.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab') return;
+      const root = panelRef.current;
+      if (!root) return;
+      const focusable = root.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      const enabled = Array.from(focusable).filter(
+        (el) => !el.hasAttribute('disabled') && el.getAttribute('aria-hidden') !== 'true',
+      );
+      const first = enabled[0];
+      const last = enabled[enabled.length - 1];
+      if (!first || !last) return;
+      const active = document.activeElement as HTMLElement | null;
+      if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  // Clear any in-flight stream timer on unmount so a late tick never fires
+  // against a closed panel.
+  useEffect(() => {
+    return () => {
+      if (streamTimer.current) clearTimeout(streamTimer.current);
+    };
+  }, []);
+
+  /**
+   * Reveal a reply word by word at the token cadence, holding the orb in
+   * SPEAKING for exactly the reveal's length, then settling to IDLE. Under
+   * reduced motion the whole reply shows at once with a brief speaking pulse.
+   * The returned settle handle is tracked so a tap-to-skip or unmount cancels it.
+   */
+  const startStream = useCallback(
+    (id: string, reply: string) => {
+      if (streamTimer.current) clearTimeout(streamTimer.current);
+      const tokens = streamTokens(reply);
+      setOviState('speaking');
+
+      if (reduced || tokens.length <= 1) {
+        setStreaming(null);
+        // A brief speaking pulse only — one speaking beat, then settle.
+        streamTimer.current = setTimeout(
+          () => setOviState('idle'),
+          reduced ? motionToken.stream.wordMs : 0,
+        );
+        return;
+      }
+
+      setStreaming({ id, shown: 1 });
+      const tick = (shown: number) => {
+        if (shown >= tokens.length) {
+          setStreaming(null);
+          setOviState('idle');
+          return;
+        }
+        streamTimer.current = setTimeout(() => {
+          setStreaming({ id, shown: shown + 1 });
+          tick(shown + 1);
+        }, motionToken.stream.wordMs);
+      };
+      tick(1);
+    },
+    [reduced, setOviState],
+  );
+
+  /** Complete the in-flight stream instantly (a tap on the streaming block). */
+  const skipStream = useCallback(() => {
+    if (streamTimer.current) clearTimeout(streamTimer.current);
+    setStreaming(null);
+    setOviState('idle');
+  }, [setOviState]);
 
   const send = useCallback(
     async (text: string, intent: OviIntent) => {
@@ -266,13 +409,11 @@ export function OviChat({ itemContext, itemsById, onClose }: OviChatProps) {
         ),
       );
 
-      // SPEAKING pulse: the reply landed as one blob (no streaming), so pulse for
-      // a bounded window scaled to the reply length, then settle to IDLE.
-      if (speakTimer.current) clearTimeout(speakTimer.current);
-      setOviState('speaking');
-      speakTimer.current = setTimeout(() => setOviState('idle'), speakingWindowMs(reply.length));
+      // Client-side word stream: the reply landed as one blob, so reveal it word
+      // by word and hold SPEAKING for exactly that window.
+      startStream(pendingEntry.id, reply);
     },
-    [busy, messages, itemContext, setOviState],
+    [busy, messages, itemContext, setOviState, startStream],
   );
 
   function onSubmit(event: FormEvent) {
@@ -283,17 +424,10 @@ export function OviChat({ itemContext, itemsById, onClose }: OviChatProps) {
     setPendingIntent(null);
   }
 
-  /** "Style me for…" arms the intent and hands the sentence to the user to finish. */
-  function armStyleFor() {
-    setPendingIntent('style_for');
-    setInput(strings.ovi.intentChips.styleFor.replace('…', ' '));
-    inputRef.current?.focus();
-  }
-
-  function dismissOutfit(entryId: string) {
+  function dismissOutfit(id: string) {
     setToast(strings.ovi.rejected);
     setMessages((prev) =>
-      prev.map((entry) => (entry.id === entryId ? { ...entry, outfit: null } : entry)),
+      prev.map((entry) => (entry.id === id ? { ...entry, outfit: null } : entry)),
     );
   }
 
@@ -302,28 +436,53 @@ export function OviChat({ itemContext, itemsById, onClose }: OviChatProps) {
     onClose();
   }
 
+  // The opening choreography: a gentle spring rise blooming FROM the orb —
+  // transform-origin bottom-right, scale up from 0.96, glow bloom ramping in.
+  // Reduced motion collapses to a plain 150ms fade.
+  const restShadow = glowShadow(baseOpacity);
+  const bloomShadow = glowShadow(baseOpacity + glow.pulse.amount);
+  const enter = reduced
+    ? {
+        initial: { opacity: 0 },
+        animate: { opacity: 1, boxShadow: restShadow },
+        exit: { opacity: 0 },
+      }
+    : {
+        initial: { opacity: 0, scale: 0.96, y: motionToken.stagger.riseYPx, boxShadow: restShadow },
+        animate: { opacity: 1, scale: 1, y: 0, boxShadow: bloomShadow },
+        exit: { opacity: 0, scale: 0.96, y: motionToken.stagger.riseYPx },
+      };
+
   return (
     <>
       <motion.div
-        style={backdropStyle}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
+        ref={panelRef}
+        role="dialog"
+        aria-modal="false"
+        aria-labelledby="ovi-chat-title"
+        style={{ ...panelStyle, transformOrigin: 'bottom right' }}
+        initial={enter.initial}
+        animate={enter.animate}
+        exit={enter.exit}
         transition={transitionFor(motionToken.springs.gentle, reduced)}
-        onClick={onClose}
-      />
-      <GlassSheet labelledBy="ovi-chat-title">
+      >
         <div style={rootStyle}>
           <header style={headerStyle}>
             <div style={titleGroupStyle}>
-              {/* The panel's hero presence — the 64px orb, state-bound so it
-                  shimmers while thinking and pulses as the reply lands. */}
-              <OviOrb size="panel" state={oviState} />
-              <Text variant="title" size="title3" weight={700} as="h2" id="ovi-chat-title">
-                {strings.ovi.fabLabel}
+              {/* The constant presence: the header orb, state-bound so it
+                  shimmers while thinking and speaks exactly as the words land. */}
+              <OviOrb size="header" state={oviState} />
+              <Text variant="oviAccent" as="h2" id="ovi-chat-title" style={{ margin: 0 }}>
+                {strings.ovi.fabLabel.split(',')[0]}
               </Text>
             </div>
-            <motion.button type="button" style={closeStyle} aria-label={strings.common.cancel} onClick={onClose} {...pressProps(reduced)}>
+            <motion.button
+              type="button"
+              style={closeStyle}
+              aria-label={strings.common.cancel}
+              onClick={onClose}
+              {...pressProps(reduced)}
+            >
               <span aria-hidden="true">×</span>
             </motion.button>
           </header>
@@ -331,9 +490,6 @@ export function OviChat({ itemContext, itemsById, onClose }: OviChatProps) {
           <div ref={listRef} style={listStyle}>
             {messages.map((entry) =>
               entry.role === 'user' ? (
-                // Each message rises + fades in as it enters (variant.visible as
-                // initial/animate — messages append incrementally, so no container
-                // orchestration; reduced motion collapses to the flat fade).
                 <motion.div
                   key={entry.id}
                   style={{ ...userBubbleStyle, margin: 0 }}
@@ -346,56 +502,35 @@ export function OviChat({ itemContext, itemsById, onClose }: OviChatProps) {
                   </Text>
                 </motion.div>
               ) : (
-                <motion.div
+                <OviReply
                   key={entry.id}
-                  style={oviTurnStyle}
+                  entry={entry}
+                  itemsById={itemsById}
                   variants={stagger.item}
-                  initial="hidden"
-                  animate="visible"
-                >
-                  <Text
-                    variant="body"
-                    as="p"
-                    style={{
-                      ...oviBubbleStyle,
-                      margin: 0,
-                      ...(entry.pending ? pendingColorStyle : null),
-                    }}
-                  >
-                    {entry.content}
-                  </Text>
-                  <AnimatePresence>
-                    {entry.outfit ? (
-                      <OutfitCard
-                        outfit={entry.outfit}
-                        itemsById={itemsById}
-                        intent={entry.intent}
-                        weatherLead={
-                          entry.weather
-                            ? strings.ovi.weatherLine(entry.weather.tempC, entry.weather.condition)
-                            : null
-                        }
-                        onSaved={setToast}
-                        onDismissed={() => dismissOutfit(entry.id)}
-                        onOpen={openSavedOutfit}
-                      />
-                    ) : null}
-                  </AnimatePresence>
-                </motion.div>
+                  streamingShown={
+                    streaming && streaming.id === entry.id ? streaming.shown : null
+                  }
+                  onSkip={skipStream}
+                  onSaved={setToast}
+                  onDismissed={() => dismissOutfit(entry.id)}
+                  onOpen={openSavedOutfit}
+                />
               ),
             )}
           </div>
 
           <footer style={footerStyle}>
             <div style={chipsRowStyle}>
-              <Chip disabled={busy} onClick={() => void send(strings.ovi.intentChips.today, 'today')}>
+              <Chip
+                glass
+                disabled={busy}
+                onClick={() => void send(strings.ovi.intentChips.today, 'today')}
+              >
                 {strings.ovi.intentChips.today}
-              </Chip>
-              <Chip disabled={busy} selected={pendingIntent === 'style_for'} onClick={armStyleFor}>
-                {strings.ovi.intentChips.styleFor}
               </Chip>
               {itemContext ? (
                 <Chip
+                  glass
                   disabled={busy}
                   onClick={() => void send(strings.ovi.intentChips.styleItem, 'style_item')}
                 >
@@ -403,6 +538,7 @@ export function OviChat({ itemContext, itemsById, onClose }: OviChatProps) {
                 </Chip>
               ) : null}
               <Chip
+                glass
                 disabled={busy}
                 onClick={() => void send(strings.ovi.intentChips.whatsMissing, 'whats_missing')}
               >
@@ -432,9 +568,83 @@ export function OviChat({ itemContext, itemsById, onClose }: OviChatProps) {
             </form>
           </footer>
         </div>
-      </GlassSheet>
+      </motion.div>
 
       <AnimatePresence>{toast ? <OviToast message={toast} /> : null}</AnimatePresence>
     </>
+  );
+}
+
+interface OviReplyProps {
+  entry: ChatEntry;
+  itemsById: ItemsById;
+  variants: ReturnType<typeof useStagger>['item'];
+  /** Word count revealed so far while this entry streams; null when not streaming. */
+  streamingShown: number | null;
+  onSkip: () => void;
+  onSaved: (message: string) => void;
+  onDismissed: () => void;
+  onOpen: (outfitId: string) => void;
+}
+
+/**
+ * One of Ovi's turns — editorial text on the glass (no bubble), streamed word by
+ * word with a soft cursor glow at the insertion point, and any proposed look as
+ * a real composed OutfitCard below. A tap on the streaming text completes it.
+ */
+function OviReply({
+  entry,
+  itemsById,
+  variants,
+  streamingShown,
+  onSkip,
+  onSaved,
+  onDismissed,
+  onOpen,
+}: OviReplyProps) {
+  const tokens = useMemo(() => streamTokens(entry.content), [entry.content]);
+  const isStreaming = streamingShown !== null;
+  const shownText = isStreaming ? tokens.slice(0, streamingShown).join('') : entry.content;
+
+  return (
+    <motion.div style={oviTurnStyle} variants={variants} initial="hidden" animate="visible">
+      <Text
+        variant="body"
+        as="p"
+        style={entry.pending ? pendingTextStyle : oviTextStyle}
+        onClick={isStreaming ? onSkip : undefined}
+      >
+        {shownText}
+        {isStreaming ? (
+          <motion.span
+            aria-hidden="true"
+            style={cursorStyle}
+            animate={{ opacity: [1, 0.3, 1] }}
+            transition={{
+              duration: motionToken.stream.wordMs / 1000,
+              repeat: Infinity,
+              ease: motionToken.easing.bezier,
+            }}
+          />
+        ) : null}
+      </Text>
+      <AnimatePresence>
+        {entry.outfit ? (
+          <OutfitCard
+            outfit={entry.outfit}
+            itemsById={itemsById}
+            intent={entry.intent}
+            weatherLead={
+              entry.weather
+                ? strings.ovi.weatherLine(entry.weather.tempC, entry.weather.condition)
+                : null
+            }
+            onSaved={onSaved}
+            onDismissed={onDismissed}
+            onOpen={onOpen}
+          />
+        ) : null}
+      </AnimatePresence>
+    </motion.div>
   );
 }

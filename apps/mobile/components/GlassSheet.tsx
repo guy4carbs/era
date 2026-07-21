@@ -11,8 +11,16 @@
  * hero, try-on renders, feed photos) swap to the AA scrim tint so their text
  * stays legible. The glass LAYERS stay STATIC — only the sheet's transform and
  * the scrim opacity animate.
+ *
+ * Two openings. The DEFAULT surface peeks at `layout.sheetPeekFraction`, taps its
+ * handle to expand to peek × φ, and dims the app behind a tinted scrim. The Ovi
+ * CHAT overrides both (`heightFraction` + `transparentScrim`): it rises straight
+ * to a taller `layout.oviPanel.sheetFraction` of the window with NO tinted scrim
+ * — the app stays visible behind the glass, and a transparent layer only catches
+ * the tap-outside. With `glowBloom` on, a soft accent glow warms in from the
+ * bottom-right (the FAB corner the sheet grew from). Reduced motion fades both.
  */
-import { glass, layout, motion, radii, spacing } from '@era/tokens';
+import { glass, glow, layout, motion, radii, spacing } from '@era/tokens';
 import { useEffect, useState, type PropsWithChildren } from 'react';
 import {
   Pressable,
@@ -37,16 +45,47 @@ interface GlassSheetProps {
   readonly onClose: () => void;
   /** Float over imagery → GlassPanel swaps to the AA scrim tint. */
   readonly busy?: boolean;
+  /**
+   * Fraction of the window height the sheet rises to, opening straight to it with
+   * NO handle-expand step (the Ovi chat passes `layout.oviPanel.sheetFraction`).
+   * Omitted ⇒ the default peek + handle-expand-to-φ behaviour every other surface
+   * uses.
+   */
+  readonly heightFraction?: number;
+  /**
+   * Retire the tinted backdrop scrim: the app stays visible behind the glass and
+   * a transparent layer only catches tap-outside-to-close. The Ovi chat sets this
+   * so the conversation never reads as a full-screen page over a dimmed app.
+   */
+  readonly transparentScrim?: boolean;
+  /**
+   * Warm a soft accent glow in from the bottom-right (the FAB corner) as the
+   * sheet rises — the opening bloom. Reduced motion still fades it in flat.
+   */
+  readonly glowBloom?: boolean;
 }
 
-export function GlassSheet({ open, onClose, busy = false, children }: PropsWithChildren<GlassSheetProps>) {
+export function GlassSheet({
+  open,
+  onClose,
+  busy = false,
+  heightFraction,
+  transparentScrim = false,
+  glowBloom = false,
+  children,
+}: PropsWithChildren<GlassSheetProps>) {
   const { colors, resolved } = useTheme();
   const reduced = useReducedMotionSafe();
   const { height } = useWindowDimensions();
   const [expanded, setExpanded] = useState(false);
 
+  // A `heightFraction` sheet rises straight to that height (no peek/expand step);
+  // otherwise the default peek + handle-expand-to-φ.
+  const custom = heightFraction !== undefined;
   const peekHeight = height * layout.sheetPeekFraction;
-  const expandedHeight = height * layout.sheetPeekFraction * layout.phi;
+  const expandedHeight = custom
+    ? height * heightFraction
+    : height * layout.sheetPeekFraction * layout.phi;
 
   // translateY: 0 = fully expanded, (expanded - peek) = peek, expanded = hidden.
   const hiddenY = expandedHeight;
@@ -55,7 +94,10 @@ export function GlassSheet({ open, onClose, busy = false, children }: PropsWithC
   const scrim = useSharedValue(0);
 
   useEffect(() => {
-    const target = !open ? hiddenY : expanded ? 0 : peekY;
+    // A custom-height sheet has one open pose (fully risen); the default sheet
+    // opens at peek and the handle toggles the expand.
+    const openY = custom ? 0 : expanded ? 0 : peekY;
+    const target = !open ? hiddenY : openY;
     const slide = (value: number) =>
       reduced
         ? withTiming(value, { duration: motion.durations.reducedFadeMs })
@@ -68,13 +110,18 @@ export function GlassSheet({ open, onClose, busy = false, children }: PropsWithC
     if (!open) {
       setExpanded(false);
     }
-  }, [open, expanded, hiddenY, peekY, reduced, translateY, scrim]);
+  }, [open, expanded, custom, hiddenY, peekY, reduced, translateY, scrim]);
 
   const sheetStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
+    // The opening bloom: the glow shadow warms in as the sheet rises, reading as
+    // light coming from the FAB corner. Held off entirely when glowBloom is unset.
+    shadowOpacity: glowBloom ? scrim.value * glow.opacity[resolved] : 0,
   }));
   const scrimStyle = useAnimatedStyle(() => ({
-    opacity: scrim.value * glass.tintOpacity[resolved],
+    // A transparent scrim keeps the app visible — only its tap-catcher matters, so
+    // opacity stays flat; the tinted scrim fades to the mode tint as before.
+    opacity: transparentScrim ? 0 : scrim.value * glass.tintOpacity[resolved],
   }));
 
   return (
@@ -82,14 +129,23 @@ export function GlassSheet({ open, onClose, busy = false, children }: PropsWithC
       <Animated.View style={[StyleSheet.absoluteFill, scrimStyle]}>
         <Pressable
           accessibilityLabel="Dismiss"
-          style={[StyleSheet.absoluteFill, { backgroundColor: colors.ink }]}
+          style={[StyleSheet.absoluteFill, transparentScrim ? undefined : { backgroundColor: colors.ink }]}
           onPress={onClose}
         />
       </Animated.View>
 
       <Animated.View
         accessibilityViewIsModal={open}
-        style={[styles.sheet, { height: expandedHeight }, sheetStyle]}
+        style={[
+          styles.sheet,
+          { height: expandedHeight },
+          // The bloom glows from the bottom-right corner — a warm accent shadow
+          // offset toward the FAB the sheet grew from.
+          glowBloom
+            ? { shadowColor: colors.accent, shadowRadius: glow.blurRadius, shadowOffset: BLOOM_OFFSET }
+            : null,
+          sheetStyle,
+        ]}
       >
         {/* Shared §3 glass recipe (BlurView + tint + highlight + border), static
             per the perf contract — only the sheet's transform/scrim animate. The
@@ -98,20 +154,31 @@ export function GlassSheet({ open, onClose, busy = false, children }: PropsWithC
             top-only radii + overflow:hidden clip the visible shape. */}
         <GlassPanel busy={busy} radius={radii.sheet} style={styles.glass} />
 
-        <Press
-          accessibilityRole="button"
-          accessibilityLabel={expanded ? 'Collapse sheet' : 'Expand sheet'}
-          onPress={() => setExpanded((value) => !value)}
-          style={styles.handleTap}
-        >
-          <View style={[styles.handle, { backgroundColor: colors.secondary }]} />
-        </Press>
+        {/* A custom-height sheet has no handle-expand step, so the handle becomes
+            a static grip rather than a toggle. */}
+        {custom ? (
+          <View style={styles.handleTap} pointerEvents="none">
+            <View style={[styles.handle, { backgroundColor: colors.secondary }]} />
+          </View>
+        ) : (
+          <Press
+            accessibilityRole="button"
+            accessibilityLabel={expanded ? 'Collapse sheet' : 'Expand sheet'}
+            onPress={() => setExpanded((value) => !value)}
+            style={styles.handleTap}
+          >
+            <View style={[styles.handle, { backgroundColor: colors.secondary }]} />
+          </Press>
+        )}
 
         <View style={styles.body}>{children}</View>
       </Animated.View>
     </View>
   );
 }
+
+// The bloom shadow leans toward the bottom-right FAB corner the sheet grew from.
+const BLOOM_OFFSET = { width: spacing.s2, height: spacing.s2 } as const;
 
 const styles = StyleSheet.create({
   sheet: {
