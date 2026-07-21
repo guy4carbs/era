@@ -81,4 +81,14 @@ export const layout = {
     headerBelowPx: 32,
     sectionAbovePx: 52,
   },
+  // oviPanel — the conversation's floating glass home (D3.2). On web/desktop a
+  // 420px panel anchored bottom-right above the corner orb, capped at 72vh —
+  // chat NEVER consumes the whole page. On mobile the panel becomes a 3/4-height
+  // glass sheet (deliberately taller than the generic GlassSheet's peek × phi
+  // expansion — a conversation needs room; still never full-screen).
+  oviPanel: {
+    widthPx: 420,
+    maxHeightVh: 72,
+    sheetFraction: 0.75,
+  },
 } as const;

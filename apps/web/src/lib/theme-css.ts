@@ -149,6 +149,9 @@ function baseVars(): string {
     `--orb-panel:${unit(orb.size.panelPx)}`,
     `--orb-rim:${unit(orb.rim.widthPx)}`,
     `--orb-highlight:${unit(orb.highlight.widthPx)}`,
+    // The Ovi conversation panel (D3.2): fixed width, viewport-capped height.
+    `--ovi-panel-width:${unit(layout.oviPanel.widthPx)}`,
+    `--ovi-panel-max-height:${layout.oviPanel.maxHeightVh}vh`,
   ];
 
   // Motion vars consumed by the CSS View Transitions in globals.css (CSS can't

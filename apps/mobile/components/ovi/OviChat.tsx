@@ -1,19 +1,29 @@
 /**
  * OviChat — the frosted sheet where Ovi actually speaks.
  *
- * Opens from the Ovi FAB into a {@link GlassSheet}: a scrolling thread of user /
- * Ovi bubbles, four quick-intent chips, and a text input. Sending posts the
- * conversation to `/api/ovi-chat`; while Ovi thinks, a soft indicator holds her
- * place. A styling turn comes back with a look, rendered as an
- * {@link OutfitProposalCard} built from the user's real cutouts — Save persists
- * it (accept event + toast), Not today dismisses it (reject event + toast).
+ * Opens from the Ovi FAB into a {@link GlassSheet} sized to a 3/4-height glass
+ * panel (`layout.oviPanel.sheetFraction`) — taller than the generic sheet, but
+ * never full-screen: the top of the app always shows through, with no tinted
+ * scrim behind it. The sheet rises on the gentle spring while a soft glow blooms
+ * from the FAB corner. A quiet header carries the state-bound orb, Ovi's name in
+ * the serif accent, and a close; below it a scrolling thread of user bubbles and
+ * Ovi's editorial replies, four quick-intent chips, and a text input.
+ *
+ * Sending posts the conversation to `/api/ovi-chat`; while Ovi thinks a soft
+ * indicator holds her place. The reply comes back as one blob and is revealed
+ * CLIENT-side word by word (`motion.stream.wordMs`) with a soft cursor glow at
+ * the insertion point — a tap skips to the full reply. The orb holds SPEAKING
+ * for exactly the stream's duration. A styling turn comes back with a look,
+ * rendered as an {@link OutfitProposalCard} built from the user's real cutouts —
+ * Save persists it (accept event + toast), Not today dismisses it (reject event
+ * + toast).
  *
  * The closet is fetched once per open to resolve a proposal's item ids to their
  * stored cutouts. The thread resets each time the sheet opens, so Ovi always
  * greets fresh. Bubbles and cards ease in gently and pin static under reduced
  * motion; sending, saving, and passing each carry the expected haptic.
  */
-import { layout, motion as motionTokens, radii, spacing } from '@era/tokens';
+import { glow, layout, motion as motionTokens, radii, spacing } from '@era/tokens';
 import type { OviIntent, ProposedOutfit } from '@era/core/ovi';
 import { strings } from '@era/core/strings';
 import * as Haptics from 'expo-haptics';
@@ -22,6 +32,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   View,
@@ -61,6 +72,11 @@ interface ChatEntry {
   dismissed?: boolean;
   /** The saved outfit's id, set once accepted — makes the card tappable. */
   savedId?: string;
+  /**
+   * Assistant turns reveal word-by-word: `streaming` is true while words are
+   * still landing (drives the cursor glow + holds the card back until done).
+   */
+  streaming?: boolean;
 }
 
 interface OviChatProps {
@@ -89,18 +105,26 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
 
   const [entries, setEntries] = useState<readonly ChatEntry[]>([]);
   const [draft, setDraft] = useState('');
-  const [pendingIntent, setPendingIntent] = useState<OviIntent | null>(null);
   const [thinking, setThinking] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   // id -> resolved cutout URL, for turning a proposal's item ids into images.
   const imagesRef = useRef<Map<string, string>>(new Map());
+  // The live word-stream timer chain — held in a ref so it survives re-renders
+  // and can be cancelled (unmount, next send, or a skip tap).
+  const streamTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearStream = useCallback(() => {
+    if (streamTimer.current) {
+      clearTimeout(streamTimer.current);
+      streamTimer.current = null;
+    }
+  }, []);
 
   // Fresh thread on each open: seed Ovi's opener and load the closet's cutouts.
   useEffect(() => {
     if (!open) return;
     setEntries([{ id: nextId(), role: 'assistant', content: strings.ovi.chatOpener }]);
     setDraft('');
-    setPendingIntent(null);
     setThinking(false);
     let active = true;
     void fetchItems()
@@ -117,10 +141,12 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
       });
     return () => {
       active = false;
-      // Leaving the panel settles Ovi so the corner orb never stays mid-thought.
+      // Leaving the panel settles Ovi so the corner orb never stays mid-thought,
+      // and kills any in-flight word stream.
+      clearStream();
       ovi.setThinking(false);
     };
-  }, [open]);
+  }, [open, clearStream]);
 
   const resolveImages = useCallback((outfit: ProposedOutfit): string[] => {
     const map = imagesRef.current;
@@ -131,6 +157,65 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
     }
     return urls;
   }, []);
+
+  /**
+   * Reveal an assistant reply word-by-word on the token cadence, driving the orb
+   * to SPEAKING for the reveal's exact duration and dropping the cursor when the
+   * last word lands. Under reduced motion the whole reply lands at once with a
+   * brief speaking pulse. Returns after scheduling; the chain lives in the ref.
+   */
+  const streamReply = useCallback(
+    (id: string, full: string) => {
+      clearStream();
+      ovi.startSpeaking();
+      scrollRef.current?.scrollToEnd({ animated: !reduced });
+
+      // Reduced motion: no typewriter — the full reply, a beat of speaking, done.
+      if (reduced) {
+        setEntries((prev) =>
+          prev.map((e) => (e.id === id ? { ...e, content: full, streaming: false } : e)),
+        );
+        streamTimer.current = setTimeout(() => {
+          streamTimer.current = null;
+          ovi.stopSpeaking();
+        }, motionTokens.durations.reducedFadeMs);
+        return;
+      }
+
+      const words = full.split(/(\s+)/); // keep whitespace tokens so spacing is exact
+      let shown = 0;
+      const tick = () => {
+        shown += 1;
+        const partial = words.slice(0, shown).join('');
+        const done = shown >= words.length;
+        setEntries((prev) =>
+          prev.map((e) => (e.id === id ? { ...e, content: partial, streaming: !done } : e)),
+        );
+        scrollRef.current?.scrollToEnd({ animated: false });
+        if (done) {
+          streamTimer.current = null;
+          ovi.stopSpeaking();
+          return;
+        }
+        streamTimer.current = setTimeout(tick, motionTokens.stream.wordMs);
+      };
+      streamTimer.current = setTimeout(tick, motionTokens.stream.wordMs);
+    },
+    [clearStream, ovi, reduced],
+  );
+
+  /** Skip a running reveal to the full reply — a tap anywhere on a live turn. */
+  const skipStream = useCallback(
+    (entry: ChatEntry, full: string) => {
+      if (!entry.streaming) return;
+      clearStream();
+      setEntries((prev) =>
+        prev.map((e) => (e.id === entry.id ? { ...e, content: full, streaming: false } : e)),
+      );
+      ovi.stopSpeaking();
+    },
+    [clearStream, ovi],
+  );
 
   const send = useCallback(
     (text: string, intent: OviIntent) => {
@@ -152,7 +237,6 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
         return next;
       });
       setDraft('');
-      setPendingIntent(null);
       setThinking(true);
       ovi.setThinking(true);
 
@@ -163,20 +247,25 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
       })
         .then((result) => {
           const outfit = result.outfit ?? undefined;
+          const id = nextId();
+          // The turn mounts EMPTY and streams in. streamReply calls startSpeaking
+          // as the first word lands, so the orb crosses straight from thinking to
+          // speaking — the shared THINKING state is only cleared here on error;
+          // the finally below just re-enables the composer.
           setEntries((prev) => [
             ...prev,
             {
-              id: nextId(),
+              id,
               role: 'assistant',
-              content: result.reply,
+              content: '',
               outfit,
               images: outfit ? resolveImages(outfit) : undefined,
               intent: outfit ? intent : undefined,
               status: outfit ? 'idle' : undefined,
+              streaming: true,
             },
           ]);
-          // The reply landed — open a bounded SPEAKING pulse, then settle to idle.
-          ovi.speak();
+          streamReply(id, result.reply);
         })
         .catch(() => {
           setEntries((prev) => [
@@ -187,14 +276,8 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
         })
         .finally(() => setThinking(false));
     },
-    [thinking, itemContext, resolveImages, ovi],
+    [thinking, itemContext, resolveImages, streamReply, ovi],
   );
-
-  /** "Style me for…" arms the intent and prefills the sentence for the user to finish. */
-  const armStyleFor = useCallback(() => {
-    setPendingIntent('style_for');
-    setDraft(strings.ovi.intentChips.styleFor.replace('…', ' '));
-  }, []);
 
   const setStatus = useCallback((id: string, patch: Partial<ChatEntry>) => {
     setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, ...patch } : e)));
@@ -257,20 +340,41 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
   );
 
   return (
-    <GlassSheet open={open} onClose={onClose}>
+    <GlassSheet
+      open={open}
+      onClose={onClose}
+      heightFraction={layout.oviPanel.sheetFraction}
+      transparentScrim
+      glowBloom
+    >
       <KeyboardAvoidingView
         style={styles.root}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        {/* Panel presence: the 64px living orb bound to Ovi's state — minimal,
-            just the character, nothing loud. Decorative; the thread carries the
-            accessible content. */}
-        <View
-          style={styles.panelHeader}
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-        >
-          <OviOrb state={ovi.state} size="panelPx" />
+        {/* Header: the 28px living orb bound to Ovi's state, her name in the serif
+            accent, and a quiet close. The orb is decorative (the thread carries the
+            accessible content); the name reads for screen readers. */}
+        <View style={styles.header}>
+          <View style={styles.headerLead}>
+            {/* The living orb is decorative — the name beside it carries the header
+                for screen readers, so the orb stays out of the a11y tree. */}
+            <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+              <OviOrb state={ovi.state} size="headerPx" />
+            </View>
+            <Text variant="oviAccent" color={colors.text} accessibilityRole="header">
+              Ovi
+            </Text>
+          </View>
+          <Press
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+            onPress={onClose}
+            style={styles.close}
+          >
+            <Text variant="ui" size="title3" color={colors.secondary}>
+              ✕
+            </Text>
+          </Press>
         </View>
 
         <ScrollView
@@ -281,7 +385,14 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
           onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: !reduced })}
         >
           {entries.map((entry) => (
-            <Bubble key={entry.id} entry={entry} onSave={onSave} onReject={onReject} onOpen={openSaved} />
+            <Turn
+              key={entry.id}
+              entry={entry}
+              onSave={onSave}
+              onReject={onReject}
+              onOpen={openSaved}
+              onSkip={skipStream}
+            />
           ))}
           {thinking ? (
             <Animated.View
@@ -297,7 +408,6 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
 
         <View style={styles.chips}>
           <Chip label={strings.ovi.intentChips.today} onToggle={() => send(strings.ovi.intentChips.today, 'today')} />
-          <Chip label={strings.ovi.intentChips.styleFor} selected={pendingIntent === 'style_for'} onToggle={armStyleFor} />
           {itemContext ? (
             <Chip label={strings.ovi.intentChips.styleItem} onToggle={() => send(strings.ovi.intentChips.styleItem, 'style_item')} />
           ) : null}
@@ -310,16 +420,17 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
             value={draft}
             onChangeText={setDraft}
             placeholder={strings.ovi.chatPlaceholder}
+            accessibilityLabel={strings.ovi.chatPlaceholder}
             returnKeyType="send"
             maxLength={2000}
             editable={!thinking}
-            onSubmitEditing={() => send(draft, pendingIntent ?? 'chat')}
+            onSubmitEditing={() => send(draft, 'chat')}
           />
           <Press
             accessibilityRole="button"
             accessibilityLabel="Send"
             disabled={thinking || draft.trim().length === 0}
-            onPress={() => send(draft, pendingIntent ?? 'chat')}
+            onPress={() => send(draft, 'chat')}
             style={[
               styles.send,
               {
@@ -341,43 +452,76 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
   );
 }
 
-/** One thread row: a text bubble, and for Ovi's styling turns, the look beneath. */
-function Bubble({
+/**
+ * One thread row. A user turn is a bubble on `surface`; an Ovi turn is a clean
+ * editorial text block directly on the glass (no bubble chrome), with a soft
+ * cursor glow at the insertion point while the reply is still streaming and, for
+ * styling turns, the look beneath once the reveal completes. Tapping a streaming
+ * Ovi turn skips to the full reply.
+ */
+function Turn({
   entry,
   onSave,
   onReject,
   onOpen,
+  onSkip,
 }: {
   readonly entry: ChatEntry;
   readonly onSave: (entry: ChatEntry) => void;
   readonly onReject: (entry: ChatEntry) => void;
   readonly onOpen: (outfitId: string) => void;
+  readonly onSkip: (entry: ChatEntry, full: string) => void;
 }) {
   const { colors } = useTheme();
   const mine = entry.role === 'user';
-  const showCard = entry.outfit && !entry.dismissed;
+  // The card holds back until the reveal completes, so a look never appears above
+  // its own half-streamed rationale.
+  const showCard = entry.outfit && !entry.dismissed && !entry.streaming;
 
-  return (
-    // A new bubble rises + fades in via the token stagger entrance (§3: y 12→0 +
-    // opacity on the gentle spring). Index 0 — chat appends one message at a
-    // time, so a cascade delay would only lag the conversation; the entrance
-    // choreography itself is the treatment. Reduced motion → 150ms fade.
-    <StaggerItem index={0}>
-      <Animated.View style={styles.turn}>
-      <View
-        style={[
-          styles.bubble,
-          mine ? styles.mine : styles.theirs,
-          {
-            backgroundColor: mine ? colors.accent : colors.surface,
-            borderColor: colors.hairline,
-            borderRadius: radii.card,
-          },
-        ]}
-      >
-        <Text variant="body" color={mine ? colors.bg : colors.text}>
+  if (mine) {
+    return (
+      <StaggerItem index={0}>
+        <View
+          style={[
+            styles.bubble,
+            styles.mine,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.hairline,
+              borderRadius: radii.card,
+            },
+          ]}
+        >
+          <Text variant="body" color={colors.text}>
+            {entry.content}
+          </Text>
+        </View>
+      </StaggerItem>
+    );
+  }
+
+  // Ovi: an editorial text block on the glass. While streaming, the whole block
+  // is a tappable skip target and carries the cursor glow after the last word.
+  const block = (
+    <View style={styles.turn}>
+      <View style={styles.oviText}>
+        <Text variant="body" color={colors.text}>
           {entry.content}
         </Text>
+        {entry.streaming ? (
+          <View
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            style={[
+              styles.cursor,
+              {
+                backgroundColor: colors.accent,
+                shadowColor: colors.accent,
+                shadowRadius: glow.blurRadius,
+              },
+            ]}
+          />
+        ) : null}
       </View>
 
       {showCard && entry.outfit ? (
@@ -390,7 +534,22 @@ function Bubble({
           onOpen={entry.savedId ? () => onOpen(entry.savedId!) : undefined}
         />
       ) : null}
-      </Animated.View>
+    </View>
+  );
+
+  return (
+    <StaggerItem index={0}>
+      {entry.streaming ? (
+        <Pressable
+          accessibilityLabel="Skip"
+          accessibilityHint="Show the full reply"
+          onPress={() => onSkip(entry, entry.content)}
+        >
+          {block}
+        </Pressable>
+      ) : (
+        block
+      )}
     </StaggerItem>
   );
 }
@@ -400,9 +559,21 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: spacing.s3,
   },
-  panelHeader: {
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: spacing.s1,
+    justifyContent: 'space-between',
+  },
+  headerLead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.s2,
+  },
+  close: {
+    width: layout.touchTarget.ios,
+    height: layout.touchTarget.ios,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   thread: {
     flex: 1,
@@ -414,6 +585,23 @@ const styles = StyleSheet.create({
   turn: {
     gap: spacing.s2,
   },
+  // Ovi's reply: an editorial block on the glass — the text plus the trailing
+  // cursor glow sit on one baseline row while streaming.
+  oviText: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    flexWrap: 'wrap',
+  },
+  // The soft insertion caret — a small accent bar carrying the glow shadow.
+  cursor: {
+    width: spacing.s1 / 2,
+    height: spacing.s3,
+    marginLeft: spacing.s1 / 2,
+    marginBottom: spacing.s1 / 2,
+    borderRadius: radii.chip,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: glow.opacity.light,
+  },
   bubble: {
     maxWidth: '86%',
     paddingVertical: spacing.s2,
@@ -423,9 +611,6 @@ const styles = StyleSheet.create({
   },
   mine: {
     alignSelf: 'flex-end',
-  },
-  theirs: {
-    alignSelf: 'flex-start',
   },
   thinking: {
     alignSelf: 'flex-start',

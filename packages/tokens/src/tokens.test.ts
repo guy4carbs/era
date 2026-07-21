@@ -320,6 +320,20 @@ test('motion choreography: press, stagger, pageRise (§3 exact)', () => {
   assert.ok(motion.stagger.delayMs * 8 <= motion.durations.maxMs + motion.stagger.delayMs);
 });
 
+test('oviPanel + stream: the glass conversation contract (D3.2)', () => {
+  // The floating panel: 420px wide, capped at 72vh — never the whole page.
+  assert.deepEqual(layout.oviPanel, { widthPx: 420, maxHeightVh: 72, sheetFraction: 0.75 });
+  assert.ok(layout.oviPanel.maxHeightVh < 100);
+  // The mobile sheet variant is taller than the generic sheet expansion
+  // (peek × phi ≈ 0.618) but still never full-screen.
+  assert.ok(layout.oviPanel.sheetFraction > layout.sheetPeekFraction * layout.phi);
+  assert.ok(layout.oviPanel.sheetFraction < 1);
+  // The client-side word stream: quick enough to feel live, and the per-word
+  // beat stays inside the stagger grammar's neighbourhood.
+  assert.deepEqual(motion.stream, { wordMs: 45 });
+  assert.equal(motion.stream.wordMs, motion.stagger.delayMs);
+});
+
 test('orb: Ovi living-presence contract — sizes, breath, shimmer, lean', () => {
   // The three canonical sizes; the corner orb must stay a legal touch target.
   assert.deepEqual(orb.size, { cornerPx: 44, headerPx: 28, panelPx: 64 });

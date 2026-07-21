@@ -5,65 +5,47 @@
  * both render the same living orb and must breathe as one character. This
  * lightweight context lifts Ovi's 'idle' | 'thinking' | 'speaking' state so the
  * corner FAB shimmers while the panel is thinking and pulses while a reply
- * lands. THINKING is bound to the in-flight request; SPEAKING is a bounded
- * window opened when a reply arrives (`speak()` self-settles back to idle).
+ * lands. THINKING is bound to the in-flight request; SPEAKING is bound to the
+ * client-side word stream — `startSpeaking()` opens it when the first word lands
+ * and `stopSpeaking()` closes it when the last word lands (or the user taps to
+ * skip), so the orb pulses for exactly as long as Ovi is actually "talking".
  */
 import {
   createContext,
   useCallback,
   useContext,
   useMemo,
-  useRef,
   useState,
   type PropsWithChildren,
 } from 'react';
 
 import type { OviOrbState } from './OviOrb';
 
-/** How long the SPEAKING pulse holds after a reply lands before settling. */
-const SPEAKING_WINDOW_MS = 2400;
-
 interface OviStateValue {
   readonly state: OviOrbState;
   /** THINKING while a request is in flight; false returns to idle. */
   readonly setThinking: (thinking: boolean) => void;
-  /** Open a bounded SPEAKING window, then settle to idle. */
-  readonly speak: () => void;
+  /** Enter SPEAKING — held for the whole word-stream reveal. */
+  readonly startSpeaking: () => void;
+  /** Leave SPEAKING back to idle — the stream finished or was skipped. */
+  readonly stopSpeaking: () => void;
 }
 
 const OviStateContext = createContext<OviStateValue | null>(null);
 
 export function OviStateProvider({ children }: PropsWithChildren) {
   const [state, setState] = useState<OviOrbState>('idle');
-  const speakTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const clearSpeak = useCallback(() => {
-    if (speakTimer.current) {
-      clearTimeout(speakTimer.current);
-      speakTimer.current = null;
-    }
+  const setThinking = useCallback((thinking: boolean) => {
+    setState(thinking ? 'thinking' : 'idle');
   }, []);
 
-  const setThinking = useCallback(
-    (thinking: boolean) => {
-      clearSpeak();
-      setState(thinking ? 'thinking' : 'idle');
-    },
-    [clearSpeak],
-  );
-
-  const speak = useCallback(() => {
-    clearSpeak();
-    setState('speaking');
-    speakTimer.current = setTimeout(() => {
-      speakTimer.current = null;
-      setState('idle');
-    }, SPEAKING_WINDOW_MS);
-  }, [clearSpeak]);
+  const startSpeaking = useCallback(() => setState('speaking'), []);
+  const stopSpeaking = useCallback(() => setState('idle'), []);
 
   const value = useMemo<OviStateValue>(
-    () => ({ state, setThinking, speak }),
-    [state, setThinking, speak],
+    () => ({ state, setThinking, startSpeaking, stopSpeaking }),
+    [state, setThinking, startSpeaking, stopSpeaking],
   );
 
   return <OviStateContext.Provider value={value}>{children}</OviStateContext.Provider>;
@@ -79,7 +61,8 @@ export function useOviState(): OviStateValue {
     useContext(OviStateContext) ?? {
       state: 'idle',
       setThinking: () => undefined,
-      speak: () => undefined,
+      startSpeaking: () => undefined,
+      stopSpeaking: () => undefined,
     }
   );
 }

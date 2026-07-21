@@ -71,4 +71,11 @@ export const motion = {
     settleMs: 400,
     maxTotalMs: 2500,
   },
+  // stream — Ovi's replies land word-by-word (D3.2: the API returns one blob;
+  // the CLIENT streams it as an editorial typewriter with a soft cursor glow,
+  // and the orb holds SPEAKING for exactly this reveal's duration). wordMs is
+  // the per-word cadence; reduced motion shows the reply at once.
+  stream: {
+    wordMs: 45,
+  },
 } as const;
