@@ -46,6 +46,12 @@ export const motion = {
     delayMs: 45,
     riseYPx: 12,
     blurPx: 4,
+    // bloomScale — the scale a surface blooms UP from when it grows from a point
+    // (the Ovi panel/sheet blooming out of the corner FAB, the reveal stage's
+    // gift lift): start at 0.96 and settle to 1 on the gentle spring, paired with
+    // the `riseYPx` rise and an opacity fade. Shared by web and mobile so the
+    // bloom-from-corner choreography reads identically on both.
+    bloomScale: 0.96,
   },
   // pageRise — page/tab transition: content cross-fades with a small rise on
   // the gentle spring (View Transitions on web approximate with the css bezier).

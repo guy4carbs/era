@@ -23,7 +23,7 @@
  * greets fresh. Bubbles and cards ease in gently and pin static under reduced
  * motion; sending, saving, and passing each carry the expected haptic.
  */
-import { glow, layout, motion as motionTokens, radii, spacing } from '@era/tokens';
+import { glass, glow, layout, motion as motionTokens, radii, spacing } from '@era/tokens';
 import type { OviIntent, ProposedOutfit } from '@era/core/ovi';
 import { strings } from '@era/core/strings';
 import * as Haptics from 'expo-haptics';
@@ -37,7 +37,13 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, {
+  FadeIn,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { StaggerItem } from '@/components/StaggerItem';
 import { Text } from '@/components/Text';
@@ -48,8 +54,9 @@ import { Press } from '@/components/Press';
 import { Input } from '@/components/Input';
 import { Toast } from '@/components/closet/Toast';
 import { fetchItems } from '@/components/items/api';
-import { useReducedMotionSafe } from '@/lib/motion';
+import { tokenEasing, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { chatWithOvi, acceptOutfit, rejectOutfit, type OviChatMessage } from './api';
 import { OutfitProposalCard, type ProposalStatus } from './OutfitProposalCard';
@@ -99,6 +106,7 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
   const { colors } = useTheme();
   const reduced = useReducedMotionSafe();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
   // Ovi's shared living state — drives the panel orb here and the corner FAB.
   const ovi = useOviState();
@@ -346,9 +354,13 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
       heightFraction={layout.oviPanel.sheetFraction}
       transparentScrim
       glowBloom
+      bloomFromCorner
+      dismissAffordance="none"
     >
       <KeyboardAvoidingView
-        style={styles.root}
+        // The sheet is bottom-attached, so the composer must clear the home
+        // indicator: the safe-area bottom inset plus one rhythm step of air.
+        style={[styles.root, { paddingBottom: insets.bottom + spacing.s3 }]}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         {/* Header: the 28px living orb bound to Ovi's state, her name in the serif
@@ -365,14 +377,16 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
               Ovi
             </Text>
           </View>
+          {/* Quiet close — mirrors the web panel: the `common.cancel` label and the
+              same `×` glyph, at the secondary-strong colour. */}
           <Press
             accessibilityRole="button"
-            accessibilityLabel="Close"
+            accessibilityLabel={strings.common.cancel}
             onPress={onClose}
             style={styles.close}
           >
             <Text variant="ui" size="title3" color={colors.secondary}>
-              ✕
+              ×
             </Text>
           </Press>
         </View>
@@ -407,11 +421,11 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
         </ScrollView>
 
         <View style={styles.chips}>
-          <Chip label={strings.ovi.intentChips.today} onToggle={() => send(strings.ovi.intentChips.today, 'today')} />
+          <Chip glass label={strings.ovi.intentChips.today} onToggle={() => send(strings.ovi.intentChips.today, 'today')} />
           {itemContext ? (
-            <Chip label={strings.ovi.intentChips.styleItem} onToggle={() => send(strings.ovi.intentChips.styleItem, 'style_item')} />
+            <Chip glass label={strings.ovi.intentChips.styleItem} onToggle={() => send(strings.ovi.intentChips.styleItem, 'style_item')} />
           ) : null}
-          <Chip label={strings.ovi.intentChips.whatsMissing} onToggle={() => send(strings.ovi.intentChips.whatsMissing, 'whats_missing')} />
+          <Chip glass label={strings.ovi.intentChips.whatsMissing} onToggle={() => send(strings.ovi.intentChips.whatsMissing, 'whats_missing')} />
         </View>
 
         <View style={styles.composer}>
@@ -440,8 +454,10 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
               },
             ]}
           >
+            {/* The send affordance mirrors the web panel's primary button — the
+                same `→` glyph on the accent fill. */}
             <Text variant="ui" size="title3" weight={600} color={colors.bg}>
-              ↑
+              →
             </Text>
           </Press>
         </View>
@@ -449,6 +465,55 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
 
       <Toast message={toast} onHide={() => setToast(null)} bottom={spacing.s2} />
     </GlassSheet>
+  );
+}
+
+/**
+ * The streaming caret — a thin accent bar carrying the §3 glow at the insertion
+ * point, so words look like they land under Ovi's light. Mirrors the web caret:
+ * it blinks on the `stream.wordMs` cadence (opacity 1 → glow.caretDimOpacity → 1,
+ * on the shared bezier). Reduced motion holds it steady at full opacity — no
+ * blink — matching the web's reduced path.
+ */
+function StreamCaret() {
+  const { colors, resolved } = useTheme();
+  const reduced = useReducedMotionSafe();
+  const blink = useSharedValue(1);
+
+  useEffect(() => {
+    if (reduced) {
+      blink.value = 1;
+      return;
+    }
+    // One 1 → dim → 1 cycle per wordMs, looping — the web caret's opacity keyframe
+    // as a reversing timing loop (half the period each direction).
+    blink.value = withRepeat(
+      withTiming(glow.caretDimOpacity, {
+        duration: motionTokens.stream.wordMs / 2,
+        easing: tokenEasing,
+      }),
+      -1,
+      true,
+    );
+  }, [reduced, blink]);
+
+  const caretStyle = useAnimatedStyle(() => ({ opacity: blink.value }));
+
+  return (
+    <Animated.View
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={[
+        styles.cursor,
+        caretStyle,
+        {
+          backgroundColor: colors.accent,
+          shadowColor: colors.accent,
+          shadowRadius: glow.blurRadius,
+          shadowOpacity: glow.opacity[resolved],
+        },
+      ]}
+    />
   );
 }
 
@@ -508,20 +573,7 @@ function Turn({
         <Text variant="body" color={colors.text}>
           {entry.content}
         </Text>
-        {entry.streaming ? (
-          <View
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-            style={[
-              styles.cursor,
-              {
-                backgroundColor: colors.accent,
-                shadowColor: colors.accent,
-                shadowRadius: glow.blurRadius,
-              },
-            ]}
-          />
-        ) : null}
+        {entry.streaming ? <StreamCaret /> : null}
       </View>
 
       {showCard && entry.outfit ? (
@@ -592,18 +644,20 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     flexWrap: 'wrap',
   },
-  // The soft insertion caret — a small accent bar carrying the glow shadow.
+  // The soft insertion caret — a thin accent bar carrying the glow, matching the
+  // web caret: 1px (the glass border width) × ~1em, `space-1` left margin, chip
+  // radius. Colour + glow shadow are applied per-theme in StreamCaret.
   cursor: {
-    width: spacing.s1 / 2,
+    width: glass.borderWidth,
     height: spacing.s3,
-    marginLeft: spacing.s1 / 2,
+    marginLeft: spacing.s1,
     marginBottom: spacing.s1 / 2,
     borderRadius: radii.chip,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: glow.opacity.light,
   },
   bubble: {
-    maxWidth: '86%',
+    // Matches the web user bubble's 82% measure and its s3/s2 inline/block padding.
+    maxWidth: '82%',
     paddingVertical: spacing.s2,
     paddingHorizontal: spacing.s3,
     borderWidth: StyleSheet.hairlineWidth,
