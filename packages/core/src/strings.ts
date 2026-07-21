@@ -185,13 +185,16 @@ export const strings = {
      */
     chatOpener: 'What are we putting together?',
     /**
-     * The four quick-intent chips above the input. `styleItem` is shown only
-     * when a piece is already in context; the other three are always offered.
+     * The quick-intent chips above the input. D3.2 pins the panel's canonical
+     * three — today / styleItem / whatsMissing — with `styleItem` swapping in
+     * for a piece already in context ('Style this', per the spec's exact
+     * label). `styleFor` is retired from the panel chips but kept here for the
+     * intent grammar and any deep-link that still names it.
      */
     intentChips: {
       today: 'What do I wear today?',
       styleFor: 'Style me for…',
-      styleItem: 'Style this piece',
+      styleItem: 'Style this',
       whatsMissing: 'What am I missing?',
     },
     /**
