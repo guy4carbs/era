@@ -6,7 +6,7 @@ import { motion as motionToken, layout } from '@era/tokens';
 import { transitionFor } from '../../../lib/motion';
 import { Text, TextControlBoundary } from '../../../components';
 import { QuizImage } from '../QuizImage';
-import { SELECTION_RING, type QuizStep } from '../types';
+import { selectionShadow, type QuizStep } from '../types';
 
 export interface PhotoOptionGridProps {
   step: QuizStep;
@@ -70,10 +70,8 @@ export function PhotoOptionGrid({ step, selectedId, onSelect }: PhotoOptionGridP
             aria-label={option.label}
             aria-pressed={selected}
             onClick={() => onSelect(option.id)}
-            style={{
-              ...tileStyle,
-              boxShadow: selected ? `var(--shadow-e3), ${SELECTION_RING}` : 'var(--shadow-e2)',
-            }}
+            style={tileStyle}
+            animate={selectionShadow(selected, reduced)}
             whileHover={reduced ? undefined : { y: layout.hover.liftPx, boxShadow: 'var(--shadow-e3)' }}
             whileTap={reduced ? undefined : { scale: motionToken.press.scale }}
             transition={transitionFor(motionToken.springs.snappy, reduced)}

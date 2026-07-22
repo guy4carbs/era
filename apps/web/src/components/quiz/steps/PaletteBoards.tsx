@@ -6,7 +6,7 @@ import { motion as motionToken, layout } from '@era/tokens';
 import { ARCHETYPES } from '@era/core/quiz';
 import { transitionFor } from '../../../lib/motion';
 import { Text, TextControlBoundary } from '../../../components';
-import { SELECTION_RING, type QuizStep } from '../types';
+import { selectionShadow, type QuizStep } from '../types';
 
 export interface PaletteBoardsProps {
   step: QuizStep;
@@ -85,10 +85,8 @@ export function PaletteBoards({ step, selectedId, onSelect }: PaletteBoardsProps
             aria-label={option.label}
             aria-pressed={selected}
             onClick={() => onSelect(option.id)}
-            style={{
-              ...boardStyle,
-              boxShadow: selected ? `var(--shadow-e3), ${SELECTION_RING}` : 'var(--shadow-e2)',
-            }}
+            style={boardStyle}
+            animate={selectionShadow(selected, reduced)}
             whileHover={reduced ? undefined : { y: layout.hover.liftPx, boxShadow: 'var(--shadow-e3)' }}
             whileTap={reduced ? undefined : { scale: motionToken.press.scale }}
             transition={transitionFor(motionToken.springs.snappy, reduced)}

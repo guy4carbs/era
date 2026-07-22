@@ -1,11 +1,14 @@
 /**
  * StepScreen — the chrome and renderer host for a single quiz step.
  *
- * Lays out the header (back chevron, progress dots, skip), the step's title and
- * prompt, and the option renderer chosen by {@link rendererFor}. Single-select
- * steps advance on tap; the multi-select occasions step shows a Continue
- * button. Content slides in horizontally with a fluid spring; under reduced
- * motion it cross-fades with no translation.
+ * Lays out the header (back chevron | the warm {@link ProgressLine} | skip), the
+ * step's title and prompt, and the option renderer chosen by {@link rendererFor}.
+ * Single-select steps advance on tap; the multi-select occasions step shows a
+ * Continue button. Content slides in horizontally with a fluid spring; under
+ * reduced motion it cross-fades with no translation.
+ *
+ * The step title and prompt are the quiz's editorial voice — the title renders
+ * in the baked Fraunces `title` face (D-QUIZ), the prompt in body sans beneath.
  */
 import { radii, spacing } from '@era/tokens';
 import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
@@ -24,7 +27,7 @@ import { MoodCards } from './MoodCards';
 import { OccasionChips } from './OccasionChips';
 import { PaletteBoards } from './PaletteBoards';
 import { PhotoOptionGrid } from './PhotoOptionGrid';
-import { ProgressDots } from './ProgressDots';
+import { ProgressLine } from './ProgressLine';
 import { TextBands } from './TextBands';
 import { isMultiStep, rendererFor, type QuizAnswerValue, type QuizStep } from './contract';
 
@@ -78,6 +81,8 @@ export function StepScreen({
 
   return (
     <View style={styles.container}>
+      {/* Header: back | the warm progress line (fills the row) | skip. The line
+          replaces the retired dots, so progress lives inline in the chrome. */}
       <View style={styles.header}>
         <Press
           accessibilityRole="button"
@@ -92,6 +97,9 @@ export function StepScreen({
             ‹
           </Text>
         </Press>
+        <View style={styles.progress}>
+          <ProgressLine total={total} current={index} />
+        </View>
         <Press
           accessibilityRole="button"
           accessibilityLabel={strings.quiz.skip}
@@ -105,10 +113,6 @@ export function StepScreen({
         </Press>
       </View>
 
-      <View style={styles.dots}>
-        <ProgressDots total={total} current={index} />
-      </View>
-
       <Animated.View style={[styles.body, contentStyle]}>
         <ScrollView
           contentContainerStyle={styles.scroll}
@@ -116,7 +120,8 @@ export function StepScreen({
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.prompt}>
-            <Text accessibilityRole="header" variant="ui" size="title2" weight={700} color={colors.text}>
+            {/* The step title is the quiz's editorial voice — baked Fraunces `title`. */}
+            <Text accessibilityRole="header" variant="title" color={colors.text}>
               {step.title}
             </Text>
             <Text variant="body" color={colors.secondaryStrong}>
@@ -153,21 +158,22 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: spacing.s4,
+    gap: spacing.s4,
     height: spacing.s12,
   },
   backButton: {
     minWidth: spacing.s8,
     justifyContent: 'center',
   },
+  // The line takes the middle of the header row, breathing between back and skip.
+  progress: {
+    flex: 1,
+    justifyContent: 'center',
+  },
   skipButton: {
     borderRadius: radii.chip,
     justifyContent: 'center',
-  },
-  dots: {
-    alignItems: 'center',
-    paddingBottom: spacing.s4,
   },
   body: {
     flex: 1,

@@ -30,6 +30,8 @@ import { PageHeader } from '../../components/PageHeader';
 import { glassSurfaceStyle } from '../../components/GlassPanel';
 import { RevealStage, OviOrb, OviSuggestion, type OviOrbState } from '../../components/ovi';
 import { FeedCard } from '../../components/feed';
+import { QuizFlow, Reveal } from '../../components/quiz';
+import { deterministicProfile, type QuizAnswers } from '@era/core/quiz';
 import { strings } from '@era/core/strings';
 import type { ProposedOutfit, OviSuggestion as OviSuggestionData } from '@era/core/ovi';
 import type { FeedPostPayload } from '@era/core/feed';
@@ -729,6 +731,66 @@ function RevealRitualIsland() {
 }
 
 // -----------------------------------------------------------------------------
+// Style quiz specimen (D-QUIZ) — the REAL, replayable quiz → reveal flow, so the
+// restyle is a living surface you can always run and tweak. It embeds the actual
+// QuizFlow; on completion it computes the profile with the pure, API-free
+// `deterministicProfile` (@era/core/quiz) and renders the REAL Reveal against it
+// (profileOverride bypasses the derivation fetch — no session, no network). The
+// CTA is inert here; Replay remounts the flow at step 1 via a key bump. The
+// column is capped to the feed width and given a min-height so completing the
+// quiz doesn't reflow the whole page.
+// -----------------------------------------------------------------------------
+
+function QuizLabIsland() {
+  const [run, setRun] = useState(0);
+  const [answers, setAnswers] = useState<QuizAnswers | null>(null);
+
+  const replay = () => {
+    setAnswers(null);
+    setRun((n) => n + 1);
+  };
+
+  return (
+    <div
+      style={{
+        width: '100%',
+        maxWidth: 'var(--feed-col)',
+        marginInline: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'var(--space-4)',
+      }}
+    >
+      {/* Contain the flow's height so completing it doesn't fight the page. */}
+      <div style={{ minHeight: 'var(--space-16)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        {answers ? (
+          <Reveal
+            key={`reveal-${run}`}
+            answers={answers}
+            profileOverride={deterministicProfile(answers)}
+            inertCta
+          />
+        ) : (
+          <QuizFlow
+            key={`flow-${run}`}
+            onComplete={(collected) => setAnswers(collected)}
+            onSkip={replay}
+          />
+        )}
+      </div>
+      <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
+        <Button variant="secondary" onClick={replay}>
+          Replay the quiz
+        </Button>
+        <Text variant="caption" as="span" size="footnote" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
+          {answers ? 'Reveal from deterministicProfile — CTA inert in the lab.' : 'Answer through to the reveal.'}
+        </Text>
+      </div>
+    </div>
+  );
+}
+
+// -----------------------------------------------------------------------------
 // Public feed frame specimen (D-FEED, Part B) — the FLAGGED direction, shown
 // WITHOUT flipping the flag. One re-skinned FeedCard on fixture data so the
 // "TikTok's hierarchy, Era's materials" anatomy (full-bleed cover + cream
@@ -1368,6 +1430,13 @@ export default function DesignLabPage() {
           note="The D9 Today's Look reveal on the lab cutouts: cream canvas → the look assembles slot by slot (gentle springs, each shadow landing 120ms behind its piece, ≤2.5s, tap to skip) → settles into the composed card with Ovi's italic line. Replay runs it again — no once-per-day gate here. The card's actions hit the real endpoints; the lab pieces aren't in a closet, so Wear it declines honestly."
         >
           <IslandPair content={() => <RevealRitualIsland />} />
+        </Section>
+
+        <Section
+          title="Style quiz"
+          note="The REAL, replayable quiz → reveal flow (D-QUIZ), embedded as one live island. Full-bleed image choices with cream letterboxing and glass captions; a thin warm progress line (accent fill over hairline, no dots) between back and skip; selecting a tile springs the press and blooms the accent glow into the steady ring; questions in Fraunces (title). Completing it computes the profile client-side with the pure, API-free deterministicProfile and renders the real Reveal — the archetype name blooms first in Display Fraunces with its synced glow disc, the palette cascades on the 45ms beat, and the era card settles last (≤1800ms). The CTA is inert here; Replay remounts the flow at step one. Reduced motion collapses every beat to a plain fade."
+        >
+          <QuizLabIsland />
         </Section>
 
         <Section

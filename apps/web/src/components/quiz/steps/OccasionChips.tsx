@@ -6,7 +6,7 @@ import { motion as motionToken } from '@era/tokens';
 import { transitionFor } from '../../../lib/motion';
 import { Text, TextControlBoundary } from '../../../components';
 import { QuizImage } from '../QuizImage';
-import { SELECTION_RING, type QuizStep } from '../types';
+import { selectionShadow, type QuizStep } from '../types';
 
 export interface OccasionChipsProps {
   step: QuizStep;
@@ -70,8 +70,8 @@ export function OccasionChips({ step, selectedIds, onToggle }: OccasionChipsProp
                 ? `color-mix(in srgb, var(--color-accent) ${SELECTED_TINT * 100}%, var(--color-surface))`
                 : 'var(--color-surface)',
               border: `var(--glass-border-width) solid ${selected ? 'var(--color-accent)' : 'var(--color-hairline)'}`,
-              boxShadow: selected ? SELECTION_RING : undefined,
             }}
+            animate={selectionShadow(selected, reduced, { lifted: false })}
             whileTap={reduced ? undefined : { scale: motionToken.press.scale }}
             transition={transitionFor(motionToken.springs.snappy, reduced)}
           >
