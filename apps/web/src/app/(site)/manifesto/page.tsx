@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 
-import { Text } from '../../../components';
+import { Text, EraMark } from '../../../components';
 import { OviOrb } from '../../../components/ovi';
 import { ScrollReveal } from '../../../components/site';
 import { JsonLd, articleSchema, breadcrumbSchema } from '../../../components/seo';
@@ -32,9 +32,9 @@ const { manifesto } = strings.site;
  */
 const PUBLISHED_ISO = '2026-07-22';
 
-/** Absolute URL of the share image — the site OG card, as the other pages reference it. */
+/** Absolute URL of the share image — the generated per-page `opengraph-image` route. */
 function ogImageUrl(): string {
-  return `${siteUrl()}/og/era-og.png`;
+  return `${siteUrl()}/manifesto/opengraph-image`;
 }
 
 export const metadata: Metadata = {
@@ -77,10 +77,10 @@ export default function ManifestoPage() {
       />
       <main style={mainStyle}>
         <header style={headerStyle}>
-          {/* The landing's quiet wordmark treatment, one register down. */}
-          <Text variant="ui" as="span" style={wordmarkStyle}>
-            Era
-          </Text>
+          {/* The locked mark, quiet above the north star. Server-rendered, so the
+              per-mode ink comes from --color-mark-onbg (ink on light, cream on
+              dark) — the two-ink brand's mode choice, not a recolor. */}
+          <EraMark fill="var(--color-mark-onbg)" heightPx={20} />
           {/* The north star, the page's h1, in the locked Display clamp. */}
           <Text variant="display" as="h1" style={northStarStyle}>
             {manifesto.northStar}
@@ -153,13 +153,6 @@ const headerStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: 'var(--space-6)',
-};
-
-// The landing's wordmark register — tracked, uppercase, quiet.
-const wordmarkStyle: CSSProperties = {
-  letterSpacing: '0.08em',
-  textTransform: 'uppercase',
-  color: 'var(--color-secondary-strong)',
 };
 
 const northStarStyle: CSSProperties = {

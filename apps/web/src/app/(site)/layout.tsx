@@ -39,24 +39,21 @@ export const metadata: Metadata = {
     siteName: 'Era',
     title: strings.site.og.title,
     description: strings.site.og.description,
-    images: [
-      { url: '/og/era-og.png', width: 1200, height: 630, alt: strings.site.og.title },
-    ],
+    // og:image is injected automatically from the generated `(site)/opengraph-image`
+    // route (and per-segment overrides like `/manifesto`), so no manual `images`
+    // fallback here — the generated card is the single source of truth.
   },
   twitter: {
     card: 'summary_large_image',
     title: strings.site.og.title,
     description: strings.site.og.description,
-    images: ['/og/era-og.png'],
+    // twitter:image likewise comes from the generated opengraph-image route.
   },
-  icons: {
-    icon: [
-      { url: '/icon.png', type: 'image/png', sizes: '512x512' },
-      { url: '/favicon.ico', sizes: 'any' },
-    ],
-    shortcut: ['/favicon.ico'],
-    apple: [{ url: '/apple-icon.png' }],
-  },
+  // No manual `icons` — the metadata-file convention owns the icons now: the
+  // locked mark ships as `src/app/icon.svg` (mode-aware SVG favicon),
+  // `src/app/favicon.ico` (32+16), and `src/app/apple-touch-icon.png` (180, ink
+  // on cream). Next auto-injects their <link> tags; a manual `icons` block here
+  // would suppress that and re-serve the old pre-mark `/icon.png` set.
 };
 
 /**

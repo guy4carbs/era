@@ -10,6 +10,7 @@ import { glowShadow } from '../lib/glow';
 import { pressProps, transitionFor, viewTransition } from '../lib/motion';
 import { TAB_ITEMS, type TabId } from './TabBar';
 import { OviOrb } from './ovi/OviOrb';
+import { EraMark } from './EraMark';
 import { Text } from './Text';
 
 /** Press-enabled rail row — Link with the token tap affordance. */
@@ -111,9 +112,9 @@ export function NavRail() {
   return (
     <nav className="era-rail" style={railStyle} aria-label="Primary">
       <MotionLink href="/feed" style={wordmarkStyle} {...pressProps(reduced)}>
-        <Text variant="title" as="span">
-          era
-        </Text>
+        {/* The locked mark, small for the rail. Two-ink: cream in dark mode, ink
+            in light — an ink choice, never a recolor. Clears the 16px minimum. */}
+        <EraMark variant={resolved === 'dark' ? 'cream' : 'ink'} heightPx={18} />
         <OviOrb size={{ cssVar: 'var(--rail-orb)' }} state="idle" />
       </MotionLink>
 

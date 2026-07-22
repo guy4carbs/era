@@ -79,6 +79,30 @@ The system is defined once in `@era/tokens` (`typeRoles`, `serifGuard`,
   web `next/font` loader + the mobile static instances. Every role, size, weight,
   leading and tracking is unchanged — the face moves, the scale does not.
 
+## Brand mark
+
+The mark is the word **`era.`** — cut from **Fraunces** (opsz 144, wght 620,
+WONK 0, SOFT 0) as vector paths, never live text. **Source of truth:**
+`apps/web/public/brand/era-mark.svg` (ink paths; `era-mark-cream.svg` is the same
+geometry in cream). On web, render it through the **`EraMark`** component
+(`apps/web/src/components/EraMark.tsx`), which inlines those paths.
+
+- **Two inks, nothing else.** Flat warm ink `#1C1B19` on cream `#FAF7F0`; inverse
+  (cream on ink) for dark. On web the fills route through palette tokens/vars —
+  `var(--color-ink)` and `var(--color-cream)` (= `palette.ink` / `palette.light.bg`),
+  or the per-mode `var(--color-mark-onbg)` for server-rendered on-bg placements.
+  Dark mode uses the **cream variant** — an ink choice, **never a recolor**.
+- **Clear space** = 3× the period's diameter. The period is ≈`297/2915` of the
+  mark's width, so in practice keep clear space ≈ **0.1× the mark's width** on
+  every side.
+- **Minimum sizes:** 16px height for the inline web mark; 60px for the app icon.
+- **Never** stretched, recolored (beyond the two inks), glowed, or drop-shadowed.
+- **OG cards** generate the mark + Fraunces headline via `buildOgImage`
+  (`apps/web/src/components/seo/og-image.tsx`, `next/og`), embedding the real mark
+  SVG so the lockup is identical everywhere.
+
+These rules are the seed of the future **Brand Guidelines** doc.
+
 ## Commit convention
 
 Conventional commits: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, with an optional scope — e.g. `feat(closet): add garment tagging`.

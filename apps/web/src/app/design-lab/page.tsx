@@ -17,6 +17,7 @@ import {
   Card,
   Chip,
   Container,
+  EraMark,
   GlassSheet,
   Input,
   ItemSurface,
@@ -211,6 +212,91 @@ function Swatch({ label, box }: { label: string; box: CSSProperties }) {
       <Text variant="caption" as="span" style={{ color: 'var(--color-secondary)' }}>
         {label}
       </Text>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Brand mark — the locked 'era.' cut, shown in both inks and with its rules.
+// ---------------------------------------------------------------------------
+
+// A small tile carrying the opposite ink so BOTH inks read on EVERY island: the
+// ink mark reads on the cream island, the cream mark on the ink island; the tile
+// supplies the contrasting field the on-bg mark can't (it uses --color-bg /
+// --color-ink, both tokens — no literal hex, so the lab keeps to the token rule).
+function InkTile({ background, children }: { background: string; children: ReactNode }) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 'var(--space-4)',
+        background,
+        borderRadius: 'var(--radius-card)',
+        border: '1px solid var(--color-hairline)',
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function BrandMarkIsland({ mode }: { mode: PaletteMode }) {
+  // The on-bg ink for THIS island: ink on the light (cream) island, cream on the
+  // dark (ink) island — the two-ink brand's mode choice.
+  const onBg: 'ink' | 'cream' = mode === 'dark' ? 'cream' : 'ink';
+  const opposite: 'ink' | 'cream' = onBg === 'ink' ? 'cream' : 'ink';
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+      {/* Both inks, each on the field that makes it read. */}
+      <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
+        <InkTile background="var(--color-bg)">
+          <EraMark variant={onBg} heightPx={44} />
+        </InkTile>
+        <InkTile background={onBg === 'ink' ? 'var(--color-ink)' : 'var(--color-bg)'}>
+          <EraMark variant={opposite} heightPx={44} />
+        </InkTile>
+      </div>
+
+      {/* Clear-space rule: a hairline box around the mark with a per-side margin of
+          ≈0.1× the mark's width (3× the period's diameter). The inner mark sits
+          inside that reserved margin so the exclusion zone is visible. */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+        <div
+          style={{
+            display: 'inline-flex',
+            // ≈0.1× the mark's width per side. The mark is 44px tall ≈ 139px wide
+            // (44 × 2914.7/921); 0.1× width ≈ 14px of clear space each side.
+            padding: '14px',
+            border: '1px dashed var(--color-hairline)',
+            borderRadius: 'var(--radius-chip)',
+            alignSelf: 'flex-start',
+          }}
+        >
+          <EraMark variant={onBg} heightPx={44} />
+        </div>
+        <Text variant="caption" as="span" size="footnote" style={{ color: 'var(--color-secondary)' }}>
+          clear space ≈ 0.1× width per side (3× the period diameter)
+        </Text>
+      </div>
+
+      {/* Min-size row: the 16px inline floor beside a comfortable size. */}
+      <div style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', alignItems: 'center' }}>
+          <EraMark variant={onBg} heightPx={16} />
+          <Text variant="caption" as="span" size="footnote" style={{ color: 'var(--color-secondary)' }}>
+            16px · web min
+          </Text>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', alignItems: 'center' }}>
+          <EraMark variant={onBg} heightPx={32} />
+          <Text variant="caption" as="span" size="footnote" style={{ color: 'var(--color-secondary)' }}>
+            32px
+          </Text>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1621,6 +1707,13 @@ export default function DesignLabPage() {
 
         <Section title="Palette" note="Seven themed roles + the mode-independent semantic hues, with hex labels.">
           <IslandPair content={(m) => <PaletteIsland mode={m} />} />
+        </Section>
+
+        <Section
+          title="Brand mark"
+          note="The locked 'era.' mark — vector paths cut from Fraunces (opsz 144, wght 620, WONK 0, SOFT 0), source of truth apps/web/public/brand/era-mark.svg. Shown in both inks on both islands (ink #1C1B19 on cream, cream #FAF7F0 on ink — a mode choice, never a recolor), the clear-space rule visualized (≈0.1× the mark's width per side = 3× the period's diameter), and the min-size row (16px web inline floor). Never stretched, recolored, glowed, or shadowed."
+        >
+          <IslandPair content={(m) => <BrandMarkIsland mode={m} />} />
         </Section>
 
         <Section title="Type roles" note="The seven Fraunces/Geist variants at their default step.">

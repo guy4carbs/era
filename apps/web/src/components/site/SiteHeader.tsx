@@ -6,6 +6,7 @@ import { strings } from '@era/core/strings';
 import { motion as motionToken } from '@era/tokens';
 import { glassSurfaceStyle } from '../index';
 import { Text } from '../Text';
+import { EraMark } from '../EraMark';
 import { transitionFor } from '../../lib/motion';
 
 /**
@@ -38,12 +39,6 @@ const barStyle: CSSProperties = {
   borderRadius: 0,
   borderInline: 'none',
   borderTop: 'none',
-};
-
-const wordmarkStyle: CSSProperties = {
-  letterSpacing: '0.08em',
-  textTransform: 'uppercase',
-  color: 'var(--color-text)',
 };
 
 // The header CTA — a compact accent pill anchor mirroring the primary button
@@ -82,9 +77,10 @@ export function SiteHeader() {
         // Keep the hidden bar out of the tab order and off assistive tech.
         {...(shown ? {} : { inert: '' as unknown as boolean, 'aria-hidden': true })}
       >
-        <Text variant="ui" as="span" style={wordmarkStyle}>
-          Era
-        </Text>
+        {/* The locked mark at the header's small register. The per-mode ink comes
+            from --color-mark-onbg (ink on light, cream on dark) — no recolor. 16px
+            is the sanctioned inline minimum. */}
+        <EraMark fill="var(--color-mark-onbg)" heightPx={16} />
         <a href="#waitlist" style={ctaStyle}>
           <Text variant="ui" as="span" style={{ color: 'inherit' }}>
             {strings.site.hero.cta}
