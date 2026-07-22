@@ -1801,6 +1801,20 @@ export const strings = {
       /** The warm, no-pressure open door — welcome back, never a win-back guilt. */
       closer: "If you ever want to start fresh, you're always welcome back.",
     },
+
+    /**
+     * Compliant footer — rendered at the bottom of every email by the shared
+     * BaseEmail layout in `@era/email`. The physical mailing address satisfies
+     * CAN-SPAM for marketing sends (The Era Edit); the unsubscribe label fills
+     * the footer's unsubscribe slot, which BaseEmail renders only when a send
+     * actually carries an unsubscribe URL (marketing yes, transactional no).
+     */
+    footer: {
+      /** Physical mailing address — required on marketing email. */
+      address: '3824 Wilcox Ave, Downers Grove, Illinois 60515',
+      /** Unsubscribe link label — plain, no guilt trip. */
+      unsubscribe: 'Unsubscribe',
+    },
   },
 
   /** Authentication surfaces. */
