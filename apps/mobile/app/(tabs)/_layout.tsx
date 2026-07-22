@@ -20,42 +20,70 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { OviFab } from '@/components/OviFab';
 import { OviChat } from '@/components/ovi';
-import { OviStateProvider } from '@/components/ovi/OviState';
+import { OviStateProvider, useOviState } from '@/components/ovi/OviState';
 import { TabBar, type TabKey } from '@/components/TabBar';
 import { TabBarVisibilityProvider, useTabBarVisibility } from '@/components/TabBarVisibility';
 
 // Route files require a default export — expo-router discovers layouts this way.
 export default function TabsLayout() {
+  return (
+    <TabBarVisibilityProvider>
+      {/* Ovi's living state is shared: the corner orb reflects what the panel is
+          doing (thinking / speaking), so both surfaces breathe as one character.
+          The provider also carries the open channel the shell below consumes. */}
+      <OviStateProvider>
+        <TabsShell />
+      </OviStateProvider>
+    </TabBarVisibilityProvider>
+  );
+}
+
+/**
+ * The shell proper — inside {@link OviStateProvider} so it can read Ovi's open
+ * channel. The FAB opens Ovi plainly; an ambient suggestion strip opens her
+ * pre-seeded via `openOvi(request)`, which flips `openRequest` non-null here.
+ * Either way the sheet raises; the seed (if any) is handed to the panel, which
+ * auto-sends it as the user's first turn.
+ */
+function TabsShell() {
   const insets = useSafeAreaInsets();
   // Float the FAB above the floating tab bar and the home-indicator inset. The FAB
   // keeps this fixed offset — it does NOT chase the bar as it hides/shows.
   const fabBottom = layout.tabBarHeight + insets.bottom + spacing.s3;
   // Ovi's chat sheet overlays every tab, so it lives here alongside the FAB.
   const [oviOpen, setOviOpen] = useState(false);
+  const { openRequest, openOvi, clearOpen } = useOviState();
+
+  // A pre-seeded open request (from a suggestion strip) raises the sheet. The
+  // request itself is passed to the panel as `seed`; opening plainly (the FAB)
+  // leaves `openRequest` null, so the panel just greets.
+  useEffect(() => {
+    if (openRequest) setOviOpen(true);
+  }, [openRequest]);
+
+  const closeOvi = () => {
+    setOviOpen(false);
+    // Drop any pending seed so a later plain open (the FAB) doesn't replay it.
+    clearOpen();
+  };
 
   return (
-    <TabBarVisibilityProvider>
-      {/* Ovi's living state is shared: the corner orb reflects what the panel is
-          doing (thinking / speaking), so both surfaces breathe as one character. */}
-      <OviStateProvider>
-        <View style={styles.root}>
-          <Tabs
-            screenOptions={{ headerShown: false }}
-            tabBar={(props) => <TabBarAdapter {...props} />}
-          >
-            <Tabs.Screen name="feed" />
-            <Tabs.Screen name="closet" />
-            <Tabs.Screen name="design" />
-            <Tabs.Screen name="shop" />
-          </Tabs>
-          <OviFab
-            style={[styles.fab, { bottom: fabBottom, right: spacing.s4 }]}
-            onPress={() => setOviOpen(true)}
-          />
-          <OviChat open={oviOpen} onClose={() => setOviOpen(false)} />
-        </View>
-      </OviStateProvider>
-    </TabBarVisibilityProvider>
+    <View style={styles.root}>
+      <Tabs
+        screenOptions={{ headerShown: false }}
+        tabBar={(props) => <TabBarAdapter {...props} />}
+      >
+        <Tabs.Screen name="feed" />
+        <Tabs.Screen name="closet" />
+        <Tabs.Screen name="design" />
+        <Tabs.Screen name="shop" />
+      </Tabs>
+      <OviFab
+        style={[styles.fab, { bottom: fabBottom, right: spacing.s4 }]}
+        onPress={() => openOvi()}
+      />
+      <OviChat open={oviOpen} seed={openRequest} onClose={closeOvi} />
+    </View>
   );
 }
 

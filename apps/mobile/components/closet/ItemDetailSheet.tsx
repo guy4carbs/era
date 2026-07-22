@@ -16,18 +16,21 @@
  * The sheet itself (backdrop + drag handle + slide) and reduced-motion handling
  * live in GlassSheet.
  */
+import type { OviSuggestion as OviSuggestionData } from '@era/core/ovi';
+import { suggestForItem } from '@era/core/ovi';
 import { strings } from '@era/core/strings';
 import { type TurnaroundRender, type TurnaroundState } from '@era/core/turnaround';
 import { layout, motion, radii, rnShadow, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { Button } from '@/components/Button';
 import { GlassSheet } from '@/components/GlassSheet';
+import { OviSuggestion } from '@/components/ovi';
 import { Text } from '@/components/Text';
-import { archiveItem, patchItem, type ItemUpdates, type ItemWithDisplay } from '@/components/items';
+import { archiveItem, patchItem, toOviItem, type ItemUpdates, type ItemWithDisplay } from '@/components/items';
 import { WearStatsBlock } from '@/components/wear';
 import { useReducedMotionSafe } from '@/lib/motion';
 import { LimitReachedError } from '@/lib/rate-limit';
@@ -54,11 +57,35 @@ interface ItemDetailSheetProps {
   readonly onArchived: (id: string) => void;
   /** Surface a toast (wear-logged confirmation) to the screen's own Toast. */
   readonly onToast: (message: string) => void;
+  /**
+   * The full closet, so Ovi's ambient strip can name a REAL partner the piece
+   * styles with (the composer draws the partner from owned pieces, never invents).
+   */
+  readonly items: readonly ItemWithDisplay[];
+  /** Open Ovi pre-seeded with the strip's suggestion (the closet owns the channel). */
+  readonly onOpenOvi: (suggestion: OviSuggestionData) => void;
 }
 
-export function ItemDetailSheet({ item, open, onClose, onUpdated, onArchived, onToast }: ItemDetailSheetProps) {
+export function ItemDetailSheet({
+  item,
+  open,
+  onClose,
+  onUpdated,
+  onArchived,
+  onToast,
+  items,
+  onOpenOvi,
+}: ItemDetailSheetProps) {
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  // Ovi's ambient item whisper — one real owned partner this piece styles with,
+  // or null (no strip). Profile isn't in the sheet's scope, so null. Recomputed
+  // when the focal piece or the closet changes.
+  const itemSuggestion = useMemo(
+    () => (item ? suggestForItem(item.id, items.map(toOviItem), null) : null),
+    [item, items],
+  );
 
   // Always return to the detail view when the sheet closes.
   useEffect(() => {
@@ -144,6 +171,8 @@ export function ItemDetailSheet({ item, open, onClose, onUpdated, onArchived, on
             onArchived={onArchived}
             onClose={onClose}
             onToast={onToast}
+            suggestion={itemSuggestion}
+            onOpenOvi={onOpenOvi}
           />
         )
       ) : null}
@@ -165,9 +194,24 @@ interface DetailProps {
   readonly onArchived: (id: string) => void;
   readonly onClose: () => void;
   readonly onToast: (message: string) => void;
+  /** Ovi's ambient item whisper (or null — no strip). */
+  readonly suggestion: OviSuggestionData | null;
+  /** Open Ovi pre-seeded with the strip's suggestion. */
+  readonly onOpenOvi: (suggestion: OviSuggestionData) => void;
 }
 
-function Detail({ item, active, busy, onConfirm, onEdit, onArchived, onClose, onToast }: DetailProps) {
+function Detail({
+  item,
+  active,
+  busy,
+  onConfirm,
+  onEdit,
+  onArchived,
+  onClose,
+  onToast,
+  suggestion,
+  onOpenOvi,
+}: DetailProps) {
   const { colors } = useTheme();
 
   const tags = buildTags(item);
@@ -216,6 +260,13 @@ function Detail({ item, active, busy, onConfirm, onEdit, onArchived, onClose, on
             {item.brand}
           </Text>
         ) : null}
+      </View>
+
+      {/* Ovi's ambient item whisper, in normal flow under the piece's identity —
+          null (no strip) unless a full look builds around it. Only ever mounts in
+          the detail view (the editor is a separate branch), so no edit guard. */}
+      <View style={styles.suggestion}>
+        <OviSuggestion suggestion={suggestion} onOpen={onOpenOvi} />
       </View>
 
       {tags.length > 0 ? (
@@ -497,6 +548,10 @@ const styles = StyleSheet.create({
   },
   headings: {
     gap: spacing.s1,
+  },
+  // The ambient strip sits between the piece's identity and its tag chips.
+  suggestion: {
+    marginTop: spacing.s3,
   },
   tags: {
     flexDirection: 'row',

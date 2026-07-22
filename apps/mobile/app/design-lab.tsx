@@ -21,6 +21,7 @@ import {
   elevationDark,
   glass,
   glow,
+  motion as motionTokens,
   orb,
   radii,
   rnShadow,
@@ -32,6 +33,7 @@ import {
   type ElevationLevel,
   type ThemeMode,
 } from '@era/tokens';
+import { strings } from '@era/core/strings';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, ScrollView, View } from 'react-native';
@@ -47,7 +49,7 @@ import { Chip } from '@/components/Chip';
 import { GlassPanel } from '@/components/GlassPanel';
 import { Input } from '@/components/Input';
 import { OviFab } from '@/components/OviFab';
-import { OviOrb, type OviOrbState } from '@/components/ovi';
+import { OviOrb, OviSuggestion, type OviOrbState } from '@/components/ovi';
 import { Text } from '@/components/Text';
 import { ItemSurface, type ForcedState } from '@/components/items';
 import { animate, useReducedMotionSafe } from '@/lib/motion';
@@ -144,6 +146,10 @@ export default function DesignLabScreen() {
 
         <Section title="Ovi orb">
           <TwoUp render={() => <OviOrbColumn />} />
+        </Section>
+
+        <Section title="Ovi suggestion">
+          <TwoUp render={() => <OviSuggestionColumn />} />
         </Section>
 
         <Section title="Sheen">
@@ -384,6 +390,33 @@ function OviOrbColumn() {
       ))}
       <Text variant="caption" color={colors.secondary}>
         corner {orb.size.cornerPx} · header {orb.size.headerPx} · panel {orb.size.panelPx} · static under reduce ({reduced ? 'on' : 'off'})
+      </Text>
+    </View>
+  );
+}
+
+/**
+ * The ambient {@link OviSuggestion} strip specimen — the closet grammar (orb +
+ * one Italic line + one action + dismiss). It waits `motion.suggestion.settleDelayMs`
+ * then fades-rises, exactly as it does in the app. `onOpen`/`onDismiss` are inert
+ * here (a dev preview); the `_lab` key namespaces its dismissal away from real ones.
+ */
+function OviSuggestionColumn() {
+  const { colors } = useTheme();
+  return (
+    <View style={styles.stack}>
+      <OviSuggestion
+        suggestion={{
+          key: '_lab:closet-untried',
+          line: strings.ovi.suggest.closetUntried(3),
+          action: strings.ovi.suggest.actionShowMe,
+          intent: 'today',
+          itemId: null,
+        }}
+        onOpen={() => undefined}
+      />
+      <Text variant="caption" color={colors.secondary}>
+        whisper orb {orb.size.whisperPx} · settle {motionTokens.suggestion.settleDelayMs}ms · dismiss persists
       </Text>
     </View>
   );

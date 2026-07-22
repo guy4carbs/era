@@ -1,12 +1,15 @@
 'use client';
 
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, useReducedMotion } from 'motion/react';
 import { typeRamp, layout, motion as motionToken } from '@era/tokens';
 import { strings } from '@era/core/strings';
+import { suggestForCloset } from '@era/core/ovi';
 import { ClosetEmpty, ClosetGallery, SettingsLink, type GalleryItem } from '../../../components/closet';
+import { OviSuggestionHost } from '../../../components/ovi';
+import { toOviItems } from '../../../components/ovi/to-ovi-items';
 import { PageHeader } from '../../../components/PageHeader';
 import { Text } from '../../../components/Text';
 import { viewTransition } from '../../../lib/motion';
@@ -118,6 +121,14 @@ export function ClosetScreen({ turnaroundEnabled }: { turnaroundEnabled: boolean
     };
   }, [isPending, session]);
 
+  // Ovi's ambient closet strip: a real, buildable, untried look from owned pieces.
+  // Profile/wearLogs aren't fetched on this screen, so we pass null/[] honestly —
+  // the composer degrades to a less style-specific pick, never a fabricated one.
+  const closetSuggestion = useMemo(
+    () => (items && items.length > 0 ? suggestForCloset(toOviItems(items), null, []) : null),
+    [items],
+  );
+
   function openAdd() {
     viewTransition(() => router.push('/closet/add'));
   }
@@ -179,6 +190,10 @@ export function ClosetScreen({ turnaroundEnabled }: { turnaroundEnabled: boolean
   return (
     <main>
       <style>{addPillCss}</style>
+      {/* Ovi's ambient presence: one strip above the gallery, in normal flow so it
+          never overlaps the tiles or the add pill. It reserves its own space only
+          after the settle delay, and stays dismissed once waved off. */}
+      <OviSuggestionHost suggestion={closetSuggestion} />
       <ClosetGallery
         items={items}
         turnaroundEnabled={turnaroundEnabled}

@@ -18,6 +18,8 @@
  * fetch and NO auth header — the URL itself is the credential. See
  * {@link uploadToR2}.
  */
+import type { OviItem } from '@era/core/ovi';
+
 import { authClient } from '@/lib/auth-client';
 import { limitFromFetchError, limitFromResponse } from '@/lib/rate-limit';
 
@@ -52,6 +54,22 @@ export interface Item {
 export interface ItemWithDisplay extends Item {
   readonly displayUrl: string | null;
   readonly wearCount: number;
+}
+
+/**
+ * Project a closet item down to the image-free {@link OviItem} shape Ovi's
+ * deterministic composers reason over (`suggestForCloset` and friends). Drops
+ * everything but the styling signals; a null colour list becomes `[]` so a piece
+ * with no tagged colours still participates honestly.
+ */
+export function toOviItem(item: Item): OviItem {
+  return {
+    id: item.id,
+    category: item.category,
+    colors: item.colors ?? [],
+    pattern: item.pattern,
+    brand: item.brand,
+  };
 }
 
 /** The subset of fields the confirm editor can change. */

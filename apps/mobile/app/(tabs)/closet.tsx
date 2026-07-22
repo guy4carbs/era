@@ -11,6 +11,7 @@
  * the detail sheet, where a piece can be edited or archived. Colour, layout,
  * motion, and copy come from tokens and strings only.
  */
+import { suggestForCloset } from '@era/core/ovi';
 import { strings } from '@era/core/strings';
 import { layout, spacing } from '@era/tokens';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -33,9 +34,9 @@ import {
   Toast,
   type ClosetDensity,
 } from '@/components/closet';
-import { fetchItems, TiltFieldProvider, type ItemWithDisplay } from '@/components/items';
+import { fetchItems, toOviItem, TiltFieldProvider, type ItemWithDisplay } from '@/components/items';
 import { CATEGORIES, type ItemCategory } from '@/components/items/constants';
-import { OviOrb } from '@/components/ovi';
+import { OviOrb, OviSuggestion, useOviState } from '@/components/ovi';
 import { readClosetDensity, writeClosetDensity } from '@/lib/closet-density';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { useTheme } from '@/lib/theme';
@@ -65,6 +66,7 @@ export default function ClosetScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const visibility = useTabBarVisibility();
+  const { openOvi } = useOviState();
 
   const [items, setItems] = useState<readonly ItemWithDisplay[]>([]);
   const [state, setState] = useState<LoadState>('loading');
@@ -152,6 +154,15 @@ export default function ClosetScreen() {
   // Categories the closet actually holds, in enum order — drives the filter chips.
   const categories = useMemo(
     () => CATEGORIES.filter((cat) => items.some((item) => item.category === cat)),
+    [items],
+  );
+
+  // Ovi's ambient closet whisper — a real, buildable, untried look, or null (no
+  // strip). Profile/wear aren't fetched on this screen yet, so we pass them
+  // honestly: null profile, no wear history — the composer still speaks only when
+  // a full look genuinely composes from owned pieces.
+  const closetSuggestion = useMemo(
+    () => suggestForCloset(items.map(toOviItem), null, []),
     [items],
   );
 
@@ -276,6 +287,15 @@ export default function ClosetScreen() {
                 onOpenSettings={() => router.push('/settings')}
                 onOpenWorn={() => router.push('/worn')}
               />
+              {/* Ovi's ambient whisper sits below the header, in normal flow above
+                  the gallery — never floated over the tiles. It composes to null
+                  when there's nothing honest to say. */}
+              <View style={styles.suggestion}>
+                <OviSuggestion
+                  suggestion={closetSuggestion}
+                  onOpen={(s) => openOvi({ intent: s.intent, itemId: s.itemId })}
+                />
+              </View>
             </>
           }
           stickySectionHeadersEnabled={false}
@@ -294,6 +314,13 @@ export default function ClosetScreen() {
           onUpdated={onUpdated}
           onArchived={onArchived}
           onToast={setToast}
+          items={items}
+          onOpenOvi={(s) => {
+            // Close the sheet first so Ovi's chat rises cleanly over the closet,
+            // not stacked atop the detail sheet, then open her seeded.
+            setSheetOpen(false);
+            openOvi({ intent: s.intent, itemId: s.itemId });
+          }}
         />
 
         <Toast message={toast} onHide={() => setToast(null)} bottom={toastBottom} />
@@ -423,6 +450,12 @@ const styles = StyleSheet.create({
   list: {
     paddingHorizontal: layout.grid.mobileMargin,
     paddingTop: spacing.s8,
+  },
+  // Breathing room between the header controls and the ambient strip, and below
+  // it before the first gallery section.
+  suggestion: {
+    marginTop: spacing.s3,
+    marginBottom: spacing.s2,
   },
   row: {
     // Horizontal gap stays the comfortable gutter (12) at both densities; the

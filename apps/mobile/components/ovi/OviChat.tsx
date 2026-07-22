@@ -86,11 +86,26 @@ interface ChatEntry {
   streaming?: boolean;
 }
 
+/**
+ * A one-shot ask to auto-send when the sheet opens. The ambient
+ * {@link OviSuggestion} strips open Ovi PRE-SEEDED with their intent: the panel
+ * greets, then immediately sends the intent's ask on the user's behalf, so a
+ * "Show me" tap lands in Ovi's answer rather than an empty box. `itemId` is the
+ * focal piece for a `style_item` seed (null otherwise). Mirrors the web
+ * OviChatProvider `OviChatSeed` contract.
+ */
+export interface OviChatSeed {
+  readonly intent: OviIntent;
+  readonly itemId: string | null;
+}
+
 interface OviChatProps {
   readonly open: boolean;
   readonly onClose: () => void;
   /** A focal item id, when the chat is opened to style a specific piece. */
   readonly itemContext?: string;
+  /** A one-shot ask auto-sent on open (from an ambient suggestion); null otherwise. */
+  readonly seed?: OviChatSeed | null;
 }
 
 let entryCounter = 0;
@@ -102,7 +117,26 @@ function nextId(): string {
 /** Ovi's honest line when a turn can't reach the server — never a raw error. */
 const CHAT_ERROR = "I lost my thread for a second — try me again.";
 
-export function OviChat({ open, onClose, itemContext }: OviChatProps) {
+/**
+ * The ask a seeded open speaks on the user's behalf, per intent — the SAME copy
+ * the matching quick-intent chip sends, so tapping a suggestion strip is
+ * identical to tapping that chip (styling asks route through `today`/`style_item`
+ * / `whats_missing`; anything else falls back to the opener as a plain chat).
+ */
+function seedAsk(intent: OviIntent): string {
+  switch (intent) {
+    case 'today':
+      return strings.ovi.intentChips.today;
+    case 'style_item':
+      return strings.ovi.intentChips.styleItem;
+    case 'whats_missing':
+      return strings.ovi.intentChips.whatsMissing;
+    default:
+      return strings.ovi.chatOpener;
+  }
+}
+
+export function OviChat({ open, onClose, itemContext, seed }: OviChatProps) {
   const { colors } = useTheme();
   const reduced = useReducedMotionSafe();
   const router = useRouter();
@@ -110,6 +144,12 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
   const scrollRef = useRef<ScrollView>(null);
   // Ovi's shared living state — drives the panel orb here and the corner FAB.
   const ovi = useOviState();
+
+  // A `style_item` seed carries its focal piece as `seed.itemId`; it takes
+  // precedence over the plain `itemContext` prop so a seeded open styles the
+  // right piece. Everything downstream (the send payload, the Style-this chip)
+  // reads this effective value.
+  const effectiveItemContext = seed?.itemId ?? itemContext;
 
   const [entries, setEntries] = useState<readonly ChatEntry[]>([]);
   const [draft, setDraft] = useState('');
@@ -251,7 +291,7 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
       void chatWithOvi({
         messages: payload,
         intent,
-        itemContext: intent === 'style_item' ? itemContext : undefined,
+        itemContext: intent === 'style_item' ? effectiveItemContext : undefined,
       })
         .then((result) => {
           const outfit = result.outfit ?? undefined;
@@ -284,8 +324,24 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
         })
         .finally(() => setThinking(false));
     },
-    [thinking, itemContext, resolveImages, streamReply, ovi],
+    [thinking, effectiveItemContext, resolveImages, streamReply, ovi],
   );
+
+  // Auto-send the seed once per open. A suggestion strip opens Ovi with an intent;
+  // we speak the matching quick-intent ask on the user's behalf so the sheet lands
+  // straight in her answer. The ref guards against a re-send on re-render, and it
+  // resets when the sheet closes so the next seeded open fires again. The opener
+  // greeting is already seeded by the open effect above; this appends the ask.
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (!open) {
+      seededRef.current = false;
+      return;
+    }
+    if (!seed || seededRef.current) return;
+    seededRef.current = true;
+    send(seedAsk(seed.intent), seed.intent);
+  }, [open, seed, send]);
 
   const setStatus = useCallback((id: string, patch: Partial<ChatEntry>) => {
     setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, ...patch } : e)));
@@ -422,7 +478,7 @@ export function OviChat({ open, onClose, itemContext }: OviChatProps) {
 
         <View style={styles.chips}>
           <Chip glass label={strings.ovi.intentChips.today} onToggle={() => send(strings.ovi.intentChips.today, 'today')} />
-          {itemContext ? (
+          {effectiveItemContext ? (
             <Chip glass label={strings.ovi.intentChips.styleItem} onToggle={() => send(strings.ovi.intentChips.styleItem, 'style_item')} />
           ) : null}
           <Chip glass label={strings.ovi.intentChips.whatsMissing} onToggle={() => send(strings.ovi.intentChips.whatsMissing, 'whats_missing')} />

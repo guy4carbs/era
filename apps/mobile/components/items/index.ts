@@ -9,6 +9,7 @@ export {
   getPrivacy,
   patchItem,
   setPrivacy,
+  toOviItem,
   type Item,
   type ItemSource,
   type ItemUpdates,

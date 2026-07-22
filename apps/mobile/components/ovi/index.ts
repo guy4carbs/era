@@ -1,7 +1,8 @@
 /** Ovi — the chat sheet, the Feed "Today" card, and Ovi's API. */
-export { OviChat } from './OviChat';
+export { OviChat, type OviChatSeed } from './OviChat';
 export { OviOrb, type OviOrbState } from './OviOrb';
-export { OviStateProvider, useOviState } from './OviState';
+export { OviSuggestion } from './OviSuggestion';
+export { OviStateProvider, useOviState, type OviOpenRequest } from './OviState';
 export { TodayCard } from './TodayCard';
 export { OutfitProposalCard, type ProposalStatus } from './OutfitProposalCard';
 export { WoreItButton } from './WoreItButton';

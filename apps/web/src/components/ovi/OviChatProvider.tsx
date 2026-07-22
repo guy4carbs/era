@@ -11,9 +11,22 @@ import {
 } from 'react';
 import { AnimatePresence } from 'motion/react';
 import { useSession } from '../../lib/auth-client';
+import type { OviIntent } from '@era/core/ovi';
 import { OviChat } from './OviChat';
 import type { OviOrbState } from './OviOrb';
 import type { CutoutInfo, ItemsById } from './types';
+
+/**
+ * A pre-seed for the panel: the ambient {@link OviSuggestion} strips open Ovi
+ * PRE-ARMED with the suggestion's ask. The panel opens, drops the seed message
+ * into the transcript as the user's turn, and immediately sends it at `intent`
+ * — so tapping "Show me" on the closet strip lands the user straight in Ovi's
+ * answer, not an empty box. `message` is the ask spoken on the user's behalf.
+ */
+export interface OviChatSeed {
+  readonly intent: OviIntent;
+  readonly message: string;
+}
 
 /** What a closet row from `GET /api/items` carries that the outfit card needs. */
 interface ItemsApiRow extends CutoutInfo {
@@ -33,7 +46,9 @@ interface OviChatContextValue {
    */
   oviState: OviOrbState;
   setOviState: (state: OviOrbState) => void;
-  openChat: (opts?: { itemContext?: string }) => void;
+  /** A one-shot ask to auto-send on open (ambient suggestions); null otherwise. */
+  seed: OviChatSeed | null;
+  openChat: (opts?: { itemContext?: string; seed?: OviChatSeed }) => void;
   closeChat: () => void;
 }
 
@@ -51,6 +66,7 @@ export function OviChatProvider({ children }: { children: ReactNode }) {
   const [itemContext, setItemContext] = useState<string | null>(null);
   const [itemsById, setItemsById] = useState<ItemsById>(() => new Map());
   const [oviState, setOviState] = useState<OviOrbState>('idle');
+  const [seed, setSeed] = useState<OviChatSeed | null>(null);
 
   // Load the closet once a session exists, so both the chat and the Today card
   // can resolve real cutouts without each hitting /api/items themselves.
@@ -81,20 +97,22 @@ export function OviChatProvider({ children }: { children: ReactNode }) {
     };
   }, [isPending, session]);
 
-  const openChat = useCallback((opts?: { itemContext?: string }) => {
+  const openChat = useCallback((opts?: { itemContext?: string; seed?: OviChatSeed }) => {
     setItemContext(opts?.itemContext ?? null);
+    setSeed(opts?.seed ?? null);
     setIsOpen(true);
   }, []);
 
   const closeChat = useCallback(() => {
     setIsOpen(false);
     setItemContext(null);
+    setSeed(null);
     setOviState('idle');
   }, []);
 
   const value = useMemo<OviChatContextValue>(
-    () => ({ isOpen, itemContext, itemsById, oviState, setOviState, openChat, closeChat }),
-    [isOpen, itemContext, itemsById, oviState, openChat, closeChat],
+    () => ({ isOpen, itemContext, itemsById, oviState, setOviState, seed, openChat, closeChat }),
+    [isOpen, itemContext, itemsById, oviState, seed, openChat, closeChat],
   );
 
   return (
@@ -102,7 +120,12 @@ export function OviChatProvider({ children }: { children: ReactNode }) {
       {children}
       <AnimatePresence>
         {isOpen ? (
-          <OviChat itemContext={itemContext} itemsById={itemsById} onClose={closeChat} />
+          <OviChat
+            itemContext={itemContext}
+            itemsById={itemsById}
+            seed={seed}
+            onClose={closeChat}
+          />
         ) : null}
       </AnimatePresence>
     </OviChatContext.Provider>
