@@ -13,7 +13,7 @@
  * {@link useFeed}; the pager owns the swipe + the double-tap heart burst.
  */
 import { strings } from '@era/core/strings';
-import { layout, radii, spacing, palette } from '@era/tokens';
+import { glass, layout, radii, spacing, palette } from '@era/tokens';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, View } from 'react-native';
@@ -40,7 +40,7 @@ interface FeedCardProps {
 }
 
 export function FeedCard({ slot, height, priority }: FeedCardProps) {
-  const { colors } = useTheme();
+  const { colors, resolved } = useTheme();
   const feed = useFeed();
 
   if (isHidden(slot)) {
@@ -49,6 +49,8 @@ export function FeedCard({ slot, height, priority }: FeedCardProps) {
   const post = slot;
 
   return (
+    // The page bg IS the mode bg (warm cream in light, warm ink in dark) — never a
+    // hard black — so a contain-fit cover letterboxes in Era's own material.
     <View style={[styles.page, { height, backgroundColor: colors.bg }]}>
       {post.coverUrl ? (
         <Image
@@ -61,10 +63,12 @@ export function FeedCard({ slot, height, priority }: FeedCardProps) {
         />
       ) : null}
 
-      {/* Bottom scrim so the light chrome stays legible over any cover. */}
+      {/* Bottom scrim over the text zone only, so the light chrome clears AA over
+          any cover. Ink at the AA-locked busy-tint strength (the same grammar the
+          glass scrim uses), tokened — no hex-alpha literal. */}
       <LinearGradient
-        colors={['transparent', `${colors.ink}99`]}
-        style={styles.scrim}
+        colors={['transparent', colors.ink]}
+        style={[styles.scrim, { opacity: glass.busyTintOpacity[resolved] }]}
         pointerEvents="none"
       />
 
@@ -91,6 +95,17 @@ interface FollowPillProps {
   readonly onPress: () => void;
 }
 
+// On-image chrome reads light regardless of theme, so the pill is built on the
+// white palette token at glass opacities rather than rgba literals: a translucent
+// white fill under a white hairline border, both dialed by state. The un-followed
+// CTA carries a fill + a near-solid border (it's the primary invitation); the
+// followed state drops the fill and softens the border to a quiet outline. Fill
+// opacity borrows the light glass tint; the border opacities are the on-image
+// hairline weights (strong = the CTA edge, soft = the settled outline).
+const PILL_FILL_OPACITY = glass.tintOpacity.light;
+const PILL_BORDER_STRONG = 0.7;
+const PILL_BORDER_SOFT = glass.busyTintOpacity.light;
+
 function FollowPill({ following, onPress }: FollowPillProps) {
   return (
     <Press
@@ -98,8 +113,25 @@ function FollowPill({ following, onPress }: FollowPillProps) {
       accessibilityLabel={following ? strings.profile.followingState : strings.profile.followCta}
       accessibilityState={{ selected: following }}
       onPress={onPress}
-      style={[styles.pill, following ? styles.pillFollowing : styles.pillFollow]}
+      style={styles.pill}
     >
+      {/* The translucent white fill — present only on the un-followed CTA. */}
+      {following ? null : (
+        <View
+          style={[styles.pillLayer, { backgroundColor: ON_IMAGE, opacity: PILL_FILL_OPACITY }]}
+          pointerEvents="none"
+        />
+      )}
+      {/* The white hairline border as its own layer, so its opacity is dialed by
+          state WITHOUT dimming the label above it. */}
+      <View
+        style={[
+          styles.pillLayer,
+          styles.pillBorder,
+          { borderColor: ON_IMAGE, opacity: following ? PILL_BORDER_SOFT : PILL_BORDER_STRONG },
+        ]}
+        pointerEvents="none"
+      />
       <Text variant="ui" weight={following ? 400 : 600} color={ON_IMAGE}>
         {following ? strings.profile.followingState : strings.profile.followCta}
       </Text>
@@ -139,14 +171,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: radii.input,
     borderCurve: 'continuous',
+    overflow: 'hidden',
+  },
+  // Fill + border ride as their own absolutely-positioned layers so each carries
+  // its own state-dialed opacity without touching the label's.
+  pillLayer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: radii.input,
+    borderCurve: 'continuous',
+  },
+  pillBorder: {
     borderWidth: StyleSheet.hairlineWidth,
-  },
-  pillFollow: {
-    backgroundColor: 'rgba(255, 255, 255, 0.16)',
-    borderColor: 'rgba(255, 255, 255, 0.7)',
-  },
-  pillFollowing: {
-    backgroundColor: 'transparent',
-    borderColor: 'rgba(255, 255, 255, 0.4)',
   },
 });

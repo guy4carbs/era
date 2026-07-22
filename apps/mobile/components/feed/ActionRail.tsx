@@ -24,6 +24,14 @@ import type { FeedPostPayload } from '@era/core/feed';
 
 const ON_IMAGE = palette.white;
 const TARGET = 44;
+// The rail buttons are the glass recipe over imagery: a dark BlurView backdrop
+// (per-button blur is fine — the rail is static, so it never re-tints under the
+// pager's scroll) under a translucent INK tint that darkens the busy cover enough
+// for the white glyph to clear, finished with the app's 1px glass border. The tint
+// color is the ink token; its opacity is the glyph-legibility scrim strength (a
+// light darkening — heavier than the app's chrome tint, lighter than the AA scrim
+// the text zones need, since the glyph is large and bold).
+const BUTTON_TINT_OPACITY = 0.28;
 
 /** Compact count: 999 → "999", 1_200 → "1.2k", 12_300 → "12k". */
 function compact(n: number): string {
@@ -53,6 +61,8 @@ function RailButton({ glyph, label, caption, onPress }: RailButtonProps) {
       >
         <BlurView intensity={glass.blur} tint="dark" style={StyleSheet.absoluteFill} />
         <View style={styles.buttonTint} />
+        {/* The 1px glass border, its own layer so it rounds with the button. */}
+        <View style={styles.buttonBorder} pointerEvents="none" />
         <Text variant="ui" size="title3" color={ON_IMAGE}>
           {glyph}
         </Text>
@@ -119,6 +129,20 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(28, 27, 25, 0.28)',
+    backgroundColor: palette.ink,
+    opacity: BUTTON_TINT_OPACITY,
+  },
+  // The glass frame — the dark-mode border token (this chrome is always dark glass
+  // over imagery), at the app's 1px glass border width.
+  buttonBorder: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: radii.card,
+    borderCurve: 'continuous',
+    borderWidth: glass.borderWidth,
+    borderColor: glass.border.dark,
   },
 });

@@ -29,8 +29,10 @@ import { Text } from '../../components/Text';
 import { PageHeader } from '../../components/PageHeader';
 import { glassSurfaceStyle } from '../../components/GlassPanel';
 import { RevealStage, OviOrb, OviSuggestion, type OviOrbState } from '../../components/ovi';
+import { FeedCard } from '../../components/feed';
 import { strings } from '@era/core/strings';
 import type { ProposedOutfit, OviSuggestion as OviSuggestionData } from '@era/core/ovi';
+import type { FeedPostPayload } from '@era/core/feed';
 import { useTheme, type ThemeMode } from '../../lib/theme';
 import { themeVarStyle } from '../../lib/theme-css';
 import { springTransition } from '../../lib/motion';
@@ -726,6 +728,55 @@ function RevealRitualIsland() {
   );
 }
 
+// -----------------------------------------------------------------------------
+// Public feed frame specimen (D-FEED, Part B) — the FLAGGED direction, shown
+// WITHOUT flipping the flag. One re-skinned FeedCard on fixture data so the
+// "TikTok's hierarchy, Era's materials" anatomy (full-bleed cover + cream
+// letterbox + right glass rail + Fraunces-italic name overlay) is visible in the
+// lab. The rail is inert here: every handler is a no-op, so nothing writes.
+// -----------------------------------------------------------------------------
+
+/** Fixture post for the flagged frame — a lab cutout cover, a fake editorial creator. */
+const FEED_FRAME_FIXTURE: FeedPostPayload = {
+  id: 'lab-feed-frame',
+  type: 'outfit',
+  // A quiz stand-in guarantees the specimen paints even before real cutouts land.
+  coverUrl: '/quiz/s10_longcoat.jpg',
+  title: 'Camel season',
+  creator: { username: 'era.editorial', displayName: 'Era Editorial', avatarUrl: null },
+  likeCount: 1240,
+  saveCount: 86,
+  viewer: { liked: false, saved: true, following: false },
+  // A fixed, recent-ish timestamp so the caption reads a stable "2d".
+  createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+};
+
+/** No-op — the specimen rail is inert; it never calls the real feed endpoints. */
+function noop() {
+  /* inert */
+}
+
+/**
+ * One specimen of the flagged public-feed card per island. It renders the SAME
+ * {@link FeedCard} the flag path uses, on {@link FEED_FRAME_FIXTURE}, capped to
+ * the feed column so it reads at its real width. All actions are wired to no-ops
+ * — this is how the flagged direction is SEEN without turning ERA_FEED_ENABLED on.
+ */
+function PublicFeedFrameIsland() {
+  return (
+    <div style={{ width: '100%', maxWidth: 'var(--feed-col)', marginInline: 'auto' }}>
+      <FeedCard
+        post={FEED_FRAME_FIXTURE}
+        onLike={noop}
+        onSave={noop}
+        onFollow={noop}
+        onReported={noop}
+        onBlocked={noop}
+      />
+    </div>
+  );
+}
+
 /**
  * The Item Engine matrix inside one mode island: rows = the six garment
  * categories, columns = the four forced states (rest / lift / tilt / selected),
@@ -1317,6 +1368,13 @@ export default function DesignLabPage() {
           note="The D9 Today's Look reveal on the lab cutouts: cream canvas → the look assembles slot by slot (gentle springs, each shadow landing 120ms behind its piece, ≤2.5s, tap to skip) → settles into the composed card with Ovi's italic line. Replay runs it again — no once-per-day gate here. The card's actions hit the real endpoints; the lab pieces aren't in a closet, so Wear it declines honestly."
         >
           <IslandPair content={() => <RevealRitualIsland />} />
+        </Section>
+
+        <Section
+          title="Public feed frame (flagged)"
+          note="The FLAGGED public-feed direction (D-FEED Part B), shown WITHOUT flipping ERA_FEED_ENABLED — 'TikTok's hierarchy, Era's materials'. One re-skinned FeedCard on fixture data: a full-bleed portrait cover that contain-fits with a CREAM letterbox (never black), a right-edge vertical glass engagement rail (like / save / more as §3 busy-glass buttons with their counts beneath), and the creator as a Fraunces-italic name over a busy-glass scrim (AA over any imagery). The rail is inert here — every action is a no-op, so the specimen never writes. This is what ships when the flag turns on."
+        >
+          <IslandPair content={() => <PublicFeedFrameIsland />} />
         </Section>
 
         <Section title="Components" note="Button variants, Chip, Input, Card — in both islands.">

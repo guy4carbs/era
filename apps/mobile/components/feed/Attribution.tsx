@@ -7,7 +7,7 @@
  * (`{API_URL}/{username}`) — there is no native profile screen yet, so this is the
  * deliberate handoff to the web page (a native creator screen is a fast-follow).
  */
-import { spacing, palette } from '@era/tokens';
+import { glass, spacing, palette } from '@era/tokens';
 import { Image } from 'expo-image';
 import * as Linking from 'expo-linking';
 import { StyleSheet, View } from 'react-native';
@@ -19,8 +19,12 @@ import type { FeedPostCreator } from '@era/core/feed';
 
 // On-image chrome uses fixed light colours — theme text would vanish on the scrim.
 const ON_IMAGE = palette.white;
-const ON_IMAGE_DIM = 'rgba(255, 255, 255, 0.82)';
 const AVATAR = 32;
+// The dim title and the avatar-fallback fill ride the white token at glass
+// opacities (no rgba literals): the title at the busy-tint strength (a legible
+// but recessive dim), the fallback disc at the light glass tint.
+const TITLE_DIM_OPACITY = glass.busyTintOpacity.light;
+const AVATAR_FALLBACK_OPACITY = glass.tintOpacity.light;
 
 const baseURL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 
@@ -51,17 +55,25 @@ export function Attribution({ creator, title }: AttributionProps) {
         />
       ) : (
         <View style={[styles.avatar, styles.avatarFallback]}>
+          {/* Translucent white fill as its own layer, so its opacity never dims
+              the initial above it. */}
+          <View
+            style={[StyleSheet.absoluteFill, { backgroundColor: ON_IMAGE, opacity: AVATAR_FALLBACK_OPACITY }]}
+            pointerEvents="none"
+          />
           <Text variant="ui" size="footnote" weight={600} color={ON_IMAGE}>
             {creator.username.charAt(0).toUpperCase()}
           </Text>
         </View>
       )}
       <View style={styles.text}>
-        <Text variant="ui" weight={600} color={ON_IMAGE} numberOfLines={1}>
+        {/* The creator credit in Ovi's editorial serif accent (Fraunces Italic) —
+            the sanctioned small-serif exception, on-image light. */}
+        <Text variant="oviAccent" size="subhead" color={ON_IMAGE} numberOfLines={1}>
           @{creator.username}
         </Text>
         {title ? (
-          <Text variant="caption" size="footnote" color={ON_IMAGE_DIM} numberOfLines={1}>
+          <Text variant="caption" size="footnote" color={ON_IMAGE} style={{ opacity: TITLE_DIM_OPACITY }} numberOfLines={1}>
             {title}
           </Text>
         ) : null}
@@ -86,7 +98,7 @@ const styles = StyleSheet.create({
   avatarFallback: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.22)',
+    overflow: 'hidden',
   },
   text: {
     flexShrink: 1,
