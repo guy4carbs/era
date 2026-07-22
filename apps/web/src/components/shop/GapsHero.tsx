@@ -19,19 +19,23 @@ export interface GapsHeroProps {
 }
 
 /**
- * The restrained gaps hero at the top of the Shop tab: the honest answer to
- * "what am I missing?". It fetches the user's GENUINE wardrobe gaps once on mount,
- * non-blocking — a failure renders nothing and never disturbs the browse grid
- * below. The engine already caps the list (≤5) and returns few gaps, often none,
- * so we render exactly what it hands back: no "show more", no manufactured need.
+ * The restrained gaps block at the top of the Shop tab: the honest answer to
+ * "what am I missing?", styled as a D8 EDITORIAL block, not a banner. It fetches
+ * the user's GENUINE wardrobe gaps once on mount, non-blocking — a failure
+ * renders nothing and never disturbs the browse grid below. The engine already
+ * caps the list (≤5) and returns few gaps, often none, so we render exactly what
+ * it hands back: no "show more", no manufactured need.
  *
  * States, all quiet:
  *   - loading / failed → `null` (we don't know yet, or we couldn't ask — say nothing).
  *   - covered closet (0 gaps) → one warm affirming line ({@link strings.shop.gaps.empty}).
- *   - real gaps → title, intro, and one honest card per gap.
+ *   - real gaps → the Fraunces-Italic deck line + its hairline rule (the closet's
+ *     editorial section grammar), then one honest gap per row.
  *
- * Each card carries the gap's honest sentence, its unlock badge, and a single
- * "Fill this gap" action that pre-filters the Shop to that category.
+ * Each gap reads as an editorial line — no box, no fill — carrying its honest
+ * sentence, its unlock note, and a single quiet "Fill this gap" action that
+ * pre-filters the Shop to that category. It introduces the gaps the way a
+ * magazine deck line introduces a section, not the way a banner shouts one.
  */
 export function GapsHero({ onFill }: GapsHeroProps) {
   const reduced = useReducedMotion();
@@ -71,16 +75,26 @@ export function GapsHero({ onFill }: GapsHeroProps) {
       animate={{ opacity: 1 }}
       transition={transitionFor(motionToken.springs.gentle, reduced)}
     >
+      {/* The editorial deck: the Fraunces-Italic lead line with its hairline rule
+          filling the row (the closet's section grammar), then the quiet intro. No
+          banner box, no fill — a magazine deck introducing the gaps. */}
       <div style={introBlockStyle}>
-        <Text variant="title" size="title3" as="h2" id="era-gaps-title" weight={700} style={{ margin: 0, color: 'var(--color-text)' }}>
-          {strings.shop.gaps.title}
-        </Text>
+        <div style={headingRowStyle}>
+          <Text variant="oviAccent" as="h2" id="era-gaps-title" style={{ margin: 0, color: 'var(--color-text)' }}>
+            {strings.shop.gaps.title}
+          </Text>
+          <span aria-hidden="true" style={hairlineRuleStyle} />
+        </div>
         <Text variant="body" as="p" size="footnote" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{strings.shop.gaps.intro}</Text>
       </div>
 
       <ul style={listStyle}>
-        {gaps.map((gap) => (
-          <li key={gap.category} style={cardStyle}>
+        {gaps.map((gap, index) => (
+          // The rule sits BETWEEN gaps; the last row sheds it so the block ends clean.
+          <li
+            key={gap.category}
+            style={index === gaps.length - 1 ? lastRowStyle : rowStyle}
+          >
             <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-text)' }}>{strings.shop.gaps.reason(gap)}</Text>
             <div style={footerStyle}>
               <Text variant="ui" as="span" size="footnote" weight={600} style={{ color: 'var(--color-secondary-strong)' }}>{strings.shop.gaps.unlocksLabel(gap.unlocksOutfits)}</Text>
@@ -97,18 +111,33 @@ export function GapsHero({ onFill }: GapsHeroProps) {
   );
 }
 
+// The whole block breathes on the section rhythm — deck then gaps, generously
+// spaced, no container.
 const sectionStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: 'var(--space-3)',
+  gap: 'var(--space-4)',
 };
 
 const introBlockStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: 'var(--space-1)',
+  gap: 'var(--space-2)',
 };
 
+// The editorial section heading: the italic serif lead line left, a hairline
+// rule filling the row to the right (ClosetGallery's sectionHeadingStyle).
+const headingRowStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 'var(--space-3)',
+};
+
+const hairlineRuleStyle: CSSProperties = {
+  flex: 1,
+  height: 'var(--glass-border-width)',
+  background: 'var(--color-hairline)',
+};
 
 const listStyle: CSSProperties = {
   listStyle: 'none',
@@ -116,19 +145,25 @@ const listStyle: CSSProperties = {
   padding: 0,
   display: 'flex',
   flexDirection: 'column',
-  gap: 'var(--space-2)',
+  gap: 'var(--space-5)',
 };
 
-const cardStyle: CSSProperties = {
+// Each gap is an editorial line, not a card: the honest sentence over its
+// unlock/CTA footer, separated from the next by a hairline rule (no box, no fill).
+const rowStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: 'var(--space-2)',
-  padding: 'var(--space-4)',
-  background: 'var(--color-surface)',
-  border: '1px solid var(--color-hairline)',
-  borderRadius: 'var(--radius-card)',
+  paddingBottom: 'var(--space-5)',
+  borderBottom: '1px solid var(--color-hairline)',
 };
 
+// The final gap ends the block — same line rhythm, no trailing rule.
+const lastRowStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-2)',
+};
 
 const footerStyle: CSSProperties = {
   display: 'flex',

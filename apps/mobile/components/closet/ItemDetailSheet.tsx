@@ -5,9 +5,9 @@
  * tag chips (category, main colour, colours, pattern), the provenance and price
  * lines, and the wear count. Two actions: EDIT swaps the body for the compact
  * ItemEditor (an in-closet edit, PATCH `{ updates }` — no add-flow heading and no
- * `confirm` flag); ARCHIVE confirms via a native alert, then PATCHes
- * `{ archived: true }`, fires a light haptic, and hands the id back so the screen
- * can toast and drop the tile.
+ * `confirm` flag); ARCHIVE confirms via a glass confirm sheet (never a native
+ * Alert — the copy and voice stay Era's), then PATCHes `{ archived: true }`, fires
+ * a light haptic, and hands the id back so the screen can toast and drop the tile.
  *
  * On a save, the returned row is merged over the item (keeping the resolved
  * displayUrl / wearCount the list route handed us) and handed back via
@@ -23,7 +23,7 @@ import { type TurnaroundRender, type TurnaroundState } from '@era/core/turnaroun
 import { layout, motion, radii, rnShadow, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { Button } from '@/components/Button';
@@ -213,33 +213,25 @@ function Detail({
   onOpenOvi,
 }: DetailProps) {
   const { colors } = useTheme();
+  const [archiveOpen, setArchiveOpen] = useState(false);
 
   const tags = buildTags(item);
   const price = formatPrice(item.purchasePrice, item.currency);
 
-  function confirmArchive() {
-    // Archiving is reversible (the item is tucked away, not deleted), so the
-    // confirm reads as a default action — not the red `destructive` styling.
-    Alert.alert('', strings.closet.archiveConfirm, [
-      { text: strings.common.cancel, style: 'cancel' },
-      {
-        text: strings.closet.archive,
-        style: 'default',
-        onPress: () => {
-          void (async () => {
-            try {
-              await archiveItem(item.id);
-              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              onArchived(item.id);
-              onClose();
-            } catch {
-              // Leave the sheet open; the tile stays put so the user can retry.
-            }
-          })();
-        },
-      },
-    ]);
-  }
+  const confirmArchive = () => {
+    void (async () => {
+      try {
+        await archiveItem(item.id);
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        setArchiveOpen(false);
+        onArchived(item.id);
+        onClose();
+      } catch {
+        // Leave the sheet open; the tile stays put so the user can retry.
+        setArchiveOpen(false);
+      }
+    })();
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -309,9 +301,55 @@ function Detail({
 
       <View style={styles.actions}>
         <Button label={strings.closet.edit} variant="secondary" onPress={onEdit} style={styles.action} />
-        <Button label={strings.closet.archive} variant="ghost" onPress={confirmArchive} style={styles.action} />
+        <Button
+          label={strings.closet.archive}
+          variant="ghost"
+          onPress={() => setArchiveOpen(true)}
+          style={styles.action}
+        />
       </View>
+
+      {/* The archive confirm — a glass sheet in Era's voice (never a native Alert),
+          modelled on DeleteAccountSheet. It stacks over the open detail sheet. */}
+      <ArchiveConfirmSheet
+        open={archiveOpen}
+        onClose={() => setArchiveOpen(false)}
+        onConfirm={confirmArchive}
+      />
     </ScrollView>
+  );
+}
+
+/**
+ * ArchiveConfirmSheet — the "tuck this away?" confirm, in the frosted GlassSheet
+ * (the DeleteAccountSheet grammar). Archiving is reversible, but the destructive
+ * action still takes the rust `danger` hue so it reads as a deliberate remove;
+ * the quiet ghost Cancel backs out. `busy` floats it over the cutout hero, so it
+ * swaps to the AA scrim tint.
+ */
+function ArchiveConfirmSheet({
+  open,
+  onClose,
+  onConfirm,
+}: {
+  readonly open: boolean;
+  readonly onClose: () => void;
+  readonly onConfirm: () => void;
+}) {
+  const { colors } = useTheme();
+  return (
+    <GlassSheet open={open} onClose={onClose} busy>
+      <View style={styles.archiveBody}>
+        <Text accessibilityRole="header" variant="ui" size="title3" weight={600} color={colors.text}>
+          {strings.closet.archive}
+        </Text>
+        <Text variant="body" color={colors.secondaryStrong}>
+          {strings.closet.archiveConfirm}
+        </Text>
+        <Button label={strings.closet.archive} variant="danger" onPress={onConfirm} />
+        <Button label={strings.common.cancel} variant="ghost" onPress={onClose} />
+      </View>
+    </GlassSheet>
   );
 }
 
@@ -575,5 +613,8 @@ const styles = StyleSheet.create({
   },
   action: {
     flex: 1,
+  },
+  archiveBody: {
+    gap: spacing.s3,
   },
 });

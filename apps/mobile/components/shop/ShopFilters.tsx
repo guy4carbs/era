@@ -54,6 +54,7 @@ export function ShopFilters({ open, onClose, filters, onChange }: ShopFiltersPro
           {BRAND_TIER_ORDER.map((tier) => (
             <Chip
               key={tier}
+              glass
               label={brandTierLabel(tier)}
               selected={filters.brandTier === tier}
               onToggle={() => setTier(tier)}
@@ -65,6 +66,7 @@ export function ShopFilters({ open, onClose, filters, onChange }: ShopFiltersPro
           {CATEGORIES.map((category) => (
             <Chip
               key={category}
+              glass
               label={strings.closet.categoryLabel(category)}
               selected={filters.category === category}
               onToggle={() => setCategory(category)}
@@ -76,6 +78,7 @@ export function ShopFilters({ open, onClose, filters, onChange }: ShopFiltersPro
           {BUDGET_BANDS.map((band) => (
             <Chip
               key={band.id}
+              glass
               label={band.label}
               selected={filters.budgetId === band.id}
               onToggle={() => setBudget(band.id)}
@@ -87,6 +90,7 @@ export function ShopFilters({ open, onClose, filters, onChange }: ShopFiltersPro
           {SIZE_OPTIONS.map((size) => (
             <Chip
               key={size}
+              glass
               label={size}
               selected={filters.size === size}
               onToggle={() => setSize(size)}

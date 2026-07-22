@@ -30,7 +30,7 @@
  * via its own close button + the tap-outside catcher) — every other consumer keeps
  * the default handle.
  */
-import { glass, glow, layout, motion, radii, spacing } from '@era/tokens';
+import { glow, layout, motion, radii, spacing } from '@era/tokens';
 import { useEffect, useState, type PropsWithChildren } from 'react';
 import {
   Pressable,
@@ -67,8 +67,20 @@ interface GlassSheetProps {
    * Retire the tinted backdrop scrim: the app stays visible behind the glass and
    * a transparent layer only catches tap-outside-to-close. The Ovi chat sets this
    * so the conversation never reads as a full-screen page over a dimmed app.
+   *
+   * Kept for the Ovi chat's explicit intent; note the DEFAULT backdrop is already
+   * a transparent catcher now (D3.2 decree — matches web's no-scrim sheet), so a
+   * plain sheet needs neither this nor {@link veil}.
    */
   readonly transparentScrim?: boolean;
+  /**
+   * A whisper veil behind the sheet — a faint ink dim (≤12% ink) instead of the
+   * transparent catcher. Reserved for a DESTRUCTIVE confirm (account deletion),
+   * where a touch of separation earns the gravity of an irreversible action. Every
+   * other sheet keeps the transparent catcher (D3.2). Ignored when
+   * `transparentScrim` is set.
+   */
+  readonly veil?: boolean;
   /**
    * Warm a soft accent glow in from the bottom-right (the FAB corner) as the
    * sheet rises — the opening bloom. Reduced motion still fades it in flat.
@@ -98,6 +110,7 @@ export function GlassSheet({
   busy = false,
   heightFraction,
   transparentScrim = false,
+  veil = false,
   glowBloom = false,
   bloomFromCorner = false,
   dismissAffordance = 'handle',
@@ -176,10 +189,13 @@ export function GlassSheet({
       shadowOpacity: glowBloom ? scrim.value * glow.opacity[resolved] : 0,
     };
   });
+  // The backdrop policy (D3.2): a transparent catcher by default (the app stays
+  // visible behind the glass, only tap-outside is caught), matching web's no-scrim
+  // sheet. A destructive confirm may opt into a whisper VEIL — a faint ink dim that
+  // fades in with the sheet. `transparentScrim` forces the catcher regardless.
+  const veiled = veil && !transparentScrim;
   const scrimStyle = useAnimatedStyle(() => ({
-    // A transparent scrim keeps the app visible — only its tap-catcher matters, so
-    // opacity stays flat; the tinted scrim fades to the mode tint as before.
-    opacity: transparentScrim ? 0 : scrim.value * glass.tintOpacity[resolved],
+    opacity: veiled ? scrim.value * VEIL_OPACITY : 0,
   }));
 
   return (
@@ -187,7 +203,7 @@ export function GlassSheet({
       <Animated.View style={[StyleSheet.absoluteFill, scrimStyle]}>
         <Pressable
           accessibilityLabel="Dismiss"
-          style={[StyleSheet.absoluteFill, transparentScrim ? undefined : { backgroundColor: colors.ink }]}
+          style={[StyleSheet.absoluteFill, veiled ? { backgroundColor: colors.ink } : undefined]}
           onPress={onClose}
         />
       </Animated.View>
@@ -240,6 +256,10 @@ export function GlassSheet({
 
 // The bloom shadow leans toward the bottom-right FAB corner the sheet grew from.
 const BLOOM_OFFSET = { width: spacing.s2, height: spacing.s2 } as const;
+
+// The destructive-confirm veil strength — a whisper ink dim (≤12%, D3.2), the
+// only sheet allowed a backdrop tint. Every other sheet uses the transparent catcher.
+const VEIL_OPACITY = 0.12;
 
 const styles = StyleSheet.create({
   sheet: {

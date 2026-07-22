@@ -14,7 +14,7 @@
  */
 import type { WardrobeGap } from '@era/core/shop';
 import { strings } from '@era/core/strings';
-import { radii, spacing } from '@era/tokens';
+import { spacing } from '@era/tokens';
 import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
@@ -43,52 +43,52 @@ export function GapsHero({ gaps, onFill }: GapsHeroProps) {
 
   return (
     <View style={styles.container}>
-      <Text
-        accessibilityRole="header"
-        variant="ui"
-        size="title3"
-        weight={700}
-        color={colors.text}
-      >
-        {strings.shop.gaps.title}
-      </Text>
+      {/* Editorial section marker (D8): the title in Fraunces-Italic (oviAccent)
+          followed by a hairline rule filling the row — a magazine header, not a
+          banner box. */}
+      <View style={styles.labelRow} accessibilityRole="header">
+        <Text variant="oviAccent" color={colors.text}>
+          {strings.shop.gaps.title}
+        </Text>
+        <View style={[styles.rule, { backgroundColor: colors.hairline }]} />
+      </View>
 
       <Text variant="body" size="subhead" color={colors.secondaryStrong}>
         {strings.shop.gaps.intro}
       </Text>
 
-      <View style={styles.cards}>
+      <View style={styles.rows}>
         {gaps.map((gap) => (
-          <GapCard key={gap.category} gap={gap} onFill={onFill} />
+          <GapRow key={gap.category} gap={gap} onFill={onFill} />
         ))}
       </View>
     </View>
   );
 }
 
-/** One gap: the honest reason, an unlock badge, and the pre-filter CTA. */
-function GapCard({ gap, onFill }: { gap: WardrobeGap; onFill: (gap: WardrobeGap) => void }) {
+/**
+ * One gap as an editorial row (no card box): the honest reason and its unlock
+ * count in normal flow over a hairline divider, with a quiet ghost CTA. The
+ * restraint is the point — guidance, not a merchandising tile.
+ */
+function GapRow({ gap, onFill }: { gap: WardrobeGap; onFill: (gap: WardrobeGap) => void }) {
   const { colors } = useTheme();
   const fillLabel = `${strings.shop.gaps.fillCta} — ${strings.closet.categoryLabel(gap.category)}`;
   return (
-    <View
-      style={[
-        styles.card,
-        { backgroundColor: colors.surface, borderColor: colors.hairline, borderRadius: radii.card },
-      ]}
-    >
-      <Text variant="body" color={colors.text}>
-        {strings.shop.gaps.reason(gap)}
-      </Text>
-
-      <Text variant="ui" size="footnote" weight={600} color={colors.secondary}>
-        {strings.shop.gaps.unlocksLabel(gap.unlocksOutfits)}
-      </Text>
+    <View style={[styles.row, { borderTopColor: colors.hairline }]}>
+      <View style={styles.rowBody}>
+        <Text variant="body" color={colors.text}>
+          {strings.shop.gaps.reason(gap)}
+        </Text>
+        <Text variant="ui" size="footnote" weight={600} color={colors.secondary}>
+          {strings.shop.gaps.unlocksLabel(gap.unlocksOutfits)}
+        </Text>
+      </View>
 
       <Button
         label={strings.shop.gaps.fillCta}
         accessibilityLabel={fillLabel}
-        variant="secondary"
+        variant="ghost"
         haptic
         onPress={() => onFill(gap)}
       />
@@ -101,14 +101,28 @@ const styles = StyleSheet.create({
     gap: spacing.s3,
     paddingBottom: spacing.s6,
   },
-  cards: {
+  // The Fraunces-Italic label + the hairline rule that fills the rest of the row.
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.s3,
   },
-  card: {
+  rule: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+  },
+  rows: {
+    gap: spacing.s3,
+  },
+  // Each gap sits over a hairline divider, its reason/unlock stacked with the
+  // quiet CTA trailing — an editorial line, not a bordered card.
+  row: {
     gap: spacing.s2,
-    padding: spacing.s4,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderCurve: 'continuous',
+    paddingTop: spacing.s3,
+    borderTopWidth: StyleSheet.hairlineWidth,
     alignItems: 'flex-start',
+  },
+  rowBody: {
+    gap: spacing.s1,
   },
 });

@@ -102,7 +102,7 @@ export function ShopFilters({ filters, onChange }: ShopFiltersProps) {
     <div style={containerStyle}>
       <FilterRow label={strings.shop.filterBudget}>
         {BUDGET_BANDS.map((b) => (
-          <Chip key={b.id} selected={filters.budgetId === b.id} onClick={() => set('budgetId', b.id)}>
+          <Chip key={b.id} glass selected={filters.budgetId === b.id} onClick={() => set('budgetId', b.id)}>
             {b.label}
           </Chip>
         ))}
@@ -112,6 +112,7 @@ export function ShopFilters({ filters, onChange }: ShopFiltersProps) {
         {BRAND_TIER_ORDER.map((tier) => (
           <Chip
             key={tier}
+            glass
             selected={filters.brandTier === tier}
             onClick={() => set('brandTier', tier)}
           >
@@ -122,7 +123,7 @@ export function ShopFilters({ filters, onChange }: ShopFiltersProps) {
 
       <FilterRow label={strings.shop.filterCategory}>
         {CATEGORY_OPTIONS.map((cat) => (
-          <Chip key={cat} selected={filters.category === cat} onClick={() => set('category', cat)}>
+          <Chip key={cat} glass selected={filters.category === cat} onClick={() => set('category', cat)}>
             {strings.closet.categoryLabel(cat)}
           </Chip>
         ))}
@@ -130,7 +131,7 @@ export function ShopFilters({ filters, onChange }: ShopFiltersProps) {
 
       <FilterRow label={strings.shop.filterSize}>
         {SIZE_OPTIONS.map((size) => (
-          <Chip key={size} selected={filters.size === size} onClick={() => set('size', size)}>
+          <Chip key={size} glass selected={filters.size === size} onClick={() => set('size', size)}>
             {size}
           </Chip>
         ))}

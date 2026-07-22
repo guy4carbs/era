@@ -33,11 +33,11 @@ const paperStyle: CSSProperties = {
 };
 
 
-/** A thin accent guide line drawn while a piece snaps. */
+/** A 1px hairline guide drawn while a piece snaps (the D-canvas alignment cue). */
 function GuideLine({ guide, width, height }: { guide: Guide; width: number; height: number }) {
   const base: CSSProperties = {
     position: 'absolute',
-    background: 'color-mix(in srgb, var(--color-accent) 60%, transparent)',
+    background: 'var(--color-hairline)',
     pointerEvents: 'none',
     zIndex: 9999,
   };

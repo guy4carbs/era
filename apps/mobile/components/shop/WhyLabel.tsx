@@ -1,35 +1,37 @@
 /**
- * WhyLabel — the honest one-line reason a pick is shown.
+ * WhyLabel — the honest one-line reason a pick is shown, as OVI'S WHISPER.
  *
- * Positive pulls (`fills_gap`, `completes_outfits`) render as a calm accent-tinted
- * pill. `similar_owned` is the trust rule made visible: it renders as a CAUTION —
- * a rust-tinted pill with a rust hairline — because the closet may already hold
- * something like this. It is a warning, never a pitch. The label text always uses
- * the high-contrast `text` colour so the caution reads through its tint safely;
- * the rust framing carries the signal.
+ * Every why kind now renders in the ambient whisper grammar (D-AMBIENT): a 20px
+ * idle Ovi orb (decorative, hidden from assistive tech) beside the reason line in
+ * Fraunces-Italic (`oviAccent` — the sanctioned small-serif exception). It reads
+ * as Ovi speaking the reason, not a UI pill.
  *
- * When the ranker also handed back a rich `whyDetail`, the card passes `onPress` so
- * the pill becomes a button that opens the why-detail sheet (Ovi's reasoning
- * grounded in the user's own closet). Without `onPress` it stays a static label —
+ * The trust rule survives the restyle: `similar_owned` is a CAUTION, so its line
+ * takes the rust `danger` hue and a rust hairline underline (rather than the calm
+ * accent), and its orb sits at rest — Ovi flagging, never pitching. Positive pulls
+ * (`fills_gap`, `completes_outfits`) render the line in the warm `text` ink with no
+ * underline. The label text stays high-contrast either way.
+ *
+ * When the ranker handed back a rich `whyDetail`, the card passes `onPress` so the
+ * whole whisper becomes a button opening the why-detail sheet (Ovi's reasoning
+ * grounded in the user's own closet). Without `onPress` it stays a static line —
  * a pick whose `why` names no owned piece has nothing to expand into.
  */
 import type { ProductWhy } from '@era/core/shop';
 import { strings } from '@era/core/strings';
-import { radii, spacing } from '@era/tokens';
+import { orb as orbToken, spacing } from '@era/tokens';
 import { StyleSheet, View } from 'react-native';
 
+import { OviOrb } from '@/components/ovi';
 import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
 import { resolveWhy } from './labels';
 
-// Subtle fill tint (~12% alpha) behind the pill, matching the quiet-luxury chips.
-const TINT_ALPHA = '1F';
-
 interface WhyLabelProps {
   readonly why: ProductWhy;
-  /** When set, the pill becomes a button opening the why-detail sheet. */
+  /** When set, the whisper becomes a button opening the why-detail sheet. */
   readonly onPress?: () => void;
 }
 
@@ -37,26 +39,43 @@ export function WhyLabel({ why, onPress }: WhyLabelProps) {
   const { colors } = useTheme();
   const { text, caution } = resolveWhy(why);
 
-  const tint = caution ? colors.danger : colors.accent;
-  const border = caution ? colors.danger : colors.hairline;
+  // Caution (similar_owned) speaks in the rust hue with a rust hairline underline;
+  // positive pulls speak in the warm ink with no underline.
+  const lineColor = caution ? colors.danger : colors.text;
 
-  const pillStyle = [
-    styles.pill,
-    {
-      backgroundColor: `${tint}${TINT_ALPHA}`,
-      borderColor: border,
-      borderRadius: radii.chip,
-    },
-  ];
-  const labelWeight = caution ? 600 : 400;
+  const body = (
+    <View style={styles.row}>
+      {/* Presence, not a control — the idle whisper orb, hidden from assistive
+          tech (the line carries the meaning). */}
+      <View
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        pointerEvents="none"
+      >
+        <OviOrb state="idle" sizePx={orbToken.size.whisperPx} />
+      </View>
+      <Text
+        variant="oviAccent"
+        size="subhead"
+        color={lineColor}
+        numberOfLines={2}
+        style={[
+          styles.line,
+          caution
+            ? { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.danger }
+            : null,
+        ]}
+      >
+        {text}
+      </Text>
+    </View>
+  );
 
-  // Static label when there's no detail to expand into.
+  // Static line when there's no detail to expand into.
   if (!onPress) {
     return (
-      <View accessibilityRole="text" style={pillStyle}>
-        <Text variant="ui" size="footnote" weight={labelWeight} color={colors.text}>
-          {text}
-        </Text>
+      <View accessibilityRole="text" accessibilityLabel={text}>
+        {body}
       </View>
     );
   }
@@ -68,21 +87,21 @@ export function WhyLabel({ why, onPress }: WhyLabelProps) {
       accessibilityHint={strings.shop.whyDetail.title}
       hitSlop={spacing.s2}
       onPress={onPress}
-      style={pillStyle}
     >
-      <Text variant="ui" size="footnote" weight={labelWeight} color={colors.text}>
-        {text}
-      </Text>
+      {body}
     </Press>
   );
 }
 
 const styles = StyleSheet.create({
-  pill: {
-    alignSelf: 'flex-start',
-    paddingVertical: spacing.s1,
-    paddingHorizontal: spacing.s2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderCurve: 'continuous',
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.s2,
+  },
+  // The line takes the remaining width so a two-line reason wraps under itself
+  // rather than shoving the orb. The rust underline only paints for caution.
+  line: {
+    flex: 1,
   },
 });

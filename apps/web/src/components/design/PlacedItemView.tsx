@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, type CSSProperties } from 'react';
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { animate, motion, useMotionValue, useReducedMotion, type MotionValue } from 'motion/react';
 import { motion as motionToken } from '@era/tokens';
 import { Text } from '../Text';
@@ -57,10 +57,13 @@ const fallbackStyle: CSSProperties = {
  * tracks the finger directly; when its center nears the stage center or another
  * piece's center (via {@link applySnap}) it eases onto that guide with a fluid
  * spring, so the piece glides the last few px onto the line instead of jumping.
- * Selection draws an accent ring; scale is real layout width (so it composes
- * 1:1 into the cover) and rotation springs on the snappy scale. Under reduced
- * motion the drag still works directly and the snap is a hard set (no spring);
- * only the decorative ring glow is dropped.
+ * While a piece is dragged it LIFTS — casting the e3 "item" shadow so the picked-
+ * up piece floats above its siblings — settling back to its flat resting state
+ * on release; the lift eases in/out on the fluid spring (a hard snap under
+ * reduced motion). Selection draws an accent ring; scale is real layout width
+ * (so it composes 1:1 into the cover) and rotation springs on the snappy scale.
+ * Under reduced motion the drag still works directly, the snap and the lift are
+ * hard sets (no spring), and the decorative ring glow is dropped.
  */
 export function PlacedItemView({
   piece,
@@ -76,6 +79,9 @@ export function PlacedItemView({
   const x = useMotionValue(piece.posX * stageWidth);
   const y = useMotionValue(piece.posY * stageHeight);
   const dragging = useRef(false);
+  // Drives the drag-lift shadow: true from drag-start to release. A state (not
+  // just the ref) so the piece re-renders and the e3 shadow animates in/out.
+  const [lifted, setLifted] = useState(false);
   // The snap coordinate (px) each axis is currently eased onto, or null when the
   // axis is tracking the finger. Edge-detects engage so the fluid spring fires
   // once per guide rather than restarting every drag frame.
@@ -137,6 +143,7 @@ export function PlacedItemView({
 
   function handleDragEnd() {
     dragging.current = false;
+    setLifted(false);
     snapTargetX.current = null;
     snapTargetY.current = null;
     onGuides([]);
@@ -151,11 +158,24 @@ export function PlacedItemView({
         outline: '2px solid var(--color-accent)',
         outlineOffset: '2px',
         borderRadius: 'var(--radius-card)',
-        boxShadow: reduced
-          ? undefined
-          : '0 0 var(--glow-blur) color-mix(in srgb, var(--color-accent) 40%, transparent)',
       }
     : null;
+
+  // The piece's box-shadow: a lifted (dragged) piece floats on the e3 "item"
+  // shadow; a selected piece carries its accent glow; a selected piece that's
+  // being dragged carries both, layered. At rest — flat. The lift eases on the
+  // fluid spring (the canvas-drag cadence) while rotation stays on snappy, so we
+  // drive shadow through `animate` with its own per-property transition. Under
+  // reduced motion the glow is dropped and the shadow hard-sets via transitionFor.
+  const selectedGlow =
+    selected && !reduced
+      ? '0 0 var(--glow-blur) color-mix(in srgb, var(--color-accent) 40%, transparent)'
+      : null;
+  const targetShadow = lifted
+    ? selectedGlow
+      ? `var(--shadow-e3), ${selectedGlow}`
+      : 'var(--shadow-e3)'
+    : (selectedGlow ?? 'none');
 
   return (
     <motion.div
@@ -166,6 +186,7 @@ export function PlacedItemView({
       onPointerDown={onSelect}
       onDragStart={() => {
         dragging.current = true;
+        setLifted(true);
         onSelect();
       }}
       onDrag={handleDrag}
@@ -174,8 +195,11 @@ export function PlacedItemView({
       <div style={centerWrapStyle}>
         <motion.div
           style={{ width: pxWidth, cursor: 'grab', ...ring }}
-          animate={{ rotate: piece.rotation }}
-          transition={transitionFor(motionToken.springs.snappy, reduced)}
+          animate={{ rotate: piece.rotation, boxShadow: targetShadow }}
+          transition={{
+            rotate: transitionFor(motionToken.springs.snappy, reduced),
+            boxShadow: transitionFor(motionToken.springs.fluid, reduced),
+          }}
         >
           {piece.displayUrl ? (
             <img
