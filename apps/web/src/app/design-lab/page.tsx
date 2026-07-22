@@ -51,6 +51,7 @@ import type { FeedPostPayload } from '@era/core/feed';
 import { useTheme, type ThemeMode } from '../../lib/theme';
 import { themeVarStyle } from '../../lib/theme-css';
 import { springTransition } from '../../lib/motion';
+import { EmailPreview } from './EmailPreview';
 
 /**
  * Design Lab v2 — a living spec sheet. Every section renders its content TWICE,
@@ -1868,6 +1869,13 @@ export default function DesignLabPage() {
 
         <Section title="Post-signup gift" note="The D-GIFT choreography: the orb blooms, 'You're in.' lands in Display Fraunces, then the referral card rises with the place-in-line numeral (fixture 214). The choreography IS the specimen — hit Replay to re-run it. Unreachable in the app without signing up.">
           <GiftSpecimen />
+        </Section>
+
+        <Section
+          title="Email — BaseEmail"
+          note="The @era/email BaseEmail layout via the base-sample template (React Email), rendered to HTML and shown in a sandboxed 600px iframe. Every value derives from the @era/tokens email tokens (asserted 1:1 in tokens.test.ts): warm-cream canvas, 48px (spacing.s12) padding, the hosted 'era.' wordmark PNG top center, hairline dividers, an editorial Georgia (Fraunces stand-in) h1, system-sans body, a muted-rust caution line, and the CAN-SPAM footer with an example unsubscribe link. The left frame is the email as an inbox renders it; the right FORCES the dark ruleset (the prefers-color-scheme media query rewritten to apply unconditionally) so BaseEmail's dark block recolors the classed elements — the way a scheme-aware client (Apple Mail) would. The wordmark stays a baked-cream-field PNG so a force-inverting client can't wreck the mark."
+        >
+          <EmailPreview />
         </Section>
 
         <Section title="Glass over busy imagery" note="A deterministic feTurbulence + gradient background (no assets) with TWO panels floating over it — default glass and the busy AA scrim. The dark busy panel is the visible proof the scrim keeps text legible over any backdrop.">

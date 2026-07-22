@@ -31,7 +31,7 @@ if (r2PublicUrl) {
  * ./src/index.ts via their exports map), so Next must transpile them itself.
  */
 const nextConfig: NextConfig = {
-  transpilePackages: ['@era/core', '@era/db'],
+  transpilePackages: ['@era/core', '@era/db', '@era/email'],
 
   /**
    * Let the App Router treat `.mdx` as first-class modules alongside `.ts`/`.tsx`.
