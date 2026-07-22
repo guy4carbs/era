@@ -12,9 +12,10 @@ import { strings } from '@era/core/strings';
 import { layout, spacing } from '@era/tokens';
 import { Redirect, Stack, useRouter } from 'expo-router';
 import { useCallback, useState, type PropsWithChildren } from 'react';
-import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { OviLoader } from '@/components/OviLoader';
 import { AvatarSection } from '@/components/settings/AvatarSection';
 import { OrdersSettings } from '@/components/settings/OrdersSettings';
 import { ShippingAddressSettings } from '@/components/settings/ShippingAddressSettings';
@@ -87,7 +88,7 @@ export default function SettingsScreen() {
     return (
       <SafeAreaView style={[styles.centered, { backgroundColor: colors.bg }]}>
         <Stack.Screen options={{ headerShown: true, title: strings.settings.title }} />
-        <ActivityIndicator color={colors.text} />
+        <OviLoader variant="page" />
       </SafeAreaView>
     );
   }

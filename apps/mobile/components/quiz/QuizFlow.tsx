@@ -8,14 +8,13 @@
  * falls back to the local deterministic profile so the reveal always resolves.
  */
 import { motion, spacing } from '@era/tokens';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { strings } from '@era/core/strings';
 
-import { Text } from '@/components/Text';
+import { OviLoader } from '@/components/OviLoader';
 import { analytics } from '@/lib/analytics';
-import { useTheme } from '@/lib/theme';
 
 import { QuizIntro } from './QuizIntro';
 import { QuizReveal } from './QuizReveal';
@@ -45,7 +44,6 @@ interface QuizFlowProps {
 }
 
 export function QuizFlow({ onExit, localOnly = false }: QuizFlowProps) {
-  const { colors } = useTheme();
   const [phase, setPhase] = useState<Phase>('intro');
   const [stepIndex, setStepIndex] = useState(0);
   const [answers, setAnswers] = useState<QuizAnswerMap>({});
@@ -151,10 +149,8 @@ export function QuizFlow({ onExit, localOnly = false }: QuizFlowProps) {
   if (phase === 'submitting') {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color={colors.accent} />
-        <Text variant="body" color={colors.secondaryStrong}>
-          {strings.ovi.thinking}
-        </Text>
+        {/* The 'Ovi thinking' beat: her orb breathing above the thinking line. */}
+        <OviLoader variant="page" caption={strings.ovi.thinking} />
       </View>
     );
   }

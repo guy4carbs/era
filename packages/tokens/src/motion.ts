@@ -95,6 +95,18 @@ export const motion = {
     eraSettleDelayMs: 900,
     maxTotalMs: 1800,
   },
+  // waiting — every waiting and failure moment (D-WAIT). Loading is Ovi's orb
+  // breathing (the orb token's sizes: whisperPx inline, cornerPx centered);
+  // skeletons shimmer in warm cream — a slow sheen sweep across the surface
+  // tone, NEVER gray — and finished content replaces them with the standard
+  // reducedFadeMs fade (150ms), no pop. Toasts auto-dismiss on the quiet
+  // cadence; success carries a small glow bloom. Reduced motion: shimmer off,
+  // static skeletons, no orb pulse. The sweep loop is ambient (exempt from
+  // durations.maxMs, the glow.pulse precedent).
+  waiting: {
+    skeletonSweepMs: 1800,
+    toastDismissMs: 2500,
+  },
   // suggestion — Ovi's ambient presence (the OviSuggestion strip): it enters on
   // a quiet fade-rise only AFTER the screen's content has settled, so it reads
   // as Ovi noticing, never as chrome racing the page. Max ONE per screen,

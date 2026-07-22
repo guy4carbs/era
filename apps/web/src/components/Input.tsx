@@ -39,10 +39,16 @@ const inputStyle: CSSProperties = {
   lineHeight: `${typeRamp.body.lineHeight}px`,
 };
 
+// Rust is a UI-contrast hue (3:1) — safe as the border/hairline accent, NOT as
+// small body text (footnote needs 4.5:1; see packages/tokens/src/contrast.ts,
+// where rust is declared 'ui' only). So the contrast-safe arrangement is: rust
+// carries the border, and the message renders in --color-secondary-strong (the
+// small-text-safe token, declared 'body' at 4.5:1). The field still reads as an
+// error via the rust border + role="alert" + aria-invalid.
 const errorStyle: CSSProperties = {
   fontSize: typeRamp.footnote.rem,
   lineHeight: `${typeRamp.footnote.lineHeight}px`,
-  color: 'var(--color-rust)',
+  color: 'var(--color-secondary-strong)',
 };
 
 /**

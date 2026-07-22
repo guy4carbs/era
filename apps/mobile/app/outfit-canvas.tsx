@@ -11,10 +11,11 @@
  * predates this feature), so we wrap the screen here.
  */
 import { Redirect, useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { OviLoader } from '@/components/OviLoader';
 import { OutfitCanvas } from '@/components/design';
 import { useSession } from '@/lib/auth-client';
 import { useTheme } from '@/lib/theme';
@@ -28,7 +29,7 @@ export default function OutfitCanvasRoute() {
   if (isPending) {
     return (
       <SafeAreaView style={[styles.centered, { backgroundColor: colors.bg }]}>
-        <ActivityIndicator color={colors.text} />
+        <OviLoader variant="page" />
       </SafeAreaView>
     );
   }

@@ -10,7 +10,9 @@ import { suggestForCloset } from '@era/core/ovi';
 import { ClosetEmpty, ClosetGallery, SettingsLink, type GalleryItem } from '../../../components/closet';
 import { OviSuggestionHost } from '../../../components/ovi';
 import { toOviItems } from '../../../components/ovi/to-ovi-items';
+import { FailedLoad } from '../../../components/FailedLoad';
 import { PageHeader } from '../../../components/PageHeader';
+import { SkeletonGrid } from '../../../components/Skeleton';
 import { Text } from '../../../components/Text';
 import { viewTransition } from '../../../lib/motion';
 import { useSession } from '../../../lib/auth-client';
@@ -102,6 +104,9 @@ export function ClosetScreen({ turnaroundEnabled }: { turnaroundEnabled: boolean
   const router = useRouter();
   const { data: session, isPending } = useSession();
   const [items, setItems] = useState<GalleryItem[] | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
+  // Bumping this re-runs the fetch effect — the failed-load retry handle.
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (isPending || !session) return;
@@ -111,15 +116,23 @@ export function ClosetScreen({ turnaroundEnabled }: { turnaroundEnabled: boolean
         const res = await fetch('/api/items');
         if (!res.ok) throw new Error('items fetch failed');
         const body = (await res.json()) as { items: GalleryItem[] };
-        if (active) setItems(body.items);
+        if (active) {
+          setItems(body.items);
+          setLoadFailed(false);
+        }
       } catch {
-        if (active) setItems([]);
+        // Don't degrade a failure to empty — an empty closet is an invitation,
+        // a failed fetch is an error. Surface the editorial failed-load state.
+        if (active) {
+          setItems([]);
+          setLoadFailed(true);
+        }
       }
     })();
     return () => {
       active = false;
     };
-  }, [isPending, session]);
+  }, [isPending, session, reloadKey]);
 
   // Ovi's ambient closet strip: a real, buildable, untried look from owned pieces.
   // Profile/wearLogs aren't fetched on this screen, so we pass null/[] honestly —
@@ -167,7 +180,23 @@ export function ClosetScreen({ turnaroundEnabled }: { turnaroundEnabled: boolean
     return (
       <main style={screenStyle}>
         <PageHeader title="Closet" subtitle={strings.closet.subtitle} />
-        <Text variant="body" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>Loading…</Text>
+        {/* The closet deserves skeletons, not a spinner: warm-cream 4:5 card
+            placeholders shimmering in the grid shape the real gallery will fill.
+            A status live region names the wait for assistive tech; the tiles
+            themselves are aria-hidden inside SkeletonGrid. */}
+        <div role="status" aria-busy="true" aria-label={strings.closet.subtitle}>
+          <SkeletonGrid count={6} />
+        </div>
+      </main>
+    );
+  }
+
+  // A failed fetch is an error (retry), never the empty invitation below.
+  if (loadFailed) {
+    return (
+      <main style={screenStyle}>
+        <PageHeader title="Closet" subtitle={strings.closet.subtitle} />
+        <FailedLoad onRetry={() => setReloadKey((k) => k + 1)} />
       </main>
     );
   }

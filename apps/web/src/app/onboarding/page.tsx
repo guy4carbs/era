@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
 import { Button, Container } from '../../components';
 import { Input } from '../../components/Input';
+import { OviLoader } from '../../components/ovi';
 import { Text } from '../../components/Text';
 import { useSession } from '../../lib/auth-client';
 
@@ -115,7 +116,7 @@ export default function OnboardingPage() {
     return (
       <Container>
         <main style={screenStyle}>
-          <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>Loading…</Text>
+          <OviLoader variant="page" label="Setting up your account" />
         </main>
       </Container>
     );

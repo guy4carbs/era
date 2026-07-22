@@ -5,6 +5,8 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken, layout } from '@era/tokens';
 import { Text } from '../Text';
 import { PageHeader } from '../PageHeader';
+import { FailedLoad } from '../FailedLoad';
+import { Skeleton } from '../Skeleton';
 import { strings } from '@era/core/strings';
 import type { RankedProduct, WardrobeGap } from '@era/core/shop';
 import { pressProps, transitionFor, useStagger } from '../../lib/motion';
@@ -16,7 +18,7 @@ import {
   unsaveProduct,
   type SavedShopProduct,
 } from '../../lib/shop-client';
-import { useOviChat } from '../ovi';
+import { OviLoader, useOviChat } from '../ovi';
 import { GapsHero } from './GapsHero';
 import { ShopCard } from './ShopCard';
 import {
@@ -356,18 +358,25 @@ function Body({
   onRetry,
 }: BodyProps) {
   if (status === 'loading') {
-    return <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{strings.shop.loading}</Text>;
+    // Skeleton product grid in the real grid shape (same class → same columns/
+    // gap), with the surface's own "finding pieces" line as the caption above it.
+    // A status live region names the wait; the tiles are aria-hidden.
+    return (
+      <div role="status" aria-busy="true" style={loadingColumnStyle}>
+        <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{strings.shop.loading}</Text>
+        <div className="era-shop-grid" aria-hidden="true">
+          {Array.from({ length: 6 }, (_, i) => (
+            <Skeleton key={i} variant="card" />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   if (status === 'error') {
-    return (
-      <div style={noticeColumnStyle}>
-        <Text variant="body" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>{strings.shop.error}</Text>
-        <motion.button type="button" style={retryStyle} onClick={onRetry} {...pressProps(reduced)}>
-          <Text variant="ui" as="span" size="subhead" weight={600} style={{ color: 'var(--color-accent)' }}>{strings.errors.retry}</Text>
-        </motion.button>
-      </div>
-    );
+    // Page-level load failure → the editorial failed-load state (Fraunces line +
+    // one retry), replacing the old plain-text error.
+    return <FailedLoad onRetry={onRetry} />;
   }
 
   if (visible.length === 0) {
@@ -458,9 +467,16 @@ function ResultsGrid({
       </motion.div>
 
       {hasMore ? (
-        <motion.button type="button" style={loadMoreStyle} onClick={onLoadMore} disabled={loadingMore} {...pressProps(reduced, !loadingMore)}>
-          <Text variant="ui" as="span" size="subhead" weight={600}>{loadingMore ? strings.shop.loading : strings.shop.loadMore}</Text>
-        </motion.button>
+        loadingMore ? (
+          // Fetching the next page reads as Ovi's inline breath, not a spinner.
+          <div style={loadMoreLoaderStyle}>
+            <OviLoader variant="inline" caption={strings.shop.loading} />
+          </div>
+        ) : (
+          <motion.button type="button" style={loadMoreStyle} onClick={onLoadMore} {...pressProps(reduced)}>
+            <Text variant="ui" as="span" size="subhead" weight={600}>{strings.shop.loadMore}</Text>
+          </motion.button>
+        )
       ) : null}
     </>
   );
@@ -542,18 +558,20 @@ const togglePillStyle: CSSProperties = {
 };
 
 
-const noticeColumnStyle: CSSProperties = {
+// The loading column: the "finding pieces" caption over the skeleton grid.
+const loadingColumnStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  alignItems: 'flex-start',
-  gap: 'var(--space-3)',
+  gap: 'var(--space-4)',
 };
 
-const retryStyle: CSSProperties = {
-  border: 'none',
-  background: 'transparent',
-  padding: 0,
-  cursor: 'pointer',
+// Centres the inline load-more loader where the load-more button used to sit.
+const loadMoreLoaderStyle: CSSProperties = {
+  alignSelf: 'center',
+  display: 'flex',
+  justifyContent: 'center',
+  minHeight: 'var(--touch-target-web)',
+  alignItems: 'center',
 };
 
 const loadMoreStyle: CSSProperties = {

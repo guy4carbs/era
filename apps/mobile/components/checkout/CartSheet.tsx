@@ -23,7 +23,6 @@ import { layout, radii, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Image,
   Linking,
   ScrollView,
@@ -32,6 +31,7 @@ import {
 } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { OviLoader } from '@/components/OviLoader';
 import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { GlassSheet } from '@/components/GlassSheet';
@@ -302,7 +302,7 @@ export function CartSheet({ open, onClose, onCartCountChange }: CartSheetProps) 
         ) : null}
 
         {loading ? (
-          <ActivityIndicator color={colors.text} style={styles.block} />
+          <OviLoader variant="page" style={styles.block} />
         ) : stage === 'starting' ? (
           <StartingView groups={groups} />
         ) : stage === 'review' ? (
@@ -626,7 +626,7 @@ function StartingView({ groups }: { readonly groups: ReturnType<typeof groupCart
   const { colors } = useTheme();
   return (
     <View style={styles.block}>
-      <ActivityIndicator color={colors.text} />
+      <OviLoader variant="page" />
       {groups.map((group) => (
         <Text
           key={group.retailer}
@@ -712,7 +712,7 @@ function ConfirmingView({
       : groups.map((group) => group.retailer);
   return (
     <View style={styles.block}>
-      <ActivityIndicator color={colors.text} />
+      <OviLoader variant="page" />
       {retailers.map((retailer) => (
         <Text
           key={retailer}

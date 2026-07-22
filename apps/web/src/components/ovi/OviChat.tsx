@@ -25,7 +25,7 @@ import { Button } from '../Button';
 import { Text } from '../Text';
 import { OutfitCard } from './OutfitCard';
 import { OviOrb } from './OviOrb';
-import { OviToast, OVI_TOAST_MS } from './OviToast';
+import { OviToast, TOAST_DISMISS_MS } from './OviToast';
 import { useOviChat, type OviChatSeed } from './OviChatProvider';
 import { sendOviChat } from './ovi-actions';
 import type { ChatEntry, ItemsById } from './types';
@@ -239,7 +239,7 @@ export function OviChat({ itemContext, itemsById, seed, onClose }: OviChatProps)
   // Auto-dismiss the toast, matching the shared timing.
   useEffect(() => {
     if (!toast) return;
-    const handle = setTimeout(() => setToast(null), OVI_TOAST_MS);
+    const handle = setTimeout(() => setToast(null), TOAST_DISMISS_MS);
     return () => clearTimeout(handle);
   }, [toast]);
 

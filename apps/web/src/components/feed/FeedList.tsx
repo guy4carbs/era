@@ -2,12 +2,14 @@
 
 import { useCallback, useEffect, useReducer, useRef, useState, type CSSProperties } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { layout, motion as motionToken } from '@era/tokens';
+import { layout } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import type { FeedPage, FeedPostPayload } from '@era/core/feed';
-import { pressProps, transitionFor, useStagger } from '../../lib/motion';
+import { useStagger } from '../../lib/motion';
 import { useSession } from '../../lib/auth-client';
 import { Text } from '../Text';
+import { FailedLoad } from '../FailedLoad';
+import { OviLoader, OviToast, TOAST_DISMISS_MS } from '../ovi';
 import { FeedCard } from './FeedCard';
 
 interface FeedState {
@@ -100,8 +102,6 @@ function reducer(state: FeedState, action: FeedAction): FeedState {
   }
 }
 
-const TOAST_MS = motionToken.durations.maxMs * 8;
-
 /**
  * The web social feed: a single centered column of {@link FeedCard}s over
  * `GET /api/feed`, with cursor pagination driven by an IntersectionObserver
@@ -178,7 +178,7 @@ export function FeedList() {
 
   useEffect(() => {
     if (!toast) return;
-    const handle = setTimeout(() => setToast(null), TOAST_MS);
+    const handle = setTimeout(() => setToast(null), TOAST_DISMISS_MS);
     return () => clearTimeout(handle);
   }, [toast]);
 
@@ -290,6 +290,9 @@ export function FeedList() {
         ))}
       </motion.div>
 
+      {/* Empty and error are separate states, never conflated: empty is an
+          invitation (the feed's own voice line), error is a failure with a retry
+          (the editorial failed-load state). */}
       {isEmpty && !state.errored ? (
         <Text variant="caption" size="footnote" as="p" style={quietLineStyle}>
           {strings.feed.empty}
@@ -297,16 +300,7 @@ export function FeedList() {
       ) : null}
 
       {isEmpty && state.errored ? (
-        <div style={retryWrapStyle}>
-          <Text variant="caption" size="footnote" as="p" style={quietLineStyle}>
-            {strings.errors.generic}
-          </Text>
-          <motion.button type="button" style={retryButtonStyle} onClick={() => void loadPage(null)} {...pressProps(reduced)}>
-            <Text variant="caption" size="footnote" weight={600} as="span" style={{ color: 'var(--color-accent)' }}>
-              {strings.errors.retry}
-            </Text>
-          </motion.button>
-        </div>
+        <FailedLoad onRetry={() => void loadPage(null)} />
       ) : null}
 
       {!isEmpty && state.reachedEnd ? (
@@ -316,28 +310,19 @@ export function FeedList() {
       ) : null}
 
       {state.loading && state.posts.length > 0 ? (
-        <Text variant="caption" size="footnote" as="p" role="status" style={quietLineStyle}>
-          {strings.feed.loadingMore}
-        </Text>
+        <div style={loadingMoreStyle}>
+          <OviLoader variant="inline" caption={strings.feed.loadingMore} />
+        </div>
       ) : null}
 
       {!state.reachedEnd ? <div ref={sentinelRef} aria-hidden="true" style={sentinelStyle} /> : null}
 
       <AnimatePresence>
         {toast ? (
-          <motion.div
-            key={toast}
-            role="status"
-            style={toastStyle}
-            initial={{ opacity: 0, x: '-50%', y: reduced ? 0 : 8 }}
-            animate={{ opacity: 1, x: '-50%', y: 0 }}
-            exit={{ opacity: 0, x: '-50%', y: reduced ? 0 : 8 }}
-            transition={transitionFor(motionToken.springs.gentle, reduced)}
-          >
-            <Text variant="caption" size="footnote" as="span">
-              {toast}
-            </Text>
-          </motion.div>
+          <OviToast
+            message={toast}
+            variant={toast === strings.errors.generic ? 'error' : 'neutral'}
+          />
         ) : null}
       </AnimatePresence>
     </section>
@@ -371,32 +356,11 @@ const quietLineStyle: CSSProperties = {
   color: 'var(--color-secondary)',
 };
 
-const retryWrapStyle: CSSProperties = {
+// Centres the inline load-more loader across the feed column.
+const loadingMoreStyle: CSSProperties = {
   display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  gap: 'var(--space-2)',
-};
-
-const retryButtonStyle: CSSProperties = {
-  padding: 0,
-  border: 'none',
-  background: 'transparent',
-  cursor: 'pointer',
+  justifyContent: 'center',
+  paddingBlock: 'var(--space-4)',
 };
 
 const sentinelStyle: CSSProperties = { height: 1, width: '100%' };
-
-const toastStyle: CSSProperties = {
-  position: 'fixed',
-  left: '50%',
-  bottom: 'calc(var(--space-16) + env(safe-area-inset-bottom))',
-  paddingInline: 'var(--space-4)',
-  paddingBlock: 'var(--space-3)',
-  borderRadius: 'var(--radius-input)',
-  background: 'var(--color-surface)',
-  border: '1px solid var(--color-hairline)',
-  color: 'var(--color-text)',
-  boxShadow: 'var(--shadow-e3)',
-  zIndex: 70,
-};

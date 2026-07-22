@@ -2,7 +2,7 @@ import { motion } from '@era/tokens';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef } from 'react';
-import { ActivityIndicator, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { useFonts } from 'expo-font';
@@ -10,6 +10,7 @@ import * as Linking from 'expo-linking';
 import * as SecureStore from 'expo-secure-store';
 import * as SplashScreen from 'expo-splash-screen';
 
+import { OviLoader } from '@/components/OviLoader';
 import { CollageExportHost } from '@/components/share';
 import { analytics } from '@/lib/analytics';
 import { authClient, useSession } from '@/lib/auth-client';
@@ -205,7 +206,7 @@ function ThemedStack() {
     return (
       <SafeAreaView style={[styles.splash, { backgroundColor: colors.bg }]}>
         <StatusBar style={resolved === 'dark' ? 'light' : 'dark'} />
-        <ActivityIndicator color={colors.text} />
+        <OviLoader variant="page" />
       </SafeAreaView>
     );
   }

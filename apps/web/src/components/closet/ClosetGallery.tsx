@@ -3,12 +3,13 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { motion as motionToken, layout, spacing } from '@era/tokens';
+import { motion as motionToken, layout } from '@era/tokens';
 import { Text } from '../Text';
 import { strings } from '@era/core/strings';
 import { transitionFor, useStagger, viewTransition } from '../../lib/motion';
 import { Chip } from '../Chip';
 import { Input } from '../Input';
+import { OviToast, TOAST_DISMISS_MS } from '../ovi';
 import { CATEGORY_OPTIONS } from '../items';
 import { GalleryTile } from './GalleryTile';
 import { ItemDetailSheet } from './ItemDetailSheet';
@@ -120,7 +121,7 @@ export function ClosetGallery({ items, turnaroundEnabled, onArchived, onUpdated 
 
   useEffect(() => {
     if (!toast) return;
-    const handle = setTimeout(() => setToast(null), motionToken.durations.maxMs * 8);
+    const handle = setTimeout(() => setToast(null), TOAST_DISMISS_MS);
     return () => clearTimeout(handle);
   }, [toast]);
 
@@ -335,21 +336,7 @@ export function ClosetGallery({ items, turnaroundEnabled, onArchived, onUpdated 
       </AnimatePresence>
 
       <AnimatePresence>
-        {toast ? (
-          <motion.div
-            key={toast}
-            role="status"
-            style={toastStyle}
-            initial={{ opacity: 0, x: '-50%', y: reduced ? 0 : spacing.s4 }}
-            animate={{ opacity: 1, x: '-50%', y: 0 }}
-            exit={{ opacity: 0, x: '-50%', y: reduced ? 0 : spacing.s4 }}
-            transition={transitionFor(motionToken.springs.gentle, reduced)}
-          >
-            <Text variant="ui" size="subhead" weight={600} style={{ color: 'var(--color-bg)' }}>
-              {toast}
-            </Text>
-          </motion.div>
-        ) : null}
+        {toast ? <OviToast message={toast} variant="success" /> : null}
       </AnimatePresence>
     </div>
   );
@@ -444,13 +431,3 @@ const backdropStyle: CSSProperties = {
   zIndex: 49,
 };
 
-const toastStyle: CSSProperties = {
-  position: 'fixed',
-  left: '50%',
-  bottom: 'calc(var(--tabbar-height) + var(--space-6) + env(safe-area-inset-bottom))',
-  paddingBlock: 'var(--space-2)',
-  paddingInline: 'var(--space-4)',
-  borderRadius: 'var(--radius-hero)',
-  background: 'var(--color-text)',
-  zIndex: 60,
-};

@@ -12,9 +12,10 @@
 import { layout, spacing } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { OviLoader } from '@/components/OviLoader';
 import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { SettingRow } from '@/components/settings/SettingRow';
@@ -81,7 +82,7 @@ export function ShippingAddressSettings({ onToast }: ShippingAddressSettingsProp
   };
 
   if (view === 'loading') {
-    return <ActivityIndicator color={colors.text} style={styles.loading} />;
+    return <OviLoader variant="inline" style={styles.loading} />;
   }
 
   if (view === 'error') {

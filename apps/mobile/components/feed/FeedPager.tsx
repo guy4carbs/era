@@ -24,7 +24,6 @@ import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   StyleSheet,
   View,
   type AccessibilityActionEvent,
@@ -41,7 +40,8 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { Text } from '@/components/Text';
-import { Button } from '@/components/Button';
+import { FailedLoad } from '@/components/FailedLoad';
+import { OviLoader } from '@/components/OviLoader';
 import { springFromToken, tokenEasing, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
 import { isHidden, type FeedSlot } from '@/lib/feed-store';
@@ -241,18 +241,13 @@ export function FeedPager() {
     return (
       <View style={[styles.fill, styles.centered, { backgroundColor: colors.bg }]} onLayout={onLayout}>
         {feed.status === 'error' ? (
-          <View style={styles.errorBox}>
-            <Text variant="body" color={colors.secondaryStrong} style={styles.stateText}>
-              {strings.errors.generic}
-            </Text>
-            <Button label={strings.errors.retry} variant="secondary" onPress={feed.loadMore} />
-          </View>
+          <FailedLoad onRetry={feed.loadMore} />
         ) : feed.status === 'end' ? (
           <Text variant="body" color={colors.secondaryStrong} style={styles.stateText}>
             {strings.feed.empty}
           </Text>
         ) : (
-          <ActivityIndicator color={colors.text} />
+          <OviLoader variant="page" />
         )}
       </View>
     );

@@ -24,11 +24,14 @@ import { layout, radii, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import * as Linking from 'expo-linking';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
+import { FailedLoad } from '@/components/FailedLoad';
+import { OviLoader } from '@/components/OviLoader';
+import { Skeleton } from '@/components/Skeleton';
 import { PageHeader } from '@/components/PageHeader';
 import { Press } from '@/components/Press';
 import { ScreenEntrance } from '@/components/ScreenEntrance';
@@ -336,14 +339,11 @@ export default function ShopScreen() {
   // The ranked feed's loading/error frames only gate the "For you" view — the
   // Saved wishlist is hydrated independently and stays reachable regardless.
   if (view === 'forYou' && state === 'loading') {
+    // Skeleton product cards where the ranked feed will land — full-width
+    // shimmering rows on the list's own margin, never a bare spinner.
     return (
       <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
-        <View style={styles.centered}>
-          <ActivityIndicator color={colors.text} />
-          <Text variant="body" color={colors.secondaryStrong} style={styles.centerCopy}>
-            {strings.shop.loading}
-          </Text>
-        </View>
+        <ShopSkeletonList />
       </SafeAreaView>
     );
   }
@@ -352,10 +352,9 @@ export default function ShopScreen() {
     return (
       <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
         <View style={styles.centered}>
-          <Text variant="body" color={colors.secondaryStrong} style={styles.centerCopy}>
-            {strings.shop.error}
-          </Text>
-          <Button label={strings.errors.retry} variant="secondary" onPress={loadReset} />
+          {/* The editorial failed-load frame with the shop's own voice line, plus
+              the saved-wishlist tap-out below it (Saved hydrates independently). */}
+          <FailedLoad line={strings.shop.error} onRetry={loadReset} />
           <Button
             label={strings.shop.saved.tab}
             variant="ghost"
@@ -441,7 +440,7 @@ export default function ShopScreen() {
                 {strings.shop.saved.empty}
               </Text>
             ) : (
-              <ActivityIndicator color={colors.text} style={styles.footer} />
+              <OviLoader variant="inline" style={styles.footer} />
             )
           ) : (
             <Text
@@ -455,7 +454,7 @@ export default function ShopScreen() {
         }
         ListFooterComponent={
           !saved && loadingMore ? (
-            <ActivityIndicator color={colors.text} style={styles.footer} />
+            <OviLoader variant="inline" style={styles.footer} />
           ) : null
         }
         onEndReached={saved ? undefined : loadMore}
@@ -610,6 +609,22 @@ function ItemSeparator() {
 }
 
 /**
+ * The shop's loading state: full-width `row` skeletons stacked where the ranked
+ * ShopCards will land, on the list's margin and gutter rhythm. Reduced motion
+ * renders them static (Skeleton handles that).
+ */
+const SHOP_SKELETON_CARDS = 4;
+function ShopSkeletonList() {
+  return (
+    <View style={styles.skeletonList}>
+      {Array.from({ length: SHOP_SKELETON_CARDS }, (_, i) => (
+        <Skeleton key={i} variant="row" />
+      ))}
+    </View>
+  );
+}
+
+/**
  * True only for a well-formed `https:` URL. Guards the native open against a
  * hostile feed handing back a `tel:`/`sms:`/custom-scheme link — anything that
  * doesn't parse as https is refused before it can reach `Linking.openURL`.
@@ -661,6 +676,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: layout.grid.mobileMargin,
     paddingTop: spacing.s6,
   },
+  // Loading skeletons sit on the same margin/rhythm as the real product list.
+  skeletonList: {
+    paddingHorizontal: layout.grid.mobileMargin,
+    paddingTop: spacing.s6,
+    gap: layout.grid.gutter,
+  },
   header: {
     gap: spacing.s3,
     paddingBottom: spacing.s6,
@@ -693,6 +714,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingVertical: spacing.s6,
+    alignItems: 'center',
   },
   // The ambient strip sits below the gaps band, above the first pick.
   suggestion: {
