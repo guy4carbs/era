@@ -2,6 +2,7 @@ import { type CSSProperties } from 'react';
 import { strings } from '@era/core/strings';
 import { typeRamp } from '@era/tokens';
 import { Text } from '../Text';
+import { EraMark } from '../EraMark';
 import { HeroGlow } from './HeroGlow';
 import { HeroTitle } from './HeroTitle';
 import { WaitlistForm } from './WaitlistForm';
@@ -45,12 +46,6 @@ const innerStyle: CSSProperties = {
   maxWidth: 'var(--content-max)',
 };
 
-const wordmarkStyle: CSSProperties = {
-  letterSpacing: '0.08em',
-  textTransform: 'uppercase',
-  color: 'var(--color-secondary-strong)',
-};
-
 const subStyle: CSSProperties = {
   margin: 0,
   fontSize: `clamp(${typeRamp.body.rem}, 2.5vw, ${typeRamp.title3.rem})`,
@@ -71,9 +66,10 @@ export function Hero() {
     <section style={sectionStyle}>
       <HeroGlow />
       <div style={innerStyle}>
-        <Text variant="title" as="span" size="title3" style={wordmarkStyle}>
-          Era
-        </Text>
+        {/* The locked mark, modest above the display title. Server-rendered, so the
+            per-mode ink comes from the reactive --color-mark-onbg var (ink on the
+            light bg, cream on dark) — the two-ink brand's mode choice, no recolor. */}
+        <EraMark fill="var(--color-mark-onbg)" heightPx={22} />
         <HeroTitle />
         <Text
           variant="body"

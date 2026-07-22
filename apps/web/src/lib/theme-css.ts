@@ -50,6 +50,12 @@ function paletteVarRecord(mode: ColorMode): Record<string, string> {
     '--color-secondary-strong': p.secondaryStrong,
     '--color-accent': p.accent,
     '--color-hairline': p.hairline,
+    // Brand-mark ink chosen PER MODE: warm ink on the light cream bg, cream on the
+    // dark ink bg. This is the two-ink brand's mode choice (never a recolor), so a
+    // server-rendered wordmark (Hero, manifesto, header) picks the right ink from
+    // one reactive var without reading the client theme. Both values are palette
+    // literals: light bg = the brand cream; ink = the constant warm ink.
+    '--color-mark-onbg': mode === 'dark' ? palette.light.bg : palette.ink,
     // Glass surface tint is mode-specific (light 0.72 / dark 0.62); expose it as
     // a percentage so component color-mix() reads one var and stays reactive.
     '--glass-tint': `${Math.round(glass.tintOpacity[mode] * 100)}%`,
@@ -98,6 +104,10 @@ function baseVars(): string {
     `--color-sage:${palette.semantic.sage}`,
     `--color-rust:${palette.semantic.rust}`,
     `--color-ink:${palette.ink}`,
+    // Mode-independent brand cream — the light-mode bg value pinned as a constant
+    // so the two-ink brand mark (EraMark) can fill cream regardless of the active
+    // theme, the same way `--color-ink` pins the constant warm ink.
+    `--color-cream:${palette.light.bg}`,
   ];
 
   const radiiVars = Object.entries(radii).map(

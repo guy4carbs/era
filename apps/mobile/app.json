@@ -7,15 +7,20 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "icon": "./assets/icon.png",
+    "icon": "./assets/brand/icon-light-1024.png",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/brand/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#FAF7F0"
     },
     "ios": {
       "bundleIdentifier": "style.era",
       "supportsTablet": true,
+      "icon": {
+        "light": "./assets/brand/icon-light-1024.png",
+        "dark": "./assets/brand/icon-dark-1024.png",
+        "tinted": "./assets/brand/icon-tinted-1024.png"
+      },
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -23,12 +28,12 @@
     "android": {
       "package": "style.era",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1C1B19"
+        "foregroundImage": "./assets/brand/adaptive-foreground.png",
+        "backgroundColor": "#FAF7F0"
       }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/brand/icon-light-1024.png"
     },
     "plugins": [
       "expo-router",

@@ -37,13 +37,14 @@ export const metadata: Metadata = {
     siteName: 'Era',
     title: strings.site.og.title,
     description: strings.site.og.description,
-    images: [{ url: '/og/era-og.png', width: 1200, height: 630, alt: strings.site.og.title }],
+    // og:image is injected automatically from the generated `(site)/opengraph-image`
+    // route — no manual `images` entry, so the generated card is the one source.
   },
   twitter: {
     card: 'summary_large_image',
     title: strings.site.og.title,
     description: strings.site.og.description,
-    images: ['/og/era-og.png'],
+    // twitter:image likewise comes from the generated opengraph-image route.
   },
 };
 
