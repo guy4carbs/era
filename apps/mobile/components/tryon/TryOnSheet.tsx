@@ -23,9 +23,10 @@ import { strings } from '@era/core/strings';
 import type { TryonState } from '@era/core/tryon';
 import { spacing } from '@era/tokens';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { OviLoader } from '@/components/OviLoader';
 import { Text } from '@/components/Text';
 import { DimensionalHero } from '@/components/closet/DimensionalHero';
 import { GlassSheet } from '@/components/GlassSheet';
@@ -199,13 +200,14 @@ interface BodyProps {
 
 function Body({ phase, result, open, colors, onUpdate, onRetry }: BodyProps) {
   if (phase === 'checking') {
-    return <Centered><ActivityIndicator color={colors.text} /></Centered>;
+    return <Centered><OviLoader variant="page" /></Centered>;
   }
 
   if (phase === 'running') {
     return (
       <Centered>
-        <ActivityIndicator color={colors.text} />
+        {/* Ovi's orb breathing beside the render progress line (kept as-is). */}
+        <OviLoader variant="page" />
         <Line color={colors.secondaryStrong}>{strings.tryon.rendering}</Line>
       </Centered>
     );

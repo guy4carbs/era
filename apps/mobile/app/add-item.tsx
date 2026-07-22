@@ -13,10 +13,11 @@
 import { strings } from '@era/core/strings';
 import { spacing } from '@era/tokens';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
+import { OviLoader } from '@/components/OviLoader';
 import { AddItemFlow } from '@/components/items';
 import { useSession } from '@/lib/auth-client';
 import { useTheme } from '@/lib/theme';
@@ -31,7 +32,7 @@ export default function AddItemRoute() {
   if (isPending) {
     return (
       <SafeAreaView style={[styles.centered, { backgroundColor: colors.bg }]}>
-        <ActivityIndicator color={colors.text} />
+        <OviLoader variant="page" />
       </SafeAreaView>
     );
   }

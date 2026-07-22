@@ -4,6 +4,7 @@ import { useState, type CSSProperties, type FormEvent } from 'react';
 import { Button, Container } from '../../components';
 import { Input } from '../../components/Input';
 import { Text } from '../../components/Text';
+import { OviOrb } from '../../components/ovi';
 import { eraAuth } from '../../lib/auth-client';
 
 type SendState = 'idle' | 'sending' | 'sent';
@@ -86,7 +87,17 @@ export default function SignInPage() {
                 onChange={(event) => setEmail(event.target.value)}
               />
               <Button type="submit" variant="primary" disabled={sending} style={fullWidthStyle}>
-                {sending ? 'Sending…' : 'Send magic link'}
+                {sending ? (
+                  // The busy beat carries Ovi's breath, not a raw text swap: the
+                  // whisper orb sits beside the wait line (Button's own layout gaps
+                  // the row). The orb is aria-hidden; the label stays announced.
+                  <>
+                    <OviOrb size={{ cssVar: 'var(--orb-whisper)' }} state="idle" />
+                    Sending…
+                  </>
+                ) : (
+                  'Send magic link'
+                )}
               </Button>
             </form>
           )}

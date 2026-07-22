@@ -2,10 +2,11 @@ import { spacing } from '@era/tokens';
 import * as Linking from 'expo-linking';
 import { Link } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
+import { OviLoader } from '@/components/OviLoader';
 import { Text } from '@/components/Text';
 import { Input } from '@/components/Input';
 import { eraAuth } from '@/lib/auth-client';
@@ -89,14 +90,11 @@ export default function SignInScreen() {
           }}
         />
 
-        {/* The pending beat, kept calm: a small themed indicator beside a quiet
+        {/* The pending beat, kept calm: Ovi's whisper orb breathing beside a quiet
             line, rather than a bare spinner floating on its own. */}
         {sending ? (
           <View style={styles.pending}>
-            <ActivityIndicator color={colors.secondary} size="small" />
-            <Text variant="caption" size="footnote" color={colors.secondary}>
-              Sending your link…
-            </Text>
+            <OviLoader variant="inline" caption="Sending your link…" />
           </View>
         ) : null}
 

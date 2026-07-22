@@ -3,13 +3,14 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { layout, motion as motionToken } from '@era/tokens';
+import { layout } from '@era/tokens';
 import { Text } from '../Text';
 import { strings } from '@era/core/strings';
-import { pressProps, transitionFor, viewTransition } from '../../lib/motion';
+import { pressProps, viewTransition } from '../../lib/motion';
 import { trackFirstOnce } from '../../lib/analytics';
 import { useSession } from '../../lib/auth-client';
 import type { ItemWithDisplay } from '../items';
+import { OviToast, TOAST_DISMISS_MS } from '../ovi';
 import { CanvasStage } from './CanvasStage';
 import { ClosetDrawer } from './ClosetDrawer';
 import { ItemControlBar } from './ItemControlBar';
@@ -85,20 +86,6 @@ const drawerSpacerStyle: CSSProperties = {
   flexShrink: 0,
 };
 
-const toastStyle: CSSProperties = {
-  position: 'fixed',
-  left: '50%',
-  bottom: 'calc(var(--space-8) + env(safe-area-inset-bottom))',
-  paddingInline: 'var(--space-4)',
-  paddingBlock: 'var(--space-3)',
-  borderRadius: 'var(--radius-input)',
-  background: 'var(--color-surface)',
-  border: '1px solid var(--color-hairline)',
-  boxShadow: 'var(--shadow-e3)',
-  zIndex: 70,
-};
-
-const TOAST_MS = motionToken.durations.maxMs * 8;
 
 /**
  * The outfit canvas: a full-screen stage over a closet drawer. Pull pieces from
@@ -172,7 +159,7 @@ export function OutfitCanvas({ outfitId }: OutfitCanvasProps) {
 
   useEffect(() => {
     if (!toast) return;
-    const handle = setTimeout(() => setToast(null), TOAST_MS);
+    const handle = setTimeout(() => setToast(null), TOAST_DISMISS_MS);
     return () => clearTimeout(handle);
   }, [toast]);
 
@@ -352,19 +339,10 @@ export function OutfitCanvas({ outfitId }: OutfitCanvasProps) {
 
       <AnimatePresence>
         {toast ? (
-          <motion.div
-            key={toast}
-            role="status"
-            style={toastStyle}
-            initial={{ opacity: 0, x: '-50%', y: reduced ? 0 : 8 }}
-            animate={{ opacity: 1, x: '-50%', y: 0 }}
-            exit={{ opacity: 0, x: '-50%', y: reduced ? 0 : 8 }}
-            transition={transitionFor(motionToken.springs.gentle, reduced)}
-          >
-            <Text variant="ui" size="footnote" style={{ color: 'var(--color-text)' }}>
-              {toast}
-            </Text>
-          </motion.div>
+          <OviToast
+            message={toast}
+            variant={toast === strings.errors.generic ? 'error' : 'success'}
+          />
         ) : null}
       </AnimatePresence>
     </main>

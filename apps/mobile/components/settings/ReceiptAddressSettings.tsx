@@ -25,8 +25,9 @@ import { strings } from '@era/core/strings';
 import { layout, radii, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { OviLoader } from '@/components/OviLoader';
 import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
@@ -154,7 +155,7 @@ export function ReceiptAddressSettings({ onToast }: ReceiptAddressSettingsProps)
         >
           {copy.regenerateCta}
         </Text>
-        {regenerating ? <ActivityIndicator color={colors.secondary} /> : null}
+        {regenerating ? <OviLoader variant="inline" /> : null}
       </Press>
     </View>
   );

@@ -20,11 +20,12 @@ import { strings } from '@era/core/strings';
 import { layout, radii, rnShadow, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Image, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
 import { Input } from '@/components/Input';
+import { OviLoader } from '@/components/OviLoader';
 import { Text } from '@/components/Text';
 import { useTheme } from '@/lib/theme';
 
@@ -132,7 +133,7 @@ export function ConfirmItem({ itemId, vision, onSaved }: ConfirmItemProps) {
   if (!item || !draft) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator color={colors.text} />
+        <OviLoader variant="page" />
       </View>
     );
   }

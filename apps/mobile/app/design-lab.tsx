@@ -55,9 +55,13 @@ import Animated, {
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Chip } from '@/components/Chip';
+import { FailedLoad } from '@/components/FailedLoad';
 import { GlassPanel } from '@/components/GlassPanel';
 import { Input } from '@/components/Input';
 import { OviFab } from '@/components/OviFab';
+import { OviLoader } from '@/components/OviLoader';
+import { Skeleton } from '@/components/Skeleton';
+import { Toast, type ToastVariant } from '@/components/closet/Toast';
 import { QuizFlow } from '@/components/quiz';
 import { ActionRail, Attribution } from '@/components/feed';
 import { OviOrb, OviSuggestion, RevealStage, type OviOrbState } from '@/components/ovi';
@@ -280,6 +284,10 @@ export default function DesignLabScreen() {
 
         <Section title="Motion playground">
           <MotionPlayground />
+        </Section>
+
+        <Section title="Waiting moments">
+          <TwoUp render={() => <WaitingMomentsColumn />} />
         </Section>
 
         <Section title="Glass over busy imagery">
@@ -1083,6 +1091,81 @@ function ComponentsColumn() {
 }
 
 /**
+ * WaitingMomentsColumn — every D-WAIT surface in one island: the two orb
+ * loaders, the three shimmering skeleton variants, both toast variants (error +
+ * success, fired by buttons into a local relative host), and the editorial
+ * failed-load state. Reduced motion is noted — the OS setting drives it, so the
+ * lab shows the live behaviour rather than a forced toggle.
+ */
+function WaitingMomentsColumn() {
+  const { colors } = useTheme();
+  const reduced = useReducedMotionSafe();
+  const [toast, setToast] = useState<string | null>(null);
+  const [toastVariant, setToastVariant] = useState<ToastVariant>('default');
+
+  const fire = (variant: ToastVariant, message: string) => {
+    setToastVariant(variant);
+    setToast(message);
+  };
+
+  return (
+    // Relative host so the absolutely-positioned Toast pins to this column.
+    <View style={styles.waitHost}>
+      <View style={styles.stack}>
+        <LabLabel>Ovi loaders</LabLabel>
+        <OviLoader variant="inline" caption="Loading" />
+        <OviLoader variant="page" caption="One moment…" />
+
+        <LabLabel>Skeletons</LabLabel>
+        <Skeleton variant="text" style={styles.waitSkeletonText} />
+        <View style={styles.rowWrap}>
+          <View style={styles.waitSkeletonCard}>
+            <Skeleton variant="card" />
+          </View>
+          <View style={styles.waitSkeletonCard}>
+            <Skeleton variant="card" />
+          </View>
+        </View>
+        <Skeleton variant="row" />
+
+        <LabLabel>Toasts</LabLabel>
+        <Button
+          label="Fire error toast"
+          variant="secondary"
+          onPress={() => fire('error', strings.errors.transient)}
+        />
+        <Button
+          label="Fire success toast"
+          variant="secondary"
+          onPress={() => fire('success', 'Saved')}
+        />
+
+        <LabLabel>Failed load</LabLabel>
+        <FailedLoad onRetry={() => fire('default', 'Retried')} />
+
+        <Text variant="caption" size="footnote" color={colors.secondary}>
+          {reduced
+            ? 'Reduced motion ON: shimmer off, static skeletons, no orb pulse.'
+            : 'Reduced motion OFF: skeletons shimmer, orb breathes, success blooms.'}
+        </Text>
+      </View>
+
+      <Toast message={toast} onHide={() => setToast(null)} bottom={spacing.s2} variant={toastVariant} />
+    </View>
+  );
+}
+
+/** A small uppercase lab sub-label, matching the section-title treatment. */
+function LabLabel({ children }: { readonly children: string }) {
+  const { colors } = useTheme();
+  return (
+    <Text variant="ui" size="footnote" weight={600} color={colors.secondaryStrong} style={styles.sectionTitle}>
+      {children}
+    </Text>
+  );
+}
+
+/**
  * ItemEngineMatrix — the ItemSurface engine across its full state space.
  *
  * BOTH modes as light|dark ThemeScope islands; within each, the six garment
@@ -1352,6 +1435,11 @@ const styles = StyleSheet.create({
   stack: { gap: spacing.s2 },
   rowWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.s2, alignItems: 'center' },
   orbStateRow: { gap: spacing.s1 },
+  // D-WAIT lab: a relative host so the Toast pins to the column, plus skeleton
+  // sizing so the text line and the two demo cards read at a glance.
+  waitHost: { position: 'relative', paddingBottom: spacing.s8 },
+  waitSkeletonText: { width: '70%' },
+  waitSkeletonCard: { flex: 1 },
   orbStateLabel: { textTransform: 'uppercase', letterSpacing: 1 },
   orbSizeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.s4 },
   paletteRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.s2 },

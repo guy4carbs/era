@@ -16,11 +16,13 @@ import { strings } from '@era/core/strings';
 import { layout, spacing } from '@era/tokens';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, SectionList, StyleSheet, View } from 'react-native';
+import { SectionList, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
+import { FailedLoad } from '@/components/FailedLoad';
+import { Skeleton } from '@/components/Skeleton';
 import { PageHeader } from '@/components/PageHeader';
 import { ScreenEntrance } from '@/components/ScreenEntrance';
 import { StaggerItem } from '@/components/StaggerItem';
@@ -197,11 +199,11 @@ export default function ClosetScreen() {
   const toastBottom = layout.tabBarHeight + insets.bottom + spacing.s3;
 
   if (state === 'loading') {
+    // The closet deserves skeletons — a 2-col grid of shimmering cream cards
+    // where the gallery will land, so the shape is present while it fetches.
     return (
       <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
-        <View style={styles.centered}>
-          <ActivityIndicator color={colors.text} />
-        </View>
+        <ClosetSkeletonGrid columns={columns} rowGap={rowGap} />
       </SafeAreaView>
     );
   }
@@ -210,10 +212,7 @@ export default function ClosetScreen() {
     return (
       <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]} edges={['top']}>
         <View style={styles.centered}>
-          <Text variant="body" color={colors.secondaryStrong} style={styles.centerCopy}>
-            {strings.errors.generic}
-          </Text>
-          <Button label={strings.errors.retry} variant="secondary" onPress={load} />
+          <FailedLoad onRetry={load} />
         </View>
       </SafeAreaView>
     );
@@ -327,6 +326,29 @@ export default function ClosetScreen() {
         </TiltFieldProvider>
       </SafeAreaView>
     </ScreenEntrance>
+  );
+}
+
+/**
+ * The closet's loading state: a few rows of shimmering cream `card` skeletons in
+ * the live column count, laid out on the same row/cell grid as the gallery so the
+ * shape is present while items fetch. Reduced motion renders them static (the
+ * Skeleton handles that).
+ */
+const SKELETON_ROWS = 3;
+function ClosetSkeletonGrid({ columns, rowGap }: { readonly columns: number; readonly rowGap: number }) {
+  return (
+    <View style={styles.skeletonGrid}>
+      {Array.from({ length: SKELETON_ROWS }, (_, r) => (
+        <View key={r} style={[styles.row, { marginBottom: rowGap }]}>
+          {Array.from({ length: columns }, (_, c) => (
+            <View key={c} style={styles.cell}>
+              <Skeleton variant="card" />
+            </View>
+          ))}
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -448,6 +470,11 @@ const styles = StyleSheet.create({
     gap: spacing.s3,
   },
   list: {
+    paddingHorizontal: layout.grid.mobileMargin,
+    paddingTop: spacing.s8,
+  },
+  // Loading skeletons sit on the same margin/rhythm as the real gallery list.
+  skeletonGrid: {
     paddingHorizontal: layout.grid.mobileMargin,
     paddingTop: spacing.s8,
   },

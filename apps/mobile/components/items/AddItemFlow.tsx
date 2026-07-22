@@ -28,9 +28,10 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { OviLoader } from '@/components/OviLoader';
 import { Input } from '@/components/Input';
 import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
@@ -310,13 +311,9 @@ function SourceCard({ label, onPress }: { readonly label: string; readonly onPre
 
 /** A centered spinner with an Ovi progress line (uploading / processing). */
 function Progress({ line }: { readonly line: string }) {
-  const { colors } = useTheme();
   return (
     <View style={styles.centered}>
-      <ActivityIndicator color={colors.text} />
-      <Text variant="body" color={colors.secondaryStrong} style={{ textAlign: 'center' }}>
-        {line}
-      </Text>
+      <OviLoader variant="page" caption={line} />
     </View>
   );
 }

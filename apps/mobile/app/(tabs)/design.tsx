@@ -12,11 +12,13 @@ import { strings } from '@era/core/strings';
 import { layout, spacing } from '@era/tokens';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
+import { FailedLoad } from '@/components/FailedLoad';
+import { OviLoader } from '@/components/OviLoader';
 import { PageHeader } from '@/components/PageHeader';
 import { ScreenEntrance } from '@/components/ScreenEntrance';
 import { Text } from '@/components/Text';
@@ -116,7 +118,7 @@ export default function DesignScreen() {
   if (state === 'loading') {
     return (
       <SafeAreaView style={[styles.screen, styles.centered, { backgroundColor: colors.bg }]} edges={['top']}>
-        <ActivityIndicator color={colors.text} />
+        <OviLoader variant="page" />
       </SafeAreaView>
     );
   }
@@ -124,10 +126,7 @@ export default function DesignScreen() {
   if (state === 'error') {
     return (
       <SafeAreaView style={[styles.screen, styles.centered, { backgroundColor: colors.bg }]} edges={['top']}>
-        <Text variant="body" color={colors.secondaryStrong} style={styles.centerCopy}>
-          {strings.errors.generic}
-        </Text>
-        <Button label={strings.errors.retry} variant="secondary" onPress={load} />
+        <FailedLoad onRetry={load} />
       </SafeAreaView>
     );
   }

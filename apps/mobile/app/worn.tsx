@@ -15,10 +15,11 @@ import { strings } from '@era/core/strings';
 import { spacing } from '@era/tokens';
 import { Redirect, Stack } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Button } from '@/components/Button';
+import { FailedLoad } from '@/components/FailedLoad';
+import { OviLoader } from '@/components/OviLoader';
 import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { useSession } from '@/lib/auth-client';
@@ -83,7 +84,7 @@ export default function WornScreen() {
     return (
       <SafeAreaView style={[styles.centered, { backgroundColor: colors.bg }]}>
         <Stack.Screen options={{ headerShown: true, title: strings.wear.calendar.title }} />
-        <ActivityIndicator color={colors.text} />
+        <OviLoader variant="page" />
       </SafeAreaView>
     );
   }
@@ -118,19 +119,10 @@ export default function WornScreen() {
 
         {state === 'loading' ? (
           <View style={styles.centeredBlock}>
-            <ActivityIndicator color={colors.text} />
+            <OviLoader variant="page" />
           </View>
         ) : state === 'error' ? (
-          <View style={styles.centeredBlock}>
-            <Text variant="body" color={colors.secondaryStrong} style={{ textAlign: 'center' }}>
-              {strings.errors.generic}
-            </Text>
-            <Button
-              label={strings.errors.retry}
-              variant="secondary"
-              onPress={() => setReloadKey((key) => key + 1)}
-            />
-          </View>
+          <FailedLoad onRetry={() => setReloadKey((key) => key + 1)} />
         ) : recap !== null && byDay !== null && payload !== null ? (
           <>
             <MonthlyRecapCard recap={recap} items={payload.items} />

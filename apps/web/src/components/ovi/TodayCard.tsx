@@ -7,7 +7,7 @@ import type { ProposedOutfit } from '@era/core/ovi';
 import { useSession } from '../../lib/auth-client';
 import { localToday } from '../../lib/local-date';
 import { Text } from '../Text';
-import { OviToast, OVI_TOAST_MS } from './OviToast';
+import { OviToast, TOAST_DISMISS_MS } from './OviToast';
 import { RevealStage } from './RevealStage';
 import { fetchOviToday } from './ovi-actions';
 import { useOviChat } from './OviChatProvider';
@@ -128,7 +128,7 @@ export function TodayCard() {
 
   useEffect(() => {
     if (!toast) return;
-    const handle = setTimeout(() => setToast(null), OVI_TOAST_MS);
+    const handle = setTimeout(() => setToast(null), TOAST_DISMISS_MS);
     return () => clearTimeout(handle);
   }, [toast]);
 

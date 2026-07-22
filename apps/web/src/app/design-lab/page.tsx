@@ -28,7 +28,16 @@ import {
 import { Text } from '../../components/Text';
 import { PageHeader } from '../../components/PageHeader';
 import { glassSurfaceStyle } from '../../components/GlassPanel';
-import { RevealStage, OviOrb, OviSuggestion, type OviOrbState } from '../../components/ovi';
+import { FailedLoad } from '../../components/FailedLoad';
+import { Skeleton } from '../../components/Skeleton';
+import {
+  RevealStage,
+  OviOrb,
+  OviLoader,
+  OviSuggestion,
+  OviToast,
+  type OviOrbState,
+} from '../../components/ovi';
 import { ShopCard } from '../../components/shop';
 import { FeedCard } from '../../components/feed';
 import { QuizFlow, Reveal } from '../../components/quiz';
@@ -532,6 +541,84 @@ function OviOrbIsland() {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+/**
+ * Waiting & failure moments (D-WAIT), one specimen block per island. The inline
+ * and page OrbLoaders, the three shimmering skeleton variants, the error/success
+ * toasts behind trigger buttons, and the editorial failed-load state — all on the
+ * same tokens the app uses. Skeletons shimmer their warm-cream sweep; the toasts
+ * are re-mounted per press (keyed) so the entrance replays. Reduced motion turns
+ * every shimmer/pulse off and holds the toasts static (noted below the block).
+ */
+function WaitingMomentsIsland() {
+  const reduced = useReducedMotion();
+  // Each press bumps a key so the keyed toast re-mounts and its entrance replays.
+  const [errorKey, setErrorKey] = useState(0);
+  const [successKey, setSuccessKey] = useState(0);
+
+  const labelStyle: CSSProperties = { color: 'var(--color-secondary)' };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+      {/* OrbLoaders — the inline (whisper) and page (corner) waiting states. */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+        <Text variant="caption" as="span" size="footnote" style={labelStyle}>
+          OrbLoader — inline / page
+        </Text>
+        <OviLoader variant="inline" caption="Loading…" />
+        <OviLoader variant="page" label="Loading" />
+      </div>
+
+      {/* The three skeleton variants, shimmering in warm cream. */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+        <Text variant="caption" as="span" size="footnote" style={labelStyle}>
+          Skeleton — text / card / row
+        </Text>
+        <Skeleton variant="text" />
+        <div style={{ maxWidth: 160 }}>
+          <Skeleton variant="card" />
+        </div>
+        <Skeleton variant="row" />
+      </div>
+
+      {/* Toast triggers — error (rust hairline) + success (glow bloom). Both keyed
+          so a press replays the entrance; each auto-dismisses on the 2500 cadence
+          in the app, but here they hold so the grammar stays inspectable. */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+        <Text variant="caption" as="span" size="footnote" style={labelStyle}>
+          Toasts — error / success
+        </Text>
+        <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+          <Button variant="secondary" onClick={() => setErrorKey((k) => k + 1)}>
+            Show error
+          </Button>
+          <Button variant="secondary" onClick={() => setSuccessKey((k) => k + 1)}>
+            Show success
+          </Button>
+        </div>
+        {errorKey > 0 ? (
+          <OviToast key={`err-${errorKey}`} message={strings.errors.transient} variant="error" />
+        ) : null}
+        {successKey > 0 ? (
+          <OviToast key={`ok-${successKey}`} message={strings.design.outfitSaved} variant="success" />
+        ) : null}
+      </div>
+
+      {/* The editorial failed-load state (Fraunces line + one retry). */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+        <Text variant="caption" as="span" size="footnote" style={labelStyle}>
+          Failed-load editorial state
+        </Text>
+        <FailedLoad onRetry={noop} />
+      </div>
+
+      <Text variant="caption" as="p" size="footnote" style={labelStyle}>
+        Reduced motion{reduced ? ' (active)' : ''}: skeletons hold static (no
+        sweep), the orb stops breathing, and toasts fade without the glow bloom.
+      </Text>
     </div>
   );
 }
@@ -1561,6 +1648,13 @@ export default function DesignLabPage() {
           note="Ovi's living presence — a dimensional warm-cream sphere (radial core, 1px taupe rim, lit highlight arc) carrying the §3 glow. Three sizes (corner 44 / header 28 / panel 64) × three states: IDLE breathes on the 3s heartbeat, THINKING adds a slow rotating glow shimmer with a quicker breath, SPEAKING pulses a touch larger on the reply cadence. Interactive orbs (the corner FAB, the panel) also lean toward the pointer. Under reduced motion every orb holds static at base glow opacity — no breath, shimmer, pulse, or lean."
         >
           <IslandPair content={() => <OviOrbIsland />} />
+        </Section>
+
+        <Section
+          title="Waiting moments"
+          note="Every waiting and failure beat (D-WAIT). Loading is Ovi's orb breathing — inline (20px whisper, optional caption) or page (44px corner, centred) — never a spinner. Skeletons are warm-cream surface blocks (NEVER gray) with a slow 135° sheen sweep on the 1800ms loop; content replaces them with a 150ms fade, no pop. Toasts auto-dismiss on the 2500ms cadence: the error variant carries a muted-rust hairline (calm, no red banner, no exclamation), success blooms a small accent glow on entrance. The failed-load state is an editorial Fraunces line + one retry. Reduced motion: shimmer off, static orb, toasts fade without the bloom."
+        >
+          <IslandPair content={() => <WaitingMomentsIsland />} />
         </Section>
 
         <Section

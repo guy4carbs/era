@@ -16,10 +16,12 @@ import { radii, spacing } from '@era/tokens';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/Text';
 import { Button } from '@/components/Button';
+import { FailedLoad } from '@/components/FailedLoad';
+import { OviLoader } from '@/components/OviLoader';
 import { GlassSheet } from '@/components/GlassSheet';
 import { useTheme } from '@/lib/theme';
 
@@ -83,19 +85,10 @@ export function ShopSimilarSheet({ postId, onClose }: ShopSimilarSheetProps) {
 
       {load.kind === 'loading' ? (
         <View style={styles.centered}>
-          <ActivityIndicator color={colors.text} />
+          <OviLoader variant="page" />
         </View>
       ) : load.kind === 'error' ? (
-        <View style={styles.empty}>
-          <Text variant="body" color={colors.secondaryStrong} style={{ textAlign: 'center' }}>
-            {strings.errors.generic}
-          </Text>
-          <Button
-            label={strings.errors.retry}
-            variant="secondary"
-            onPress={() => setReloadKey((key) => key + 1)}
-          />
-        </View>
+        <FailedLoad onRetry={() => setReloadKey((key) => key + 1)} />
       ) : empty ? (
         <View style={styles.empty}>
           <Text variant="body" color={colors.secondaryStrong} style={{ textAlign: 'center' }}>

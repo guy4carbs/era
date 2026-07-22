@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from 'motion/react';
 import { layout } from '@era/tokens';
 import { Text } from '../Text';
 import { strings } from '@era/core/strings';
+import { OviLoader } from '../ovi/OviLoader';
 import { pressProps } from '../../lib/motion';
 import { GlassSheet } from '../GlassSheet';
 import { Chip } from '../Chip';
@@ -127,7 +128,9 @@ export function ClosetDrawer({ items, placedIds, onAdd }: ClosetDrawerProps) {
       </div>
 
       {items === null ? (
-        <Text variant="body" as="p" style={{ margin: 0, padding: 'var(--space-6) 0', color: 'var(--color-secondary-strong)' }}>Loading…</Text>
+        <div style={{ padding: 'var(--space-6) 0' }}>
+          <OviLoader variant="inline" label={strings.closet.subtitle} />
+        </div>
       ) : visible.length === 0 ? (
         <Text variant="body" as="p" style={{ margin: 0, padding: 'var(--space-6) 0', color: 'var(--color-secondary-strong)' }}>{strings.closet.empty}</Text>
       ) : (

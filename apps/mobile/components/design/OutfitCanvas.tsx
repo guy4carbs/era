@@ -20,13 +20,14 @@ import { strings } from '@era/core/strings';
 import { layout, radii, spacing } from '@era/tokens';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSharedValue } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { captureRef } from 'react-native-view-shot';
 
 import { Button } from '@/components/Button';
+import { OviLoader } from '@/components/OviLoader';
 import { Text } from '@/components/Text';
 import { Toast } from '@/components/closet';
 import { useCollageExport } from '@/components/share';
@@ -398,7 +399,7 @@ export function OutfitCanvas({ outfitId: initialOutfitId }: OutfitCanvasProps) {
   if (loading) {
     return (
       <SafeAreaView style={[styles.screen, styles.centered, { backgroundColor: colors.bg }]}>
-        <ActivityIndicator color={colors.text} />
+        <OviLoader variant="page" />
       </SafeAreaView>
     );
   }

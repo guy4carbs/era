@@ -23,10 +23,11 @@ import { type TurnaroundRender, type TurnaroundState } from '@era/core/turnaroun
 import { layout, motion, radii, rnShadow, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { Button } from '@/components/Button';
+import { OviLoader } from '@/components/OviLoader';
 import { GlassSheet } from '@/components/GlassSheet';
 import { OviSuggestion } from '@/components/ovi';
 import { Text } from '@/components/Text';
@@ -509,7 +510,7 @@ function TurnaroundHero({
       <StaticHero item={item} active={active} />
       {phase === 'generating' ? (
         <View style={styles.turnaroundRow}>
-          <ActivityIndicator color={colors.secondaryStrong} />
+          <OviLoader variant="inline" />
           <Text variant="caption" size="subhead" color={colors.secondaryStrong}>
             {strings.turnaround.generating}
           </Text>

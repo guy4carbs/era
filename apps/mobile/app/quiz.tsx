@@ -7,9 +7,10 @@
  * sign-in. Skipping and finishing both land the user on the feed.
  */
 import { Redirect, useRouter } from 'expo-router';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { OviLoader } from '@/components/OviLoader';
 import { QuizFlow } from '@/components/quiz';
 import { useSession } from '@/lib/auth-client';
 import { useTheme } from '@/lib/theme';
@@ -23,7 +24,7 @@ export default function QuizRoute() {
   if (isPending) {
     return (
       <SafeAreaView style={[styles.centered, { backgroundColor: colors.bg }]}>
-        <ActivityIndicator color={colors.text} />
+        <OviLoader variant="page" />
       </SafeAreaView>
     );
   }

@@ -20,10 +20,11 @@ import { strings } from '@era/core/strings';
 import { spacing } from '@era/tokens';
 import { Redirect, Stack, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
+import { OviLoader } from '@/components/OviLoader';
 import { PlanCard } from '@/components/plus';
 import { Text } from '@/components/Text';
 import { useSession } from '@/lib/auth-client';
@@ -152,7 +153,7 @@ export default function PaywallRoute() {
   if (isPending) {
     return (
       <SafeAreaView style={[styles.centered, { backgroundColor: colors.bg }]}>
-        <ActivityIndicator color={colors.text} />
+        <OviLoader variant="page" />
       </SafeAreaView>
     );
   }
@@ -180,7 +181,7 @@ export default function PaywallRoute() {
           <ManagementState onManage={openManageSubscription} />
         ) : phase === 'loading' ? (
           <View style={styles.centeredBlock}>
-            <ActivityIndicator color={colors.text} />
+            <OviLoader variant="page" />
           </View>
         ) : phase === 'dormant' ? (
           <View style={styles.messageBlock}>

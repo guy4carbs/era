@@ -1,7 +1,8 @@
 import { Redirect } from 'expo-router';
-import { ActivityIndicator, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { OviLoader } from '@/components/OviLoader';
 import { useSession } from '@/lib/auth-client';
 import { useTheme } from '@/lib/theme';
 
@@ -14,7 +15,7 @@ export default function Index() {
   if (isPending) {
     return (
       <SafeAreaView style={[styles.centered, { backgroundColor: colors.bg }]}>
-        <ActivityIndicator color={colors.text} />
+        <OviLoader variant="page" />
       </SafeAreaView>
     );
   }

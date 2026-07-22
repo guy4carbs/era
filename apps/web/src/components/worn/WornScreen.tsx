@@ -7,6 +7,8 @@ import { strings } from '@era/core/strings';
 import { buildMonthlyRecap } from '@era/core/wear-stats';
 import { pressProps } from '../../lib/motion';
 import { Container } from '../Container';
+import { FailedLoad } from '../FailedLoad';
+import { OviLoader } from '../ovi';
 import { Text } from '../Text';
 import { localMonthToday } from '../../lib/local-date';
 import { MonthlyRecapCard } from './MonthlyRecapCard';
@@ -50,6 +52,8 @@ export function WornScreen() {
   const reduced = useReducedMotion();
   const [month, setMonth] = useState<string>(localMonthToday);
   const [state, setState] = useState<LoadState>({ status: 'loading' });
+  // Bumping this re-runs the fetch effect — the failed-load retry handle.
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -67,7 +71,7 @@ export function WornScreen() {
     return () => {
       active = false;
     };
-  }, [month]);
+  }, [month, reloadKey]);
 
   const data = state.status === 'ready' ? state.data : null;
 
@@ -134,13 +138,11 @@ export function WornScreen() {
         </header>
 
         {state.status === 'error' ? (
-          <Text variant="body" size="subhead" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
-            {strings.errors.generic}
-          </Text>
+          // Page-level load failure → the editorial failed-load state with retry,
+          // in the shared D-WAIT grammar (Fraunces line + one action).
+          <FailedLoad onRetry={() => setReloadKey((k) => k + 1)} />
         ) : state.status === 'loading' ? (
-          <Text variant="body" size="subhead" as="p" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
-            {strings.wear.calendar.title}…
-          </Text>
+          <OviLoader variant="page" label={strings.wear.calendar.title} />
         ) : (
           <>
             <MonthlyRecapCard recap={recap} itemsById={itemsById} monthLabel={monthLabel} />

@@ -8,7 +8,7 @@ import { layout, motion as motionToken, typeRamp } from '@era/tokens';
 import { Text } from '../../../components/Text';
 import { strings } from '@era/core/strings';
 import { suggestForDesign } from '@era/core/ovi';
-import { Button } from '../../../components';
+import { Button, FailedLoad } from '../../../components';
 import {
   EraAssignSheet,
   EraList,
@@ -16,9 +16,9 @@ import {
   type EraSummary,
   type OutfitSummary,
 } from '../../../components/design';
-import { OviSuggestionHost } from '../../../components/ovi';
+import { OviLoader, OviSuggestionHost, OviToast, TOAST_DISMISS_MS } from '../../../components/ovi';
 import { toOviItems, type OviItemSource } from '../../../components/ovi/to-ovi-items';
-import { transitionFor, viewTransition } from '../../../lib/motion';
+import { viewTransition } from '../../../lib/motion';
 import { PageHeader } from '../../../components/PageHeader';
 import { useSession } from '../../../lib/auth-client';
 
@@ -83,22 +83,6 @@ const buildPillCss = [
   `@media(min-width:${layout.breakpoints.lg}px){.era-build-pill{left:calc(var(--rail-width) + var(--space-4))}}`,
 ].join('\n');
 
-const toastStyle: CSSProperties = {
-  position: 'fixed',
-  left: '50%',
-  bottom: 'calc(var(--space-16) + env(safe-area-inset-bottom))',
-  paddingInline: 'var(--space-4)',
-  paddingBlock: 'var(--space-3)',
-  borderRadius: 'var(--radius-input)',
-  background: 'var(--color-surface)',
-  border: '1px solid var(--color-hairline)',
-  color: 'var(--color-text)',
-  fontSize: typeRamp.footnote.rem,
-  boxShadow: 'var(--shadow-e3)',
-  zIndex: 70,
-};
-
-const TOAST_MS = motionToken.durations.maxMs * 8;
 
 /** Accent build pill that opens a fresh canvas. */
 function BuildPill({ onClick }: { onClick: () => void }) {
@@ -132,7 +116,6 @@ function BuildPill({ onClick }: { onClick: () => void }) {
  */
 export function DesignScreen({ feedEnabled }: { feedEnabled: boolean }) {
   const router = useRouter();
-  const reduced = useReducedMotion();
   const { data: session, isPending } = useSession();
 
   const [outfits, setOutfits] = useState<OutfitSummary[] | null>(null);
@@ -141,6 +124,7 @@ export function DesignScreen({ feedEnabled }: { feedEnabled: boolean }) {
   const [assignTarget, setAssignTarget] = useState<OutfitSummary | null>(null);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   const loadOutfits = useCallback(async () => {
     try {
@@ -148,8 +132,13 @@ export function DesignScreen({ feedEnabled }: { feedEnabled: boolean }) {
       if (!res.ok) throw new Error('outfits fetch failed');
       const body = (await res.json()) as { outfits: OutfitSummary[] };
       setOutfits(body.outfits);
+      setLoadFailed(false);
     } catch {
+      // The outfits list is the surface's primary data — a failure here is a
+      // page-level load failure, surfaced as the editorial failed-load state
+      // (not silently degraded to empty, which would read as "no looks yet").
       setOutfits([]);
+      setLoadFailed(true);
     }
   }, []);
 
@@ -177,16 +166,20 @@ export function DesignScreen({ feedEnabled }: { feedEnabled: boolean }) {
     }
   }, []);
 
-  useEffect(() => {
-    if (isPending || !session) return;
+  const reloadAll = useCallback(() => {
     void loadOutfits();
     void loadEras();
     void loadItems();
-  }, [isPending, session, loadOutfits, loadEras, loadItems]);
+  }, [loadOutfits, loadEras, loadItems]);
+
+  useEffect(() => {
+    if (isPending || !session) return;
+    reloadAll();
+  }, [isPending, session, reloadAll]);
 
   useEffect(() => {
     if (!toast) return;
-    const handle = setTimeout(() => setToast(null), TOAST_MS);
+    const handle = setTimeout(() => setToast(null), TOAST_DISMISS_MS);
     return () => clearTimeout(handle);
   }, [toast]);
 
@@ -290,7 +283,16 @@ export function DesignScreen({ feedEnabled }: { feedEnabled: boolean }) {
     return (
       <main style={screenStyle}>
         <PageHeader title="Design" subtitle={strings.design.subtitle} />
-        <Text variant="body" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>Loading…</Text>
+        <OviLoader variant="page" label={strings.design.subtitle} />
+      </main>
+    );
+  }
+
+  if (loadFailed) {
+    return (
+      <main style={screenStyle}>
+        <PageHeader title="Design" subtitle={strings.design.subtitle} />
+        <FailedLoad onRetry={reloadAll} />
       </main>
     );
   }
@@ -343,17 +345,10 @@ export function DesignScreen({ feedEnabled }: { feedEnabled: boolean }) {
 
       <AnimatePresence>
         {toast ? (
-          <motion.div
-            key={toast}
-            role="status"
-            style={toastStyle}
-            initial={{ opacity: 0, x: '-50%', y: reduced ? 0 : 8 }}
-            animate={{ opacity: 1, x: '-50%', y: 0 }}
-            exit={{ opacity: 0, x: '-50%', y: reduced ? 0 : 8 }}
-            transition={transitionFor(motionToken.springs.gentle, reduced)}
-          >
-            {toast}
-          </motion.div>
+          <OviToast
+            message={toast}
+            variant={toast === strings.errors.generic ? 'error' : 'success'}
+          />
         ) : null}
       </AnimatePresence>
     </main>

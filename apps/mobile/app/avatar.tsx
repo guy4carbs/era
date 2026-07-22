@@ -17,9 +17,10 @@ import { strings } from '@era/core/strings';
 import { spacing } from '@era/tokens';
 import { Redirect, Stack, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Image, StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { OviLoader } from '@/components/OviLoader';
 import { AvatarPhotoStep, ConsentScreen } from '@/components/avatar';
 import {
   PlusRequiredError,
@@ -85,7 +86,7 @@ export default function AvatarRoute() {
     return (
       <SafeAreaView style={[styles.centered, { backgroundColor: colors.bg }]}>
         <Stack.Screen options={{ presentation: 'modal' }} />
-        <ActivityIndicator color={colors.text} />
+        <OviLoader variant="page" />
       </SafeAreaView>
     );
   }
@@ -121,15 +122,11 @@ export default function AvatarRoute() {
   );
 }
 
-/** A centered spinner with the patient creation line. */
+/** Ovi breathing with the patient creation line — the avatar is being built. */
 function Progress({ line }: { readonly line: string }) {
-  const { colors } = useTheme();
   return (
     <View style={styles.centeredBlock}>
-      <ActivityIndicator color={colors.text} />
-      <Text variant="body" color={colors.secondaryStrong} style={{ textAlign: 'center' }}>
-        {line}
-      </Text>
+      <OviLoader variant="page" caption={line} />
     </View>
   );
 }
