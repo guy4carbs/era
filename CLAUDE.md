@@ -103,6 +103,51 @@ geometry in cream). On web, render it through the **`EraMark`** component
 
 These rules are the seed of the future **Brand Guidelines** doc.
 
+## Email system
+
+Two layers, deliberately separate:
+
+- **Rendering** lives in `packages/email` (`@era/email`) — React Email. Email-safe
+  tokens in `packages/email/src/tokens.ts` are **derived at import time from
+  `@era/tokens`** (asserted 1:1 by `tokens.test.ts`); never re-type a hex there.
+  `BaseEmail` is the layout every template extends: 600px max width, 48px padding
+  (`spacing.s12`), the `era.` wordmark top center as a hosted 2x PNG
+  (`apps/web/public/brand/email/era-mark-email@2x.png` — ink on a **baked cream
+  field**, because Gmail force-invert darkens backgrounds but never inverts
+  images), hairline dividers, dark-mode metas + `prefers-color-scheme` block, a
+  `<Preview>` slot, an auto-generated plain-text alternative via `renderEmail`,
+  and the compliant footer (`strings.emails.footer` address; the unsubscribe link
+  renders only when a send passes `unsubscribeUrl` — marketing yes, transactional no).
+- **Sending** lives in `apps/web/src/lib/send-email.ts` — the raw-fetch Resend
+  transport with the dormant-credential pattern (`change-me-…` keys are not real),
+  suppression checks (`email-suppression.ts`), and the Svix-verified
+  bounce/complaint webhook. New templates render in `@era/email` and send through
+  this transport; don't build a second sender.
+
+**The sanctioned email exceptions:** email clients strip CSS vars and `@font-face`,
+so `packages/email` inlines palette-derived hex and uses the
+`Georgia, 'Times New Roman', serif` stack as the Fraunces stand-in (tuned in
+`emailType`). The design/font guards scan only `apps/*` by construction —
+`packages/email` sits outside them intentionally; the derivation tests are its guard.
+
+**Tooling:** `pnpm --filter @era/email dev` (react-email preview),
+`pnpm --filter @era/email send-test -- --template <name> --to <inbox>` (fires a
+real send with a real `RESEND_API_KEY`; prints the rendered HTML path when dormant).
+
+**Domain authentication (era.style, via Resend + Cloudflare)** — full runbook in
+`docs/ACTIVATION.md` §3:
+
+| Purpose | Type | Host / Name | Value |
+|---------|------|-------------|-------|
+| SPF | `TXT` | `send.era.style` | the exact `v=spf1 include:…` string Resend shows |
+| DKIM | `TXT`/`CNAME` | `resend._domainkey…` (Resend names it) | paste Resend's generated value verbatim |
+| DMARC | `TXT` | `_dmarc.era.style` | e.g. `v=DMARC1; p=none;` |
+
+All three records **DNS-only (grey cloud)** — mail-auth records must never be
+Cloudflare-proxied. Then Resend → Verify, create the API key, and set
+`RESEND_API_KEY` + `EMAIL_FROM='Era <hello@era.style>'` on Railway (and in local
+`.env` for send-tests). `EMAIL_FROM` must be an address on the verified domain.
+
 ## Commit convention
 
 Conventional commits: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, with an optional scope — e.g. `feat(closet): add garment tagging`.
