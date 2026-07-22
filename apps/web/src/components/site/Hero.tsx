@@ -1,21 +1,23 @@
 import { type CSSProperties } from 'react';
 import { strings } from '@era/core/strings';
 import { typeRamp } from '@era/tokens';
-import { Text, TextControlBoundary } from '../Text';
+import { Text } from '../Text';
 import { HeroGlow } from './HeroGlow';
+import { HeroTitle } from './HeroTitle';
+import { WaitlistForm } from './WaitlistForm';
 
 /**
- * Full-bleed landing hero: the promise in an editorial serif over a soft accent
- * bloom, with a single CTA that scrolls to the waitlist form. This is a Server
- * Component — only the glow bloom ({@link HeroGlow}) is a client island, so the
- * critical render stays lean. The CTA is a plain anchor (no JS) to `#waitlist`;
- * smooth-scroll is honoured (and disabled under reduced motion) by the global
- * `scroll-behavior` rule.
+ * Full-bleed landing hero: the promise as a two-line rising serif over a soft
+ * accent bloom, the elaboration in Geist, and the waitlist capture inline as the
+ * glass `bar`. Mostly a Server Component — only the glow bloom ({@link HeroGlow})
+ * and the waitlist form ({@link WaitlistForm}) are client islands; the LCP h1
+ * ({@link HeroTitle}) is fully server-rendered and rises via a pure CSS keyframe.
+ *
+ * The sub-line fades in after the title's two lines by reusing the same
+ * `.era-hero-line` entrance at the next stagger index — one token-derived
+ * cascade, no separate timing. Under reduced motion the entrance is a no-op.
  */
 
-// Display headline: fluid between the title1 and display steps, with the
-// display step's own line-height ratio (derived, so no literal is introduced).
-const displayLineHeight = typeRamp.display.lineHeight / typeRamp.display.px;
 const subLineHeight = typeRamp.title3.lineHeight / typeRamp.title3.px;
 
 const sectionStyle: CSSProperties = {
@@ -30,6 +32,7 @@ const sectionStyle: CSSProperties = {
   textAlign: 'center',
   paddingInline: 'var(--space-6)',
   paddingBlock: 'var(--space-16)',
+  background: 'var(--color-bg)',
 };
 
 const innerStyle: CSSProperties = {
@@ -48,15 +51,6 @@ const wordmarkStyle: CSSProperties = {
   color: 'var(--color-secondary-strong)',
 };
 
-// Display headline: the `display` role's fluid clamp handles size (opsz 144);
-// only the bespoke bits — margin reset, color, and the measure — live here.
-const titleStyle: CSSProperties = {
-  margin: 0,
-  lineHeight: displayLineHeight,
-  color: 'var(--color-text)',
-  maxWidth: '14ch',
-};
-
 const subStyle: CSSProperties = {
   margin: 0,
   fontSize: `clamp(${typeRamp.body.rem}, 2.5vw, ${typeRamp.title3.rem})`,
@@ -65,34 +59,11 @@ const subStyle: CSSProperties = {
   maxWidth: '46ch',
 };
 
-// Primary CTA styled as an anchor (native scroll, no JS) — mirrors the Button
-// primary surface: accent fill, ink label, e1 lift, and the sanctioned sheen.
-const ctaStyle: CSSProperties = {
-  position: 'relative',
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  overflow: 'hidden',
-  isolation: 'isolate',
-  minHeight: 'var(--touch-target-web)',
+// Constrain the inline waitlist bar to a comfortable single column.
+const formWrapStyle: CSSProperties = {
+  width: '100%',
+  maxWidth: 'var(--feed-col)',
   marginTop: 'var(--space-2)',
-  paddingInline: 'var(--space-6)',
-  borderRadius: 'var(--radius-input)',
-  background: 'var(--color-accent)',
-  color: 'var(--color-ink)',
-  fontSize: typeRamp.subhead.rem,
-  lineHeight: `${typeRamp.subhead.lineHeight}px`,
-  fontWeight: 600,
-  textDecoration: 'none',
-  boxShadow: 'var(--shadow-e1)',
-};
-
-const ctaSheenStyle: CSSProperties = {
-  position: 'absolute',
-  inset: 0,
-  pointerEvents: 'none',
-  zIndex: 1,
-  background: 'var(--sheen-gradient)',
 };
 
 export function Hero() {
@@ -103,20 +74,18 @@ export function Hero() {
         <Text variant="title" as="span" size="title3" style={wordmarkStyle}>
           Era
         </Text>
-        <Text variant="display" as="h1" style={titleStyle}>
-          {strings.site.hero.title}
-        </Text>
-        <Text variant="body" as="p" style={subStyle}>
+        <HeroTitle />
+        <Text
+          variant="body"
+          as="p"
+          className="era-hero-line"
+          style={{ ...subStyle, ['--hero-line-index' as string]: 2 }}
+        >
           {strings.site.hero.sub}
         </Text>
-        <a href="#waitlist" style={ctaStyle}>
-          <span aria-hidden="true" style={ctaSheenStyle} />
-          <TextControlBoundary>
-            <Text variant="ui" as="span" style={{ position: 'relative', zIndex: 2 }}>
-              {strings.site.hero.cta}
-            </Text>
-          </TextControlBoundary>
-        </a>
+        <div style={formWrapStyle}>
+          <WaitlistForm variant="bar" />
+        </div>
       </div>
     </section>
   );

@@ -5,7 +5,16 @@ import { type CSSProperties } from 'react';
 import { strings } from '@era/core/strings';
 import { auth } from '../../lib/auth';
 import { Container } from '../../components';
-import { Hero, FeatureSection, Closer, FaqSection } from '../../components/site';
+import {
+  Hero,
+  SiteHeader,
+  LandingSection,
+  ClosetShowcase,
+  OviShowcase,
+  EraCarousel,
+  Closer,
+  FaqSection,
+} from '../../components/site';
 import {
   JsonLd,
   organizationSchema,
@@ -49,13 +58,24 @@ export const metadata: Metadata = {
  * render stays lean.
  */
 
-// Vertical rhythm between the frosted feature panels.
+// Vertical rhythm between the scroll-driven editorial sections.
 const sectionsStackStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: 'var(--space-12)',
+  gap: 'var(--space-16)',
   paddingBlock: 'var(--space-16)',
 };
+
+// The four sections' live embeds, keyed to `strings.site.sections` by scroll
+// order: 1 → the real closet cards, 2 → Ovi's streamed line, 3 → the era rail,
+// 4 → a quiet copy-only editorial beat (no embed). Kept as a positional tuple so
+// the page maps copy and embed together and the order is the source of truth.
+const SECTION_EMBEDS = [
+  <ClosetShowcase key="closet" />,
+  <OviShowcase key="ovi" />,
+  <EraCarousel key="era" />,
+  null,
+] as const;
 
 export default async function LandingPage() {
   // Session-gate is best-effort: if the auth/DB stack is momentarily unavailable,
@@ -83,16 +103,19 @@ export default async function LandingPage() {
           faqPageSchema(strings.site.faq),
         ]}
       />
+      <SiteHeader />
       <Hero />
       <Container>
         <div style={sectionsStackStyle}>
           {strings.site.sections.map((section, index) => (
-            <FeatureSection
+            <LandingSection
               key={section.title}
               index={index}
               title={section.title}
               body={section.body}
-            />
+            >
+              {SECTION_EMBEDS[index]}
+            </LandingSection>
           ))}
         </div>
         <FaqSection />
