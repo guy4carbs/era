@@ -21,6 +21,7 @@ import {
   elevationDark,
   glass,
   glow,
+  layout,
   motion as motionTokens,
   orb,
   radii,
@@ -33,14 +34,20 @@ import {
   type ElevationLevel,
   type ThemeMode,
 } from '@era/tokens';
+import { costPerWear } from '@era/core/wear-stats';
+import type { ProposedOutfit } from '@era/core/ovi';
 import { strings } from '@era/core/strings';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useState, type ReactNode } from 'react';
-import { StyleSheet, ScrollView, View } from 'react-native';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Image, Pressable, StyleSheet, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
+  withDelay,
+  withRepeat,
+  withSpring,
+  withTiming,
 } from 'react-native-reanimated';
 
 import { Button } from '@/components/Button';
@@ -49,10 +56,17 @@ import { Chip } from '@/components/Chip';
 import { GlassPanel } from '@/components/GlassPanel';
 import { Input } from '@/components/Input';
 import { OviFab } from '@/components/OviFab';
-import { OviOrb, OviSuggestion, type OviOrbState } from '@/components/ovi';
+import { OviOrb, OviSuggestion, RevealStage, type OviOrbState } from '@/components/ovi';
 import { Text } from '@/components/Text';
 import { ItemSurface, type ForcedState } from '@/components/items';
-import { animate, useReducedMotionSafe } from '@/lib/motion';
+import { formatMoney } from '@/components/wear/format';
+import {
+  animate,
+  fadeTiming,
+  springFromToken,
+  tokenEasing,
+  useReducedMotionSafe,
+} from '@/lib/motion';
 import { ThemeScope, useTheme } from '@/lib/theme';
 
 const MODES: readonly ThemeMode[] = ['light', 'dark'];
@@ -79,6 +93,52 @@ const ITEM_LAB_CATEGORIES = Object.keys(ITEM_LAB_ASSETS);
 
 // The forced states painted per row, plus the live pressable specimen column.
 const ITEM_LAB_STATES: readonly ForcedState[] = ['rest', 'lift', 'tilt', 'selected'];
+
+// The bundled cutouts resolved to real bundle URIs. RevealStage's assembly maps
+// item ids → cutout URLs (`Image source={{ uri }}`), so the require() module refs
+// are resolved to their stable Metro asset URLs once (Image.resolveAssetSource),
+// letting the ritual embed the same cutouts the Item Engine already ships without
+// any change to RevealStage's props. A `null` uri (a resolve miss) simply doesn't
+// assemble, matching the product's "Ovi never invents an item" contract.
+const REVEAL_LAB_ASSET_URIS: Readonly<Record<string, string | null>> = Object.fromEntries(
+  Object.entries(ITEM_LAB_ASSETS).map(([category, source]) => [
+    category,
+    typeof source === 'number' ? Image.resolveAssetSource(source).uri : null,
+  ]),
+);
+
+// One cutout per outfit slot, drawn from the bundled lab categories — a full look
+// (base → bottom → shoes → outerwear → accessory) so the reveal assembles a real
+// overlapped stack. Ids are lab-namespaced so nothing here touches a real closet.
+const REVEAL_LAB_CATEGORIES = ['top', 'bottom', 'shoes', 'outerwear', 'accessory'] as const;
+const revealLabId = (category: string): string => `_lab:reveal:${category}`;
+const REVEAL_LAB_IDS = REVEAL_LAB_CATEGORIES.map(revealLabId);
+
+const REVEAL_LAB_OUTFIT: ProposedOutfit = {
+  name: 'Lab specimen look',
+  occasion: 'design lab',
+  itemIds: REVEAL_LAB_IDS,
+  rationale: 'A scripted look assembled from the bundled lab cutouts.',
+};
+
+// id → cutout URL and id → category, the two maps RevealStage resolves against.
+const REVEAL_LAB_URL_BY_ID = new Map<string, string>(
+  REVEAL_LAB_CATEGORIES.flatMap((category) => {
+    const uri = REVEAL_LAB_ASSET_URIS[category];
+    return uri ? [[revealLabId(category), uri] as [string, string]] : [];
+  }),
+);
+const REVEAL_LAB_CATEGORY_BY_ID = new Map<string, string>(
+  REVEAL_LAB_CATEGORIES.map((category) => [revealLabId(category), category] as [string, string]),
+);
+
+// Ovi's one scripted italic line for the composed reveal card — short, her voice.
+const REVEAL_LAB_LINE = 'Easy lines today — let the coat do the talking.';
+
+// The lab's scripted "Glass conversation" reply — Ovi's editorial voice, short,
+// the same word-stream treatment the panel uses (motion.stream.wordMs + caret).
+const GLASS_CHAT_REPLY =
+  'The ivory knit with those trousers — quiet, but it carries. Add the coat if it turns cool.';
 
 // The seven type roles, in visual-weight order. `display` is web-only (opsz 144)
 // and falls back to largeTitle on mobile — labelled so the fallback is legible.
@@ -152,12 +212,28 @@ export default function DesignLabScreen() {
           <TwoUp render={() => <OviSuggestionColumn />} />
         </Section>
 
+        <Section title="Header choreography">
+          <TwoUp render={() => <HeaderChoreographyColumn />} />
+        </Section>
+
+        <Section title="Reveal ritual">
+          <TwoUp render={() => <RevealRitualColumn />} />
+        </Section>
+
+        <Section title="Glass conversation">
+          <TwoUp render={() => <GlassConversationColumn />} />
+        </Section>
+
         <Section title="Sheen">
           <TwoUp render={(mode) => <SheenColumn mode={mode} />} />
         </Section>
 
         <Section title="Item Engine">
           <ItemEngineMatrix />
+        </Section>
+
+        <Section title="Editorial closet">
+          <TwoUp render={() => <EditorialClosetColumn />} />
         </Section>
 
         <Section title="Components">
@@ -422,6 +498,375 @@ function OviSuggestionColumn() {
   );
 }
 
+/**
+ * HeaderChoreographyColumn — the D6 page-header entrance, replayable.
+ *
+ * The real {@link PageHeader} choreography (title rises 8px + fades; the one-line
+ * subtitle trails on a 60ms delay) is driven here off a Replay-button `key`
+ * remount rather than the tab-focus effect PageHeader uses in the app — a lab
+ * has no tab focus to trigger it. The animation values themselves are the
+ * tokens (`motion.headerRise.yPx` / `.subtitleDelayMs`, the gentle spring, the
+ * shared fade), so what plays is exactly the app's entrance. Beneath it, the phi
+ * rhythm pair (32 below the header / 52 above the next section) is shown as
+ * labeled spacer bars — the same grammar as the Spacing section.
+ */
+function HeaderChoreographyColumn() {
+  const { colors } = useTheme();
+  const [replayKey, setReplayKey] = useState(0);
+  return (
+    <View style={styles.stack}>
+      <HeaderChoreographyDemo key={replayKey} />
+      <View style={styles.rhythmStack}>
+        <RhythmBar label={`headerBelow ${layout.rhythm.headerBelowPx}`} value={layout.rhythm.headerBelowPx} />
+        <RhythmBar label={`sectionAbove ${layout.rhythm.sectionAbovePx}`} value={layout.rhythm.sectionAbovePx} />
+      </View>
+      <Text variant="caption" color={colors.secondary}>
+        title rise {motionTokens.headerRise.yPx} · subtitle trail {motionTokens.headerRise.subtitleDelayMs}ms · phi {layout.rhythm.sectionAbovePx}/{layout.rhythm.headerBelowPx}
+      </Text>
+      <Button label="Replay" variant="secondary" onPress={() => setReplayKey((k) => k + 1)} />
+    </View>
+  );
+}
+
+/**
+ * The header pair (title + trailing subtitle) played through the D6 rise+fade.
+ * A remount (via the parent's Replay `key`) restarts the choreography — the lab
+ * analogue of PageHeader's focus replay. Reduced motion collapses to a plain
+ * simultaneous fade, matching PageHeader.
+ */
+function HeaderChoreographyDemo() {
+  const { colors } = useTheme();
+  const reduced = useReducedMotionSafe();
+  const titleStyle = useLabHeaderLine(reduced, 0);
+  const subtitleStyle = useLabHeaderLine(reduced, reduced ? 0 : motionTokens.headerRise.subtitleDelayMs);
+  return (
+    <View style={styles.headerDemo}>
+      <Animated.View style={titleStyle}>
+        <Text variant="title" color={colors.text}>Your closet</Text>
+      </Animated.View>
+      <Animated.View style={subtitleStyle}>
+        <Text variant="body" size="subhead" color={colors.secondary}>
+          Everything you own, in one place.
+        </Text>
+      </Animated.View>
+    </View>
+  );
+}
+
+/**
+ * PageHeader's `useLineEntrance` distilled to a mount-driven form for the lab:
+ * one line's opacity + translateY through the headerRise tokens, run once on
+ * mount (a remount replays it). Same tokens as the product; no focus dependency.
+ */
+function useLabHeaderLine(reduced: boolean, delayMs: number) {
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(reduced ? 0 : motionTokens.headerRise.yPx);
+  useEffect(() => {
+    if (reduced) {
+      opacity.value = fadeTiming(1, true);
+      return;
+    }
+    opacity.value = withDelay(
+      delayMs,
+      withTiming(1, { duration: motionTokens.durations.minMs, easing: tokenEasing }),
+    );
+    translateY.value = withDelay(delayMs, withSpring(0, springFromToken('gentle')));
+  }, [reduced, delayMs, opacity, translateY]);
+  return useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+}
+
+/** A labeled spacer bar — a vertical block `value` tall, in the Spacing grammar. */
+function RhythmBar({ label, value }: { label: string; value: number }) {
+  const { colors } = useTheme();
+  return (
+    <View style={styles.rhythmRow}>
+      <View style={[styles.rhythmBar, { height: value, backgroundColor: colors.accent }]} />
+      <Text variant="caption" color={colors.secondary}>{label}</Text>
+    </View>
+  );
+}
+
+/**
+ * RevealRitualColumn — the D9 Today's-Look ritual, replayable.
+ *
+ * Mounts the real {@link RevealStage} with lab-scoped data: a scripted outfit
+ * whose item ids resolve to the bundled cutouts (via REVEAL_LAB_URL_BY_ID /
+ * REVEAL_LAB_CATEGORY_BY_ID) and Ovi's one italic line. All handlers are inert
+ * (a dev preview), so Wear/Something-else/Share do nothing here. A Replay button
+ * remounts the stage via `key` — the web lab's pattern — so the assembly
+ * sequence (cutouts springing in one by one, then the settle) plays fresh.
+ * Under reduced motion the stage cross-fades straight to the composed card,
+ * exactly as in the app.
+ */
+function RevealRitualColumn() {
+  const { colors } = useTheme();
+  const [replayKey, setReplayKey] = useState(0);
+  return (
+    <View style={styles.stack}>
+      <RevealStage
+        key={replayKey}
+        outfit={REVEAL_LAB_OUTFIT}
+        urlById={REVEAL_LAB_URL_BY_ID}
+        categoryById={REVEAL_LAB_CATEGORY_BY_ID}
+        weather={null}
+        revealLine={REVEAL_LAB_LINE}
+        initiallySettled={false}
+        onWear={() => undefined}
+        onElse={() => undefined}
+        onShare={() => undefined}
+        busy={false}
+        saved={false}
+        sharePreparing={false}
+      />
+      <Text variant="caption" color={colors.secondary}>
+        assemble ≤ {motionTokens.reveal.maxTotalMs}ms · settle {motionTokens.reveal.settleMs}ms · tap the stage to skip
+      </Text>
+      <Button label="Replay" variant="secondary" onPress={() => setReplayKey((k) => k + 1)} />
+    </View>
+  );
+}
+
+/**
+ * GlassConversationColumn — the D3.2 chat sheet anatomy inside a glass panel.
+ *
+ * Not the live OviChat (that fetches the closet and posts to the API); this is a
+ * lab-scoped still-life of the sheet's grammar over a busy backdrop so the glass
+ * reads: a 28px header orb + 'Ovi' in the serif accent + a quiet (inert) close,
+ * one user bubble, then Ovi's editorial reply that WORD-STREAMS on Replay using
+ * the same tokens the panel uses (motion.stream.wordMs + the blinking caret at
+ * glow.caretDimOpacity — replicated minimally here, since OviChat's Turn/
+ * StreamCaret are private), the three canonical intent chips (inert), and a glass
+ * input row whose send is inert. Reduced motion shows the whole reply at once.
+ */
+function GlassConversationColumn() {
+  const { colors } = useTheme();
+  const [replayKey, setReplayKey] = useState(0);
+  return (
+    <View style={styles.stack}>
+      <View style={styles.glassChatStage}>
+        <LinearGradient
+          colors={[colors.accent, colors.surface, colors.bg]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+        <GlassPanel radius={radii.sheet} style={styles.glassChatPanel}>
+          <View style={styles.glassChatBody}>
+            {/* Header: 28px living orb + name + quiet close (the panel's grammar). */}
+            <View style={styles.glassChatHeader}>
+              <View style={styles.glassChatLead}>
+                <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+                  <OviOrb state="idle" size="headerPx" />
+                </View>
+                <Text variant="oviAccent" color={colors.text}>Ovi</Text>
+              </View>
+              <Text variant="ui" size="title3" color={colors.secondary}>×</Text>
+            </View>
+
+            {/* One user bubble + Ovi's streaming reply. */}
+            <View style={styles.glassChatThread}>
+              <View
+                style={[
+                  styles.chatBubble,
+                  { backgroundColor: colors.surface, borderColor: colors.hairline, borderRadius: radii.card },
+                ]}
+              >
+                <Text variant="body" size="subhead" color={colors.text}>
+                  Something soft for today?
+                </Text>
+              </View>
+              <StreamingReply key={replayKey} full={GLASS_CHAT_REPLY} />
+            </View>
+
+            {/* The three canonical intent chips — inert. */}
+            <View style={styles.glassChatChips}>
+              <Chip glass label={strings.ovi.intentChips.today} haptic={false} onToggle={() => undefined} />
+              <Chip glass label={strings.ovi.intentChips.styleItem} haptic={false} onToggle={() => undefined} />
+              <Chip glass label={strings.ovi.intentChips.whatsMissing} haptic={false} onToggle={() => undefined} />
+            </View>
+
+            {/* Glass input row + an inert send affordance (the panel's composer). */}
+            <View style={styles.glassChatComposer}>
+              <Input
+                containerStyle={styles.glassChatInput}
+                editable={false}
+                placeholder={strings.ovi.chatPlaceholder}
+                pointerEvents="none"
+              />
+              <View
+                style={[styles.glassChatSend, { backgroundColor: colors.accent, borderRadius: radii.input }]}
+                pointerEvents="none"
+              >
+                <Text variant="ui" size="title3" weight={600} color={colors.bg}>→</Text>
+              </View>
+            </View>
+          </View>
+        </GlassPanel>
+      </View>
+      <Text variant="caption" color={colors.secondary}>
+        word stream {motionTokens.stream.wordMs}ms · caret dim {glow.caretDimOpacity} · reduced = whole reply at once
+      </Text>
+      <Button label="Replay" variant="secondary" onPress={() => setReplayKey((k) => k + 1)} />
+    </View>
+  );
+}
+
+/**
+ * StreamingReply — Ovi's editorial reply revealed word-by-word, the OviChat
+ * Turn/StreamCaret grammar replicated minimally for the lab (those internals are
+ * private). Words land on `motion.stream.wordMs`; while streaming, the trailing
+ * caret blinks 1 → glow.caretDimOpacity → 1 on the same cadence. Reduced motion
+ * shows the whole reply at once with a steady (non-blinking) caret. A remount
+ * (Replay `key`) restarts the reveal.
+ */
+function StreamingReply({ full }: { full: string }) {
+  const { colors } = useTheme();
+  const reduced = useReducedMotionSafe();
+  const [shown, setShown] = useState(reduced ? full : '');
+  const [streaming, setStreaming] = useState(!reduced);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (reduced) {
+      setShown(full);
+      setStreaming(false);
+      return;
+    }
+    const words = full.split(/(\s+)/);
+    let count = 0;
+    const tick = () => {
+      count += 1;
+      setShown(words.slice(0, count).join(''));
+      if (count >= words.length) {
+        setStreaming(false);
+        timer.current = null;
+        return;
+      }
+      timer.current = setTimeout(tick, motionTokens.stream.wordMs);
+    };
+    timer.current = setTimeout(tick, motionTokens.stream.wordMs);
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, [full, reduced]);
+
+  return (
+    <View style={styles.glassChatReply}>
+      <Text variant="body" size="subhead" color={colors.text}>{shown}</Text>
+      {streaming ? <LabStreamCaret /> : null}
+    </View>
+  );
+}
+
+/** The streaming caret — a thin accent bar carrying the glow, blinking on the
+ *  stream cadence (the OviChat StreamCaret, replicated for the lab). */
+function LabStreamCaret() {
+  const { colors, resolved } = useTheme();
+  const reduced = useReducedMotionSafe();
+  const blink = useSharedValue(1);
+  useEffect(() => {
+    if (reduced) {
+      blink.value = 1;
+      return;
+    }
+    blink.value = withRepeat(
+      withTiming(glow.caretDimOpacity, {
+        duration: motionTokens.stream.wordMs / 2,
+        easing: tokenEasing,
+      }),
+      -1,
+      true,
+    );
+  }, [reduced, blink]);
+  const caretStyle = useAnimatedStyle(() => ({ opacity: blink.value }));
+  return (
+    <Animated.View
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={[
+        styles.chatCaret,
+        caretStyle,
+        {
+          backgroundColor: colors.accent,
+          shadowColor: colors.accent,
+          shadowRadius: glow.blurRadius,
+          shadowOpacity: glow.opacity[resolved],
+        },
+      ]}
+    />
+  );
+}
+
+/**
+ * EditorialClosetColumn — the D8 closet grammar as a specimen.
+ *
+ * The magazine section marker (Fraunces-Italic label + a hairline rule filling
+ * the row — the closet's SectionLabel treatment, replicated since that function
+ * is private to closet.tsx), a live density toggle (lab-local state, comfortable
+ * ⇄ compact, re-flowing 2 ↔ 3 columns), and 2–3 real {@link ItemSurface} tiles
+ * over the bundled cutouts, each with a cost-per-wear read in Fraunces numerals
+ * (serif `title`, computed by the same `costPerWear` the item detail uses).
+ */
+const EDITORIAL_CLOSET_TILES = [
+  { id: '_lab:closet:outerwear', category: 'outerwear', price: '240', worn: 8 },
+  { id: '_lab:closet:top', category: 'top', price: '65', worn: 12 },
+  { id: '_lab:closet:shoes', category: 'shoes', price: '180', worn: 6 },
+] as const;
+
+type LabDensity = 'comfortable' | 'compact';
+
+function EditorialClosetColumn() {
+  const { colors } = useTheme();
+  const [density, setDensity] = useState<LabDensity>('comfortable');
+  const columns = density === 'comfortable' ? 2 : 3;
+  const tiles = EDITORIAL_CLOSET_TILES.slice(0, columns);
+  return (
+    <View style={styles.stack}>
+      {/* The closet's magazine section marker: Italic label + hairline rule. */}
+      <View style={styles.closetLabelRow}>
+        <Text variant="oviAccent" color={colors.text}>Outerwear</Text>
+        <View style={[styles.closetRule, { backgroundColor: colors.hairline }]} />
+      </View>
+
+      {/* Live density toggle — lab-local, the closet's DensityToggle idiom. */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ checked: density === 'compact' }}
+        accessibilityLabel={`Density: ${density}`}
+        onPress={() => setDensity((d) => (d === 'comfortable' ? 'compact' : 'comfortable'))}
+        style={styles.closetDensityToggle}
+      >
+        <Text variant="ui" size="subhead" color={colors.secondaryStrong}>
+          {density === 'comfortable' ? '▦ comfortable' : '▤ compact'}
+        </Text>
+      </Pressable>
+
+      <View style={styles.closetGrid}>
+        {tiles.map((tile) => (
+          <View key={tile.id} style={styles.closetCell}>
+            <ItemSurface
+              uri={REVEAL_LAB_ASSET_URIS[tile.category] ?? null}
+              accessibilityLabel={`${tile.category} tile`}
+              interactive="none"
+            />
+            <View style={styles.closetCost}>
+              <Text variant="title" size="title3" color={colors.text}>
+                {formatMoney(costPerWear(tile.price, tile.worn) ?? 0)}
+              </Text>
+              <Text variant="caption" color={colors.secondaryStrong}>
+                {strings.closet.costPerWearLabel}
+              </Text>
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 function SheenColumn({ mode }: { mode: ThemeMode }) {
   const { colors } = useTheme();
   return (
@@ -453,6 +898,8 @@ function ComponentsColumn() {
       <View style={styles.rowWrap}>
         <Chip label="chip" selected={chipOn} haptic={false} onToggle={setChipOn} />
         <Chip label="off" selected={false} haptic={false} onToggle={() => undefined} />
+        {/* The `glass` variant (D8/D3.2): the rest fill becomes the §3 glass tint. */}
+        <Chip glass label="glass" selected={false} haptic={false} onToggle={() => undefined} />
       </View>
       <Input placeholder="you@example.com" autoCapitalize="none" />
       <Card aspect="item" style={styles.cardDemo}>
@@ -823,6 +1270,74 @@ const styles = StyleSheet.create({
   itemLabCell: {
     flex: 1,
   },
+  // Header choreography — the played header pair, then the phi rhythm bars.
+  headerDemo: { gap: spacing.s2 },
+  rhythmStack: { gap: spacing.s2 },
+  rhythmRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.s2 },
+  rhythmBar: { width: spacing.s2, borderRadius: radii.chip },
+  // Glass conversation — the sheet anatomy inside a glass panel over a busy bg.
+  glassChatStage: {
+    borderRadius: radii.card,
+    overflow: 'hidden',
+    padding: spacing.s2,
+  },
+  // GlassPanel owns radius/border/overflow; this just gives the anatomy room.
+  glassChatPanel: {
+    width: '100%',
+  },
+  glassChatBody: { padding: spacing.s3, gap: spacing.s3 },
+  glassChatHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  glassChatLead: { flexDirection: 'row', alignItems: 'center', gap: spacing.s2 },
+  glassChatThread: { gap: spacing.s2 },
+  chatBubble: {
+    maxWidth: '82%',
+    alignSelf: 'flex-end',
+    paddingVertical: spacing.s2,
+    paddingHorizontal: spacing.s3,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderCurve: 'continuous',
+  },
+  // Ovi's reply block — text + trailing caret on one baseline row while streaming.
+  glassChatReply: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    flexWrap: 'wrap',
+  },
+  // The soft insertion caret — a thin accent bar carrying the glow (OviChat's).
+  chatCaret: {
+    width: glass.borderWidth,
+    height: spacing.s3,
+    marginLeft: spacing.s1,
+    marginBottom: spacing.s1 / 2,
+    borderRadius: radii.chip,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  glassChatChips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.s2 },
+  glassChatComposer: { flexDirection: 'row', alignItems: 'center', gap: spacing.s2 },
+  glassChatInput: { flex: 1 },
+  glassChatSend: {
+    width: layout.touchTarget.ios,
+    height: layout.touchTarget.ios,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderCurve: 'continuous',
+  },
+  // Editorial closet — the magazine section marker + density-driven tile grid.
+  closetLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.s3,
+    paddingTop: spacing.s2,
+  },
+  closetRule: { flex: 1, height: StyleSheet.hairlineWidth },
+  closetDensityToggle: { alignSelf: 'flex-start', paddingVertical: spacing.s1 },
+  closetGrid: { flexDirection: 'row', gap: spacing.s2 },
+  closetCell: { flex: 1, gap: spacing.s2 },
+  closetCost: { gap: spacing.s1 },
   auditGroup: { gap: spacing.s1 },
   contrastRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.s2 },
   contrastMeta: { flex: 1 },

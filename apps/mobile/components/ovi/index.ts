@@ -2,6 +2,7 @@
 export { OviChat, type OviChatSeed } from './OviChat';
 export { OviOrb, type OviOrbState } from './OviOrb';
 export { OviSuggestion } from './OviSuggestion';
+export { RevealStage } from './RevealStage';
 export { OviStateProvider, useOviState, type OviOpenRequest } from './OviState';
 export { TodayCard } from './TodayCard';
 export { OutfitProposalCard, type ProposalStatus } from './OutfitProposalCard';
