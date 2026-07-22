@@ -43,7 +43,14 @@ const BANNED_FACES = [
 ] as const;
 
 // Files permitted to carry a documented exception (relative to repo root).
-const ALLOWED_EXCEPTIONS = new Set(['apps/web/src/components/site/prose.ts']);
+const ALLOWED_EXCEPTIONS = new Set([
+  'apps/web/src/components/site/prose.ts',
+  // Exception #2 (see the doc block above): the waitlist email sets its heading
+  // in a Georgia/'Times New Roman'/serif stack — the web-safe stand-in for
+  // Fraunces, since email clients strip @font-face. Server-rendered HTML string
+  // literal, not linted CSS; the only serif-stack email template.
+  'apps/web/src/lib/send-waitlist-email.ts',
+]);
 
 const SCAN_ROOTS = ['apps/web/src', 'apps/mobile/app', 'apps/mobile/components', 'apps/mobile/lib'];
 const SKIP_DIRS = new Set(['node_modules', '.next', '.expo', 'dist', 'assets']);

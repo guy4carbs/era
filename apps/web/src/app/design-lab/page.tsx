@@ -40,6 +40,7 @@ import {
 } from '../../components/ovi';
 import { ShopCard } from '../../components/shop';
 import { FeedCard } from '../../components/feed';
+import { PostSignupGift } from '../../components/site';
 import { QuizFlow, Reveal } from '../../components/quiz';
 import { deterministicProfile, type QuizAnswers } from '@era/core/quiz';
 import { strings } from '@era/core/strings';
@@ -210,6 +211,39 @@ function Swatch({ label, box }: { label: string; box: CSSProperties }) {
       <Text variant="caption" as="span" style={{ color: 'var(--color-secondary)' }}>
         {label}
       </Text>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Post-signup gift specimen — the D-GIFT choreography with a fixture position.
+// This state is otherwise unreachable without actually signing up, so the lab
+// earns it: the choreography IS the specimen, replayed by remounting the tree
+// under a fresh key. `alreadyJoined` is false — the ordinary, celebratory path.
+// ---------------------------------------------------------------------------
+
+/** A believable place-in-line for the fixture; large enough to read as real. */
+const GIFT_FIXTURE_POSITION = 214;
+
+function GiftSpecimen() {
+  // The key bumps on Replay so the whole gift remounts and re-runs its staged
+  // entrance from the top — the bloom, the heading, the card rise.
+  const [runKey, setRunKey] = useState(0);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+      <div>
+        <Button variant="secondary" onClick={() => setRunKey((k) => k + 1)}>
+          Replay
+        </Button>
+      </div>
+      <div style={{ maxWidth: 'var(--feed-col)' }}>
+        <PostSignupGift
+          key={runKey}
+          referralCode="ERA00214"
+          alreadyJoined={false}
+          position={GIFT_FIXTURE_POSITION}
+        />
+      </div>
     </div>
   );
 }
@@ -1737,6 +1771,10 @@ export default function DesignLabPage() {
 
         <Section title="Motion playground">
           <IslandPair content={() => <MotionPlayground />} />
+        </Section>
+
+        <Section title="Post-signup gift" note="The D-GIFT choreography: the orb blooms, 'You're in.' lands in Display Fraunces, then the referral card rises with the place-in-line numeral (fixture 214). The choreography IS the specimen — hit Replay to re-run it. Unreachable in the app without signing up.">
+          <GiftSpecimen />
         </Section>
 
         <Section title="Glass over busy imagery" note="A deterministic feTurbulence + gradient background (no assets) with TWO panels floating over it — default glass and the busy AA scrim. The dark busy panel is the visible proof the scrim keeps text legible over any backdrop.">

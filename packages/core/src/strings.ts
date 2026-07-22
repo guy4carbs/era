@@ -2253,6 +2253,33 @@ export const strings = {
       line: 'Skip the line — invite a friend.',
       cta: 'Copy invite link',
     },
+    /**
+     * The post-signup gift (D-GIFT): submitting the waitlist should feel like
+     * receiving something. The orb blooms, 'You're in.' lands in Display
+     * Fraunces, and the referral card rises with the user's place in line.
+     * Calm throughout — no confetti, no exclamation marks.
+     */
+    gift: {
+      /** The landing beat, Display Fraunces. */
+      heading: "You're in.",
+      /** The one line beneath, Geist. */
+      sub: "We'll email you when your era begins.",
+      /**
+       * Screen-reader / text form of the position; the numeral itself renders
+       * large in Fraunces. `positionLabel(214)` → "You're number 214 in line."
+       */
+      positionLabel: (n: number): string => `You're number ${n} in line.`,
+      /** Quiet confirmation after the invite link is copied. */
+      copied: 'Link copied.',
+      /** The share-image download action — a card, not a banner. */
+      downloadCta: 'Download the card',
+      /** The email, same voice: subject, the one line, the one link's label. */
+      email: {
+        subject: "You're in.",
+        line: "We'll email you when your era begins.",
+        linkLabel: 'era.style',
+      },
+    },
     /** Open Graph tags for shared links — concise, on-brand, mirrors the hero. */
     og: {
       title: 'Era — Getting dressed should be easy.',

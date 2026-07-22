@@ -9,7 +9,7 @@
  */
 import { randomBytes } from 'node:crypto';
 
-import { eq } from 'drizzle-orm';
+import { and, eq, lt, or, sql } from 'drizzle-orm';
 
 import { createDbClient, waitlist } from '@era/db';
 
@@ -75,12 +75,46 @@ export interface JoinWaitlistInput {
 export interface JoinWaitlistResult {
   readonly referralCode: string;
   readonly alreadyJoined: boolean;
+  /**
+   * The joiner's 1-based place in line — the count of rows at or before this
+   * row in `(createdAt, id)` order (see {@link positionOf}). Present for both a
+   * fresh join and a re-join: an already-joined email still has a place, and the
+   * gift shows it the same way.
+   */
+  readonly position: number;
+}
+
+/**
+ * The joiner's 1-based place in line: COUNT of waitlist rows whose
+ * `(createdAt, id)` is at or before this row's. Ordering by `createdAt` then
+ * breaking ties on `id` makes the rank deterministic even for rows minted inside
+ * the same millisecond (or sharing a `defaultNow()` transaction timestamp) — the
+ * same total order the export and the gift card read from.
+ *
+ * SCALE BACKLOG: this is an unindexed sequential count over the whole table.
+ * The waitlist is small (pre-launch capture), so it is deliberately fine here; a
+ * composite `(created_at, id)` index + migration is the documented next step if
+ * the list ever grows enough for the count to cost.
+ */
+async function positionOf(createdAt: Date, id: string): Promise<number> {
+  const rows = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(waitlist)
+    .where(
+      or(
+        lt(waitlist.createdAt, createdAt),
+        and(eq(waitlist.createdAt, createdAt), sql`${waitlist.id} <= ${id}`),
+      ),
+    );
+  // A row always counts itself, so this is ≥ 1; guard the empty-result path.
+  return rows[0]?.count ?? 1;
 }
 
 /**
  * Idempotently add an email to the waitlist. Re-signing up is a success, not an
  * error: on a unique-email conflict the existing row's referral code is returned
- * with `alreadyJoined: true`. A malformed `ref` is stored as `null`.
+ * with `alreadyJoined: true`. A malformed `ref` is stored as `null`. Either way
+ * the result carries the joiner's `position` in line (see {@link positionOf}).
  *
  * Throws only for a genuinely invalid email (the route rejects those first) or a
  * database failure — the route maps the latter to a generic 500.
@@ -96,19 +130,36 @@ export async function joinWaitlist({ email, ref }: JoinWaitlistInput): Promise<J
     .insert(waitlist)
     .values({ email: normalized, referralCode, referredBy })
     .onConflictDoNothing({ target: waitlist.email })
-    .returning({ referralCode: waitlist.referralCode });
+    .returning({
+      referralCode: waitlist.referralCode,
+      createdAt: waitlist.createdAt,
+      id: waitlist.id,
+    });
 
-  const insertedCode = inserted[0]?.referralCode;
-  if (insertedCode) {
-    return { referralCode: insertedCode, alreadyJoined: false };
+  const insertedRow = inserted[0];
+  if (insertedRow?.referralCode) {
+    const position = await positionOf(insertedRow.createdAt, insertedRow.id);
+    return { referralCode: insertedRow.referralCode, alreadyJoined: false, position };
   }
 
-  // Conflict on the unique email — return the referral code already on file.
+  // Conflict on the unique email — return the referral code + place already on file.
   const existing = await db
-    .select({ referralCode: waitlist.referralCode })
+    .select({
+      referralCode: waitlist.referralCode,
+      createdAt: waitlist.createdAt,
+      id: waitlist.id,
+    })
     .from(waitlist)
     .where(eq(waitlist.email, normalized))
     .limit(1);
 
-  return { referralCode: existing[0]?.referralCode ?? referralCode, alreadyJoined: true };
+  const existingRow = existing[0];
+  const position = existingRow
+    ? await positionOf(existingRow.createdAt, existingRow.id)
+    : 1;
+  return {
+    referralCode: existingRow?.referralCode ?? referralCode,
+    alreadyJoined: true,
+    position,
+  };
 }

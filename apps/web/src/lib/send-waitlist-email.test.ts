@@ -25,13 +25,20 @@ function suppressionDb(rows: unknown[]): DbClient {
   return chain as unknown as DbClient;
 }
 
-test('renderWaitlistEmail: subject, html and text carry the waitlist copy', () => {
+test('renderWaitlistEmail: subject, html and text carry the gift copy', () => {
   const { subject, html, text } = renderWaitlistEmail();
-  assert.equal(subject, "You're on the Era waitlist");
-  assert.ok(html.includes('Era waitlist'));
+  // The subject + heading are the gift voice ("You're in."), one line + one link.
+  assert.equal(subject, "You're in.");
+  assert.ok(html.includes("You're in."));
+  assert.ok(html.includes('when your era begins'));
+  // The serif heading stack (the sanctioned email stand-in for Fraunces).
+  assert.ok(html.includes('Georgia'));
+  // The single link points at era.style with the era.style label.
+  assert.ok(html.includes('>era.style</a>'));
+  // Pricing honesty stays, small, beneath.
   assert.ok(html.includes('Joining is free'));
-  assert.ok(text.includes('Era waitlist'));
-  assert.ok(text.includes("We'll be in touch."));
+  assert.ok(text.includes("You're in."));
+  assert.ok(text.includes('when your era begins'));
 });
 
 test('sendWaitlistEmail: real key + not suppressed POSTs the waitlist email to Resend', async () => {
@@ -50,7 +57,7 @@ test('sendWaitlistEmail: real key + not suppressed POSTs the waitlist email to R
   assert.equal(calls[0]!.url, 'https://api.resend.com/emails');
   const body = JSON.parse(calls[0]!.init!.body as string);
   assert.equal(body.to, 'joiner@example.com');
-  assert.equal(body.subject, "You're on the Era waitlist");
+  assert.equal(body.subject, "You're in.");
 });
 
 test('sendWaitlistEmail: suppressed recipient is skipped — never calls fetch', async () => {
