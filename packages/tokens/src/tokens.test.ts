@@ -337,6 +337,16 @@ test('oviPanel + stream: the glass conversation contract (D3.2)', () => {
   // transition ceiling, so it never races page content.
   assert.deepEqual(motion.suggestion, { settleDelayMs: 800 });
   assert.ok(motion.suggestion.settleDelayMs > motion.durations.maxMs);
+  // The quiz reveal: one notch below the daily ritual — its whole choreography
+  // must fit inside a smaller budget, cascade on the shared stagger beat, and
+  // settle the era card before the budget closes.
+  assert.deepEqual(motion.quizReveal, { swatchStaggerMs: 45, eraSettleDelayMs: 900, maxTotalMs: 1800 });
+  assert.equal(motion.quizReveal.swatchStaggerMs, motion.stagger.delayMs);
+  assert.ok(motion.quizReveal.maxTotalMs < motion.reveal.maxTotalMs);
+  assert.ok(motion.quizReveal.eraSettleDelayMs < motion.quizReveal.maxTotalMs);
+  // The quiz progress line: thin, present, never chrome.
+  assert.deepEqual(layout.quizProgress, { heightPx: 2 });
+  assert.ok(layout.quizProgress.heightPx <= 2);
 });
 
 test('orb: Ovi living-presence contract — sizes, breath, shimmer, lean', () => {

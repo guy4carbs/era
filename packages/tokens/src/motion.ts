@@ -84,6 +84,17 @@ export const motion = {
   stream: {
     wordMs: 45,
   },
+  // quizReveal — the archetype reveal's choreography (D-QUIZ): deliberately ONE
+  // NOTCH BELOW the daily ritual (motion.reveal) in weight. The archetype name
+  // blooms first (bloomScale + the gentle spring), the palette swatches cascade
+  // on the stagger beat, and the starter era card settles LAST after
+  // eraSettleDelayMs. The whole choreography fits maxTotalMs — asserted smaller
+  // than the ritual's budget so the daily reveal stays the biggest moment.
+  quizReveal: {
+    swatchStaggerMs: 45, // == stagger.delayMs — one shared cascade beat
+    eraSettleDelayMs: 900,
+    maxTotalMs: 1800,
+  },
   // suggestion — Ovi's ambient presence (the OviSuggestion strip): it enters on
   // a quiet fade-rise only AFTER the screen's content has settled, so it reads
   // as Ovi noticing, never as chrome racing the page. Max ONE per screen,
