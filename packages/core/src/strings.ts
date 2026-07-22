@@ -2177,6 +2177,45 @@ export const strings = {
       cta: 'Join the waitlist',
     },
     /**
+     * /manifesto — the pure-typography editorial page. The north star opens in
+     * Display Fraunces; each numbered belief sets large in Fraunces with a
+     * two-line Geist elaboration in the brand voice: calm, honest, invitational,
+     * never an exclamation mark. The type IS the design.
+     */
+    manifesto: {
+      /** Page title for metadata (template appends · Era). */
+      metaTitle: 'Manifesto',
+      metaDescription:
+        'What Era believes: wear what you own, honest styling, quiet over loud, your era on your rules — because easy is a feature.',
+      /** The north star, set in Display Fraunces. */
+      northStar: 'Make the things that should be easy, actually easy.',
+      /** The numbered beliefs, in reading order. Title in Fraunces, body in Geist. */
+      beliefs: [
+        {
+          title: 'Wear what you own',
+          body: 'Your closet is already full of answers. Era starts there — not at a store.',
+        },
+        {
+          title: 'An honest stylist',
+          body: 'Ovi styles what you have, and says so when you need nothing new. Advice only counts when it can tell you no.',
+        },
+        {
+          title: 'Quiet over loud',
+          body: 'No streaks, no badges, no noise. The best tool is the one that gets out of the way of your taste.',
+        },
+        {
+          title: 'Your era, your rules',
+          body: "Style moves in chapters. Name the one you're in and dress like you mean it — until you don't, and that's the point.",
+        },
+        {
+          title: 'Easy is a feature',
+          body: "Every decision we take off your morning is time handed back. Ease isn't a shortcut. It's the product.",
+        },
+      ],
+      /** Footer line + the single action, back to the waitlist. */
+      footerLine: 'If this sounds like your closet, come early.',
+    },
+    /**
      * The four value sections, in scroll order. Kept as a tuple so the page
      * renders them with a single `.map` and the order is the source of truth.
      */
