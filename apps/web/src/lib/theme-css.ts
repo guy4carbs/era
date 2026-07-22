@@ -168,6 +168,12 @@ function baseVars(): string {
     `--motion-ease:${motion.easing.css}`,
     `--motion-page-ms:${motion.durations.maxMs}ms`,
     `--motion-reduced-ms:${motion.durations.reducedFadeMs}ms`,
+    // Hero split-line entrance (the landing LCP element rises per line as a pure
+    // CSS keyframe — no client island). The per-line beat is 2× the stagger
+    // delay so two lines clear well under the page-transition ceiling; the rise
+    // and bezier come straight from the motion tokens.
+    `--hero-line-stagger:${2 * motion.stagger.delayMs}ms`,
+    `--hero-line-rise:${unit(motion.stagger.riseYPx)}`,
   ];
 
   return [

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
 import { strings } from '@era/core/strings';
-import { Button, Input } from '../index';
+import { Button, Input, glassSurfaceStyle } from '../index';
 import { track } from '../../lib/analytics';
 import { PostSignupReferral } from './PostSignupReferral';
 
@@ -13,6 +13,18 @@ interface JoinResult {
 }
 
 type Status = 'idle' | 'submitting' | 'error';
+
+/**
+ * Layout register. `stacked` (default) is the vertical column the Closer uses;
+ * `bar` is the hero's glass row — a frosted pill holding a borderless input and
+ * the accent submit side by side. Purely a layout choice: the submit/error/
+ * success behaviour is identical across both.
+ */
+export type WaitlistFormVariant = 'stacked' | 'bar';
+
+export interface WaitlistFormProps {
+  variant?: WaitlistFormVariant;
+}
 
 // Inline error micro-copy — not in the locked deck yet (candidate for Quill).
 // Named so a future `strings.site.form.error*` can drop in cleanly.
@@ -27,6 +39,32 @@ const formStyle: CSSProperties = {
   width: '100%',
 };
 
+// The hero 'bar' register: a frosted glass pill wrapping the field + submit on
+// one row. Composes the ONE glass recipe (blur + tint + hairline + top
+// highlight) at input radius, with a hair of inner padding so the borderless
+// field and the accent button sit flush inside the pill.
+const barWrapStyle: CSSProperties = {
+  ...glassSurfaceStyle({ shadow: 'e3', radius: 'var(--radius-input)' }),
+  display: 'flex',
+  alignItems: 'flex-start',
+  gap: 'var(--space-2)',
+  width: '100%',
+  padding: 'var(--space-2)',
+};
+
+// The field flexes to fill the pill; the row wrapper carries the glass, so the
+// input drops its own border/shadow/surface and reads as part of the bar.
+const barFieldWrapStyle: CSSProperties = {
+  flex: 1,
+  minWidth: 0,
+};
+
+const barInputStyle: CSSProperties = {
+  border: 'none',
+  boxShadow: 'none',
+  background: 'transparent',
+};
+
 /**
  * The waitlist capture island. Reads an optional `?ref=` from the URL and sends
  * it with the join so referral credit is attributed. On success it swaps to the
@@ -34,7 +72,7 @@ const formStyle: CSSProperties = {
  * field without leaving the aesthetic: 400 → "enter a valid email", 429 → a
  * gentle "try again". Fires the `waitlist_signup` funnel event on a successful join.
  */
-export function WaitlistForm() {
+export function WaitlistForm({ variant = 'stacked' }: WaitlistFormProps = {}) {
   const [email, setEmail] = useState('');
   const [ref, setRef] = useState<string | undefined>(undefined);
   const [status, setStatus] = useState<Status>('idle');
@@ -92,23 +130,44 @@ export function WaitlistForm() {
     );
   }
 
+  // The field + submit are identical across both registers — only the wrapping
+  // layout differs (stacked column vs. the hero's glass pill).
+  const field = (
+    <Input
+      type="email"
+      inputMode="email"
+      autoComplete="email"
+      required
+      aria-label="Email address"
+      placeholder={strings.site.form.emailPlaceholder}
+      value={email}
+      onChange={(event) => setEmail(event.target.value)}
+      error={status === 'error' ? (error ?? undefined) : undefined}
+      disabled={status === 'submitting'}
+      style={variant === 'bar' ? barInputStyle : undefined}
+    />
+  );
+  const submit = (
+    <Button type="submit" disabled={status === 'submitting'}>
+      {strings.site.form.cta}
+    </Button>
+  );
+
+  if (variant === 'bar') {
+    return (
+      <form style={formStyle} onSubmit={onSubmit} noValidate>
+        <div style={barWrapStyle}>
+          <div style={barFieldWrapStyle}>{field}</div>
+          {submit}
+        </div>
+      </form>
+    );
+  }
+
   return (
     <form style={formStyle} onSubmit={onSubmit} noValidate>
-      <Input
-        type="email"
-        inputMode="email"
-        autoComplete="email"
-        required
-        aria-label="Email address"
-        placeholder={strings.site.form.emailPlaceholder}
-        value={email}
-        onChange={(event) => setEmail(event.target.value)}
-        error={status === 'error' ? (error ?? undefined) : undefined}
-        disabled={status === 'submitting'}
-      />
-      <Button type="submit" disabled={status === 'submitting'}>
-        {strings.site.form.cta}
-      </Button>
+      {field}
+      {submit}
     </form>
   );
 }

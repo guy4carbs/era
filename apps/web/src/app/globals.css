@@ -118,6 +118,53 @@ body {
   outline-offset: 2px;
 }
 
+/*
+ * Hero split-line entrance. Each line of the landing h1 rises + fades on a pure
+ * CSS keyframe so the LCP element carries no client island. The per-line beat is
+ * --hero-line-stagger (2× the stagger token) applied via --hero-line-index set
+ * inline per line; the rise is --hero-line-rise (stagger.riseYPx) and the easing
+ * is the token bezier (--motion-ease) — no keyword easing (motion guard). The
+ * whole reveal fits well under the page-transition ceiling.
+ */
+.era-hero-line {
+  display: block;
+  animation-name: era-hero-line-rise;
+  animation-duration: var(--motion-page-ms, 300ms);
+  animation-timing-function: var(--motion-ease, cubic-bezier(0.32, 0.72, 0, 1));
+  animation-fill-mode: both;
+  animation-delay: calc(var(--hero-line-index, 0) * var(--hero-line-stagger, 90ms));
+}
+
+@keyframes era-hero-line-rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--hero-line-rise, 12px));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/*
+ * Reduced motion: the split-line hero lands instantly — no rise, no stagger, no
+ * fade — so the promise is legible at once and the LCP element never depends on
+ * an animation completing.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .era-hero-line {
+    animation: none;
+  }
+}
+
+/*
+ * The fixed glass header overlaps anchored content; reserve its height so the
+ * hero CTA's jump to #waitlist doesn't tuck the heading under the bar.
+ */
+#waitlist {
+  scroll-margin-top: var(--header-height);
+}
+
 /* ---- Global element resets (kept from the pre-foundation auth styles — the
    class-based .page/.btn/.input family is gone now that every screen renders
    through the design-system primitives, but these bare-element rules act as a

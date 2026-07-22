@@ -1,9 +1,15 @@
 export { Hero } from './Hero';
 export { HeroGlow } from './HeroGlow';
+export { HeroTitle } from './HeroTitle';
+export { SiteHeader } from './SiteHeader';
+export { LandingSection, type LandingSectionProps } from './LandingSection';
+export { ClosetShowcase } from './ClosetShowcase';
+export { OviShowcase } from './OviShowcase';
+export { EraCarousel } from './EraCarousel';
 export { FeatureSection, type FeatureSectionProps } from './FeatureSection';
 export { Closer } from './Closer';
 export { FaqSection } from './FaqSection';
-export { WaitlistForm } from './WaitlistForm';
+export { WaitlistForm, type WaitlistFormProps, type WaitlistFormVariant } from './WaitlistForm';
 export { PostSignupReferral, type PostSignupReferralProps } from './PostSignupReferral';
 export { ScrollReveal, type ScrollRevealProps } from './ScrollReveal';
 export { Pageview } from './Pageview';

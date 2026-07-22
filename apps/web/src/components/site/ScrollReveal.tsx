@@ -8,6 +8,13 @@ import { transitionFor } from '../../lib/motion';
 export interface ScrollRevealProps {
   children: ReactNode;
   style?: CSSProperties;
+  /**
+   * Fraction of the element that must be visible before it reveals — passed to
+   * Framer's {@link useInView} `amount`. Defaults to a quarter; the editorial
+   * landing sections pass a larger amount so a section commits to the reveal
+   * once it is meaningfully on screen, not at the first pixel.
+   */
+  amount?: number;
 }
 
 /** Rise distance for the reveal — a spacing-scale step (px), not a literal. */
@@ -20,11 +27,12 @@ const RISE_PX = spacing.s6;
  * no observer, no transform, no fade — so content is instant and never risks
  * staying hidden if an observer callback misses.
  */
-export function ScrollReveal({ children, style }: ScrollRevealProps) {
+export function ScrollReveal({ children, style, amount = 0.25 }: ScrollRevealProps) {
   const reduced = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
-  // `once` — reveal a single time; `amount` — fire when ~a quarter is visible.
-  const inView = useInView(ref, { once: true, amount: 0.25 });
+  // `once` — reveal a single time; `amount` — the visible fraction that fires it
+  // (default a quarter; landing sections raise it).
+  const inView = useInView(ref, { once: true, amount });
 
   if (reduced) {
     return <div style={style}>{children}</div>;
