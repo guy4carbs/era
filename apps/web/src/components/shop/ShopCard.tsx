@@ -8,6 +8,7 @@ import { strings } from '@era/core/strings';
 import type { ProductWhy, RankedProduct, WhyDetail } from '@era/core/shop';
 import { pressProps, transitionFor } from '../../lib/motion';
 import { logRecEvent, type SavedShopProduct } from '../../lib/shop-client';
+import { OviOrb } from '../ovi';
 import { WhyLabel } from './WhyLabel';
 import { WhyDetailSheet } from './WhyDetailSheet';
 
@@ -29,6 +30,13 @@ export interface ShopCardProps {
    * the "Not for me" action.
    */
   onDismiss?: (productId: string) => void;
+  /**
+   * Open Ovi pre-seeded when the `completes_outfits` why is tapped — that reason
+   * wears the OviSuggestion strip grammar (Ovi's italic voice) and, like the
+   * ambient strips, its tap opens the panel. Absent on Saved-view cards (no
+   * ranking, no why), where the strip-grammar treatment never renders.
+   */
+  onWhyCompletesOpen?: () => void;
 }
 
 /** rel for every monetised click-out: no window handle, no ranking pass, disclosed. */
@@ -70,7 +78,7 @@ function formatPrice(price: number, currency: string): string {
  * "Not for me" fires `rec_dismiss` and removes the card. Neither log blocks the
  * user: the anchor navigates immediately and {@link logRecEvent} never awaits.
  */
-export function ShopCard({ product, isSaved, onToggleSave, onDismiss }: ShopCardProps) {
+export function ShopCard({ product, isSaved, onToggleSave, onDismiss, onWhyCompletesOpen }: ShopCardProps) {
   const reduced = useReducedMotion();
   const [whyOpen, setWhyOpen] = useState(false);
   // When the product image URL can't load, we swap in a neutral placeholder tile
@@ -157,11 +165,15 @@ export function ShopCard({ product, isSaved, onToggleSave, onDismiss }: ShopCard
           <Text variant="caption" as="span" style={{ color: 'var(--color-secondary-strong)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{product.retailer}</Text>
         </p>
 
-        {/* The compact why is tappable ONLY when there's rich detail to reveal;
-            otherwise it stays the plain one-liner. The label itself is unchanged
-            — the button is a transparent, full-width wrapper so a keyboard user
-            gets the reveal for free. */}
-        {why && whyDetail ? (
+        {/* The why. The `completes_outfits` reason wears the OviSuggestion strip
+            grammar — Ovi's italic line via `shopCompletes`, and a tap that opens
+            the panel pre-seeded (the same "Ovi present beyond the panel" gesture as
+            the ambient strips), rather than the static detail sheet. Every other
+            reason keeps its {@link WhyLabel} register: tappable to the rich detail
+            sheet when there's detail, else the plain one-liner. */}
+        {why?.kind === 'completes_outfits' && onWhyCompletesOpen ? (
+          <WhyCompletesStrip count={why.count} reduced={reduced} onOpen={onWhyCompletesOpen} />
+        ) : why && whyDetail ? (
           <motion.button
             type="button"
             style={whyTriggerStyle}
@@ -217,6 +229,59 @@ export function ShopCard({ product, isSaved, onToggleSave, onDismiss }: ShopCard
     </motion.article>
   );
 }
+
+/**
+ * The `completes_outfits` why in the OviSuggestion strip grammar — the 20px
+ * whisper orb (idle, non-interactive) beside Ovi's italic `oviAccent` line
+ * (`shopCompletes`), the whole thing one quiet tap target that opens the panel.
+ * This is the Shop card's OwnWhy upgraded to Ovi's visual language, NOT a second
+ * competing ambient strip: it lives inline in the card, carries no dismiss, and
+ * the "one dismissible strip per screen" budget is untouched.
+ */
+function WhyCompletesStrip({
+  count,
+  reduced,
+  onOpen,
+}: {
+  count: number;
+  reduced: boolean | null;
+  onOpen: () => void;
+}) {
+  return (
+    <motion.button
+      type="button"
+      style={whyCompletesStripStyle}
+      aria-label={strings.ovi.suggest.shopCompletes(count)}
+      onClick={onOpen}
+      whileTap={reduced ? undefined : { scale: motionToken.press.scale }}
+      transition={transitionFor(motionToken.springs.snappy, reduced)}
+    >
+      <OviOrb size={{ cssVar: 'var(--orb-whisper)' }} state="idle" />
+      <Text
+        variant="oviAccent"
+        as="span"
+        size="body"
+        style={{ margin: 0, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+      >
+        {strings.ovi.suggest.shopCompletes(count)}
+      </Text>
+    </motion.button>
+  );
+}
+
+const whyCompletesStripStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 'var(--space-2)',
+  width: '100%',
+  minWidth: 0,
+  border: 'none',
+  background: 'transparent',
+  padding: 0,
+  margin: 0,
+  textAlign: 'left',
+  cursor: 'pointer',
+};
 
 const cardStyle: CSSProperties = {
   display: 'flex',

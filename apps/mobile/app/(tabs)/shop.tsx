@@ -17,6 +17,7 @@
  * Ranking is a bonus, not a gate: `rankProducts` never hard-fails, so a dormant
  * ranker still yields a browsable grid (unranked, no labels).
  */
+import type { OviSuggestion as OviSuggestionData } from '@era/core/ovi';
 import type { RankedProduct, WardrobeGap } from '@era/core/shop';
 import { strings } from '@era/core/strings';
 import { layout, radii, spacing } from '@era/tokens';
@@ -55,6 +56,7 @@ import {
   type ShopFilterState,
 } from '@/components/shop';
 import { CartSheet, addToCart, getCart, checkoutCopy } from '@/components/checkout';
+import { OviSuggestion, useOviState } from '@/components/ovi';
 import { cardCheckoutSupport, eraCheckoutEnabled } from '@/lib/checkout-flag';
 import { useTheme } from '@/lib/theme';
 
@@ -75,6 +77,7 @@ export default function ShopScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const visibility = useTabBarVisibility();
+  const { openOvi } = useOviState();
 
   const [filters, setFilters] = useState<ShopFilterState>(EMPTY_FILTERS);
   const [products, setProducts] = useState<readonly RankedProduct[]>([]);
@@ -302,6 +305,32 @@ export default function ShopScreen() {
     [products, dismissed],
   );
 
+  // Ovi's ambient Shop whisper — the completes-looks 'why', lifted from the
+  // per-card treatment into Ovi's strip grammar (one voice, not doubled up). It
+  // speaks the STRONGEST completes-outfits count in the ranked feed
+  // (`shopCompletes(count)`) and, tapped, opens Ovi on her gap ask so she can walk
+  // the real gap. Null when nothing in view completes a look — then no strip, and
+  // the per-card whys still carry the finer detail. Only ever on the ranked view.
+  const shopSuggestion = useMemo<OviSuggestionData | null>(() => {
+    if (view === 'saved') return null;
+    let best = 0;
+    for (const product of visible) {
+      if (product.why?.kind === 'completes_outfits' && product.why.count > best) {
+        best = product.why.count;
+      }
+    }
+    if (best === 0) return null;
+    return {
+      // Key on the count so a stronger completion may speak again after dismissal,
+      // but the same count stays retired.
+      key: `shop:completes:${best}`,
+      line: strings.ovi.suggest.shopCompletes(best),
+      action: strings.ovi.suggest.actionShowMe,
+      intent: 'whats_missing',
+      itemId: null,
+    };
+  }, [view, visible]);
+
   const listPadBottom = layout.tabBarHeight + insets.bottom + spacing.s8;
 
   // The ranked feed's loading/error frames only gate the "For you" view — the
@@ -388,6 +417,17 @@ export default function ShopScreen() {
             {/* The gaps band leads the ranked feed only — it's guidance toward the
                 picks below, not part of the Saved wishlist. */}
             {saved ? null : <GapsHero gaps={gaps} onFill={onFillGap} />}
+            {/* Ovi's ambient completes-looks whisper — the 'why' treatment in her
+                strip grammar, above the picks in normal flow (ranked view only).
+                Null → no strip; the per-card whys still carry the finer detail. */}
+            {saved ? null : (
+              <View style={styles.suggestion}>
+                <OviSuggestion
+                  suggestion={shopSuggestion}
+                  onOpen={(s) => openOvi({ intent: s.intent, itemId: s.itemId })}
+                />
+              </View>
+            )}
           </>
         }
         ListEmptyComponent={
@@ -653,5 +693,9 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingVertical: spacing.s6,
+  },
+  // The ambient strip sits below the gaps band, above the first pick.
+  suggestion: {
+    paddingBottom: spacing.s4,
   },
 });

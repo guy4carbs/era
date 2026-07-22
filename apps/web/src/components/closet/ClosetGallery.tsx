@@ -324,6 +324,7 @@ export function ClosetGallery({ items, turnaroundEnabled, onArchived, onUpdated 
           <ItemDetailSheet
             key={selected.id}
             item={selected}
+            closet={items}
             turnaroundEnabled={turnaroundEnabled}
             onClose={() => setSelectedId(null)}
             onArchived={handleArchived}

@@ -333,11 +333,18 @@ test('oviPanel + stream: the glass conversation contract (D3.2)', () => {
   // beat stays inside the stagger grammar's neighbourhood.
   assert.deepEqual(motion.stream, { wordMs: 45 });
   assert.equal(motion.stream.wordMs, motion.stagger.delayMs);
+  // The ambient suggestion waits for the screen to settle — well past the
+  // transition ceiling, so it never races page content.
+  assert.deepEqual(motion.suggestion, { settleDelayMs: 800 });
+  assert.ok(motion.suggestion.settleDelayMs > motion.durations.maxMs);
 });
 
 test('orb: Ovi living-presence contract — sizes, breath, shimmer, lean', () => {
-  // The three canonical sizes; the corner orb must stay a legal touch target.
-  assert.deepEqual(orb.size, { cornerPx: 44, headerPx: 28, panelPx: 64 });
+  // The canonical sizes; the corner orb must stay a legal touch target, and the
+  // ambient whisper stays the smallest presence above the 12px rail dot.
+  assert.deepEqual(orb.size, { cornerPx: 44, headerPx: 28, panelPx: 64, whisperPx: 20 });
+  assert.ok(orb.size.whisperPx < orb.size.headerPx);
+  assert.ok(orb.size.whisperPx > layout.rail.orbPx);
   assert.ok(orb.size.cornerPx >= layout.touchTarget.webMin);
   assert.ok(orb.size.cornerPx >= layout.touchTarget.ios);
   // Dimensional rendering — hairline rim + highlight arc, both 1px, quiet.

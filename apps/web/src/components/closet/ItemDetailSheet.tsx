@@ -1,14 +1,17 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { type PanInfo, motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken, layout, spacing } from '@era/tokens';
 import { Text } from '../Text';
 import { strings } from '@era/core/strings';
+import { suggestForItem } from '@era/core/ovi';
 import { type TurnaroundRender, type TurnaroundState } from '@era/core/turnaround';
 import { transitionFor } from '../../lib/motion';
 import { Button } from '../Button';
 import { GlassSheet } from '../GlassSheet';
+import { OviSuggestionHost } from '../ovi';
+import { toOviItems } from '../ovi/to-ovi-items';
 import type { ItemEdits } from '../items';
 import { AngleViewer } from './AngleViewer';
 import { ItemEditor } from './ItemEditor';
@@ -24,6 +27,12 @@ import type { GalleryItem } from './types';
 
 export interface ItemDetailSheetProps {
   item: GalleryItem;
+  /**
+   * The full closet, so Ovi's ambient item strip can name a REAL owned partner
+   * this piece styles with (`suggestForItem` reasons over the whole wardrobe, not
+   * just this row).
+   */
+  closet: readonly GalleryItem[];
   /**
    * Server-authoritative turnaround flag (request-time `ERA_TURNAROUND_ENABLED`,
    * threaded from the closet page's server wrapper). Off → the static cutout with
@@ -71,6 +80,7 @@ function formatPrice(price: string | null, currency: string | null): string | nu
  */
 export function ItemDetailSheet({
   item,
+  closet,
   turnaroundEnabled,
   onClose,
   onArchived,
@@ -80,6 +90,14 @@ export function ItemDetailSheet({
   const [mode, setMode] = useState<'view' | 'edit'>('view');
   const [confirmingArchive, setConfirmingArchive] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  // Ovi's ambient item strip: names ONE real owned partner this piece styles with.
+  // No profile on this surface, so pass null honestly — the composer degrades, it
+  // never invents a partner. Silent (null) when no full look builds around the piece.
+  const itemSuggestion = useMemo(
+    () => suggestForItem(item.id, toOviItems(closet), null),
+    [item.id, closet],
+  );
 
   function handleDragEnd(_e: unknown, info: PanInfo) {
     if (info.offset.y > DISMISS_DISTANCE || info.velocity.y > DISMISS_VELOCITY) onClose();
@@ -182,6 +200,11 @@ export function ItemDetailSheet({
             </div>
 
             <ItemWearStats item={item} />
+
+            {/* Ovi's ambient nudge: one strip naming a real owned partner. In normal
+                flow beneath the meta, above the actions — never over the hero, never
+                blocking a control. Only in view mode (the editor owns the space when open). */}
+            <OviSuggestionHost suggestion={itemSuggestion} />
 
             {confirmingArchive ? (
               <div style={confirmColumnStyle}>

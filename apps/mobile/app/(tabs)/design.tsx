@@ -7,6 +7,7 @@
  * above the eras section. Tapping an outfit reopens it on the canvas; the build
  * CTA opens a fresh canvas. Colour, layout, and copy come from tokens + strings.
  */
+import { suggestForDesign } from '@era/core/ovi';
 import { strings } from '@era/core/strings';
 import { layout, spacing } from '@era/tokens';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -30,6 +31,8 @@ import {
   type EraSummary,
   type OutfitSummary,
 } from '@/components/design';
+import { fetchItems, toOviItem, type ItemWithDisplay } from '@/components/items';
+import { OviSuggestion, useOviState } from '@/components/ovi';
 import { useTheme } from '@/lib/theme';
 
 type LoadState = 'loading' | 'ready' | 'error';
@@ -48,18 +51,28 @@ export default function DesignScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const visibility = useTabBarVisibility();
+  const { openOvi } = useOviState();
 
   const [outfits, setOutfits] = useState<readonly OutfitSummary[]>([]);
   const [eras, setEras] = useState<readonly EraSummary[]>([]);
+  const [items, setItems] = useState<readonly ItemWithDisplay[]>([]);
   const [state, setState] = useState<LoadState>('loading');
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const [nextOutfits, nextEras] = await Promise.all([fetchOutfits(), fetchEras()]);
+      // Items ride along so Ovi's design whisper can confirm a look actually
+      // composes before it invites; a miss just leaves the closet empty for the
+      // composer (→ null → no strip), never fails the screen.
+      const [nextOutfits, nextEras, nextItems] = await Promise.all([
+        fetchOutfits(),
+        fetchEras(),
+        fetchItems().catch(() => [] as ItemWithDisplay[]),
+      ]);
       setOutfits(nextOutfits);
       setEras(nextEras);
+      setItems(nextItems);
       setState('ready');
     } catch {
       setState('error');
@@ -92,6 +105,13 @@ export default function DesignScreen() {
   }, []);
 
   const rows = useMemo(() => chunk(outfits, layout.grid.mobileColumns), [outfits]);
+
+  // Ovi's ambient design invitation — the open door, but only when the closet can
+  // actually deliver a starting point. Profile isn't fetched here, so null.
+  const designSuggestion = useMemo(
+    () => suggestForDesign(items.map(toOviItem), null),
+    [items],
+  );
 
   if (state === 'loading') {
     return (
@@ -149,6 +169,15 @@ export default function DesignScreen() {
             <Button label={strings.design.newOutfit} onPress={openCanvas} haptic />
           </View>
 
+          {/* Ovi's open invitation, in normal flow between the CTA and the grid —
+              null (no strip) unless a starting-point look actually composes. */}
+          <View style={styles.suggestion}>
+            <OviSuggestion
+              suggestion={designSuggestion}
+              onOpen={(s) => openOvi({ intent: s.intent, itemId: s.itemId })}
+            />
+          </View>
+
           <View style={styles.grid}>
             {rows.map((row, index) => (
               <View key={`row-${index}`} style={styles.row}>
@@ -197,6 +226,10 @@ const styles = StyleSheet.create({
   },
   // The build CTA sits just under the header, above the outfit grid.
   cta: {
+    paddingBottom: spacing.s4,
+  },
+  // The ambient strip sits between the CTA and the grid, with a little air below.
+  suggestion: {
     paddingBottom: spacing.s4,
   },
   // The outfit grid: rows share the grid gutter both across and down.

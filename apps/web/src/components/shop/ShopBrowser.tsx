@@ -16,6 +16,7 @@ import {
   unsaveProduct,
   type SavedShopProduct,
 } from '../../lib/shop-client';
+import { useOviChat } from '../ovi';
 import { GapsHero } from './GapsHero';
 import { ShopCard } from './ShopCard';
 import {
@@ -50,6 +51,7 @@ const gridCss = [
  */
 export function ShopBrowser() {
   const reduced = useReducedMotion();
+  const { openChat } = useOviChat();
   const [filters, setFilters] = useState<ShopFilterState>(EMPTY_FILTERS);
   const [products, setProducts] = useState<RankedProduct[]>([]);
   const [status, setStatus] = useState<Status>('loading');
@@ -166,6 +168,17 @@ export function ShopBrowser() {
     setFilters(filtersFromQuery(gap.suggestedQuery));
   }
 
+  // The Shop "why" — its `completes_outfits` reason wears the OviSuggestion strip
+  // grammar (Ovi's italic line, tappable). Its tap opens the panel pre-seeded with
+  // the closet-gap ask: on Shop, "this completes N looks" is Ovi reasoning about
+  // the wardrobe, so 'whats_missing' (the closet-gap intent) is the honest seed —
+  // there's no per-closet-item context to carry for an external product.
+  function handleWhyCompletesOpen() {
+    openChat({
+      seed: { intent: 'whats_missing', message: strings.ovi.intentChips.whatsMissing },
+    });
+  }
+
   const visible = useMemo(
     () => products.filter((p) => !dismissed.has(p.id)),
     [products, dismissed],
@@ -207,6 +220,7 @@ export function ShopBrowser() {
                 reduced={reduced}
                 onDismiss={handleDismiss}
                 onToggleSave={handleToggleSave}
+                onWhyCompletesOpen={handleWhyCompletesOpen}
                 onLoadMore={() => void load(page + 1, 'append')}
                 onRetry={() => void load(1, 'replace')}
               />
@@ -321,6 +335,8 @@ interface BodyProps {
   reduced: boolean | null;
   onDismiss: (productId: string) => void;
   onToggleSave: (product: RankedProduct) => void;
+  /** Open Ovi pre-seeded from a card's `completes_outfits` why (the strip-grammar tap). */
+  onWhyCompletesOpen: () => void;
   onLoadMore: () => void;
   onRetry: () => void;
 }
@@ -335,6 +351,7 @@ function Body({
   reduced,
   onDismiss,
   onToggleSave,
+  onWhyCompletesOpen,
   onLoadMore,
   onRetry,
 }: BodyProps) {
@@ -364,6 +381,7 @@ function Body({
       reduced={reduced}
       onDismiss={onDismiss}
       onToggleSave={onToggleSave}
+      onWhyCompletesOpen={onWhyCompletesOpen}
       hasMore={hasMore}
       loadingMore={loadingMore}
       onLoadMore={onLoadMore}
@@ -377,6 +395,8 @@ interface ResultsGridProps {
   reduced: boolean | null;
   onDismiss: (productId: string) => void;
   onToggleSave: (product: RankedProduct) => void;
+  /** Open Ovi pre-seeded from a card's `completes_outfits` why. */
+  onWhyCompletesOpen: () => void;
   hasMore: boolean;
   loadingMore: boolean;
   onLoadMore: () => void;
@@ -394,6 +414,7 @@ function ResultsGrid({
   reduced,
   onDismiss,
   onToggleSave,
+  onWhyCompletesOpen,
   hasMore,
   loadingMore,
   onLoadMore,
@@ -429,6 +450,7 @@ function ResultsGrid({
                 isSaved={saved.has(product.id)}
                 onToggleSave={() => onToggleSave(product)}
                 onDismiss={onDismiss}
+                onWhyCompletesOpen={onWhyCompletesOpen}
               />
             </motion.div>
           ))}

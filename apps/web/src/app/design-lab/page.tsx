@@ -27,8 +27,9 @@ import {
 } from '../../components';
 import { Text } from '../../components/Text';
 import { glassSurfaceStyle } from '../../components/GlassPanel';
-import { RevealStage, OviOrb, type OviOrbState } from '../../components/ovi';
-import type { ProposedOutfit } from '@era/core/ovi';
+import { RevealStage, OviOrb, OviSuggestion, type OviOrbState } from '../../components/ovi';
+import { strings } from '@era/core/strings';
+import type { ProposedOutfit, OviSuggestion as OviSuggestionData } from '@era/core/ovi';
 import { useTheme, type ThemeMode } from '../../lib/theme';
 import { themeVarStyle } from '../../lib/theme-css';
 import { springTransition } from '../../lib/motion';
@@ -528,6 +529,32 @@ function OviOrbIsland() {
   );
 }
 
+/**
+ * The ambient OviSuggestion strip (D-AMBIENT), one specimen per island. Real
+ * {@link OviSuggestion} components with lab-only keys (so a lab dismiss never
+ * touches a real surface's dismissed set) and no-op open/dismiss — the point is
+ * to eyeball the glass strip grammar (whisper orb, italic line, quiet action, ×)
+ * and its settle-delayed fade-rise in both modes. It appears ~800ms after mount,
+ * exactly as it does in the app.
+ */
+const LAB_SUGGESTION: OviSuggestionData = {
+  key: 'design-lab:specimen',
+  line: strings.ovi.suggest.closetUntried(3),
+  action: strings.ovi.suggest.actionShowMe,
+  intent: 'today',
+  itemId: null,
+};
+
+function OviSuggestionIsland() {
+  return (
+    <OviSuggestion
+      suggestion={LAB_SUGGESTION}
+      onOpen={() => {}}
+      onDismiss={() => {}}
+    />
+  );
+}
+
 function SheenIsland() {
   return (
     <div style={{ position: 'relative', width: '100%', height: 'var(--space-16)', borderRadius: 'var(--radius-card)', overflow: 'hidden', background: 'var(--color-accent)' }}>
@@ -869,6 +896,13 @@ export default function DesignLabPage() {
           note="Ovi's living presence — a dimensional warm-cream sphere (radial core, 1px taupe rim, lit highlight arc) carrying the §3 glow. Three sizes (corner 44 / header 28 / panel 64) × three states: IDLE breathes on the 3s heartbeat, THINKING adds a slow rotating glow shimmer with a quicker breath, SPEAKING pulses a touch larger on the reply cadence. Interactive orbs (the corner FAB, the panel) also lean toward the pointer. Under reduced motion every orb holds static at base glow opacity — no breath, shimmer, pulse, or lean."
         >
           <IslandPair content={() => <OviOrbIsland />} />
+        </Section>
+
+        <Section
+          title="Ovi suggestion"
+          note="The ambient strip (D-AMBIENT) — Ovi present beyond the panel. A quiet glass strip (e2, chip radius) carrying the 20px whisper orb (idle), ONE italic oviAccent line, ONE quiet action, and a dismiss ×. Max one per screen, dismissible (persists), never blocking. It fades-rises in ~800ms after content settles (fade only under reduced motion); tapping the line or action opens Ovi pre-seeded, the × keeps THIS suggestion quiet for good. Specimen keys are lab-only, so a lab dismiss never silences a real surface."
+        >
+          <IslandPair content={() => <OviSuggestionIsland />} />
         </Section>
 
         <Section title="Sheen" note="var(--sheen-gradient) laid over an accent surface.">

@@ -84,4 +84,11 @@ export const motion = {
   stream: {
     wordMs: 45,
   },
+  // suggestion — Ovi's ambient presence (the OviSuggestion strip): it enters on
+  // a quiet fade-rise only AFTER the screen's content has settled, so it reads
+  // as Ovi noticing, never as chrome racing the page. Max ONE per screen,
+  // dismissible, never blocking (enforced in components, not here).
+  suggestion: {
+    settleDelayMs: 800,
+  },
 } as const;

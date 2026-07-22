@@ -26,7 +26,7 @@ import { Text } from '../Text';
 import { OutfitCard } from './OutfitCard';
 import { OviOrb } from './OviOrb';
 import { OviToast, OVI_TOAST_MS } from './OviToast';
-import { useOviChat } from './OviChatProvider';
+import { useOviChat, type OviChatSeed } from './OviChatProvider';
 import { sendOviChat } from './ovi-actions';
 import type { ChatEntry, ItemsById } from './types';
 
@@ -35,6 +35,13 @@ export interface OviChatProps {
   itemContext: string | null;
   /** Shared cutout lookup for resolving proposed outfits. */
   itemsById: ItemsById;
+  /**
+   * A one-shot ask to auto-send on open, set by an ambient {@link OviSuggestion}.
+   * When present, the panel opens PRE-SEEDED: the seed message lands as the user's
+   * turn and sends immediately at its intent, so a tapped suggestion resolves
+   * straight into Ovi's answer. Null for a plainly-summoned panel (empty box).
+   */
+  seed: OviChatSeed | null;
   onClose: () => void;
 }
 
@@ -199,7 +206,7 @@ const CORNER_ORB_SELECTOR = `[aria-label="${strings.ovi.fabLabel}"]`;
  * it — no backdrop, no scrim. Esc / the close button / a click outside dismiss;
  * focus is trapped while open and returns to the orb on close.
  */
-export function OviChat({ itemContext, itemsById, onClose }: OviChatProps) {
+export function OviChat({ itemContext, itemsById, seed, onClose }: OviChatProps) {
   const reduced = useReducedMotion();
   const router = useRouter();
   const stagger = useStagger(reduced);
@@ -415,6 +422,16 @@ export function OviChat({ itemContext, itemsById, onClose }: OviChatProps) {
     },
     [busy, messages, itemContext, setOviState, startStream],
   );
+
+  // Pre-seeded open (ambient suggestion): fire the seed ask exactly once as the
+  // panel mounts, so a tapped strip lands the user in Ovi's answer. The ref guards
+  // against a re-fire if `send` re-identifies while the reply is in flight.
+  const seedFired = useRef(false);
+  useEffect(() => {
+    if (!seed || seedFired.current) return;
+    seedFired.current = true;
+    void send(seed.message, seed.intent);
+  }, [seed, send]);
 
   function onSubmit(event: FormEvent) {
     event.preventDefault();

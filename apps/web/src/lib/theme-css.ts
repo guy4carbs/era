@@ -147,6 +147,9 @@ function baseVars(): string {
     `--orb-corner:${unit(orb.size.cornerPx)}`,
     `--orb-header:${unit(orb.size.headerPx)}`,
     `--orb-panel:${unit(orb.size.panelPx)}`,
+    // The ambient-suggestion strip's whisper orb (D-AMBIENT): the smallest,
+    // non-interactive presence Ovi holds beyond the panel.
+    `--orb-whisper:${unit(orb.size.whisperPx)}`,
     `--orb-rim:${unit(orb.rim.widthPx)}`,
     `--orb-highlight:${unit(orb.highlight.widthPx)}`,
     // The Ovi conversation panel (D3.2): fixed width, viewport-capped height.

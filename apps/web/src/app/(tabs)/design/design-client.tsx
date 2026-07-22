@@ -1,12 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { layout, motion as motionToken, typeRamp } from '@era/tokens';
 import { Text } from '../../../components/Text';
 import { strings } from '@era/core/strings';
+import { suggestForDesign } from '@era/core/ovi';
 import { Button } from '../../../components';
 import {
   EraAssignSheet,
@@ -15,6 +16,8 @@ import {
   type EraSummary,
   type OutfitSummary,
 } from '../../../components/design';
+import { OviSuggestionHost } from '../../../components/ovi';
+import { toOviItems, type OviItemSource } from '../../../components/ovi/to-ovi-items';
 import { transitionFor, viewTransition } from '../../../lib/motion';
 import { PageHeader } from '../../../components/PageHeader';
 import { useSession } from '../../../lib/auth-client';
@@ -134,6 +137,7 @@ export function DesignScreen({ feedEnabled }: { feedEnabled: boolean }) {
 
   const [outfits, setOutfits] = useState<OutfitSummary[] | null>(null);
   const [eras, setEras] = useState<EraSummary[] | null>(null);
+  const [items, setItems] = useState<OviItemSource[] | null>(null);
   const [assignTarget, setAssignTarget] = useState<OutfitSummary | null>(null);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -160,17 +164,38 @@ export function DesignScreen({ feedEnabled }: { feedEnabled: boolean }) {
     }
   }, []);
 
+  // The closet, read only to power Ovi's ambient "starting point" invitation —
+  // the same /api/items every closet surface already hits, no new route.
+  const loadItems = useCallback(async () => {
+    try {
+      const res = await fetch('/api/items');
+      if (!res.ok) throw new Error('items fetch failed');
+      const body = (await res.json()) as { items: OviItemSource[] };
+      setItems(body.items);
+    } catch {
+      setItems([]);
+    }
+  }, []);
+
   useEffect(() => {
     if (isPending || !session) return;
     void loadOutfits();
     void loadEras();
-  }, [isPending, session, loadOutfits, loadEras]);
+    void loadItems();
+  }, [isPending, session, loadOutfits, loadEras, loadItems]);
 
   useEffect(() => {
     if (!toast) return;
     const handle = setTimeout(() => setToast(null), TOAST_MS);
     return () => clearTimeout(handle);
   }, [toast]);
+
+  // Ovi's open invitation: only speaks when the closet can actually deliver a
+  // starting point (a look composes). No profile on this surface → null, honestly.
+  const designSuggestion = useMemo(
+    () => (items && items.length > 0 ? suggestForDesign(toOviItems(items), null) : null),
+    [items],
+  );
 
   function openCanvas(outfitId?: string) {
     viewTransition(() =>
@@ -274,6 +299,10 @@ export function DesignScreen({ feedEnabled }: { feedEnabled: boolean }) {
     <main style={screenStyle}>
       <style>{buildPillCss}</style>
       <PageHeader title="Design" subtitle={strings.design.subtitle} />
+
+      {/* Ovi's ambient invitation: one strip below the header, in normal flow so it
+          never overlaps the grid or the build pill. Silent unless a look composes. */}
+      <OviSuggestionHost suggestion={designSuggestion} />
 
       <div style={sectionsStyle}>
         {outfits.length === 0 ? (
