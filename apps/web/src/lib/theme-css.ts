@@ -155,6 +155,8 @@ function baseVars(): string {
     // The Ovi conversation panel (D3.2): fixed width, viewport-capped height.
     `--ovi-panel-width:${unit(layout.oviPanel.widthPx)}`,
     `--ovi-panel-max-height:${layout.oviPanel.maxHeightVh}vh`,
+    // The quiz's thin warm progress line (D-QUIZ).
+    `--quiz-progress:${unit(layout.quizProgress.heightPx)}`,
   ];
 
   // Motion vars consumed by the CSS View Transitions in globals.css (CSS can't

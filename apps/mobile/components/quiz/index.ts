@@ -3,7 +3,7 @@ export { QuizFlow } from './QuizFlow';
 export { QuizIntro } from './QuizIntro';
 export { QuizReveal } from './QuizReveal';
 export { StepScreen } from './StepScreen';
-export { ProgressDots } from './ProgressDots';
+export { ProgressLine } from './ProgressLine';
 export { PhotoOptionGrid } from './PhotoOptionGrid';
 export { PaletteBoards } from './PaletteBoards';
 export { OccasionChips } from './OccasionChips';

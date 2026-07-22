@@ -17,6 +17,18 @@ import { Button, Text } from '../../components';
 
 export interface RevealProps {
   answers: QuizAnswers;
+  /**
+   * A pre-computed profile to render directly, bypassing the derivation fetch.
+   * The design lab passes `deterministicProfile(answers)` here so the embedded
+   * reveal is pure and hits no API (and never needs a session). Production omits
+   * it, so the real fetch-with-fallback path runs untouched.
+   */
+  profileOverride?: StyleProfileResult;
+  /**
+   * When true the CTA renders but does not navigate — the design lab embeds the
+   * real reveal as a living specimen where "Step in" must not leave the page.
+   */
+  inertCta?: boolean;
 }
 
 const centerColumn: CSSProperties = {
@@ -71,8 +83,16 @@ const eraDescStyle: CSSProperties = {
   color: 'var(--color-secondary-strong)',
 };
 
-/** Per-swatch entrance stagger, keyed to the token fade duration. */
-const STAGGER = motionToken.durations.reducedFadeMs / 1000;
+// The reveal choreography (D-QUIZ), deliberately ONE NOTCH BELOW the daily
+// ritual (motion.reveal). All beats come from motion.quizReveal and fit its
+// maxTotalMs budget (1800ms). Seconds, since Framer transitions take seconds:
+//   - name blooms FIRST at t=0 (gentle spring, bloomScale → 1 + fade + glow)
+//   - palette swatches cascade one swatchStaggerMs beat apart
+//   - the era card settles LAST, entering at eraSettleDelayMs
+// Worst case: 8 swatches × 45ms = 360ms of cascade, then the era card starts at
+// 900ms and settles on the gentle spring (~<900ms tail) → comfortably < 1800ms.
+const SWATCH_STAGGER_S = motionToken.quizReveal.swatchStaggerMs / 1000;
+const ERA_SETTLE_S = motionToken.quizReveal.eraSettleDelayMs / 1000;
 
 /**
  * The reveal. Sends the answers to the derivation endpoint and renders the
@@ -81,13 +101,18 @@ const STAGGER = motionToken.durations.reducedFadeMs / 1000;
  * archetype name glows, the palette staggers in, and the era title carries the
  * editorial serif — all collapsing to a plain fade under reduced motion.
  */
-export function Reveal({ answers }: RevealProps) {
+export function Reveal({ answers, profileOverride, inertCta = false }: RevealProps) {
   const router = useRouter();
   const reduced = useReducedMotion();
   const { resolved } = useTheme();
-  const [profile, setProfile] = useState<StyleProfileResult | null>(null);
+  const [profile, setProfile] = useState<StyleProfileResult | null>(profileOverride ?? null);
 
   useEffect(() => {
+    // The lab supplies the profile directly (pure, no API) — skip the fetch.
+    if (profileOverride) {
+      setProfile(profileOverride);
+      return;
+    }
     let active = true;
     void (async () => {
       let result: StyleProfileResult;
@@ -114,7 +139,7 @@ export function Reveal({ answers }: RevealProps) {
     return () => {
       active = false;
     };
-  }, [answers]);
+  }, [answers, profileOverride]);
 
   if (!profile) {
     return (
@@ -130,13 +155,34 @@ export function Reveal({ answers }: RevealProps) {
   const glowPercent = Math.round(glow.opacity[resolved] * 100);
   const bloom = `radial-gradient(circle, color-mix(in srgb, var(--color-accent) ${glowPercent}%, transparent), transparent 70%)`;
 
+  // The name bloom: scale up from bloomScale to 1 with a fade, on the gentle
+  // spring — the FIRST beat. Under reduced motion it appears at once, plain fade.
+  const nameEnter = {
+    initial: reduced
+      ? { opacity: 0 }
+      : { opacity: 0, scale: motionToken.stagger.bloomScale },
+    animate: { opacity: 1, scale: 1 },
+    transition: transitionFor(motionToken.springs.gentle, reduced),
+  };
+
   const swatchContainer = {
     hidden: {},
-    visible: { transition: { staggerChildren: reduced ? 0 : STAGGER } },
+    visible: { transition: { staggerChildren: reduced ? 0 : SWATCH_STAGGER_S } },
   };
   const swatchItem = {
     hidden: { opacity: 0, scale: reduced ? 1 : 0.8 },
     visible: { opacity: 1, scale: 1 },
+  };
+
+  // The era card settles LAST — delayed to eraSettleDelayMs so it lands after
+  // the name has bloomed and the palette has cascaded. Reduced motion drops the
+  // delay and the rise, landing on a simultaneous fade with everything else.
+  const eraEnter = {
+    initial: reduced ? { opacity: 0 } : { opacity: 0, y: motionToken.stagger.riseYPx },
+    animate: { opacity: 1, y: 0 },
+    transition: reduced
+      ? transitionFor(motionToken.springs.gentle, reduced)
+      : { ...transitionFor(motionToken.springs.gentle, reduced), delay: ERA_SETTLE_S },
   };
 
   return (
@@ -150,7 +196,9 @@ export function Reveal({ answers }: RevealProps) {
         {strings.quiz.revealTitle}
       </Text>
 
-      <Text variant="largeTitle" as="h1" weight={700} style={nameStyle}>
+      {/* This surface earns the Display Fraunces — the archetype name blooms
+          first, its glow disc synced to the same bloom via a shared motion. */}
+      <motion.div style={nameStyle} initial={nameEnter.initial} animate={nameEnter.animate} transition={nameEnter.transition}>
         <span
           aria-hidden="true"
           style={{
@@ -162,8 +210,10 @@ export function Reveal({ answers }: RevealProps) {
             zIndex: -1,
           }}
         />
-        {archetypeName}
-      </Text>
+        <Text variant="display" as="h1" style={{ margin: 0, color: 'var(--color-text)' }}>
+          {archetypeName}
+        </Text>
+      </motion.div>
 
       {profile.keywords.length > 0 ? (
         <Text variant="body" as="span" style={keywordStyle}>
@@ -194,20 +244,29 @@ export function Reveal({ answers }: RevealProps) {
         ))}
       </motion.div>
 
-      <div style={eraCardStyle}>
+      <motion.div
+        style={eraCardStyle}
+        initial={eraEnter.initial}
+        animate={eraEnter.animate}
+        transition={eraEnter.transition}
+      >
         <Text variant="title" as="h2" size="title1" style={eraTitleStyle}>
           {profile.era_suggestion.title}
         </Text>
         <Text variant="body" as="p" style={eraDescStyle}>
           {profile.era_suggestion.description}
         </Text>
-      </div>
+      </motion.div>
 
       <Text variant="caption" as="span" size="footnote" style={keywordStyle}>
         {strings.quiz.revealSubtitle}
       </Text>
 
-      <Button onClick={() => viewTransition(() => router.push('/feed'))}>{strings.quiz.revealCta}</Button>
+      <Button
+        onClick={inertCta ? undefined : () => viewTransition(() => router.push('/feed'))}
+      >
+        {strings.quiz.revealCta}
+      </Button>
     </motion.div>
   );
 }

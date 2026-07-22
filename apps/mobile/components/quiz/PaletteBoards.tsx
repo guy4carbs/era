@@ -18,6 +18,7 @@ import { Text } from '@/components/Text';
 import { PRESS_SCALE, animate, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
 
+import { SelectionGlow } from './SelectionGlow';
 import type { QuizOption, QuizStep } from './contract';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -88,55 +89,63 @@ function PaletteBoard({ option, selected, onSelect }: PaletteBoardProps) {
   const swatches = boardFor(option.id);
 
   return (
-    <AnimatedPressable
-      accessibilityRole="button"
-      accessibilityLabel={option.label}
-      accessibilityState={{ selected }}
-      onPressIn={() => {
-        scale.value = animate(PRESS_SCALE, reduced, 'snappy');
-      }}
-      onPressOut={() => {
-        scale.value = animate(REST_SCALE, reduced, 'snappy');
-      }}
-      onPress={() => {
-        void Haptics.selectionAsync();
-        onSelect(option.id);
-      }}
-      style={[
-        styles.board,
-        selected ? rnShadow('e3', resolved) : rnShadow('e2', resolved),
-        {
-          borderRadius: radii.card,
-          backgroundColor: colors.surface,
-          borderColor: selected ? colors.accent : colors.hairline,
-          borderWidth: selected ? 2 : StyleSheet.hairlineWidth,
-        },
-        animatedStyle,
-      ]}
-    >
-      <View style={styles.swatchRow}>
-        {swatches.map((hex, index) => (
-          <View
-            key={index}
-            style={[
-              styles.swatch,
-              { backgroundColor: hex, borderColor: colors.hairline },
-              index === 0 && styles.swatchLeading,
-              index === swatches.length - 1 && styles.swatchTrailing,
-            ]}
-          />
-        ))}
-      </View>
-      <Text variant="body" color={colors.text}>
-        {option.label}
-      </Text>
-    </AnimatedPressable>
+    <View style={styles.cell}>
+      {/* The shared select-time bloom sits behind the board. */}
+      <SelectionGlow selected={selected} radius={radii.card} />
+      <AnimatedPressable
+        accessibilityRole="button"
+        accessibilityLabel={option.label}
+        accessibilityState={{ selected }}
+        onPressIn={() => {
+          scale.value = animate(PRESS_SCALE, reduced, 'snappy');
+        }}
+        onPressOut={() => {
+          scale.value = animate(REST_SCALE, reduced, 'snappy');
+        }}
+        onPress={() => {
+          void Haptics.selectionAsync();
+          onSelect(option.id);
+        }}
+        style={[
+          styles.board,
+          selected ? rnShadow('e3', resolved) : rnShadow('e2', resolved),
+          {
+            borderRadius: radii.card,
+            backgroundColor: colors.surface,
+            borderColor: selected ? colors.accent : colors.hairline,
+            borderWidth: selected ? 2 : StyleSheet.hairlineWidth,
+          },
+          animatedStyle,
+        ]}
+      >
+        <View style={styles.swatchRow}>
+          {swatches.map((hex, index) => (
+            <View
+              key={index}
+              style={[
+                styles.swatch,
+                { backgroundColor: hex, borderColor: colors.hairline },
+                index === 0 && styles.swatchLeading,
+                index === swatches.length - 1 && styles.swatchTrailing,
+              ]}
+            />
+          ))}
+        </View>
+        <Text variant="body" color={colors.text}>
+          {option.label}
+        </Text>
+      </AnimatedPressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   list: {
     gap: spacing.s4,
+  },
+  // A positioned wrapper so the bloom can sit behind the board.
+  cell: {
+    position: 'relative',
   },
   board: {
     padding: spacing.s4,

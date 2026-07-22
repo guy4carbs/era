@@ -25,9 +25,12 @@ type AnswerMap = Record<string, string | string[]>;
 
 const TOTAL = QUIZ_STEPS.length;
 
+// back | line | skip — the progress line takes the flexible middle column so it
+// spans the full width between the two controls (D-QUIZ: a thin warm line, not
+// centered dots).
 const headerStyle: CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: '1fr auto 1fr',
+  gridTemplateColumns: 'auto 1fr auto',
   alignItems: 'center',
   gap: 'var(--space-3)',
 };
@@ -216,7 +219,7 @@ export function QuizFlow({ onComplete, onSkip }: QuizFlowProps) {
             <Text variant="title" as="h2" size="title2" weight={600} style={titleStyle}>
               {step.title}
             </Text>
-            <Text variant="body" as="p" style={promptStyle}>
+            <Text variant="title" as="p" size="title3" style={promptStyle}>
               {step.prompt}
             </Text>
           </div>

@@ -5,8 +5,8 @@ import { motion, useReducedMotion } from 'motion/react';
 import { motion as motionToken, layout } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { transitionFor } from '../../../lib/motion';
-import { Text, TextControlBoundary } from '../../../components';
-import { SELECTION_RING, type QuizStep } from '../types';
+import { Text } from '../../../components';
+import { selectionShadow, type QuizStep } from '../types';
 
 export interface MoodCardsProps {
   step: QuizStep;
@@ -60,24 +60,22 @@ export function MoodCards({ step, selectedId, onSelect }: MoodCardsProps) {
             aria-label={title}
             aria-pressed={selected}
             onClick={() => onSelect(option.id)}
-            style={{
-              ...cardStyle,
-              boxShadow: selected ? `var(--shadow-e3), ${SELECTION_RING}` : 'var(--shadow-e2)',
-            }}
+            style={cardStyle}
+            animate={selectionShadow(selected, reduced)}
             whileHover={reduced ? undefined : { y: layout.hover.liftPx, boxShadow: 'var(--shadow-e3)' }}
             whileTap={reduced ? undefined : { scale: motionToken.press.scale }}
             transition={transitionFor(motionToken.springs.snappy, reduced)}
           >
-            <TextControlBoundary>
-              <Text variant="ui" size="title2" weight={600} as="span" style={titleStyle}>
-                {title}
+            {/* These are editorial mood cards, not form controls — the era name
+                earns the Fraunces title role (no TextControlBoundary here). */}
+            <Text variant="title" size="title2" weight={600} as="span" style={titleStyle}>
+              {title}
+            </Text>
+            {mood ? (
+              <Text variant="caption" size="footnote" as="span" style={taglineStyle}>
+                {mood.tagline}
               </Text>
-              {mood ? (
-                <Text variant="caption" size="footnote" as="span" style={taglineStyle}>
-                  {mood.tagline}
-                </Text>
-              ) : null}
-            </TextControlBoundary>
+            ) : null}
           </motion.button>
         );
       })}

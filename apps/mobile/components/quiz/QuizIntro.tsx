@@ -24,7 +24,9 @@ export function QuizIntro({ onBegin }: QuizIntroProps) {
   return (
     <View style={styles.container}>
       <View style={styles.copy}>
-        <Text accessibilityRole="header" variant="ui" size="title1" weight={700} color={colors.text}>
+        {/* The intro title is editorial, not chrome — the baked Fraunces `title`
+            face (closes the old ui/title1 contradiction). */}
+        <Text accessibilityRole="header" variant="title" color={colors.text}>
           {strings.quiz.introTitle}
         </Text>
         <Text variant="body" color={colors.secondaryStrong}>

@@ -57,6 +57,7 @@ import { Chip } from '@/components/Chip';
 import { GlassPanel } from '@/components/GlassPanel';
 import { Input } from '@/components/Input';
 import { OviFab } from '@/components/OviFab';
+import { QuizFlow } from '@/components/quiz';
 import { ActionRail, Attribution } from '@/components/feed';
 import { OviOrb, OviSuggestion, RevealStage, type OviOrbState } from '@/components/ovi';
 import { Text } from '@/components/Text';
@@ -241,6 +242,10 @@ export default function DesignLabScreen() {
 
         <Section title="Reveal ritual">
           <TwoUp render={() => <RevealRitualColumn />} />
+        </Section>
+
+        <Section title="Style quiz">
+          <StyleQuizColumn />
         </Section>
 
         <Section title="Glass conversation">
@@ -650,6 +655,40 @@ function RevealRitualColumn() {
       />
       <Text variant="caption" color={colors.secondary}>
         assemble ≤ {motionTokens.reveal.maxTotalMs}ms · settle {motionTokens.reveal.settleMs}ms · tap the stage to skip
+      </Text>
+      <Button label="Replay" variant="secondary" onPress={() => setReplayKey((k) => k + 1)} />
+    </View>
+  );
+}
+
+/**
+ * StyleQuizColumn — the D-QUIZ flow, live and replayable.
+ *
+ * Deliberately ONE ThemeScope island (not the TwoUp light|dark pair): this is the
+ * REAL, interactive {@link QuizFlow} — a stateful twelve-step flow that
+ * auto-advances and lands on the real {@link QuizReveal} — so it must mount once,
+ * not twice racing each other. It runs in a light island (the quiz's home mode);
+ * dark-mode quiz chrome is already covered by the per-primitive TwoUp sections
+ * above. `localOnly` routes onComplete through the pure client scorer
+ * (localProfile/deterministicProfile from @era/core/quiz) with NO API — the lab
+ * has no session — into the same reveal the product ships. The exit/step-in CTA is
+ * an inert lab noop (a dev preview mutates nothing). A Replay button remounts the
+ * flow via `key`, resetting it to the intro. The flow is contained in a fixed
+ * frame so the full-screen quiz reads as a specimen, not a takeover.
+ */
+function StyleQuizColumn() {
+  const { colors } = useTheme();
+  const [replayKey, setReplayKey] = useState(0);
+  return (
+    <View style={styles.stack}>
+      <ThemeScope mode="light">
+        <View style={[styles.quizFrame, { backgroundColor: colors.bg, borderColor: colors.hairline }]}>
+          <QuizFlow key={replayKey} localOnly onExit={() => undefined} />
+        </View>
+      </ThemeScope>
+      <Text variant="caption" color={colors.secondary}>
+        The real flow, scored client-side (no API) into the real reveal · reveal ≤{' '}
+        {motionTokens.quizReveal.maxTotalMs}ms · Step-in is an inert lab noop
       </Text>
       <Button label="Replay" variant="secondary" onPress={() => setReplayKey((k) => k + 1)} />
     </View>
@@ -1318,6 +1357,15 @@ const styles = StyleSheet.create({
   // and chrome exactly as a full-screen card would, so the material reads at a glance.
   feedFrame: {
     height: spacing.s16 * 4,
+    borderRadius: radii.card,
+    borderCurve: 'continuous',
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
+  },
+  // The style-quiz specimen — a tall fixed frame that contains the full-screen
+  // flow so it reads as a replayable specimen, not a takeover of the lab scroll.
+  quizFrame: {
+    height: spacing.s16 * 8,
     borderRadius: radii.card,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,

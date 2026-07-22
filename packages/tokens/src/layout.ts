@@ -91,4 +91,10 @@ export const layout = {
     maxHeightVh: 72,
     sheetFraction: 0.75,
   },
+  // quizProgress — the quiz's progress indicator (D-QUIZ): a thin warm line
+  // (accent fill over hairline track), NO numbers, no dots. 2px — present but
+  // editorial, not chrome.
+  quizProgress: {
+    heightPx: 2,
+  },
 } as const;

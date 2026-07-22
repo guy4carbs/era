@@ -4,8 +4,10 @@
  * Occasions are the one place the quiz takes several answers, so options are
  * toggle chips rather than one-tap cards. Each chip pairs a small thumbnail
  * with its label, meets the 44pt touch target, and fires a selection tick on
- * every toggle. A missing image degrades to a token gradient swatch. The parent
- * supplies a Continue button; toggling never auto-advances.
+ * every toggle. A selected chip blooms the shared accent glow and settles into
+ * the 2px accent border. A missing image degrades to a token gradient swatch
+ * that letterboxes on the mode bg. The parent supplies a Continue button;
+ * toggling never auto-advances.
  */
 import { layout, radii, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
@@ -17,6 +19,7 @@ import { Text } from '@/components/Text';
 import { PRESS_SCALE, animate, useReducedMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/lib/theme';
 
+import { SelectionGlow } from './SelectionGlow';
 import { imageFor } from './imageFor';
 import { imageKeyOf, type QuizOption, type QuizStep } from './contract';
 
@@ -60,46 +63,51 @@ function OccasionChip({ option, selected, onToggle }: OccasionChipProps) {
   const source = imageFor(imageKeyOf(option));
 
   return (
-    <AnimatedPressable
-      accessibilityRole="button"
-      accessibilityLabel={option.label}
-      accessibilityState={{ selected }}
-      onPressIn={() => {
-        scale.value = animate(PRESS_SCALE, reduced, 'snappy');
-      }}
-      onPressOut={() => {
-        scale.value = animate(REST_SCALE, reduced, 'snappy');
-      }}
-      onPress={() => {
-        void Haptics.selectionAsync();
-        onToggle(option.id);
-      }}
-      style={[
-        styles.chip,
-        {
-          minHeight: layout.touchTarget.ios,
-          borderRadius: radii.input,
-          backgroundColor: selected ? `${colors.accent}29` : colors.surface,
-          borderColor: selected ? colors.accent : colors.hairline,
-          borderWidth: selected ? 2 : StyleSheet.hairlineWidth,
-        },
-        animatedStyle,
-      ]}
-    >
-      {source ? (
-        <Image source={source} style={styles.thumb} resizeMode="cover" accessible={false} />
-      ) : (
-        <LinearGradient
-          colors={[colors.surface, colors.hairline]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.thumb}
-        />
-      )}
-      <Text variant="ui" size="footnote" color={colors.text}>
-        {option.label}
-      </Text>
-    </AnimatedPressable>
+    <View style={styles.cell}>
+      {/* The shared select-time bloom sits behind the chip. */}
+      <SelectionGlow selected={selected} radius={radii.input} />
+      <AnimatedPressable
+        accessibilityRole="button"
+        accessibilityLabel={option.label}
+        accessibilityState={{ selected }}
+        onPressIn={() => {
+          scale.value = animate(PRESS_SCALE, reduced, 'snappy');
+        }}
+        onPressOut={() => {
+          scale.value = animate(REST_SCALE, reduced, 'snappy');
+        }}
+        onPress={() => {
+          void Haptics.selectionAsync();
+          onToggle(option.id);
+        }}
+        style={[
+          styles.chip,
+          {
+            minHeight: layout.touchTarget.ios,
+            borderRadius: radii.input,
+            backgroundColor: selected ? `${colors.accent}29` : colors.surface,
+            borderColor: selected ? colors.accent : colors.hairline,
+            borderWidth: selected ? 2 : StyleSheet.hairlineWidth,
+          },
+          animatedStyle,
+        ]}
+      >
+        {source ? (
+          <Image source={source} style={styles.thumb} resizeMode="cover" accessible={false} />
+        ) : (
+          // Letterbox the fallback on the mode bg (Era's warm cream), never black.
+          <LinearGradient
+            colors={[colors.surface, colors.hairline]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[styles.thumb, { backgroundColor: colors.bg }]}
+          />
+        )}
+        <Text variant="ui" size="footnote" color={colors.text}>
+          {option.label}
+        </Text>
+      </AnimatedPressable>
+    </View>
   );
 }
 
@@ -108,6 +116,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.s3,
+  },
+  // A positioned wrapper so the bloom can sit behind the chip.
+  cell: {
+    position: 'relative',
   },
   chip: {
     flexDirection: 'row',

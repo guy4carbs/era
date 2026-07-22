@@ -1,7 +1,10 @@
 'use client';
 
 import { type CSSProperties } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
+import { motion as motionToken } from '@era/tokens';
 import { strings } from '@era/core/strings';
+import { transitionFor } from '../../lib/motion';
 
 export interface ProgressDotsProps {
   /** Zero-based index of the current step. */
@@ -10,41 +13,48 @@ export interface ProgressDotsProps {
   total: number;
 }
 
-const rowStyle: CSSProperties = {
-  display: 'flex',
-  gap: 'var(--space-2)',
-  alignItems: 'center',
-  justifyContent: 'center',
+/** The hairline track the accent fill rides over. Height is the frozen token. */
+const trackStyle: CSSProperties = {
+  position: 'relative',
+  width: '100%',
+  height: 'var(--quiz-progress)',
+  borderRadius: 'var(--radius-chip)',
+  background: 'var(--color-hairline)',
+  overflow: 'hidden',
 };
 
-const dotBase: CSSProperties = {
-  width: 'var(--space-2)',
-  height: 'var(--space-2)',
+const fillStyle: CSSProperties = {
+  position: 'absolute',
+  insetBlock: 0,
+  insetInlineStart: 0,
   borderRadius: 'var(--radius-chip)',
+  background: 'var(--color-accent)',
 };
 
 /**
- * A row of `total` dots. Every step up to and including the current one reads in
- * the accent; upcoming steps sit in the hairline. The row announces its position
- * with the shared `progressLabel` copy; the dots themselves are decorative.
+ * The quiz's progress: a thin warm line, not dots. A hairline track carries an
+ * accent fill whose width is (current + 1) / total, animated on the gentle
+ * spring (a plain fade-to-width under reduced motion). No numbers or dots read
+ * visually; the container still announces its position via `progressLabel` so
+ * assistive tech gets the "Step N of total" it needs — the fill is decorative.
  */
 export function ProgressDots({ current, total }: ProgressDotsProps) {
+  const reduced = useReducedMotion();
+  const fraction = total > 0 ? (current + 1) / total : 0;
+
   return (
     <div
-      style={rowStyle}
+      style={trackStyle}
       role="group"
       aria-label={strings.quiz.progressLabel(current + 1, total)}
     >
-      {Array.from({ length: total }, (_, i) => (
-        <span
-          key={i}
-          aria-hidden="true"
-          style={{
-            ...dotBase,
-            background: i <= current ? 'var(--color-accent)' : 'var(--color-hairline)',
-          }}
-        />
-      ))}
+      <motion.span
+        aria-hidden="true"
+        style={fillStyle}
+        initial={false}
+        animate={{ width: `${fraction * 100}%` }}
+        transition={transitionFor(motionToken.springs.gentle, reduced)}
+      />
     </div>
   );
 }

@@ -34,9 +34,17 @@ type Phase = 'intro' | 'step' | 'submitting' | 'reveal';
 interface QuizFlowProps {
   /** Leave the quiz to the feed — used by skip and the reveal's step-in CTA. */
   readonly onExit: () => void;
+  /**
+   * Score with the pure client scorer only — skip the authenticated endpoint and
+   * its spinner, resolving the reveal synchronously from `localProfile`. The one
+   * honest seam the design lab needs so it can embed the REAL flow with no API
+   * (the lab has no session); the shipping /quiz route leaves it unset and keeps
+   * the server-derived profile with its offline fallback.
+   */
+  readonly localOnly?: boolean;
 }
 
-export function QuizFlow({ onExit }: QuizFlowProps) {
+export function QuizFlow({ onExit, localOnly = false }: QuizFlowProps) {
   const { colors } = useTheme();
   const [phase, setPhase] = useState<Phase>('intro');
   const [stepIndex, setStepIndex] = useState(0);
@@ -51,6 +59,12 @@ export function QuizFlow({ onExit }: QuizFlowProps) {
     async (finalAnswers: QuizAnswerMap) => {
       // Funnel: the user answered every step and is submitting the quiz.
       analytics.track('quiz_completed');
+      // Lab path: score locally and land straight on the reveal, no API, no spinner.
+      if (localOnly) {
+        setReveal(normalizeProfile(localProfile(finalAnswers)));
+        setPhase('reveal');
+        return;
+      }
       setPhase('submitting');
       try {
         const { profile } = await deriveStyleProfile(finalAnswers);
@@ -60,7 +74,7 @@ export function QuizFlow({ onExit }: QuizFlowProps) {
       }
       setPhase('reveal');
     },
-    [],
+    [localOnly],
   );
 
   const advanceFrom = useCallback(
