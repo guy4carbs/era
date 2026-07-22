@@ -551,3 +551,105 @@ export function composeOutfit(input: ComposeOutfitInput): OviResponse {
   }
   return composeStyling(input);
 }
+
+/**
+ * An ambient suggestion (D-AMBIENT) — the small glass strip that gives Ovi
+ * presence beyond the panel. One Italic `line`, one `action`, and the intent +
+ * optional focal item the panel opens pre-seeded with when tapped. `key` is the
+ * stable dismissal identity: dismissing a suggestion hides THAT suggestion
+ * durably (per surface + subject), not the surface forever.
+ */
+export interface OviSuggestion {
+  readonly key: string;
+  readonly line: string;
+  readonly action: string;
+  readonly intent: OviIntent;
+  readonly itemId: string | null;
+}
+
+/**
+ * The Closet suggestion: only speaks when a full look actually composes from
+ * owned pieces AND that exact combination has never been worn together (no wear
+ * log contains all its ids). Pure and total — sparse closets, failed
+ * compositions, and already-tried looks all return null (no strip, no nag).
+ */
+export function suggestForCloset(
+  items: readonly OviItem[],
+  profile: StyleProfileLite | null,
+  wearLogs: readonly WearLogLite[] = [],
+): OviSuggestion | null {
+  const proposal = composeStyling({ intent: 'today', items, profile, wearLogs });
+  const outfit = proposal.outfit;
+  if (!outfit || outfit.itemIds.length < 2) {
+    return null;
+  }
+  const ids = new Set(outfit.itemIds);
+  const tried = wearLogs.some((log) => {
+    const worn = new Set(log.itemIds);
+    return outfit.itemIds.every((id) => worn.has(id));
+  });
+  if (tried) {
+    return null;
+  }
+  // Key on the sorted combination so dismissing THIS look stays dismissed, but
+  // a genuinely new composition may speak again later.
+  const combo = [...ids].sort().join('+');
+  return {
+    key: `closet:${combo}`,
+    line: strings.ovi.suggest.closetUntried(outfit.itemIds.length),
+    action: strings.ovi.suggest.actionShowMe,
+    intent: 'today',
+    itemId: null,
+  };
+}
+
+/**
+ * The item-detail suggestion: names ONE real owned partner the focal piece
+ * styles with, drawn from the deterministic composer's own pick (never
+ * invented). Null when no full look builds around the piece.
+ */
+export function suggestForItem(
+  itemId: string,
+  items: readonly OviItem[],
+  profile: StyleProfileLite | null,
+): OviSuggestion | null {
+  const proposal = composeStyling({ intent: 'style_item', items, profile, itemContext: itemId });
+  const outfit = proposal.outfit;
+  if (!outfit) {
+    return null;
+  }
+  const partnerId = outfit.itemIds.find((id) => id !== itemId);
+  const partner = partnerId ? items.find((item) => item.id === partnerId) : undefined;
+  if (!partner) {
+    return null;
+  }
+  return {
+    key: `item:${itemId}`,
+    line: strings.ovi.suggest.itemPairs(describePiece(partner)),
+    action: strings.ovi.suggest.actionStyleIt,
+    intent: 'style_item',
+    itemId,
+  };
+}
+
+/**
+ * The Design-canvas suggestion: the open invitation. Only speaks when the
+ * closet can actually deliver a starting point (a look composes); the action
+ * seeds the panel with a 'today' ask.
+ */
+export function suggestForDesign(
+  items: readonly OviItem[],
+  profile: StyleProfileLite | null,
+): OviSuggestion | null {
+  const proposal = composeStyling({ intent: 'today', items, profile });
+  if (!proposal.outfit) {
+    return null;
+  }
+  return {
+    key: 'design:start',
+    line: strings.ovi.suggest.designStart,
+    action: strings.ovi.suggest.actionShowMe,
+    intent: 'today',
+    itemId: null,
+  };
+}

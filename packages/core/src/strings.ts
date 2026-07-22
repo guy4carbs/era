@@ -135,6 +135,19 @@ const safeCount = (n: unknown): number => {
 const wearsLabel = (n: number): string => `${n} ${n === 1 ? 'wear' : 'wears'}`;
 
 /**
+ * Small counts as words for editorial lines — "three pieces" reads like Ovi,
+ * "3 pieces" reads like a spreadsheet. Beyond seven, digits are honest.
+ */
+const NUMBER_WORDS: Record<number, string> = {
+  2: 'two',
+  3: 'three',
+  4: 'four',
+  5: 'five',
+  6: 'six',
+  7: 'seven',
+};
+
+/**
  * Trim an interpolated text value, falling back rather than rendering an empty
  * or non-string slot — so a missing price/label never leaves a dangling "your "
  * or a bare "undefined" in user-facing copy.
@@ -215,6 +228,30 @@ export const strings = {
     woreItCta: 'Wore it today',
     /** Confirmed state once a wear is logged — warm, brief, asks nothing further. */
     woreItConfirmed: 'Logged — nice pick.',
+    /**
+     * The ambient suggestion strip (D-AMBIENT) — Ovi present beyond the panel.
+     * One Italic line + one action per surface; max ONE visible per screen,
+     * dismissible, never blocking. Whether a line is honest to show is decided
+     * by the composers in `./ovi.ts` (real closet data only); these are the
+     * curated voices they speak in.
+     */
+    suggest: {
+      /** Closet: a real, buildable, untried outfit exists (count = its pieces). */
+      closetUntried: (count: number): string =>
+        `These ${NUMBER_WORDS[count] ?? String(count)} pieces make an outfit you haven't tried.`,
+      /** Item detail: `partner` comes from describePiece — a REAL owned piece. */
+      itemPairs: (partner: string): string => `Pairs with ${partner}.`,
+      /** Shop: the 'why' treatment — a real look-completion count. */
+      shopCompletes: (count: number): string =>
+        `This completes ${count} ${count === 1 ? 'look' : 'looks'}.`,
+      /** Design canvas: the open invitation. */
+      designStart: 'Want a starting point?',
+      /** The one action per strip. */
+      actionShowMe: 'Show me',
+      actionStyleIt: 'Style it',
+      /** a11y label on the quiet dismiss. */
+      dismissA11y: 'Dismiss suggestion',
+    },
     /**
      * The honest answer to "what am I missing?". Names the thin category and
      * embodies the trust rule: it flags a real gap without ever pushing a

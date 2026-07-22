@@ -30,6 +30,9 @@ export const orb = {
     cornerPx: 44,
     headerPx: 28,
     panelPx: 64,
+    // whisperPx — the ambient-suggestion strip's orb (D-AMBIENT): Ovi present
+    // in the corner of a card, quieter than any interactive size.
+    whisperPx: 20,
   },
   // The 1px taupe rim and the 1px highlight arc that make it read dimensional.
   rim: {

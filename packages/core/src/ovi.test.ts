@@ -204,3 +204,58 @@ test('buildOviUserContext stays inventory-scoped and names the focal item', () =
   assert.match(context, /shoes-1/);
   assert.match(context, /what goes with these\?/);
 });
+
+// --- ambient suggestions (D-AMBIENT) -----------------------------------------
+
+test('suggestForCloset speaks only for a real, untried combination', async () => {
+  const { suggestForCloset } = await import('./ovi.ts');
+  const suggestion = suggestForCloset(FULL_CLOSET, PROFILE, []);
+  assert.ok(suggestion);
+  assert.match(suggestion.line, /pieces make an outfit you haven't tried\./);
+  assert.equal(suggestion.action, 'Show me');
+  assert.equal(suggestion.intent, 'today');
+  assert.ok(suggestion.key.startsWith('closet:'));
+});
+
+test('suggestForCloset stays silent when the exact look was already worn', async () => {
+  const { suggestForCloset } = await import('./ovi.ts');
+  const spoken = suggestForCloset(FULL_CLOSET, PROFILE, []);
+  assert.ok(spoken);
+  // Log a wear containing every proposed id — the suggestion must go quiet.
+  const wornIds = spoken.key.replace('closet:', '').split('+');
+  const silent = suggestForCloset(FULL_CLOSET, PROFILE, [
+    { itemIds: wornIds, wornOn: '2026-07-20' },
+  ]);
+  assert.equal(silent, null);
+});
+
+test('suggestForCloset never nags a sparse closet', async () => {
+  const { suggestForCloset } = await import('./ovi.ts');
+  assert.equal(suggestForCloset([item({ id: 'top-1', category: 'top' })], PROFILE, []), null);
+  assert.equal(suggestForCloset([], PROFILE, []), null);
+});
+
+test('suggestForItem names a real owned partner, never an invention', async () => {
+  const { suggestForItem } = await import('./ovi.ts');
+  const suggestion = suggestForItem('shoes-1', FULL_CLOSET, PROFILE);
+  assert.ok(suggestion);
+  assert.match(suggestion.line, /^Pairs with (your|the) /);
+  assert.equal(suggestion.intent, 'style_item');
+  assert.equal(suggestion.itemId, 'shoes-1');
+  // The named partner must be a real closet piece's category or brand.
+  const names = FULL_CLOSET.filter((i) => i.id !== 'shoes-1').map((i) => i.category);
+  assert.ok(names.some((category) => suggestion.line.includes(category)));
+});
+
+test('suggestForItem is silent when no look builds around the piece', async () => {
+  const { suggestForItem } = await import('./ovi.ts');
+  assert.equal(suggestForItem('top-1', [item({ id: 'top-1', category: 'top' })], PROFILE), null);
+});
+
+test('suggestForDesign invites only when a starting point actually composes', async () => {
+  const { suggestForDesign } = await import('./ovi.ts');
+  const suggestion = suggestForDesign(FULL_CLOSET, PROFILE);
+  assert.ok(suggestion);
+  assert.equal(suggestion.line, 'Want a starting point?');
+  assert.equal(suggestForDesign([], PROFILE), null);
+});
