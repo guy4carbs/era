@@ -864,6 +864,11 @@ export const strings = {
   feed: {
     /** One-line page-header subtitle — the tab's calm register (D6 PageHeader). */
     subtitle: 'Today, from your own closet.',
+    /**
+     * The solo morning page's one section label (D-FEED): the editorial row of
+     * saved looks beneath the ritual. Fraunces-Italic register, D8 grammar.
+     */
+    recentLooks: 'Recent looks',
     /** Empty feed — invitational, not a scold; no fake social pressure. */
     empty: 'Nothing in your feed yet. Follow a few people and their looks land here.',
     /** Shown at the very end of the feed — a quiet stop, not a nudge to keep scrolling. */

@@ -6,4 +6,9 @@
 export { FeedProvider, useFeed } from './FeedProvider';
 export { FeedPager } from './FeedPager';
 export { FpsOverlay } from './FpsOverlay';
+export { RecentLooksRow } from './RecentLooksRow';
+// Card chrome, exported for the design-lab "Public feed frame" specimen (the
+// flagged direction shown without the flag). Not used by the flag-off tab.
+export { ActionRail } from './ActionRail';
+export { Attribution } from './Attribution';
 export { sharePost, unsharePost, type ShareSubject } from './api';

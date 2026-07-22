@@ -35,6 +35,7 @@ import {
   type ThemeMode,
 } from '@era/tokens';
 import { costPerWear } from '@era/core/wear-stats';
+import type { FeedPostPayload } from '@era/core/feed';
 import type { ProposedOutfit } from '@era/core/ovi';
 import { strings } from '@era/core/strings';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -56,6 +57,7 @@ import { Chip } from '@/components/Chip';
 import { GlassPanel } from '@/components/GlassPanel';
 import { Input } from '@/components/Input';
 import { OviFab } from '@/components/OviFab';
+import { ActionRail, Attribution } from '@/components/feed';
 import { OviOrb, OviSuggestion, RevealStage, type OviOrbState } from '@/components/ovi';
 import { Text } from '@/components/Text';
 import { ItemSurface, type ForcedState } from '@/components/items';
@@ -134,6 +136,27 @@ const REVEAL_LAB_CATEGORY_BY_ID = new Map<string, string>(
 
 // Ovi's one scripted italic line for the composed reveal card — short, her voice.
 const REVEAL_LAB_LINE = 'Easy lines today — let the coat do the talking.';
+
+// The bundled cutout that stands in for a public-feed cover in the specimen — a
+// dress reads as a whole look, and contain-fit letterboxes it in the mode bg.
+const PUBLIC_FEED_COVER =
+  typeof ITEM_LAB_ASSETS.dress === 'number'
+    ? Image.resolveAssetSource(ITEM_LAB_ASSETS.dress).uri
+    : null;
+
+// One inert fixture post for the "Public feed frame" specimen — the flagged
+// direction shown without the flag. Editorial creator, a title, resting counts.
+const PUBLIC_FEED_POST: FeedPostPayload = {
+  id: '_lab:feed:specimen',
+  type: 'outfit',
+  coverUrl: PUBLIC_FEED_COVER,
+  title: 'Soft neutrals',
+  creator: { username: 'era.editorial', displayName: 'Era Editorial', avatarUrl: null },
+  likeCount: 128,
+  saveCount: 24,
+  viewer: { liked: false, saved: false, following: false },
+  createdAt: new Date(Date.UTC(2026, 6, 14, 12, 0, 0)).toISOString(),
+};
 
 // The lab's scripted "Glass conversation" reply — Ovi's editorial voice, short,
 // the same word-stream treatment the panel uses (motion.stream.wordMs + caret).
@@ -222,6 +245,10 @@ export default function DesignLabScreen() {
 
         <Section title="Glass conversation">
           <TwoUp render={() => <GlassConversationColumn />} />
+        </Section>
+
+        <Section title="Public feed frame">
+          <TwoUp render={(mode) => <PublicFeedFrameColumn mode={mode} />} />
         </Section>
 
         <Section title="Sheen">
@@ -625,6 +652,46 @@ function RevealRitualColumn() {
         assemble ≤ {motionTokens.reveal.maxTotalMs}ms · settle {motionTokens.reveal.settleMs}ms · tap the stage to skip
       </Text>
       <Button label="Replay" variant="secondary" onPress={() => setReplayKey((k) => k + 1)} />
+    </View>
+  );
+}
+
+/**
+ * PublicFeedFrameColumn — the flagged public-feed card's materials pass, shown in
+ * the lab so the direction is visible WITHOUT the flag. A reduced-height still-life
+ * of {@link FeedCard}'s grammar: the cover contain-fits over the mode bg (warm cream
+ * in light — the letterbox is Era's material, never black), a tokened ink scrim over
+ * the bottom text zone at the AA-locked busy-tint strength, the real {@link Attribution}
+ * (serif creator name) bottom-left, and the real glass {@link ActionRail} on the
+ * right. Every callback is inert — this frame demonstrates the material, it doesn't
+ * mutate a feed.
+ */
+function PublicFeedFrameColumn({ mode }: { mode: ThemeMode }) {
+  const { colors } = useTheme();
+  const post = PUBLIC_FEED_POST;
+  const noop = () => undefined;
+  return (
+    <View style={[styles.feedFrame, { backgroundColor: colors.bg, borderColor: colors.hairline }]}>
+      {post.coverUrl ? (
+        <Image
+          source={{ uri: post.coverUrl }}
+          style={StyleSheet.absoluteFill}
+          resizeMode="contain"
+          accessible={false}
+        />
+      ) : null}
+      {/* Ink scrim over the text zone only, at the busy-tint strength — tokened. */}
+      <LinearGradient
+        colors={['transparent', colors.ink]}
+        style={[styles.feedScrim, { opacity: glass.busyTintOpacity[mode] }]}
+        pointerEvents="none"
+      />
+      <View style={styles.feedAttribution}>
+        <Attribution creator={post.creator} title={post.title} />
+      </View>
+      <View style={styles.feedRail}>
+        <ActionRail post={post} onLike={noop} onSave={noop} onShopSimilar={noop} onMore={noop} />
+      </View>
     </View>
   );
 }
@@ -1246,6 +1313,34 @@ const styles = StyleSheet.create({
   busyGlass: {
     flex: 1,
     justifyContent: 'center',
+  },
+  // The public-feed specimen — a reduced-height frame that clips the cover, scrim,
+  // and chrome exactly as a full-screen card would, so the material reads at a glance.
+  feedFrame: {
+    height: spacing.s16 * 4,
+    borderRadius: radii.card,
+    borderCurve: 'continuous',
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
+  },
+  feedScrim: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: '45%',
+  },
+  feedAttribution: {
+    position: 'absolute',
+    left: spacing.s3,
+    // Keep clear of the rail column on the right.
+    right: layout.touchTarget.ios + spacing.s6,
+    bottom: spacing.s3,
+  },
+  feedRail: {
+    position: 'absolute',
+    right: spacing.s3,
+    bottom: spacing.s3,
   },
   // Item Engine matrix — a header row + one row per category, each a label plus
   // the forced-state cells and the live specimen. Cells are small so all five

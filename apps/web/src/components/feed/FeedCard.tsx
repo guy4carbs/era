@@ -7,10 +7,10 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { layout, motion as motionToken, typeRamp } from '@era/tokens';
 import { strings } from '@era/core/strings';
 import { REPORT_REASONS, type FeedPostPayload, type ReportReason } from '@era/core/feed';
-import { Avatar } from '../profile/Avatar';
 import { Button } from '../Button';
 import { Chip } from '../Chip';
 import { Text } from '../Text';
+import { glassSurfaceStyle } from '../GlassPanel';
 import { pressProps, transitionFor } from '../../lib/motion';
 
 /** next/link routed through motion so the creator link gets the press affordance. */
@@ -62,16 +62,20 @@ function formatWhen(iso: string): string {
 }
 
 /**
- * One post in the web feed: a quiet-luxury card, not the mobile full-screen pager.
+ * One post in the web feed, re-skinned to "TikTok's hierarchy, Era's materials":
+ * a full-bleed vertical cover fills the card edge-to-edge, `object-fit: contain`
+ * so a look is never cropped — and where the cover doesn't fill the portrait
+ * frame it letterboxes on the app's cream `--color-bg`, never black. The card IS
+ * the cover: there is no header row or footer chrome. Engagement (like, save) and
+ * the UGC more-menu ride a vertical GLASS rail hugging the right edge; the creator
+ * reads as an editorial Fraunces-italic name over the lower-left, both sitting on
+ * a bottom scrim that clears AA over any imagery (the §3 busy-glass grammar).
  *
- * Top row credits the creator (avatar + @username → their profile, display name,
- * and when it was shared) with the follow pill and a more-menu on the right. The
- * cover sits in a 4:5 frame, `object-fit: contain` over the surface so a look is
- * never cropped (covers are 4:5 view-shots). The footer carries the title and the
- * like/save controls with their live counts. Like/save/follow are optimistic —
- * the parent {@link FeedList} owns the write and the revert — while report and
- * block live here in a small popover, since each ends by asking the parent to drop
- * the post ({@link onReported}) or the whole creator ({@link onBlocked}).
+ * Like/save/follow are optimistic — the parent {@link FeedList} owns the write and
+ * the revert. Report and block live in the rail's popover, since each ends by
+ * asking the parent to drop the post ({@link onReported}) or the whole creator
+ * ({@link onBlocked}). Double-click on the cover likes (never unlikes), mirroring
+ * the mobile pager's double-tap; the burst is decorative and reduced-motion-aware.
  */
 export function FeedCard({
   post,
@@ -108,39 +112,16 @@ export function FeedCard({
       animate={{ opacity: 1, y: 0 }}
       transition={transitionFor(motionToken.springs.gentle, reduced)}
     >
-      <header style={headerStyle}>
-        <MotionLink href={`/${post.creator.username}`} style={creatorLinkStyle} aria-label={`@${post.creator.username}`} {...pressProps(reduced)}>
-          <Avatar src={post.creator.avatarUrl} name={displayName} size={40} />
-          <span style={creatorTextStyle}>
-            <Text variant="ui" size="subhead" weight={600} as="span" style={handleColorStyle}>
-              @{post.creator.username}
-            </Text>
-            <Text variant="caption" size="footnote" as="span" style={metaRowStyle}>
-              {displayName}
-              <span aria-hidden="true" style={dotStyle}>
-                ·
-              </span>
-              {formatWhen(post.createdAt)}
-            </Text>
-          </span>
-        </MotionLink>
-
-        <div style={headerActionsStyle}>
-          {isOwnPost ? null : <FollowPill following={post.viewer.following} onToggle={() => onFollow(post)} />}
-          <MoreMenu post={post} onReported={onReported} onBlocked={onBlocked} />
-        </div>
-      </header>
-
       {/* Double-click likes — the desktop cousin of the mobile pager's double-tap.
-          Like-only (a second double-click never unlikes); the heart button stays
-          the accessible/toggle path. The burst is decorative and skipped under
-          reduced motion. */}
+          Like-only (a second double-click never unlikes); the rail heart stays the
+          accessible/toggle path. The burst is skipped under reduced motion. */}
       <div style={coverFrameStyle} onDoubleClick={handleCoverDoubleClick}>
         {post.coverUrl ? (
           <Image src={post.coverUrl} alt={coverAlt} fill sizes={COVER_SIZES} style={coverImageStyle} />
         ) : (
           <span aria-hidden="true" style={coverPlaceholderStyle} />
         )}
+
         <AnimatePresence>
           {burstAt !== null ? (
             <motion.span
@@ -157,32 +138,62 @@ export function FeedCard({
             </motion.span>
           ) : null}
         </AnimatePresence>
-      </div>
 
-      <footer style={footerStyle}>
-        {post.title ? (
-          // The shared look's name — editorial label, Fraunces italic (oviAccent).
-          <Text variant="oviAccent" size="subhead" as="p" style={{ margin: 0, color: 'var(--color-text)' }}>
-            {post.title}
-          </Text>
-        ) : null}
-        <div style={engagementRowStyle}>
-          <EngagementButton
+        {/* Bottom scrim: a busy-glass panel so the name + follow clear AA over any
+            cover. It hugs the lower-left, the rail rides the right. */}
+        <div style={scrimStyle}>
+          <MotionLink
+            href={`/${post.creator.username}`}
+            style={creatorLinkStyle}
+            aria-label={`@${post.creator.username}`}
+            {...pressProps(reduced)}
+          >
+            {/* The creator reads as an editorial name — Fraunces italic (oviAccent),
+                the sanctioned small-serif. */}
+            <Text variant="oviAccent" size="subhead" as="span" style={creatorNameStyle}>
+              {displayName}
+            </Text>
+            <Text variant="caption" size="footnote" as="span" style={metaRowStyle}>
+              @{post.creator.username}
+              <span aria-hidden="true" style={dotStyle}>
+                ·
+              </span>
+              {formatWhen(post.createdAt)}
+            </Text>
+          </MotionLink>
+
+          {isOwnPost ? null : <FollowPill following={post.viewer.following} onToggle={() => onFollow(post)} />}
+        </div>
+
+        {/* The right-edge engagement rail — glass action buttons stacked vertically,
+            each with its live count beneath. The UGC more-menu anchors the bottom. */}
+        <div style={railStyle}>
+          <RailAction
             glyph={post.viewer.liked ? '♥' : '♡'}
             active={post.viewer.liked}
             label={strings.feed.rail.like}
             count={post.likeCount}
             onClick={() => onLike(post)}
           />
-          <EngagementButton
+          <RailAction
             glyph={post.viewer.saved ? '★' : '☆'}
             active={post.viewer.saved}
             label={strings.feed.rail.save}
             count={post.saveCount}
             onClick={() => onSave(post)}
           />
+          <MoreMenu post={post} onReported={onReported} onBlocked={onBlocked} />
         </div>
-      </footer>
+
+        {/* The look's name — editorial label over the top-left, on its own scrim. */}
+        {post.title ? (
+          <div style={titleScrimStyle}>
+            <Text variant="oviAccent" size="subhead" as="p" style={{ margin: 0, color: 'var(--color-text)' }}>
+              {post.title}
+            </Text>
+          </div>
+        ) : null}
+      </div>
     </motion.article>
   );
 }
@@ -214,8 +225,13 @@ function FollowPill({ following, onToggle }: { following: boolean; onToggle: () 
   );
 }
 
-/** A like/save control: a glyph that fills when active, plus its live count. */
-function EngagementButton({
+/**
+ * One rail action: a glass action button (the §3 recipe — blur + tint + 1px
+ * border, full radius, touch-target sized) carrying a glyph that fills when
+ * active, with its live count in caption beneath. The `busy` glass keeps the
+ * glyph legible over any cover.
+ */
+function RailAction({
   glyph,
   active,
   label,
@@ -230,21 +246,23 @@ function EngagementButton({
 }) {
   const reduced = useReducedMotion();
   return (
-    <motion.button
-      type="button"
-      style={engagementButtonStyle}
-      aria-label={label}
-      aria-pressed={active}
-      onClick={onClick}
-      {...pressProps(reduced)}
-    >
-      <span aria-hidden="true" style={{ ...glyphStyle, color: active ? 'var(--color-accent)' : 'var(--color-text)' }}>
-        {glyph}
-      </span>
-      <Text variant="caption" size="footnote" weight={600} as="span" style={{ color: 'var(--color-secondary-strong)' }}>
+    <div style={railItemStyle}>
+      <motion.button
+        type="button"
+        style={glassButtonStyle}
+        aria-label={label}
+        aria-pressed={active}
+        onClick={onClick}
+        {...pressProps(reduced)}
+      >
+        <span aria-hidden="true" style={{ ...glyphStyle, color: active ? 'var(--color-accent)' : 'var(--color-text)' }}>
+          {glyph}
+        </span>
+      </motion.button>
+      <Text variant="caption" size="footnote" weight={600} as="span" style={railCountStyle}>
         {compact(count)}
       </Text>
-    </motion.button>
+    </div>
   );
 }
 
@@ -252,7 +270,8 @@ type MenuView = 'root' | 'report' | 'block';
 
 /**
  * The per-post more-menu: a popover Apple's UGC rules require on every post,
- * carrying report and block. Report files against the post (and, server-side, its
+ * carrying report and block. It rides the bottom of the engagement rail as a
+ * glass action button. Report files against the post (and, server-side, its
  * creator); block drops the creator both ways. Both hand control back to the
  * parent on success. A transparent backdrop closes it on an outside click.
  */
@@ -332,14 +351,16 @@ function MoreMenu({
     <div style={menuWrapStyle}>
       <motion.button
         type="button"
-        style={moreButtonStyle}
+        style={glassButtonStyle}
         aria-label={strings.feed.rail.more}
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         {...pressProps(reduced)}
       >
-        <span aria-hidden="true">⋯</span>
+        <span aria-hidden="true" style={glyphStyle}>
+          ⋯
+        </span>
       </motion.button>
 
       {open ? (
@@ -425,41 +446,86 @@ function MoreMenu({
   );
 }
 
+// --- the card IS the cover: a portrait frame, cream letterbox, glass rail ---
+
 const cardStyle: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 'var(--space-3)',
-  padding: 'var(--space-4)',
-  background: 'var(--color-surface)',
-  border: '1px solid var(--color-hairline)',
+  width: '100%',
   borderRadius: 'var(--radius-card)',
-  boxShadow: 'var(--shadow-e1)',
+  overflow: 'hidden',
+  boxShadow: 'var(--shadow-e2)',
 };
 
-const headerStyle: CSSProperties = {
+const coverFrameStyle: CSSProperties = {
+  position: 'relative',
+  // Portrait-leaning full-bleed cover; the 4:5 item-card ratio reserves the box
+  // before the image loads (D6 CLS) so a cover load never reflows the column.
+  aspectRatio: layout.itemCard.aspectRatio,
+  width: '100%',
+  // Cream letterbox — a `contain`-fit cover never letterboxes on black.
+  background: 'var(--color-bg)',
+  overflow: 'hidden',
+};
+
+const coverImageStyle: CSSProperties = { objectFit: 'contain' };
+
+const coverPlaceholderStyle: CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  background: 'color-mix(in srgb, var(--color-hairline) 40%, transparent)',
+};
+
+/** The double-click heart burst — centered over the cover, purely decorative. */
+const heartBurstStyle: CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: '4rem',
+  color: 'var(--color-text)',
+  opacity: 0.85,
+  pointerEvents: 'none',
+  userSelect: 'none',
+};
+
+// Bottom-left scrim carrying the creator + follow — a busy-glass panel so text
+// clears AA over any cover imagery (the §3 minimum-contrast grammar).
+const scrimStyle: CSSProperties = {
+  ...glassSurfaceStyle({ busy: true, shadow: 'e3', radius: 'var(--radius-input)' }),
+  position: 'absolute',
+  left: 'var(--space-3)',
+  bottom: 'var(--space-3)',
+  // Leave room for the right rail — never run under the action buttons.
+  right: 'calc(var(--touch-target-min) + var(--space-4))',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
   gap: 'var(--space-3)',
+  paddingInline: 'var(--space-3)',
+  paddingBlock: 'var(--space-2)',
+};
+
+// Top-left scrim carrying the look's name — same busy-glass grammar.
+const titleScrimStyle: CSSProperties = {
+  ...glassSurfaceStyle({ busy: true, shadow: 'e3', radius: 'var(--radius-input)' }),
+  position: 'absolute',
+  left: 'var(--space-3)',
+  top: 'var(--space-3)',
+  right: 'calc(var(--touch-target-min) + var(--space-4))',
+  paddingInline: 'var(--space-3)',
+  paddingBlock: 'var(--space-2)',
 };
 
 const creatorLinkStyle: CSSProperties = {
   display: 'flex',
-  alignItems: 'center',
-  gap: 'var(--space-3)',
+  flexDirection: 'column',
+  gap: '2px',
   minWidth: 0,
   textDecoration: 'none',
   color: 'var(--color-text)',
 };
 
-const creatorTextStyle: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '2px',
-  minWidth: 0,
-};
-
-const handleColorStyle: CSSProperties = {
+const creatorNameStyle: CSSProperties = {
   color: 'var(--color-text)',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
@@ -478,95 +544,60 @@ const metaRowStyle: CSSProperties = {
 
 const dotStyle: CSSProperties = { color: 'var(--color-secondary-strong)' };
 
-const headerActionsStyle: CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 'var(--space-2)',
-  flexShrink: 0,
-};
-
 const followPillStyle: CSSProperties = {
   minHeight: 'var(--touch-target-min)',
   paddingInline: 'var(--space-3)',
   fontSize: typeRamp.footnote.rem,
+  flexShrink: 0,
 };
 
-const coverFrameStyle: CSSProperties = {
-  position: 'relative',
-  aspectRatio: layout.itemCard.aspectRatio,
-  width: '100%',
-  background: 'var(--color-bg)',
-  borderRadius: 'var(--radius-input)',
-  overflow: 'hidden',
-};
-
-const coverImageStyle: CSSProperties = { objectFit: 'contain' };
-
-/** The double-click heart burst — centered over the cover, purely decorative. */
-const heartBurstStyle: CSSProperties = {
+// The vertical engagement rail hugging the card's right edge.
+const railStyle: CSSProperties = {
   position: 'absolute',
-  inset: 0,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  fontSize: '4rem',
-  color: 'var(--color-text)',
-  opacity: 0.85,
-  pointerEvents: 'none',
-  userSelect: 'none',
-};
-
-const coverPlaceholderStyle: CSSProperties = {
-  position: 'absolute',
-  inset: 0,
-  background: 'color-mix(in srgb, var(--color-hairline) 40%, transparent)',
-};
-
-const footerStyle: CSSProperties = {
+  right: 'var(--space-3)',
+  bottom: 'var(--space-3)',
   display: 'flex',
   flexDirection: 'column',
-  gap: 'var(--space-2)',
+  alignItems: 'center',
+  gap: 'var(--space-3)',
 };
 
-const engagementRowStyle: CSSProperties = {
+const railItemStyle: CSSProperties = {
   display: 'flex',
+  flexDirection: 'column',
   alignItems: 'center',
-  gap: 'var(--space-4)',
+  gap: 'var(--space-1)',
 };
 
-const engagementButtonStyle: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 'var(--space-2)',
-  minHeight: 'var(--touch-target-min)',
-  padding: 0,
-  border: 'none',
-  background: 'transparent',
-  cursor: 'pointer',
-  color: 'var(--color-text)',
-};
-
-const glyphStyle: CSSProperties = {
-  fontSize: typeRamp.title3.rem,
-  lineHeight: 1,
-};
-
-const menuWrapStyle: CSSProperties = { position: 'relative', flexShrink: 0 };
-
-const moreButtonStyle: CSSProperties = {
+// A glass action button: the §3 busy recipe, full radius, touch-target sized.
+const glassButtonStyle: CSSProperties = {
+  ...glassSurfaceStyle({ busy: true, shadow: 'e3', radius: 'var(--radius-full)' }),
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
   minWidth: 'var(--touch-target-min)',
   minHeight: 'var(--touch-target-min)',
   padding: 0,
-  border: 'none',
-  background: 'transparent',
   cursor: 'pointer',
-  color: 'var(--color-secondary-strong)',
-  fontSize: typeRamp.title3.rem,
+  color: 'var(--color-text)',
+};
+
+const railCountStyle: CSSProperties = {
+  color: 'var(--color-text)',
+  // A quiet caption chip under each glyph — sits on its own busy-glass so the
+  // count clears AA over the cover the same way the buttons do.
+  ...glassSurfaceStyle({ busy: true, shadow: 'e3', radius: 'var(--radius-full)' }),
+  paddingInline: 'var(--space-2)',
   lineHeight: 1,
 };
+
+const glyphStyle: CSSProperties = {
+  fontSize: typeRamp.title3.rem,
+  lineHeight: 1,
+  color: 'var(--color-text)',
+};
+
+const menuWrapStyle: CSSProperties = { position: 'relative', flexShrink: 0 };
 
 const backdropStyle: CSSProperties = {
   position: 'fixed',
@@ -580,7 +611,7 @@ const backdropStyle: CSSProperties = {
 
 const popoverStyle: CSSProperties = {
   position: 'absolute',
-  top: 'calc(100% + var(--space-1))',
+  bottom: 'calc(100% + var(--space-1))',
   right: 0,
   zIndex: 50,
   width: 'min(320px, 80vw)',
