@@ -42,6 +42,12 @@ const staticRoutes: MetadataRoute.Sitemap = [
     priority: 1,
   },
   {
+    url: `${siteUrl()}/manifesto`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly',
+    priority: 0.5,
+  },
+  {
     url: `${siteUrl()}/privacy`,
     lastModified: new Date(),
     changeFrequency: 'yearly',
