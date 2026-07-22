@@ -1,26 +1,31 @@
 /**
- * ShopCard — one shoppable pick in the Shop grid.
+ * ShopCard — one shoppable pick in the Shop grid, on the Item-Engine grammar.
  *
- * A quiet-luxury card: an image-forward header (the cutout floats on the theme
- * surface with a 135° specular sheen and an e2 lift), then brand, title, price ·
- * retailer, and — when the ranker gave one — a single honest `WhyLabel`. Two
- * affordances close the loop: a primary "View at {retailer}" (also fired by
- * tapping the image) opens the affiliate link, and an understated ghost
- * "Not for me" dismisses the card. Both are lifted to the screen so the side
- * effects (Linking, haptics, rec-event) live in one place.
+ * The product image is the OBJECT on the shared {@link ItemSurface} — the same
+ * 4:5 squircle the closet tiles use: theme surface, hairline border, the e3 ambient
+ * ink shadow with an accent-glow underlay, a 135° specular sheen, and the 1% warm
+ * tone — so a Shop pick reads as premium as an owned piece. Tapping the surface is
+ * the click-out (it fires the hero press-lift, then opens the affiliate link).
  *
- * Fixture image URLs point at placeholder hosts that never resolve, so a
- * LinearGradient sits behind every image as a graceful fallback — the card reads
- * as premium whether or not the photo loads.
+ * Below the object: brand, title, price · retailer, and — when the ranker gave one
+ * — Ovi's honest `WhyLabel` whisper. Two affordances close the loop: a primary
+ * "View at {retailer}" opens the affiliate link, and an understated ghost "Not for
+ * me" dismisses the card. Both are lifted to the screen so the side effects
+ * (Linking, haptics, rec-event) live in one place.
+ *
+ * The product image is a full-bleed photo, so ItemSurface's `cover` shows it edge
+ * to edge (its default `contain` is for transparent cutouts). Fixture URLs point
+ * at placeholder hosts that never resolve, and the surface's token-gradient
+ * placeholder stands in — the card reads as premium whether or not the photo loads.
  */
 import type { RankedProduct } from '@era/core/shop';
-import { layout, radii, rnShadow, sheen, spacing } from '@era/tokens';
+import { layout, radii, spacing } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { ItemSurface } from '@/components/items';
 import { Press } from '@/components/Press';
 import { Text } from '@/components/Text';
 import { strings } from '@era/core/strings';
@@ -74,7 +79,7 @@ export function ShopCard({
   canAddToCart = false,
   onAddToCart,
 }: ShopCardProps) {
-  const { colors, resolved } = useTheme();
+  const { colors } = useTheme();
   const viewLabel = strings.shop.viewAt(product.retailer);
   const inFlow = canAddToCart && onAddToCart !== undefined;
 
@@ -104,46 +109,18 @@ export function ShopCard({
   const canOpenWhy = ranked !== null && ranked.whyDetail !== null && onOpenWhy !== undefined;
 
   return (
-    <View
-      style={[
-        styles.card,
-        rnShadow('e2', resolved),
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.hairline,
-          borderRadius: radii.card,
-        },
-      ]}
-    >
-      {/* Tapping the image is a click-out, same as the primary button. */}
-      <Press
-        accessibilityRole="button"
+    <View style={styles.card}>
+      {/* The product photo AS THE OBJECT on the shared Item-Engine surface — the
+          same squircle/hairline/glow-underlay/sheen/warm-tone the closet tiles
+          use, here covering edge to edge (a full-bleed photo, not a cutout).
+          Pressing it fires the hero lift then clicks out, same as the button. */}
+      <ItemSurface
+        uri={product.imageUrl}
+        resizeMode="cover"
         accessibilityLabel={viewLabel}
+        interactive="press"
         onPress={() => onView(product)}
-        style={[styles.imageWrap, { borderRadius: radii.card - spacing.s1 }]}
-      >
-        <LinearGradient
-          colors={[colors.surface, colors.hairline]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-        <Image
-          source={{ uri: product.imageUrl }}
-          style={StyleSheet.absoluteFill}
-          resizeMode="cover"
-          accessible={false}
-        />
-        {/* 135° specular sheen — the premium cue shared with the closet tiles. */}
-        <LinearGradient
-          colors={[sheen.from[resolved], sheen.to]}
-          locations={[0, 0.6]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          pointerEvents="none"
-          style={StyleSheet.absoluteFill}
-        />
-      </Press>
+      />
 
       <View style={styles.info}>
         <Text
@@ -259,19 +236,12 @@ function SaveToggle({ isSaved, onToggle }: { isSaved: boolean; onToggle: () => v
 }
 
 const styles = StyleSheet.create({
+  // The card is now just the object + the anatomy stacked; ItemSurface brings its
+  // own squircle, border, shadow, and glow, so the card wrapper carries no frame.
   card: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-  },
-  imageWrap: {
-    width: '100%',
-    aspectRatio: layout.itemCard.ratio,
-    overflow: 'hidden',
-    borderCurve: 'continuous',
+    gap: spacing.s2,
   },
   info: {
-    padding: layout.itemCard.padding,
     gap: spacing.s2,
   },
   actions: {

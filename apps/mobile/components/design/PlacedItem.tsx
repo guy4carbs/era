@@ -17,12 +17,13 @@
  * commits back to the parent on gesture end — so parent state stays the source of
  * truth for saving and never fights an in-flight gesture.
  */
-import { glass, motion, radii } from '@era/tokens';
+import { elevation, elevationDark, glass, motion, radii } from '@era/tokens';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo } from 'react';
 import { StyleSheet } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
+  interpolate,
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
@@ -46,6 +47,14 @@ import {
 import type { OutfitItemTransform } from './api';
 
 const RAD_TO_DEG = 180 / Math.PI;
+
+// The dragged piece lifts on the e3 ambient ink layer (per-mode opacity/blur);
+// at rest the shadow is off (opacity 0), so the resting piece keeps its minimal
+// treatment. `lift` (0..1) ramps between the two.
+const DRAG_SHADOW = { light: elevation.e3.ambient, dark: elevationDark.e3.ambient } as const;
+// The e3 ambient vertical offset (shared by both modes); paired with the ramped
+// opacity/radius so the lift casts downward like the closet tiles.
+const DRAG_SHADOW_OFFSET = { width: 0, height: elevation.e3.ambient.y } as const;
 
 /** A snap target: another piece's normalized center, or the stage center-line. */
 interface SnapTarget {
@@ -123,7 +132,7 @@ export function PlacedItem({
   guideXPos,
   guideYPos,
 }: PlacedItemProps) {
-  const { colors } = useTheme();
+  const { colors, resolved } = useTheme();
 
   // Seeded once from the placement; the gesture drives these directly and the
   // parent is updated on release. Reopen/add mounts fresh with correct seeds.
@@ -136,6 +145,10 @@ export function PlacedItem({
   const startY = useSharedValue(0);
   const startScale = useSharedValue(0);
   const startRot = useSharedValue(0);
+  // Drag-lift (0..1): raises an e3 ink shadow under the piece while it's dragged,
+  // settling back to the minimal rest treatment on release. Fluid spring on grab
+  // and release; reduced motion snaps it. Written only from the pan callbacks.
+  const lift = useSharedValue(0);
   // Edge-detect snap engage per axis so the haptic fires once, not every frame.
   const wasSnapX = useSharedValue(false);
   const wasSnapY = useSharedValue(false);
@@ -192,6 +205,8 @@ export function PlacedItem({
         snapTargetY.value = -1;
         // Freeze the other pieces' centres for the life of this drag.
         startOthers.value = othersShared.value;
+        // The piece lifts as it's grabbed — fluid spring in, snap under reduce.
+        lift.value = settle(1);
         runOnJS(select)();
       })
       .onUpdate((event) => {
@@ -245,6 +260,8 @@ export function PlacedItem({
       .onEnd(() => {
         guideX.value = 0;
         guideY.value = 0;
+        // The piece settles back down on release — fluid spring out, snap under reduce.
+        lift.value = settle(0);
         runOnJS(commit)();
       });
 
@@ -289,6 +306,7 @@ export function PlacedItem({
   }, [stage.w, stage.h, reduced]);
 
   const base = stage.w * BASE_ITEM_FRACTION;
+  const dragShadow = DRAG_SHADOW[resolved];
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -297,6 +315,10 @@ export function PlacedItem({
       { scale: scale.value },
       { rotate: `${rotation.value}deg` },
     ],
+    // The drag lift: the e3 ambient ink shadow ramps in from nothing as the piece
+    // is grabbed and out on release. Rest (lift 0) is shadowless — the minimal look.
+    shadowOpacity: interpolate(lift.value, [0, 1], [0, dragShadow.opacity]),
+    shadowRadius: interpolate(lift.value, [0, 1], [0, dragShadow.blur]),
   }));
 
   return (
@@ -314,6 +336,10 @@ export function PlacedItem({
             borderWidth: selected ? glass.borderWidth : 0,
             borderColor: colors.accent,
             backgroundColor: selected ? `${colors.accent}1F` : 'transparent',
+            // Ink shadow colour + the e3 ambient offset; opacity/radius animate
+            // in from 0 (see animatedStyle) so a resting piece casts nothing.
+            shadowColor: colors.ink,
+            shadowOffset: DRAG_SHADOW_OFFSET,
           },
           animatedStyle,
         ]}

@@ -72,6 +72,9 @@ export default function SettingsScreen() {
   // this verifiable today.
   const triggerTestError = useCallback(() => {
     forceError();
+    // Dev-only diagnostics (gated behind __DEV__ below), never in a release build,
+    // so this stays a native Alert on purpose — it's an engineer-facing confirmation
+    // of the reporting pipeline, not user-facing product chrome that needs Era's voice.
     Alert.alert(
       'Test error captured',
       reportingActive
@@ -208,18 +211,20 @@ export default function SettingsScreen() {
   );
 }
 
-/** A titled group of settings rows — a small heading over its children. */
+/**
+ * A titled group of settings rows — a small eyebrow heading over its children.
+ * The eyebrow uses the `caption` register (uppercase, tracked, secondaryStrong)
+ * to match web's settings section label exactly (closes the D6 eyebrow drift).
+ */
 function Section({ title, children }: PropsWithChildren<{ readonly title: string }>) {
   const { colors } = useTheme();
   return (
     <View style={styles.section}>
       <Text
         accessibilityRole="header"
-        variant="ui"
-        size="footnote"
-        weight={600}
+        variant="caption"
         color={colors.secondaryStrong}
-        style={{ textTransform: 'uppercase' }}
+        style={styles.eyebrow}
       >
         {title}
       </Text>
@@ -246,5 +251,10 @@ const styles = StyleSheet.create({
   },
   section: {
     gap: spacing.s3,
+  },
+  // The eyebrow register — uppercase caption, matching the settings sub-sections'
+  // own eyebrows (AvatarSection / SizesSettings) and web's caption section label.
+  eyebrow: {
+    textTransform: 'uppercase',
   },
 });

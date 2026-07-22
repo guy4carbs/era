@@ -29,11 +29,13 @@ import { Text } from '../../components/Text';
 import { PageHeader } from '../../components/PageHeader';
 import { glassSurfaceStyle } from '../../components/GlassPanel';
 import { RevealStage, OviOrb, OviSuggestion, type OviOrbState } from '../../components/ovi';
+import { ShopCard } from '../../components/shop';
 import { FeedCard } from '../../components/feed';
 import { QuizFlow, Reveal } from '../../components/quiz';
 import { deterministicProfile, type QuizAnswers } from '@era/core/quiz';
 import { strings } from '@era/core/strings';
 import type { ProposedOutfit, OviSuggestion as OviSuggestionData } from '@era/core/ovi';
+import type { RankedProduct } from '@era/core/shop';
 import type { FeedPostPayload } from '@era/core/feed';
 import { useTheme, type ThemeMode } from '../../lib/theme';
 import { themeVarStyle } from '../../lib/theme-css';
@@ -665,6 +667,181 @@ function ItemLiveSpecimen({ category }: { category: (typeof ITEM_CATEGORIES)[num
     </div>
   );
 }
+
+// -----------------------------------------------------------------------------
+// Shop card specimen — the product card on the Item-Engine grammar
+// -----------------------------------------------------------------------------
+
+/**
+ * Three fixture picks, one per `why` kind, so the specimen shows the whole
+ * whisper taxonomy in one voice: `completes_outfits` (opens Ovi), `fills_gap`
+ * (taps to the detail sheet), and the honest `similar_owned` warning (whisper
+ * register + rust caution). Ids are lab-scoped; `affiliateUrl` is a placeholder
+ * https link so the surface reads as a live click-out. Images point at the lab
+ * cutouts — a broken URL falls back to the brand initial via the card's probe,
+ * so the specimen never mounts a visibly-broken <img>.
+ */
+const SHOP_SPECIMENS: readonly RankedProduct[] = [
+  {
+    id: 'lab-shop-completes',
+    title: 'Merino crew knit',
+    brand: 'Colhoun',
+    brandTier: 'contemporary',
+    category: 'top',
+    price: 180,
+    currency: 'USD',
+    imageUrl: '/design-lab/cutouts/top.png',
+    retailer: 'Colhoun',
+    productUrl: 'https://colhoun.example/p/lab-shop-completes',
+    affiliateUrl: 'https://colhoun.example/p/lab-shop-completes?aff=era-lab',
+    score: 0.9,
+    why: { kind: 'completes_outfits', count: 3 },
+    whyDetail: null,
+  },
+  {
+    id: 'lab-shop-gap',
+    title: 'Camel wool trousers',
+    brand: 'Vestre',
+    brandTier: 'premium',
+    category: 'bottom',
+    price: 240,
+    currency: 'USD',
+    imageUrl: '/design-lab/cutouts/bottom.png',
+    retailer: 'Vestre',
+    productUrl: 'https://vestre.example/p/lab-shop-gap',
+    affiliateUrl: 'https://vestre.example/p/lab-shop-gap?aff=era-lab',
+    score: 0.82,
+    why: { kind: 'fills_gap', category: 'bottom' },
+    whyDetail: { completesWith: [], fillsGap: { category: 'bottom', ownedCount: 1 }, similarTo: [], paletteMatch: [] },
+  },
+  {
+    id: 'lab-shop-similar',
+    title: 'White leather sneakers',
+    brand: 'Aldous',
+    brandTier: 'contemporary',
+    category: 'shoes',
+    price: 150,
+    currency: 'USD',
+    imageUrl: '/design-lab/cutouts/shoes.png',
+    retailer: 'Aldous',
+    productUrl: 'https://aldous.example/p/lab-shop-similar',
+    affiliateUrl: 'https://aldous.example/p/lab-shop-similar?aff=era-lab',
+    score: 0.61,
+    why: { kind: 'similar_owned', ownedCount: 2 },
+    whyDetail: {
+      completesWith: [],
+      fillsGap: null,
+      similarTo: [{ id: 'lab-owned-sneaker', label: 'white sneakers' }],
+      paletteMatch: [],
+    },
+  },
+];
+
+/**
+ * The Shop card on the Item-Engine grammar, in one mode island: the product photo
+ * AS the hero object (ItemSurface — 4:5, hairline, dual-e3, sheen, warm tone,
+ * hover lift), the brand/title/price beneath, and the why as Ovi's whisper (the
+ * 20px orb + a Fraunces-Italic line) across all three kinds. Save/dismiss are
+ * live but lab-scoped (no wishlist writes land for these ids).
+ */
+function ShopCardIsland() {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(0, 1fr))', gap: 'var(--space-4)' }}>
+      {SHOP_SPECIMENS.map((product) => (
+        <ShopCard
+          key={product.id}
+          product={product}
+          isSaved={false}
+          onToggleSave={() => {}}
+          onDismiss={() => {}}
+          onWhyCompletesOpen={() => {}}
+        />
+      ))}
+    </div>
+  );
+}
+
+// -----------------------------------------------------------------------------
+// Canvas physics specimen — the drag lift + hairline snap guide, static
+// -----------------------------------------------------------------------------
+
+/**
+ * A still frame of the outfit-canvas drag physics: a 4:5 "paper" surface with a
+ * centre hairline snap guide (var(--color-hairline), 1px) crossing it, and one
+ * piece parked on the guide carrying the e3 "item" shadow — the lift a dragged
+ * piece holds while it's picked up. Static: no drag, no motion; it just shows the
+ * two resting-state values (the guide colour and the lift shadow) the live canvas
+ * animates in on drag-start and settles out on release.
+ */
+function CanvasPhysicsIsland() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+      <div style={canvasPaperStyle}>
+        {/* Centre snap guides — the exact hairline treatment CanvasStage draws. */}
+        <span aria-hidden="true" style={canvasGuideVStyle} />
+        <span aria-hidden="true" style={canvasGuideHStyle} />
+        {/* A piece parked on the guide, lifted on the e3 shadow (drag-held state). */}
+        <div style={canvasPieceStyle}>
+          <Text variant="caption" as="span" size="footnote" style={{ color: 'var(--color-secondary-strong)' }}>
+            top
+          </Text>
+        </div>
+      </div>
+      <Text variant="body" as="p" size="footnote" style={{ margin: 0, color: 'var(--color-secondary)' }}>
+        Drag physics (static): a piece lifts onto <code>var(--shadow-e3)</code> while dragged (fluid
+        spring in, settling out on release), and snap guides render as 1px{' '}
+        <code>var(--color-hairline)</code> rules. Under reduced motion the lift hard-sets.
+      </Text>
+    </div>
+  );
+}
+
+// The 4:5 canvas "paper" (CanvasStage.paperStyle) sized for the specimen.
+const canvasPaperStyle: CSSProperties = {
+  position: 'relative',
+  aspectRatio: '4 / 5',
+  maxWidth: 'var(--space-16)',
+  overflow: 'hidden',
+  background: 'var(--color-surface)',
+  borderRadius: 'var(--radius-sheet)',
+  border: '1px solid var(--color-hairline)',
+};
+
+// The snap guides: the exact 1px hairline rules CanvasStage draws while snapping.
+const canvasGuideVStyle: CSSProperties = {
+  position: 'absolute',
+  left: '50%',
+  top: 0,
+  width: 1,
+  height: '100%',
+  background: 'var(--color-hairline)',
+};
+const canvasGuideHStyle: CSSProperties = {
+  position: 'absolute',
+  top: '50%',
+  left: 0,
+  height: 1,
+  width: '100%',
+  background: 'var(--color-hairline)',
+};
+
+// A piece parked on the centre guide, carrying the e3 drag-lift shadow — the
+// resting frame of what a dragged piece holds.
+const canvasPieceStyle: CSSProperties = {
+  position: 'absolute',
+  left: '50%',
+  top: '50%',
+  transform: 'translate(-50%, -50%)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '45%',
+  aspectRatio: '4 / 5',
+  borderRadius: 'var(--radius-card)',
+  background: 'var(--color-bg)',
+  border: '1px solid var(--color-hairline)',
+  boxShadow: 'var(--shadow-e3)',
+};
 
 // -----------------------------------------------------------------------------
 // Reveal ritual specimen (D9) — a replayable Today's Look reveal on lab assets.
@@ -1423,6 +1600,20 @@ export default function DesignLabPage() {
           note="The D8 closet's editorial grammar: the real Fraunces-Italic section label (oviAccent) with its hairline rule filling the row, a live density toggle reflowing the specimen grid between the two density values (lab-local, not persisted), and the cost-per-wear line in Fraunces numerals over its quiet 'per wear' label (the detail-sheet treatment). Real lab cutouts sit in ItemSurface tiles so the label / rule / density read against actual cards."
         >
           <IslandPair content={() => <EditorialClosetIsland />} />
+        </Section>
+
+        <Section
+          title="Shop card"
+          note="The Shop product card on the Item-Engine grammar: the product photo AS the hero object (ItemSurface — 4:5 cream card, hairline, dual-e3, sheen, 1% warm tone, hover lift), with brand / title / price / actions reading beneath it. The 'why' is Ovi's whisper for every kind — the 20px idle orb beside a Fraunces-Italic line: completes_outfits opens Ovi, fills_gap taps to the detail sheet, and the honest similar_owned warning keeps the whisper voice with a rust caution marker. One quiet voice, not a label taxonomy. Fixtures are lab-scoped; product images fall back to the brand initial."
+        >
+          <IslandPair content={() => <ShopCardIsland />} />
+        </Section>
+
+        <Section
+          title="Canvas physics"
+          note="The outfit-canvas drag physics, static: a 4:5 paper with the 1px var(--color-hairline) snap guides crossing it, and one piece parked on the guide carrying the e3 'item' shadow — the lift a piece holds while dragged. Live, the lift eases in on drag-start and settles out on release via the fluid spring (a hard set under reduced motion); the guides appear only while snapping."
+        >
+          <IslandPair content={() => <CanvasPhysicsIsland />} />
         </Section>
 
         <Section

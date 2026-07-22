@@ -81,20 +81,36 @@ export default function SignInScreen() {
         />
 
         <Button
-          label={sending ? '…' : 'Send magic link'}
+          label={sending ? 'Sending…' : 'Send magic link'}
           variant="primary"
           disabled={sending}
           onPress={() => {
             void sendMagicLink();
           }}
         />
-        {sending ? <ActivityIndicator color={colors.accent} /> : null}
+
+        {/* The pending beat, kept calm: a small themed indicator beside a quiet
+            line, rather than a bare spinner floating on its own. */}
+        {sending ? (
+          <View style={styles.pending}>
+            <ActivityIndicator color={colors.secondary} size="small" />
+            <Text variant="caption" size="footnote" color={colors.secondary}>
+              Sending your link…
+            </Text>
+          </View>
+        ) : null}
 
         {status.kind === 'sent' && (
-          <Text variant="caption" size="footnote" color={colors.secondary}>
-            Check your email for a sign-in link. In development the link is printed
-            to the server console.
-          </Text>
+          <View style={styles.sent}>
+            {/* The serif lead — a calm, editorial confirmation, not a toast. */}
+            <Text variant="title" size="title3" color={colors.text}>
+              Check your email
+            </Text>
+            <Text variant="caption" size="footnote" color={colors.secondary}>
+              We sent a sign-in link. In development the link is printed to the
+              server console.
+            </Text>
+          </View>
         )}
 
         <View style={styles.divider}>
@@ -145,6 +161,16 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: spacing.s4,
+  },
+  // The calm pending row — a small themed spinner beside its line.
+  pending: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.s2,
+  },
+  // The sent confirmation — a serif lead over the quiet detail line.
+  sent: {
+    gap: spacing.s1,
   },
   divider: {
     flexDirection: 'row',

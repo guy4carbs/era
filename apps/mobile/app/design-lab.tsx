@@ -37,6 +37,7 @@ import {
 import { costPerWear } from '@era/core/wear-stats';
 import type { FeedPostPayload } from '@era/core/feed';
 import type { ProposedOutfit } from '@era/core/ovi';
+import type { ProductWhy } from '@era/core/shop';
 import { strings } from '@era/core/strings';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
@@ -62,6 +63,7 @@ import { ActionRail, Attribution } from '@/components/feed';
 import { OviOrb, OviSuggestion, RevealStage, type OviOrbState } from '@/components/ovi';
 import { Text } from '@/components/Text';
 import { ItemSurface, type ForcedState } from '@/components/items';
+import { WhyLabel } from '@/components/shop';
 import { formatMoney } from '@/components/wear/format';
 import {
   animate,
@@ -266,6 +268,10 @@ export default function DesignLabScreen() {
 
         <Section title="Editorial closet">
           <TwoUp render={() => <EditorialClosetColumn />} />
+        </Section>
+
+        <Section title="Shop card">
+          <TwoUp render={() => <ShopCardColumn />} />
         </Section>
 
         <Section title="Components">
@@ -973,6 +979,67 @@ function EditorialClosetColumn() {
   );
 }
 
+/**
+ * ShopCardColumn — the Shop pick's Item-Engine treatment as a specimen.
+ *
+ * The product photo AS THE OBJECT on the shared {@link ItemSurface} (`cover` fit,
+ * since a Shop photo is full-bleed, not a cutout), then the card's real anatomy —
+ * brand / title / price · retailer — and Ovi's honest {@link WhyLabel} whisper
+ * beneath. Two whys are shown so both grammars read: a positive `fills_gap` pull
+ * (warm ink line) and the `similar_owned` CAUTION (rust line + rust underline).
+ * Fixture data only; a bundled cutout stands in for the product photo. The why
+ * whispers are static here (no `onPress`), so they don't try to open a sheet.
+ */
+const SHOP_LAB_WHY_FILL: ProductWhy = { kind: 'fills_gap', category: 'outerwear' };
+const SHOP_LAB_WHY_CAUTION: ProductWhy = { kind: 'similar_owned', ownedCount: 2 };
+
+function ShopCardColumn() {
+  const { colors } = useTheme();
+  return (
+    <View style={styles.stack}>
+      <View style={styles.shopCardSpecimen}>
+        {/* The photo-as-object on the shared surface — cover fit for a full-bleed
+            product photo (a lab cutout stands in for the shot). */}
+        <ItemSurface
+          uri={REVEAL_LAB_ASSET_URIS.outerwear ?? null}
+          resizeMode="cover"
+          accessibilityLabel="Shop pick specimen"
+          interactive="press"
+          onPress={() => undefined}
+        />
+        <View style={styles.shopCardInfo}>
+          <Text
+            numberOfLines={1}
+            variant="ui"
+            size="footnote"
+            weight={600}
+            color={colors.secondaryStrong}
+            style={styles.shopCardBrand}
+          >
+            {'ATELIER NOIR'}
+          </Text>
+          <Text numberOfLines={2} variant="body" color={colors.text}>
+            Belted wool overcoat
+          </Text>
+          <Text variant="ui" size="subhead" weight={600} color={colors.text}>
+            {'USD 240'}
+            <Text variant="ui" size="subhead" weight={400} color={colors.secondaryStrong}>
+              {'   Atelier Noir'}
+            </Text>
+          </Text>
+          {/* Both why grammars, static (no detail sheet in the lab). */}
+          <WhyLabel why={SHOP_LAB_WHY_FILL} />
+          <WhyLabel why={SHOP_LAB_WHY_CAUTION} />
+        </View>
+      </View>
+      <Text variant="caption" color={colors.secondary}>
+        Product photo as the object on the Item-Engine surface · the &lsquo;why&rsquo; as
+        Ovi&rsquo;s whisper (positive pull + similar-owned caution)
+      </Text>
+    </View>
+  );
+}
+
 function SheenColumn({ mode }: { mode: ThemeMode }) {
   const { colors } = useTheme();
   return (
@@ -1481,6 +1548,10 @@ const styles = StyleSheet.create({
   closetGrid: { flexDirection: 'row', gap: spacing.s2 },
   closetCell: { flex: 1, gap: spacing.s2 },
   closetCost: { gap: spacing.s1 },
+  // Shop card — the object stacked over its anatomy, matching ShopCard's grammar.
+  shopCardSpecimen: { gap: spacing.s2 },
+  shopCardInfo: { gap: spacing.s2 },
+  shopCardBrand: { letterSpacing: 0.4 },
   auditGroup: { gap: spacing.s1 },
   contrastRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.s2 },
   contrastMeta: { flex: 1 },

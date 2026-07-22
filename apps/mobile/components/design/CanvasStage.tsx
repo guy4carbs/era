@@ -122,14 +122,15 @@ export function CanvasStage({
         ))}
       </View>
 
-      {/* Snap guides — overlay, excluded from the capture. */}
+      {/* Snap guides — hairline centre-lines (D3.2: a quiet guide, not an accent
+          rule); opacity ridden by the shared guideX/guideY a dragging piece raises. */}
       <Animated.View
         pointerEvents="none"
-        style={[styles.guideV, { backgroundColor: colors.accent }, guideXStyle]}
+        style={[styles.guideV, { backgroundColor: colors.hairline }, guideXStyle]}
       />
       <Animated.View
         pointerEvents="none"
-        style={[styles.guideH, { backgroundColor: colors.accent }, guideYStyle]}
+        style={[styles.guideH, { backgroundColor: colors.hairline }, guideYStyle]}
       />
 
       {/* Control row for the selected piece — layer order + remove. */}

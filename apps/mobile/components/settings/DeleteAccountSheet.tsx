@@ -85,7 +85,10 @@ export function DeleteAccountSheet({
   }
 
   return (
-    <GlassSheet open={open} onClose={handleClose}>
+    // The one sheet that keeps a backdrop: a whisper veil (≤12% ink, D3.2) so an
+    // irreversible erase reads with a touch of gravity; every other sheet uses the
+    // transparent catcher.
+    <GlassSheet open={open} onClose={handleClose} veil>
       {status === 'deleted' ? (
         <View style={styles.body}>
           <Text

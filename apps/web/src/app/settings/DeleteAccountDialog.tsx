@@ -224,10 +224,15 @@ const triggerStyle: CSSProperties = {
   textAlign: 'left',
 };
 
+// D3.2 scrim decree: no gray veils — everywhere else the backdrop is a
+// transparent click-catcher and the GlassSheet's blur + e4 carry separation.
+// Account deletion is the one DESTRUCTIVE exception: it keeps a veil, but dropped
+// to a WHISPER (ink 12%, far below the retired 45%) — just enough weight to mark
+// an irreversible action as different from a routine sheet, never a gray wash.
 const backdropStyle: CSSProperties = {
   position: 'fixed',
   inset: 0,
-  background: 'color-mix(in srgb, var(--color-ink) 45%, transparent)',
+  background: 'color-mix(in srgb, var(--color-ink) 12%, transparent)',
   zIndex: 45,
 };
 

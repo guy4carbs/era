@@ -3,7 +3,6 @@ export { ShopCard, type ShopCardProps } from './ShopCard';
 export { PriceDropCard, type PriceDropCardProps } from './PriceDropCard';
 export { ReceiptImportCard, type ReceiptImportCardProps } from './ReceiptImportCard';
 export { NotificationFeed } from './NotificationFeed';
-export { WhyLabel, type WhyLabelProps } from './WhyLabel';
 export { WhyDetailSheet, type WhyDetailSheetProps } from './WhyDetailSheet';
 export {
   ShopFilters,

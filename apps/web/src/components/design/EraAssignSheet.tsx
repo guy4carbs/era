@@ -20,10 +20,13 @@ export interface EraAssignSheetProps {
   onClose: () => void;
 }
 
+// D3.2 scrim decree: no tinted gray overlay. A transparent click-catcher closes
+// the sheet on an outside tap; the GlassSheet's own blur + e4 shadow carry the
+// separation from the page beneath — the frosted sheet is the figure, not a veil.
 const backdropStyle: CSSProperties = {
   position: 'fixed',
   inset: 0,
-  background: 'color-mix(in srgb, var(--color-ink) 45%, transparent)',
+  background: 'transparent',
   zIndex: 45,
 };
 

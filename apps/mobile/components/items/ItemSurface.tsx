@@ -86,6 +86,13 @@ export interface ItemSurfaceProps {
    * `require()` returns) for the lab, or `null` for a token-gradient placeholder.
    */
   readonly uri: string | number | null;
+  /**
+   * How the image fills the surface. `'contain'` (default) is the cutout fit —
+   * a transparent garment PNG floats whole on the surface. `'cover'` fills the
+   * squircle edge to edge, for full-bleed product photos (the Shop pick) that
+   * carry their own background rather than a cutout.
+   */
+  readonly resizeMode?: 'contain' | 'cover';
   readonly accessibilityLabel: string;
   /** Holds the glow + e4 shadow steady — the touch-peak bloom, pinned. */
   readonly selected?: boolean;
@@ -130,6 +137,7 @@ const FORCED_TILT = { rotateX: -4, rotateY: 5 } as const;
 
 export function ItemSurface({
   uri,
+  resizeMode = 'contain',
   accessibilityLabel,
   selected = false,
   interactive = 'press',
@@ -227,7 +235,7 @@ export function ItemSurface({
         <Animated.Image
           source={typeof uri === 'number' ? uri : { uri }}
           style={[styles.image, forced ? forced.imageStyle : imageStyle]}
-          resizeMode="contain"
+          resizeMode={resizeMode}
           accessible={false}
         />
       ) : (
