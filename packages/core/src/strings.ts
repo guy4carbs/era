@@ -1833,8 +1833,19 @@ export const strings = {
   errors: {
     /** Generic failure. Owns it, no blame, no jargon. */
     generic: 'Something went wrong on our end. Give it another go.',
+    /**
+     * The canonical transient-failure toast line (D-WAIT): calm Geist on the
+     * glass toast with the muted-rust hairline. Never an exclamation mark,
+     * never a red banner — the brand keeps its voice when things fail.
+     */
+    transient: "That didn't go through. Try once more.",
     /** Offline / no connection. */
     offline: "You're offline. We'll pick up when you're back.",
+    /**
+     * The failed-load editorial state (D-WAIT): a Fraunces line + ONE action
+     * (errors.retry). Used when a surface can't load at all.
+     */
+    failedLoad: "This didn't load.",
     /** Retry affordance label. */
     retry: 'Try again',
   },

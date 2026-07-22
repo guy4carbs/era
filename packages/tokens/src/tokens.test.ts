@@ -347,6 +347,11 @@ test('oviPanel + stream: the glass conversation contract (D3.2)', () => {
   // The quiz progress line: thin, present, never chrome.
   assert.deepEqual(layout.quizProgress, { heightPx: 2 });
   assert.ok(layout.quizProgress.heightPx <= 2);
+  // Waiting moments: the skeleton sweep is ambient (slower than any
+  // transition), and toasts outlive the longest transition but stay brief.
+  assert.deepEqual(motion.waiting, { skeletonSweepMs: 1800, toastDismissMs: 2500 });
+  assert.ok(motion.waiting.skeletonSweepMs > motion.durations.maxMs);
+  assert.ok(motion.waiting.toastDismissMs > motion.waiting.skeletonSweepMs);
 });
 
 test('orb: Ovi living-presence contract — sizes, breath, shimmer, lean', () => {
