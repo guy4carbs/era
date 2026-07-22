@@ -35,6 +35,7 @@ const ALLOWED_FILES: readonly RegExp[] = [
   /^apps\/web\/src\/app\/design-lab\/page\.tsx$/, // busy-imagery SVG art — deliberately non-token
   /^apps\/mobile\/app\/design-lab\.tsx$/, // ditto, mobile lab busy imagery
   /^apps\/web\/src\/components\/ovi\/reveal-export\.ts$/, // canvas 2D fills — ctx can't read CSS vars, palette drawn as literal hex (same as email)
+  /^apps\/web\/src\/components\/site\/waitlist-card-export\.ts$/, // same canvas 2D fills as reveal-export — palette drawn as literal hex
 ];
 
 const HEX_RE = /#[0-9a-fA-F]{3,8}\b/;

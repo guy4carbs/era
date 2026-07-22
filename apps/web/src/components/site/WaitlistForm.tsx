@@ -1,15 +1,20 @@
 'use client';
 
 import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { motion as motionToken } from '@era/tokens';
+import { transitionFor } from '../../lib/motion';
 import { strings } from '@era/core/strings';
 import { Button, Input, glassSurfaceStyle } from '../index';
 import { track } from '../../lib/analytics';
-import { PostSignupReferral } from './PostSignupReferral';
+import { PostSignupGift } from './PostSignupGift';
 
 /** The waitlist join response, per Forge's `POST /api/waitlist` contract. */
 interface JoinResult {
   referralCode: string;
   alreadyJoined: boolean;
+  /** The joiner's 1-based place in line — the hero of the post-signup gift. */
+  position: number;
 }
 
 type Status = 'idle' | 'submitting' | 'error';
@@ -67,12 +72,15 @@ const barInputStyle: CSSProperties = {
 
 /**
  * The waitlist capture island. Reads an optional `?ref=` from the URL and sends
- * it with the join so referral credit is attributed. On success it swaps to the
- * {@link PostSignupReferral} view. Error responses are surfaced inline in the
- * field without leaving the aesthetic: 400 → "enter a valid email", 429 → a
- * gentle "try again". Fires the `waitlist_signup` funnel event on a successful join.
+ * it with the join so referral credit is attributed. On success the input
+ * DISSOLVES (fade + scale-out on the gentle spring) and the {@link PostSignupGift}
+ * choreography blooms in its place — the same gift for both layout registers.
+ * Error responses are surfaced inline in the field without leaving the aesthetic:
+ * 400 → "enter a valid email", 429 → a gentle "try again". Fires the
+ * `waitlist_signup` funnel event on a successful join.
  */
 export function WaitlistForm({ variant = 'stacked' }: WaitlistFormProps = {}) {
+  const reduced = useReducedMotion();
   const [email, setEmail] = useState('');
   const [ref, setRef] = useState<string | undefined>(undefined);
   const [status, setStatus] = useState<Status>('idle');
@@ -124,11 +132,12 @@ export function WaitlistForm({ variant = 'stacked' }: WaitlistFormProps = {}) {
     }
   }
 
-  if (result) {
-    return (
-      <PostSignupReferral referralCode={result.referralCode} alreadyJoined={result.alreadyJoined} />
-    );
-  }
+  // The dissolve the form plays on its way out: fade + a gentle scale-out on the
+  // gentle spring (reduced motion fades only). The gift then blooms in its place.
+  const formExit = reduced
+    ? { opacity: 0 }
+    : { opacity: 0, scale: motionToken.stagger.bloomScale };
+  const spring = transitionFor(motionToken.springs.gentle, reduced);
 
   // The field + submit are identical across both registers — only the wrapping
   // layout differs (stacked column vs. the hero's glass pill).
@@ -153,21 +162,52 @@ export function WaitlistForm({ variant = 'stacked' }: WaitlistFormProps = {}) {
     </Button>
   );
 
-  if (variant === 'bar') {
-    return (
+  const form =
+    variant === 'bar' ? (
       <form style={formStyle} onSubmit={onSubmit} noValidate>
         <div style={barWrapStyle}>
           <div style={barFieldWrapStyle}>{field}</div>
           {submit}
         </div>
       </form>
+    ) : (
+      <form style={formStyle} onSubmit={onSubmit} noValidate>
+        {field}
+        {submit}
+      </form>
     );
-  }
 
+  // One AnimatePresence across both states so the form's dissolve exit plays
+  // before the gift blooms in. `mode="wait"` holds the gift until the input has
+  // faded out — the input DISSOLVES, then the orb blooms, the choreography's
+  // opening beat. The gift owns its own internal staged entrance.
   return (
-    <form style={formStyle} onSubmit={onSubmit} noValidate>
-      {field}
-      {submit}
-    </form>
+    <AnimatePresence mode="wait" initial={false}>
+      {result ? (
+        <motion.div
+          key="gift"
+          style={{ width: '100%' }}
+          initial={reduced ? { opacity: 0 } : { opacity: 0, scale: motionToken.stagger.bloomScale }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={spring}
+        >
+          <PostSignupGift
+            referralCode={result.referralCode}
+            alreadyJoined={result.alreadyJoined}
+            position={result.position}
+          />
+        </motion.div>
+      ) : (
+        <motion.div
+          key="form"
+          style={{ width: '100%' }}
+          initial={false}
+          exit={formExit}
+          transition={spring}
+        >
+          {form}
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

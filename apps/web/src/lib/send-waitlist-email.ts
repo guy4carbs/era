@@ -18,6 +18,7 @@ import { type DbClient } from '@era/db';
 
 import { isEmailSuppressed } from './email-suppression.ts';
 import { sendEmail, type SendEmailDeps } from './send-email.ts';
+import { siteUrl } from './site-url.ts';
 
 /** Everything the waitlist send needs: the recipient and the db. */
 export interface WaitlistEmail {
@@ -26,36 +27,49 @@ export interface WaitlistEmail {
 }
 
 /**
- * Render the waitlist-confirmation email — quiet, honest, no CTA. Pure: no env,
- * no network, so the copy is snapshot-testable in isolation.
+ * Render the waitlist-confirmation email — quiet, elegant, the same voice as the
+ * on-site gift. Pure: no env, no network, so the copy is snapshot-testable in
+ * isolation.
+ *
+ * The heading is set in a SERIF stack (Georgia / 'Times New Roman' / serif) — the
+ * web-safe stand-in for Fraunces, since email clients strip `@font-face` and can
+ * never load the brand face. This is the sanctioned email exception to the
+ * two-font rule (the file is allowlisted in font-consistency.test.ts, alongside
+ * the system-sans transactional templates). The body is one line and one link
+ * (era.style), mirroring the gift's `email` copy; the pricing-honesty line stays
+ * beneath, small, because the trust rule favours saying it up front.
  */
 export function renderWaitlistEmail(): { subject: string; html: string; text: string } {
   const copy = strings.emails.waitlist;
-  const subject = copy.subject;
+  const gift = strings.site.gift.email;
+  const subject = gift.subject;
+  const url = siteUrl();
 
   const html = `<!doctype html>
 <html>
   <body style="margin:0;padding:0;background:#faf9f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#1c1b1a;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf9f7;">
       <tr>
-        <td align="center" style="padding:48px 24px;">
+        <td align="center" style="padding:64px 24px;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:440px;">
             <tr>
-              <td style="font-size:20px;font-weight:600;letter-spacing:0.02em;padding-bottom:24px;">Era</td>
-            </tr>
-            <tr>
-              <td style="font-size:16px;line-height:1.6;padding-bottom:20px;">
-                ${copy.body}
+              <td style="font-family:Georgia,'Times New Roman',serif;font-size:40px;font-weight:500;letter-spacing:-0.01em;line-height:1.1;padding-bottom:20px;">
+                ${gift.subject}
               </td>
             </tr>
             <tr>
-              <td style="font-size:14px;line-height:1.6;color:#6b6864;padding-bottom:28px;">
-                ${copy.pricingNote}
+              <td style="font-size:17px;line-height:1.6;color:#3a382f;padding-bottom:32px;">
+                ${gift.line}
+              </td>
+            </tr>
+            <tr>
+              <td style="font-size:15px;line-height:1.6;padding-bottom:32px;">
+                <a href="${url}" style="color:#1c1b1a;text-decoration:underline;">${gift.linkLabel}</a>
               </td>
             </tr>
             <tr>
               <td style="font-size:13px;line-height:1.6;color:#9a9691;border-top:1px solid #ecebe8;padding-top:20px;">
-                ${copy.closer}
+                ${copy.pricingNote}
               </td>
             </tr>
           </table>
@@ -65,7 +79,7 @@ export function renderWaitlistEmail(): { subject: string; html: string; text: st
   </body>
 </html>`;
 
-  const text = [copy.body, '', copy.pricingNote, '', copy.closer, '', '— Era'].join('\n');
+  const text = [gift.subject, '', gift.line, '', url, '', copy.pricingNote].join('\n');
 
   return { subject, html, text };
 }

@@ -10,7 +10,7 @@ export { FeatureSection, type FeatureSectionProps } from './FeatureSection';
 export { Closer } from './Closer';
 export { FaqSection } from './FaqSection';
 export { WaitlistForm, type WaitlistFormProps, type WaitlistFormVariant } from './WaitlistForm';
-export { PostSignupReferral, type PostSignupReferralProps } from './PostSignupReferral';
+export { PostSignupGift, type PostSignupGiftProps } from './PostSignupGift';
 export { ScrollReveal, type ScrollRevealProps } from './ScrollReveal';
 export { Pageview } from './Pageview';
 export { LegalArticle, type LegalArticleProps } from './LegalArticle';
