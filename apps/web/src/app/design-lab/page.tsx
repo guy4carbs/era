@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   typeRamp,
@@ -26,6 +26,7 @@ import {
   type TabId,
 } from '../../components';
 import { Text } from '../../components/Text';
+import { PageHeader } from '../../components/PageHeader';
 import { glassSurfaceStyle } from '../../components/GlassPanel';
 import { RevealStage, OviOrb, OviSuggestion, type OviOrbState } from '../../components/ovi';
 import { strings } from '@era/core/strings';
@@ -572,12 +573,17 @@ function ComponentsIsland({ chips, onToggleChip }: { chips: Record<string, boole
         <Button variant="secondary">Secondary</Button>
         <Button variant="ghost">Ghost</Button>
       </div>
-      <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', alignItems: 'center' }}>
         {Object.keys(chips).map((key) => (
           <Chip key={key} selected={chips[key]} onClick={() => onToggleChip(key)}>
             {key}
           </Chip>
         ))}
+        {/* The D8 quiet-glass rest treatment (Chip `glass`) — a frosted pill,
+            unselected. The row above is the solid-surface default for contrast. */}
+        <Chip glass onClick={() => onToggleChip('glass')} selected={chips.glass ?? false}>
+          glass
+        </Chip>
       </div>
       <Input label="Email" placeholder="you@example.com" />
       <Card>
@@ -800,6 +806,375 @@ function BusyImageryIsland() {
 }
 
 // ---------------------------------------------------------------------------
+// Glass conversation (D3.2 + parity) — the Ovi panel's anatomy, live.
+// A lab-scoped island rendering the conversation grammar INSIDE the real glass
+// recipe: the header orb + 'Ovi' accent + quiet close, a user bubble, Ovi's
+// editorial reply that WORD-STREAMS on Replay (the exact stream.wordMs cadence +
+// glowing caret with caretDimOpacity blink from OviChat), the three canonical
+// chips, and the glass input row with the pressing send. All inert / toast-noop.
+// The streaming internals are private to OviChat, so they're replicated here
+// minimally against the same tokens — no private export just for the lab.
+// ---------------------------------------------------------------------------
+
+/** Ovi's scripted reply — honest, short, in her voice (lab-scoped literal). */
+const CONVO_USER_LINE = 'What do I wear today?';
+const CONVO_OVI_REPLY =
+  '18° and sunny — the cream knit with your straight-leg denim, white sneakers to keep it easy.';
+
+/** Split a reply into word+trailing-whitespace tokens — mirrors OviChat's
+ *  streamTokens so the reveal cadence and spacing match the real panel. */
+function convoStreamTokens(reply: string): string[] {
+  return reply.match(/\S+\s*/g) ?? [];
+}
+
+/** The panel's glass recipe at panel scale: the full §3 surface (blur + tint +
+ *  1px border + top highlight + e4), sheet radius, with the panel's own inset
+ *  padding. Same composition OviChat's panelStyle uses. */
+const convoPanelStyle: CSSProperties = {
+  ...glassSurfaceStyle(),
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-3)',
+  padding: 'var(--space-4)',
+};
+
+const convoHeaderStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 'var(--space-3)',
+};
+
+const convoCloseStyle: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  minWidth: 'var(--touch-target-min)',
+  minHeight: 'var(--touch-target-min)',
+  border: 'none',
+  background: 'transparent',
+  color: 'var(--color-secondary-strong)',
+  cursor: 'pointer',
+  fontSize: typeRamp.title3.rem,
+};
+
+const convoUserBubbleStyle: CSSProperties = {
+  alignSelf: 'flex-end',
+  maxWidth: '82%',
+  paddingInline: 'var(--space-3)',
+  paddingBlock: 'var(--space-2)',
+  borderRadius: 'var(--radius-card)',
+  background: 'var(--color-surface)',
+  border: '1px solid var(--color-hairline)',
+  color: 'var(--color-text)',
+};
+
+// Ovi's reply is editorial text straight on the glass — no bubble, comfortable measure.
+const convoReplyStyle: CSSProperties = {
+  margin: 0,
+  maxWidth: '62ch',
+  color: 'var(--color-text)',
+};
+
+// The soft accent caret at the streaming insertion point (OviChat's cursorStyle).
+const convoCaretStyle: CSSProperties = {
+  display: 'inline-block',
+  width: 'var(--glass-border-width)',
+  height: '1em',
+  marginLeft: 'var(--space-1)',
+  verticalAlign: 'text-bottom',
+  borderRadius: 'var(--radius-chip)',
+  background: 'var(--color-accent)',
+};
+
+const convoChipsRowStyle: CSSProperties = {
+  display: 'flex',
+  gap: 'var(--space-2)',
+  overflowX: 'auto',
+  paddingBottom: 'var(--space-1)',
+};
+
+const convoFormStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'flex-end',
+  gap: 'var(--space-2)',
+};
+
+/**
+ * One replayable glass conversation per island. The reply reveals word by word
+ * at `stream.wordMs` while the header orb holds SPEAKING for exactly that window,
+ * then settles to IDLE; a glowing caret blinks on the same cadence at the
+ * insertion point. Replay remounts via a key (the Reveal-ritual pattern). Under
+ * reduced motion the reply appears whole and the orb holds idle. Everything the
+ * user can touch — the chips, the send, the close — is inert or a toast-noop.
+ */
+function GlassConversationIsland() {
+  const [run, setRun] = useState(0);
+  return <GlassConversationRun key={run} onReplay={() => setRun((n) => n + 1)} />;
+}
+
+function GlassConversationRun({ onReplay }: { onReplay: () => void }) {
+  const reduced = useReducedMotion();
+  const tokens = convoStreamTokens(CONVO_OVI_REPLY);
+  // How many word-tokens of the reply have landed. Reduced motion → all at once.
+  const [shown, setShown] = useState(reduced ? tokens.length : 1);
+  const [orbState, setOrbState] = useState<OviOrbState>(reduced ? 'idle' : 'speaking');
+  const [note, setNote] = useState<string | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Drive the word stream on mount, holding SPEAKING for the reveal's length,
+  // then settling to IDLE — the OviChat startStream shape, lab-minimal.
+  useEffect(() => {
+    if (reduced || tokens.length <= 1) {
+      setOrbState('idle');
+      return;
+    }
+    const tick = (count: number) => {
+      if (count >= tokens.length) {
+        setOrbState('idle');
+        return;
+      }
+      timer.current = setTimeout(() => {
+        setShown(count + 1);
+        tick(count + 1);
+      }, motionToken.stream.wordMs);
+    };
+    tick(1);
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
+    // Runs once per mount — Replay remounts via key to replay the stream.
+  }, [reduced]);
+
+  const isStreaming = !reduced && shown < tokens.length;
+  const shownText = tokens.slice(0, shown).join('');
+
+  const chips = [
+    strings.ovi.intentChips.today,
+    strings.ovi.intentChips.styleItem,
+    strings.ovi.intentChips.whatsMissing,
+  ];
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+      <div style={convoPanelStyle}>
+        <header style={convoHeaderStyle}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+            <OviOrb size="header" state={orbState} />
+            <Text variant="oviAccent" as="span" style={{ margin: 0 }}>
+              {strings.ovi.fabLabel.split(',')[0]}
+            </Text>
+          </div>
+          <button type="button" style={convoCloseStyle} aria-label={strings.common.cancel} disabled>
+            <span aria-hidden="true">×</span>
+          </button>
+        </header>
+
+        <div style={convoUserBubbleStyle}>
+          <Text variant="body" as="p" style={{ margin: 0, color: 'inherit' }}>
+            {CONVO_USER_LINE}
+          </Text>
+        </div>
+
+        <Text variant="body" as="p" style={convoReplyStyle}>
+          {shownText}
+          {isStreaming ? (
+            <motion.span
+              aria-hidden="true"
+              style={convoCaretStyle}
+              animate={{ opacity: [1, glow.caretDimOpacity, 1] }}
+              transition={{
+                duration: motionToken.stream.wordMs / 1000,
+                repeat: Infinity,
+                ease: motionToken.easing.bezier,
+              }}
+            />
+          ) : null}
+        </Text>
+
+        <div style={convoChipsRowStyle}>
+          {chips.map((label) => (
+            <Chip key={label} glass onClick={() => setNote('Chip is inert in the lab.')}>
+              {label}
+            </Chip>
+          ))}
+        </div>
+
+        <form style={convoFormStyle} onSubmit={(e) => e.preventDefault()}>
+          <div style={{ flex: 1 }}>
+            <Input
+              aria-label={strings.ovi.chatPlaceholder}
+              placeholder={strings.ovi.chatPlaceholder}
+              disabled
+            />
+          </div>
+          <Button type="submit" variant="primary" aria-label={strings.common.continue} disabled>
+            <span aria-hidden="true">→</span>
+          </Button>
+        </form>
+      </div>
+
+      <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
+        <Button variant="secondary" onClick={onReplay}>
+          Replay the reply
+        </Button>
+        {note ? (
+          <Text variant="caption" as="span" size="footnote" style={{ margin: 0, color: 'var(--color-secondary-strong)' }} role="status">
+            {note}
+          </Text>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Header choreography (D6) — the real PageHeader inside both islands, with a
+// Replay: title rises 8px, subtitle trails 60ms (motion.headerRise). The two phi
+// gaps (header-below 32 / section-above 52) render as labeled spacer bars, the
+// way the Spacing section reads its values.
+// ---------------------------------------------------------------------------
+
+/** A labeled vertical spacer bar — height set by a rhythm var, so the phi gaps
+ *  read visually the way the Spacing swatches read their spacing tokens. */
+function RhythmBar({ label, heightVar }: { label: string; heightVar: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+      <div
+        style={{
+          width: 'var(--space-2)',
+          height: heightVar,
+          background: 'var(--color-accent)',
+          borderRadius: 'var(--radius-chip)',
+          flex: 'none',
+        }}
+      />
+      <Text variant="caption" as="span" size="footnote" style={{ color: 'var(--color-secondary)' }}>
+        {label}
+      </Text>
+    </div>
+  );
+}
+
+function HeaderChoreographyIsland() {
+  const [run, setRun] = useState(0);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+      {/* The real PageHeader — it replays its rise on each mount, so the key bumps it. */}
+      <PageHeader key={run} title="Closet" subtitle={strings.closet.subtitle} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+        <RhythmBar label="--rhythm-header-below · 32 (header → first section)" heightVar="var(--rhythm-header-below)" />
+        <RhythmBar label="--rhythm-section-above · 52 (between sections)" heightVar="var(--rhythm-section-above)" />
+      </div>
+      <div>
+        <Button variant="secondary" onClick={() => setRun((n) => n + 1)}>
+          Replay the rise
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Editorial closet (D8) — the closet's editorial grammar as a specimen: the real
+// Fraunces-Italic section label + hairline rule (ClosetGallery's treatment), a
+// live density toggle (lab-local, toggling the grid's column count between the
+// two density values), and the cost-per-wear line in Fraunces numerals
+// (ItemWearStats' treatment). Read against real cutouts in ItemSurface tiles.
+// ---------------------------------------------------------------------------
+
+// The editorial section heading (ClosetGallery.sectionHeadingStyle): italic
+// serif label left, a hairline rule filling the row to the right.
+const closetHeadingStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 'var(--space-3)',
+};
+const closetHairlineStyle: CSSProperties = {
+  flex: 1,
+  height: 'var(--glass-border-width)',
+  background: 'var(--color-hairline)',
+};
+
+/** Cost-per-wear figure (ItemWearStats): the amount in Fraunces numerals (title
+ *  role) over a quiet "per wear" caption, held tight as one editorial unit. */
+function CostPerWearFigure({ amount }: { amount: string }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+      <Text variant="title" as="span" style={{ margin: 0, color: 'var(--color-text)' }}>
+        {amount}
+      </Text>
+      <Text variant="caption" size="footnote" as="span" style={{ margin: 0, color: 'var(--color-secondary-strong)' }}>
+        {strings.closet.costPerWearLabel}
+      </Text>
+    </div>
+  );
+}
+
+// Three cutouts read against the label/rule/density — the tops-ish trio.
+const CLOSET_SPECIMEN_CATEGORIES = ['top', 'outerwear', 'shoes'] as const;
+
+function EditorialClosetIsland() {
+  // Lab-local density — NOT persisted. 'comfortable' shows two columns, 'compact'
+  // three, toggling the specimen grid's column count the way the real gallery does.
+  const [density, setDensity] = useState<'comfortable' | 'compact'>('comfortable');
+  const columns = density === 'comfortable' ? 2 : 3;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+      <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center', flexWrap: 'wrap' }}>
+        <Chip
+          selected={density === 'comfortable'}
+          aria-label={strings.closet.densityComfortable}
+          onClick={() => setDensity('comfortable')}
+        >
+          {strings.closet.densityComfortable}
+        </Chip>
+        <Chip
+          selected={density === 'compact'}
+          aria-label={strings.closet.densityCompact}
+          onClick={() => setDensity('compact')}
+        >
+          {strings.closet.densityCompact}
+        </Chip>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <div style={closetHeadingStyle}>
+          <Text variant="oviAccent" as="h3" style={{ margin: 0 }}>
+            {strings.closet.categoryLabel('top')}
+          </Text>
+          <span aria-hidden="true" style={closetHairlineStyle} />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`, gap: 'var(--space-3)' }}>
+          {CLOSET_SPECIMEN_CATEGORIES.map((category) => (
+            <EditorialClosetTile key={category} category={category} />
+          ))}
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'flex-start', paddingTop: 'var(--space-2)', borderTop: '1px solid var(--color-hairline)' }}>
+        <CostPerWearFigure amount="$4.20" />
+        <Text variant="body" as="p" size="footnote" style={{ margin: 0, color: 'var(--color-secondary)', flex: 1 }}>
+          The detail-sheet cost-per-wear treatment: the amount in Fraunces numerals over its quiet
+          label. Toggle density above to reflow the grid ({columns} columns) — lab-local, not persisted.
+        </Text>
+      </div>
+    </div>
+  );
+}
+
+/** One cutout in an ItemSurface tile — real cutout with the quiz-image fallback. */
+function EditorialClosetTile({ category }: { category: (typeof ITEM_CATEGORIES)[number] }) {
+  const { src, probe } = useCutoutSrc(category);
+  return (
+    <div style={{ position: 'relative' }}>
+      {probe}
+      <ItemSurface src={src} alt={`${category} — editorial closet specimen`} />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 
@@ -905,6 +1280,20 @@ export default function DesignLabPage() {
           <IslandPair content={() => <OviSuggestionIsland />} />
         </Section>
 
+        <Section
+          title="Glass conversation"
+          note="The D3.2 panel anatomy, live: the real §3 glass recipe (blur + tint + 1px border + top highlight, sheet radius) carrying the header orb + 'Ovi' accent + quiet close, a user bubble, then Ovi's editorial reply that word-streams on Replay at the stream.wordMs cadence with the accent caret blinking on caretDimOpacity — the orb holds SPEAKING for exactly the reveal, then settles. The three canonical chips + the glass input row with the pressing send are inert (chips toast-noop). Replay remounts via key; reduced motion shows the reply whole."
+        >
+          <IslandPair content={() => <GlassConversationIsland />} />
+        </Section>
+
+        <Section
+          title="Header choreography"
+          note="The real PageHeader (D6): on mount the title rises 8px on the gentle spring and the subtitle trails 60ms behind (motion.headerRise). Replay remounts it to re-run the rise. The two phi rhythm gaps — header-below 32 and section-above 52 — render below as labeled accent spacer bars, the way the Spacing section shows its tokens."
+        >
+          <IslandPair content={() => <HeaderChoreographyIsland />} />
+        </Section>
+
         <Section title="Sheen" note="var(--sheen-gradient) laid over an accent surface.">
           <IslandPair content={() => <SheenIsland />} />
         </Section>
@@ -914,6 +1303,13 @@ export default function DesignLabPage() {
           note="The D7 hero object (ItemSurface): 4:5 cutout card with hairline + dual shadow + 135° sheen + 1% warm tone. Rows = six categories; columns = forced states (rest / lift / tilt / selected), rendered statically. One live full-tilt specimen per island. Cutouts fall back to quiz stand-ins until real PNGs land in public/design-lab/cutouts/."
         >
           <IslandPair content={() => <ItemEngineIsland />} />
+        </Section>
+
+        <Section
+          title="Editorial closet"
+          note="The D8 closet's editorial grammar: the real Fraunces-Italic section label (oviAccent) with its hairline rule filling the row, a live density toggle reflowing the specimen grid between the two density values (lab-local, not persisted), and the cost-per-wear line in Fraunces numerals over its quiet 'per wear' label (the detail-sheet treatment). Real lab cutouts sit in ItemSurface tiles so the label / rule / density read against actual cards."
+        >
+          <IslandPair content={() => <EditorialClosetIsland />} />
         </Section>
 
         <Section
