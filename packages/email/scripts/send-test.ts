@@ -27,6 +27,8 @@ import { WaitlistEmail } from '../src/templates/waitlist.tsx';
 import { LaunchInviteEmail } from '../src/templates/launch-invite.tsx';
 import { DeletionEmail } from '../src/templates/deletion.tsx';
 import { EraPlusReceiptEmail } from '../src/templates/era-plus-receipt.tsx';
+import { TheEraEdit } from '../src/templates/the-era-edit.tsx';
+import { issue001 } from '../src/issues/issue-001.ts';
 
 /** Resend's transactional send endpoint — pinned in code, never user-derived. */
 const RESEND_ENDPOINT = 'https://api.resend.com/emails';
@@ -43,6 +45,28 @@ const TEMPLATES: Record<string, () => ReactElement> = {
   'launch-invite': () => createElement(LaunchInviteEmail, { accessUrl: 'https://era.style' }),
   deletion: () => createElement(DeletionEmail),
   'era-plus-receipt': () => createElement(EraPlusReceiptEmail),
+  // The Era Edit renders with example (not cryptographically signed) footer URLs
+  // — this script carries no signing secret, so it uses the same literal example
+  // links the template's PreviewProps do. The 'era-edit' entry exercises the
+  // personalized Your Week, Worn block; 'era-edit-waitlist' passes weekWorn null,
+  // so that section is absent (the broadcast shape).
+  'era-edit': () =>
+    createElement(TheEraEdit, {
+      issue: issue001,
+      weekWorn: {
+        mostWorn: { name: 'linen shirt', count: 4 },
+        costPerWear: { name: 'linen shirt', formatted: '$12.50' },
+      },
+      unsubscribeUrl: 'https://era.style/api/email/unsubscribe?email=you%40example.com&token=example',
+      preferencesUrl: 'https://era.style/email/preferences?email=you%40example.com&token=example',
+    }),
+  'era-edit-waitlist': () =>
+    createElement(TheEraEdit, {
+      issue: issue001,
+      weekWorn: null,
+      unsubscribeUrl: 'https://era.style/api/email/unsubscribe?email=you%40example.com&token=example',
+      preferencesUrl: 'https://era.style/email/preferences?email=you%40example.com&token=example',
+    }),
 };
 
 /**

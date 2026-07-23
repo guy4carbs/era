@@ -134,6 +134,21 @@ so `packages/email` inlines palette-derived hex and uses the
 `pnpm --filter @era/email send-test -- --template <name> --to <inbox>` (fires a
 real send with a real `RESEND_API_KEY`; prints the rendered HTML path when dormant).
 
+**The Era Edit (newsletter):** template `packages/email/src/templates/the-era-edit.tsx`;
+per-issue content is typed DATA in `packages/email/src/issues/` (fixed format strings in
+`strings.emails.theEraEdit`; a new issue = a new file). Two segments, HYBRID sends via
+`apps/web/scripts/send-era-edit.ts` (railway run; `--dry-run`/`--confirm` gated):
+**waitlist** = Resend Broadcast to the existing Audience (`RESEND_AUDIENCE_ID`) with BOTH
+footer links as the native `{{{RESEND_UNSUBSCRIBE_URL}}}` merge tag (broadcasts cannot
+compute per-recipient HMACs); **active users** = individual per-user renders with real
+`getWeekWornData` (era-edit-data.ts over `buildMonthlyRecap`) and OUR signed links —
+`email-links.ts` HMAC-SHA256(email, BETTER_AUTH_SECRET) → `/api/email/unsubscribe`
+(manual suppression + audience removal) and `/email/preferences` (one toggle;
+`removeSuppression` reverses ONLY reason='manual' — bounces/complaints never
+user-reversible). 'Your Week, Worn' renders only with real wear data; waitlist readers
+never see the section. Newsletter passes `unsubscribeUrl` + `preferencesUrl`;
+transactional templates pass neither.
+
 **Domain authentication (era.style, via Resend + Cloudflare)** — full runbook in
 `docs/ACTIVATION.md` §3:
 
