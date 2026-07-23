@@ -51,6 +51,12 @@ export interface BaseEmailProps {
    * the marketing-send signal. Omit it for transactional sends.
    */
   readonly unsubscribeUrl?: string;
+  /**
+   * When present, a 'Preferences' link renders beside Unsubscribe — the signed
+   * per-recipient preferences page (The Era Edit). Omit it for transactional
+   * sends, which carry neither footer link.
+   */
+  readonly preferencesUrl?: string;
 }
 
 /**
@@ -115,8 +121,9 @@ const unsubscribeLinkStyle: CSSProperties = {
   textDecoration: 'underline',
 };
 
-export function BaseEmail({ previewText, children, unsubscribeUrl }: BaseEmailProps): React.JSX.Element {
+export function BaseEmail({ previewText, children, unsubscribeUrl, preferencesUrl }: BaseEmailProps): React.JSX.Element {
   const footer = strings.emails.footer;
+  const preferencesLabel = strings.emails.theEraEdit.preferences;
 
   return (
     <Html lang="en">
@@ -152,6 +159,14 @@ export function BaseEmail({ previewText, children, unsubscribeUrl }: BaseEmailPr
                   {'  ·  '}
                   <Link href={unsubscribeUrl} className="email-secondary" style={unsubscribeLinkStyle}>
                     {footer.unsubscribe}
+                  </Link>
+                </>
+              ) : null}
+              {preferencesUrl ? (
+                <>
+                  {'  ·  '}
+                  <Link href={preferencesUrl} className="email-secondary" style={unsubscribeLinkStyle}>
+                    {preferencesLabel}
                   </Link>
                 </>
               ) : null}

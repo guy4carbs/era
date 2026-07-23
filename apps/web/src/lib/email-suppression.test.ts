@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 
 import type { DbClient } from '@era/db';
 
-import { addSuppression, isEmailSuppressed } from './email-suppression.ts';
+import { addSuppression, isEmailSuppressed, removeSuppression } from './email-suppression.ts';
 
 /**
  * A chainable stand-in for the Drizzle client. The select-chain resolves to
@@ -24,17 +24,27 @@ import { addSuppression, isEmailSuppressed } from './email-suppression.ts';
 function fakeDb(
   selectRows: unknown[] = [],
   throwOnSelect = false,
-): { db: DbClient; captured: { where?: unknown; values?: unknown } } {
-  const captured: { where?: unknown; values?: unknown } = {};
+): { db: DbClient; captured: { where?: unknown; values?: unknown; deleteWhere?: unknown } } {
+  const captured: { where?: unknown; values?: unknown; deleteWhere?: unknown } = {};
+  let deleting = false;
   const chain: Record<string, unknown> = {
     select: () => chain,
     from: () => chain,
     where: (predicate: unknown) => {
+      if (deleting) {
+        captured.deleteWhere = predicate;
+        deleting = false;
+        return Promise.resolve();
+      }
       captured.where = predicate;
       return chain;
     },
     limit: () => chain,
     insert: () => chain,
+    delete: () => {
+      deleting = true;
+      return chain;
+    },
     values: (v: unknown) => {
       captured.values = v;
       return chain;
@@ -78,4 +88,34 @@ test('addSuppression: inserts the normalized email with its reason, idempotently
   const { db, captured } = fakeDb();
   await addSuppression(db, '  Bounced@Example.COM  ', 'bounced');
   assert.deepEqual(captured.values, { email: 'bounced@example.com', reason: 'bounced' });
+});
+
+/** Recursively collect every bound `Param` value from a drizzle SQL predicate. */
+function allBoundValues(predicate: unknown): unknown[] {
+  const out: unknown[] = [];
+  const walk = (node: unknown): void => {
+    if (node == null || typeof node !== 'object') {
+      return;
+    }
+    if ((node as { constructor?: { name?: string } }).constructor?.name === 'Param') {
+      out.push((node as { value?: unknown }).value);
+      return;
+    }
+    const chunks = (node as { queryChunks?: unknown[] }).queryChunks;
+    if (Array.isArray(chunks)) {
+      for (const chunk of chunks) {
+        walk(chunk);
+      }
+    }
+  };
+  walk(predicate);
+  return out;
+}
+
+test('removeSuppression: deletes the normalized email scoped to reason=manual', async () => {
+  const { db, captured } = fakeDb();
+  await removeSuppression(db, '  Wants-Back@Example.COM  ');
+  const bound = allBoundValues(captured.deleteWhere);
+  assert.ok(bound.includes('wants-back@example.com'), 'normalized email in the predicate');
+  assert.ok(bound.includes('manual'), "scoped to reason='manual' — bounced/complained never reversible");
 });

@@ -6,9 +6,11 @@ import {
   BaseSampleEmail,
   DeletionEmail,
   EraPlusReceiptEmail,
+  issue001,
   LaunchInviteEmail,
   MagicLinkEmail,
   renderEmail,
+  TheEraEdit,
   WaitlistEmail,
   WelcomeEmail,
 } from '@era/email';
@@ -46,6 +48,23 @@ const TEMPLATES: Record<string, () => ReactElement> = {
   'launch-invite': () => createElement(LaunchInviteEmail, { accessUrl: 'https://era.style' }),
   deletion: () => createElement(DeletionEmail),
   'era-plus-receipt': () => createElement(EraPlusReceiptEmail),
+  // The Era Edit, with Your Week, Worn ON. The live waitlist variant passes
+  // weekWorn null, which hides that whole section (see the option label below).
+  'the-era-edit': () =>
+    createElement(TheEraEdit, {
+      issue: issue001,
+      weekWorn: {
+        mostWorn: { name: 'linen shirt', count: 4 },
+        costPerWear: { name: 'linen shirt', formatted: '$12.50' },
+      },
+      unsubscribeUrl: 'https://era.style/api/email/unsubscribe?email=you%40example.com&token=example',
+      preferencesUrl: 'https://era.style/email/preferences?email=you%40example.com&token=example',
+    }),
+};
+
+/** Human-readable notes for a few templates, shown beside the picker chip. */
+const TEMPLATE_NOTES: Record<string, string> = {
+  'the-era-edit': 'weekWorn ON — the waitlist variant hides Your Week, Worn',
 };
 
 const TEMPLATE_KEYS = Object.keys(TEMPLATES);
@@ -152,6 +171,12 @@ export function EmailPreview() {
           </button>
         ))}
       </div>
+
+      {TEMPLATE_NOTES[selected] ? (
+        <Text variant="caption" as="p" size="footnote" style={{ margin: '0 0 var(--space-2) 0', color: 'var(--color-secondary)' }}>
+          {TEMPLATE_NOTES[selected]}
+        </Text>
+      ) : null}
 
       {html === null ? (
         <Text variant="body" as="p" size="footnote" style={{ margin: 0, color: 'var(--color-secondary)' }}>

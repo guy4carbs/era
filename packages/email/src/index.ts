@@ -22,3 +22,5 @@ export { WaitlistEmail, type WaitlistEmailProps } from './templates/waitlist.tsx
 export { LaunchInviteEmail, type LaunchInviteEmailProps } from './templates/launch-invite.tsx';
 export { DeletionEmail } from './templates/deletion.tsx';
 export { EraPlusReceiptEmail, type EraPlusReceiptEmailProps } from './templates/era-plus-receipt.tsx';
+export { TheEraEdit, type TheEraEditProps, type WeekWornData } from './templates/the-era-edit.tsx';
+export { type EraEditIssue, issue001 } from './issues/issue-001.ts';
