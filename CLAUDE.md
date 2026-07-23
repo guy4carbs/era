@@ -137,7 +137,7 @@ real send with a real `RESEND_API_KEY`; prints the rendered HTML path when dorma
 **The Era Edit (newsletter):** template `packages/email/src/templates/the-era-edit.tsx`;
 per-issue content is typed DATA in `packages/email/src/issues/` (fixed format strings in
 `strings.emails.theEraEdit`; a new issue = a new file). Two segments, HYBRID sends via
-`apps/web/scripts/send-era-edit.ts` (railway run; `--dry-run`/`--confirm` gated):
+`pnpm --filter web send-era-edit` (railway run; `--dry-run`/`--confirm` gated):
 **waitlist** = Resend Broadcast to the existing Audience (`RESEND_AUDIENCE_ID`) with BOTH
 footer links as the native `{{{RESEND_UNSUBSCRIBE_URL}}}` merge tag (broadcasts cannot
 compute per-recipient HMACs); **active users** = individual per-user renders with real
