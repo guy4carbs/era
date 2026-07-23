@@ -20,12 +20,14 @@ import { addContactToAudience, type AudienceContact, type AudienceDeps } from '.
 import { sendWaitlistEmail, type WaitlistEmail } from './send-waitlist-email.ts';
 import { type SendEmailDeps } from './send-email.ts';
 
-/** The signup this notifies about: recipient, whether it was a duplicate, db. */
+/** The signup this notifies about: recipient, whether it was a duplicate, db, place in line. */
 export interface WaitlistSignupArgs {
   readonly email: string;
   /** True when `joinWaitlist` found the email already on the list. */
   readonly alreadyJoined: boolean;
   readonly db: DbClient;
+  /** The joiner's 1-based place in line, threaded into the confirmation email. */
+  readonly position?: number;
 }
 
 /** Injectable seams for {@link notifyNewWaitlistSignup}. All default to real. */
@@ -41,7 +43,7 @@ export interface WaitlistSignupDeps {
  * and still return success even when a send fails.
  */
 export async function notifyNewWaitlistSignup(
-  { email, alreadyJoined, db }: WaitlistSignupArgs,
+  { email, alreadyJoined, db, position }: WaitlistSignupArgs,
   deps: WaitlistSignupDeps = {},
 ): Promise<void> {
   if (alreadyJoined) {
@@ -51,7 +53,7 @@ export async function notifyNewWaitlistSignup(
 
   const send = deps.sendEmail ?? sendWaitlistEmail;
   try {
-    await send({ to: email, db });
+    await send({ to: email, db, position });
   } catch (error) {
     log(`[era-waitlist] confirmation email failed (${error instanceof Error ? error.name : 'unknown'})`);
   }

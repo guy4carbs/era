@@ -25,13 +25,14 @@ function suppressionDb(rows: unknown[]): DbClient {
   return chain as unknown as DbClient;
 }
 
-test('renderWaitlistEmail: subject, html and text carry the gift copy', () => {
-  const { subject, html, text } = renderWaitlistEmail();
+test('renderWaitlistEmail: subject, html and text carry the gift copy', async () => {
+  const { subject, html, text } = await renderWaitlistEmail();
   // The subject + heading are the gift voice ("You're in."), one line + one link.
   assert.equal(subject, "You're in.");
-  assert.ok(html.includes("You're in."));
+  assert.ok(html.includes("You're in.") || html.includes('You&#x27;re in.'), 'html carries the gift heading');
   assert.ok(html.includes('when your era begins'));
-  // The serif heading stack (the sanctioned email stand-in for Fraunces).
+  // The serif heading stack (the sanctioned email stand-in for Fraunces) — now
+  // set from `emailFonts.headline`, which is the Georgia/'Times New Roman' stack.
   assert.ok(html.includes('Georgia'));
   // The single link points at era.style with the era.style label.
   assert.ok(html.includes('>era.style</a>'));
@@ -39,6 +40,15 @@ test('renderWaitlistEmail: subject, html and text carry the gift copy', () => {
   assert.ok(html.includes('Joining is free'));
   assert.ok(text.includes("You're in."));
   assert.ok(text.includes('when your era begins'));
+});
+
+test('renderWaitlistEmail: a position renders the numeral large with the label', async () => {
+  const { html, text } = await renderWaitlistEmail(214);
+  // The numeral itself is rendered (large, in the serif stack).
+  assert.ok(html.includes('214'), 'html carries the place-in-line numeral');
+  // The accompanying screen-reader / text label.
+  assert.ok(html.includes('number 214 in line'), 'html carries the position label');
+  assert.ok(text.includes('214'), 'text carries the numeral');
 });
 
 test('sendWaitlistEmail: real key + not suppressed POSTs the waitlist email to Resend', async () => {

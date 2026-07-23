@@ -13,6 +13,9 @@
  * open, and never tries to win the user back. Copy comes from
  * `strings.emails.deletion` in `@era/core`.
  */
+import { createElement } from 'react';
+
+import { DeletionEmail as DeletionEmailTemplate, renderEmail } from '@era/email';
 import { strings } from '@era/core/strings';
 import { type DbClient } from '@era/db';
 
@@ -26,42 +29,13 @@ export interface DeletionEmail {
 }
 
 /**
- * Render the account-deletion email — plain, final, no win-back. Pure: no env, no
- * network, so the copy is snapshot-testable in isolation.
+ * Render the account-deletion email — plain, final, no win-back. Renders the
+ * shared `@era/email` template through `renderEmail`, so it's async; still pure
+ * (no env, no network), so the copy is snapshot-testable in isolation.
  */
-export function renderDeletionEmail(): { subject: string; html: string; text: string } {
-  const copy = strings.emails.deletion;
-  const subject = copy.subject;
-
-  const html = `<!doctype html>
-<html>
-  <body style="margin:0;padding:0;background:#faf9f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#1c1b1a;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf9f7;">
-      <tr>
-        <td align="center" style="padding:48px 24px;">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:440px;">
-            <tr>
-              <td style="font-size:20px;font-weight:600;letter-spacing:0.02em;padding-bottom:24px;">Era</td>
-            </tr>
-            <tr>
-              <td style="font-size:16px;line-height:1.6;padding-bottom:28px;">
-                ${copy.body}
-              </td>
-            </tr>
-            <tr>
-              <td style="font-size:13px;line-height:1.6;color:#9a9691;border-top:1px solid #ecebe8;padding-top:20px;">
-                ${copy.closer}
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
-</html>`;
-
-  const text = [copy.body, '', copy.closer, '', '— Era'].join('\n');
-
+export async function renderDeletionEmail(): Promise<{ subject: string; html: string; text: string }> {
+  const subject = strings.emails.deletion.subject;
+  const { html, text } = await renderEmail(createElement(DeletionEmailTemplate));
   return { subject, html, text };
 }
 
@@ -75,6 +49,6 @@ export async function sendDeletionEmail({ to, db }: DeletionEmail, deps: SendEma
     (deps.log ?? console.log)('[era-email] skipped deletion email — recipient suppressed');
     return;
   }
-  const { subject, html, text } = renderDeletionEmail();
+  const { subject, html, text } = await renderDeletionEmail();
   await sendEmail({ to, subject, html, text }, deps);
 }

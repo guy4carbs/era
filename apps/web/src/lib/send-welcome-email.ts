@@ -13,6 +13,9 @@
  * the address, per the repo's Security posture). Copy comes from
  * `strings.emails.welcome` in `@era/core`.
  */
+import { createElement } from 'react';
+
+import { WelcomeEmail as WelcomeEmailTemplate, renderEmail } from '@era/email';
 import { strings } from '@era/core/strings';
 import { type DbClient } from '@era/db';
 
@@ -29,48 +32,13 @@ export interface WelcomeEmail {
 
 /**
  * Render the welcome email — warm, brief, one clear next step, in Era's voice.
- * Pure: no env, no network, so the copy is snapshot-testable in isolation. The
- * greeting is neutral ("there") since the first-sign-in send carries no name.
+ * Renders the shared `@era/email` template through `renderEmail`, so it's async;
+ * still pure (no env, no network), so the copy is snapshot-testable in isolation.
+ * The greeting is neutral ("there") since the first-sign-in send carries no name.
  */
-export function renderWelcomeEmail({ url }: { url: string }): { subject: string; html: string; text: string } {
-  const copy = strings.emails.welcome;
-  const subject = copy.subject;
-  const body = copy.body('there');
-
-  const html = `<!doctype html>
-<html>
-  <body style="margin:0;padding:0;background:#faf9f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#1c1b1a;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf9f7;">
-      <tr>
-        <td align="center" style="padding:48px 24px;">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:440px;">
-            <tr>
-              <td style="font-size:20px;font-weight:600;letter-spacing:0.02em;padding-bottom:24px;">Era</td>
-            </tr>
-            <tr>
-              <td style="font-size:16px;line-height:1.6;padding-bottom:28px;">
-                ${body}
-              </td>
-            </tr>
-            <tr>
-              <td style="padding-bottom:28px;">
-                <a href="${url}" style="display:inline-block;background:#1c1b1a;color:#faf9f7;text-decoration:none;font-size:15px;font-weight:500;padding:13px 28px;border-radius:10px;">${copy.cta}</a>
-              </td>
-            </tr>
-            <tr>
-              <td style="font-size:13px;line-height:1.6;color:#9a9691;border-top:1px solid #ecebe8;padding-top:20px;">
-                Take your time — Era's here whenever you're ready to start.
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
-</html>`;
-
-  const text = [body, '', `${copy.cta}: ${url}`, '', '— Era'].join('\n');
-
+export async function renderWelcomeEmail({ url }: { url: string }): Promise<{ subject: string; html: string; text: string }> {
+  const subject = strings.emails.welcome.subject;
+  const { html, text } = await renderEmail(createElement(WelcomeEmailTemplate, { name: 'there', appUrl: url }));
   return { subject, html, text };
 }
 
@@ -88,6 +56,6 @@ export async function sendWelcomeEmail(
     (deps.log ?? console.log)('[era-email] skipped welcome email — recipient suppressed');
     return;
   }
-  const { subject, html, text } = renderWelcomeEmail({ url });
+  const { subject, html, text } = await renderWelcomeEmail({ url });
   await sendEmail({ to, subject, html, text }, deps);
 }

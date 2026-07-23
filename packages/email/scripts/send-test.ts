@@ -21,6 +21,12 @@ import { join } from 'node:path';
 
 import { renderEmail } from '../src/render.ts';
 import { BaseSampleEmail } from '../src/templates/base-sample.tsx';
+import { MagicLinkEmail } from '../src/templates/magic-link.tsx';
+import { WelcomeEmail } from '../src/templates/welcome.tsx';
+import { WaitlistEmail } from '../src/templates/waitlist.tsx';
+import { LaunchInviteEmail } from '../src/templates/launch-invite.tsx';
+import { DeletionEmail } from '../src/templates/deletion.tsx';
+import { EraPlusReceiptEmail } from '../src/templates/era-plus-receipt.tsx';
 
 /** Resend's transactional send endpoint — pinned in code, never user-derived. */
 const RESEND_ENDPOINT = 'https://api.resend.com/emails';
@@ -31,6 +37,12 @@ const DEFAULT_FROM = 'Era <hello@era.style>';
 /** The templates this script can render, by their CLI name. */
 const TEMPLATES: Record<string, () => ReactElement> = {
   'base-sample': () => createElement(BaseSampleEmail),
+  'magic-link': () => createElement(MagicLinkEmail, { url: 'https://era.style/sign-in/confirm?next=example' }),
+  welcome: () => createElement(WelcomeEmail, { name: 'Guy', appUrl: 'https://era.style' }),
+  waitlist: () => createElement(WaitlistEmail, { position: 214 }),
+  'launch-invite': () => createElement(LaunchInviteEmail, { accessUrl: 'https://era.style' }),
+  deletion: () => createElement(DeletionEmail),
+  'era-plus-receipt': () => createElement(EraPlusReceiptEmail),
 };
 
 /**

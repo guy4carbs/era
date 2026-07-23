@@ -1,0 +1,8 @@
+{
+  "_comment": "Test-only tsconfig for the `node --import tsx` runners. The web app's tsconfig sets `jsx: preserve` (Next transforms JSX at build), but the tsx/esbuild test loader cannot emit `preserve` and falls back to the classic `React.createElement` transform, which references an undefined `React` in the `@era/email` `.tsx` templates the migrated send paths now import. tsx applies ONE tsconfig per run, scoped to files under that tsconfig's directory — so it must live at the repo root to cover both `apps/web` and `packages/email`. Pointed at via `TSX_TSCONFIG_PATH` in the web test script; the app build is untouched.",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true
+  }
+}

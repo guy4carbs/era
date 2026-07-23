@@ -14,4 +14,11 @@ export {
 } from './tokens.ts';
 export { BaseEmail, type BaseEmailProps } from './BaseEmail.tsx';
 export { renderEmail, type RenderedEmail } from './render.ts';
+export { EmailButton, type EmailButtonProps } from './EmailButton.tsx';
 export { BaseSampleEmail } from './templates/base-sample.tsx';
+export { MagicLinkEmail, type MagicLinkEmailProps } from './templates/magic-link.tsx';
+export { WelcomeEmail, type WelcomeEmailProps } from './templates/welcome.tsx';
+export { WaitlistEmail, type WaitlistEmailProps } from './templates/waitlist.tsx';
+export { LaunchInviteEmail, type LaunchInviteEmailProps } from './templates/launch-invite.tsx';
+export { DeletionEmail } from './templates/deletion.tsx';
+export { EraPlusReceiptEmail, type EraPlusReceiptEmailProps } from './templates/era-plus-receipt.tsx';

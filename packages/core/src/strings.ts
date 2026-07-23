@@ -1754,6 +1754,8 @@ export const strings = {
     welcome: {
       /** Subject — warm, plain, no exclamation. */
       subject: 'Welcome to Era',
+      /** The serif headline — the one line that lands first. */
+      headline: 'Welcome to your era.',
       /**
        * Body — greets by name and names the first move. `body('Guy')`. Keeps the
        * ask to one thing so the CTA is obvious.
@@ -1762,6 +1764,58 @@ export const strings = {
         `Hi ${name} — you're in. Start by adding a few pieces you already own, and Ovi, your stylist, will begin building looks from your closet.`,
       /** The single CTA — opens the app at the link passed in. */
       cta: 'Open Era',
+    },
+
+    /**
+     * Magic link — the passwordless sign-in email. One purpose, one button.
+     * The expiry note stays quiet (secondary, small) and the ignore line keeps
+     * the no-alarm promise: nothing happens unless the human acts.
+     */
+    magicLink: {
+      /** Subject — plain statement of what this is. */
+      subject: 'Your sign-in link for Era',
+      /** The serif headline. */
+      headline: 'Your key to Era.',
+      /** The one button. */
+      cta: 'Sign in to Era',
+      /** The quiet expiry note — rendered small, in secondary. */
+      expiry: 'The link expires shortly and can only be used once.',
+      /** The no-alarm closer for unrequested emails. */
+      ignore:
+        "If you didn't ask to sign in, you can safely ignore this email — nothing will happen.",
+      /** Lead-in above the raw fallback URL (plain-text and paste cases). */
+      fallback: 'Or paste this link into your browser:',
+    },
+
+    /**
+     * Launch invite — the wave-send that opens the door for a waitlist member.
+     * The biggest moment this family carries; still calm. One button in.
+     */
+    launchInvite: {
+      /** Subject — the moment, stated plainly. */
+      subject: 'Your era begins',
+      /** The serif headline. */
+      headline: 'Your era begins.',
+      /** One line — what's now open, no hype. */
+      body: 'Early access is open for you. Your closet, your stylist, and your first look are waiting.',
+      /** The one button. */
+      cta: 'Step inside',
+    },
+
+    /**
+     * Era+ receipt — Phase 2 PLACEHOLDER. The layout and voice are locked now
+     * so billing work later only fills in the transaction fields; nothing sends
+     * until Era+ exists.
+     */
+    eraPlusReceipt: {
+      /** Subject — a receipt, named plainly. */
+      subject: 'Your Era+ receipt',
+      /** The serif headline — gratitude without performance. */
+      headline: 'Thank you.',
+      /** One line of context above the (future) transaction details. */
+      body: 'Your Era+ receipt — plan and payment details will appear here.',
+      /** The placeholder marker rendered where line items will live. */
+      placeholderNote: 'Receipt details land with Era+ billing (Phase 2).',
     },
 
     /**
@@ -1792,6 +1846,8 @@ export const strings = {
     deletion: {
       /** Subject — plain and final. */
       subject: 'Your Era account has been deleted',
+      /** The serif headline — closure, no guilt. */
+      headline: 'Taken care of.',
       /**
        * Body — confirms the account, closet, and images are permanently gone.
        * Matches the app's real-deletion promise; no euphemism, no hedging.

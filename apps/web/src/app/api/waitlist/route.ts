@@ -138,7 +138,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     // Best-effort: confirmation email + audience add for a genuinely NEW signup
     // only. Gated on `alreadyJoined` and non-throwing, so it never turns a
     // successful join into a 500 nor re-sends on a duplicate submit.
-    await notifyNewWaitlistSignup({ email, alreadyJoined: result.alreadyJoined, db });
+    await notifyNewWaitlistSignup({ email, alreadyJoined: result.alreadyJoined, db, position: result.position });
     return NextResponse.json(result, { status: 200 });
   } catch {
     // Never leak database internals to the client.

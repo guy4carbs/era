@@ -36,17 +36,23 @@ test('a duplicate signup sends nothing — no email, no audience add', async () 
 test('a new signup fires the confirmation email and the audience add', async () => {
   const emails: string[] = [];
   const contacts: string[] = [];
+  const positions: Array<number | undefined> = [];
 
   await notifyNewWaitlistSignup(
-    { email: 'new@example.com', alreadyJoined: false, db: DB },
+    { email: 'new@example.com', alreadyJoined: false, db: DB, position: 214 },
     {
-      sendEmail: async ({ to }) => void emails.push(to),
+      sendEmail: async ({ to, position }) => {
+        emails.push(to);
+        positions.push(position);
+      },
       addContact: async ({ email }) => void contacts.push(email),
     },
   );
 
   assert.deepEqual(emails, ['new@example.com']);
   assert.deepEqual(contacts, ['new@example.com']);
+  // The place in line is threaded through to the confirmation email.
+  assert.deepEqual(positions, [214]);
 });
 
 test('best-effort: an email failure is swallowed and the audience add still runs', async () => {
