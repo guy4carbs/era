@@ -1859,6 +1859,42 @@ export const strings = {
     },
 
     /**
+     * The Era Edit — the weekly newsletter's FIXED format strings. Per-issue
+     * editorial content (headline, paragraphs, formula lines, dispatch) is
+     * DATA, not strings — it lives in `@era/email`'s issues/ modules. Only the
+     * masthead grammar, section labels, and the personalized-stat sentence
+     * shapes are locked here. Small caps = uppercase + wide tracking at
+     * caption size, applied by the template, not encoded in these strings.
+     */
+    theEraEdit: {
+      /** The masthead — always the serif stack. */
+      masthead: 'The Era Edit',
+      /** Issue numbering, print-style. `issueLabel(1)` → "No. 001". */
+      issueLabel: (n: number): string => `No. ${String(n).padStart(3, '0')}`,
+      /** Section labels, in the locked order. */
+      sections: {
+        formula: 'The Formula',
+        weekWorn: 'Your Week, Worn',
+        dispatch: 'The Dispatch',
+      },
+      /**
+       * Personalized stat lines for Your Week, Worn — small counts read as
+       * words in Ovi's voice. `mostWorn('cream knit', 3)` →
+       * "Your cream knit led the week — worn three times."
+       */
+      mostWorn: (name: string, count: number): string =>
+        `Your ${name} led the week — worn ${NUMBER_WORDS[count] ?? String(count)} ${count === 1 ? 'time' : 'times'}.`,
+      /**
+       * The one cost-per-wear stat. `costPerWear('cream knit', '$4.50')` →
+       * "Your cream knit is down to $4.50 a wear."
+       */
+      costPerWear: (name: string, formatted: string): string =>
+        `Your ${name} is down to ${formatted} a wear.`,
+      /** Footer preferences-link label (sits beside Unsubscribe). */
+      preferences: 'Preferences',
+    },
+
+    /**
      * Compliant footer — rendered at the bottom of every email by the shared
      * BaseEmail layout in `@era/email`. The physical mailing address satisfies
      * CAN-SPAM for marketing sends (The Era Edit); the unsubscribe label fills
