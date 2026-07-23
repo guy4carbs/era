@@ -553,6 +553,21 @@ Production serves from **era.style**. To wire the domain and get indexed:
 - **B3 (before a real `ANTHROPIC_API_KEY`):** enforce a **global daily AI-spend cap / kill-switch** + alert on `recordUsage` write failures. (Per-user rate limits already live.)
 - Before live PostHog/Sentry keys: EU cookie-consent + PII scrub. Before public legal: fill the `[BRACKETS]` + counsel-review the privacy/terms DRAFTs. User: verify era.style in Google Search Console + submit the sitemap.
 
+**Design Revamp V1 — COMPLETE (Revamp Bar audited 2026-07-23).** PRs #57–#97 rebuilt every
+surface on the token system: the Fraunces+Geist type roles, §3 surfaces + dark shadow set,
+universal press + spring motion, real glass with the AA busy-imagery scrim, the rail-only
+web nav decree, the Item Engine (ItemSurface), the daily reveal ritual, the living Ovi orb +
+glass conversation panel + ambient suggestions, the editorial quiz, designed waiting/failure
+moments, the scroll-driven landing, /manifesto, the post-signup gift, the vector `era.` mark
+(icons/favicons/OG), and the email system (BaseEmail foundation, six transactional
+templates, The Era Edit newsletter + segments + signed unsubscribe). Machine checks of the
+Revamp Bar hold in CI: four consistency guards (design/font/motion/reveal), the 15/15
+contrast audit, Lighthouse hard gates (Perf ≥ 0.90 ERROR, SEO ≥ 0.95, CLS < 0.05 ERROR).
+Eyes-gated bar items (the quiet-dressing-room brand test, 60fps on a mid-range phone,
+signature screenshot-worthiness, the 60-second memory test, the email client matrix) are the
+operator's standing checklist — taste finishes what tokens begin. `docs/PRODUCT.md` § The
+aesthetic reflects this system; the old P0.8 description is retired.
+
 **Phase 2 doorway (Shop + stickiness):** shortest first move — wire the affiliate feed into the (stubbed, trust-rule-aligned) Shop tab, driven by Ovi's existing `whats_missing` gap computation ("buy only for a real gap").
 
 **Phase 4 seed — avatar / virtual try-on ("See it on you") shipped dark.** An Era+-gated try-on surface is built and merged behind `ERA_TRYON_ENABLED` (unset ⇒ every avatar/try-on route 404s, zero client trace): a consented user uploads 1–3 photos, our try-on provider **FASHN** builds an AI-likeness avatar (source photos deleted immediately after creation), and saved outfits render onto it in the private, encrypted-at-rest `avatars` bucket with owner-only presigned access. Avatar + renders are deletable from Settings with verified counts; account deletion sweeps everything. Schema is **migration 0010** (`avatars` + `outfit_tryons`); FASHN stays dormant until the operator funds credits and secures a DPA / no-training confirmation (hard launch gate). Privacy DRAFT documents the flow.
