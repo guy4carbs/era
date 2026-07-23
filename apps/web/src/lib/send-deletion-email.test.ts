@@ -25,9 +25,10 @@ function suppressionDb(rows: unknown[]): DbClient {
   return chain as unknown as DbClient;
 }
 
-test('renderDeletionEmail: subject, html and text carry the deletion copy', () => {
-  const { subject, html, text } = renderDeletionEmail();
+test('renderDeletionEmail: subject, html and text carry the deletion copy', async () => {
+  const { subject, html, text } = await renderDeletionEmail();
   assert.equal(subject, 'Your Era account has been deleted');
+  assert.ok(html.includes('Taken care of.'), 'html carries the serif headline');
   assert.ok(html.includes('gone for good'));
   assert.ok(html.includes('always welcome back'));
   assert.ok(text.includes('gone for good'));

@@ -74,9 +74,9 @@ async function main(): Promise<void> {
 
   const jobs: Array<[string, Rendered]> = [
     ['magic-link', magicLink],
-    ['welcome', renderWelcomeEmail({ url: 'https://era.style' })],
-    ['waitlist', renderWaitlistEmail()],
-    ['deletion', renderDeletionEmail()],
+    ['welcome', await renderWelcomeEmail({ url: 'https://era.style' })],
+    ['waitlist', await renderWaitlistEmail(214)],
+    ['deletion', await renderDeletionEmail()],
     [
       'price-drop',
       renderPriceDropEmail({

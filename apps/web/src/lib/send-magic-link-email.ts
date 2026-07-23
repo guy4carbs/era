@@ -13,6 +13,11 @@
  * the transport's generic line. The magic-link URL is a secret and never
  * reaches a production log — the dev line runs in development only.
  */
+import { createElement } from 'react';
+
+import { MagicLinkEmail, renderEmail } from '@era/email';
+import { strings } from '@era/core/strings';
+
 import { isRealCredential, sendEmail } from './send-email.ts';
 import { siteUrl } from './site-url.ts';
 
@@ -56,7 +61,8 @@ export async function sendMagicLinkEmail(
   // submits it. `url` (Better Auth's verify URL, token and all) rides along as
   // the `next` param; the confirm page + route re-validate it before use.
   const confirmUrl = `${siteUrl()}/sign-in/confirm?next=${encodeURIComponent(url)}`;
-  const { subject, html, text } = renderEmail(confirmUrl);
+  const subject = strings.emails.magicLink.subject;
+  const { html, text } = await renderEmail(createElement(MagicLinkEmail, { url: confirmUrl }));
   await sendEmail(
     { to: email, subject, html, text },
     {
@@ -67,65 +73,4 @@ export async function sendMagicLinkEmail(
       devLog: (_message, log) => log(`[era-auth] magic link for ${email}: ${url}`),
     },
   );
-}
-
-/** Era's magic-link email — warm, understated, one clear action. */
-function renderEmail(url: string): { subject: string; html: string; text: string } {
-  const subject = 'Your sign-in link for Era';
-
-  const html = `<!doctype html>
-<html>
-  <body style="margin:0;padding:0;background:#faf9f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#1c1b1a;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf9f7;">
-      <tr>
-        <td align="center" style="padding:48px 24px;">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:440px;">
-            <tr>
-              <td style="font-size:20px;font-weight:600;letter-spacing:0.02em;padding-bottom:24px;">Era</td>
-            </tr>
-            <tr>
-              <td style="font-size:16px;line-height:1.6;padding-bottom:28px;">
-                Welcome back. Tap the button below to sign in — the link expires shortly and can only be used once.
-              </td>
-            </tr>
-            <tr>
-              <td style="padding-bottom:28px;">
-                <a href="${url}" style="display:inline-block;background:#1c1b1a;color:#faf9f7;text-decoration:none;font-size:15px;font-weight:500;padding:13px 28px;border-radius:10px;">Sign in to Era</a>
-              </td>
-            </tr>
-            <tr>
-              <td style="font-size:13px;line-height:1.6;color:#6b6864;padding-bottom:8px;">
-                Or paste this link into your browser:
-              </td>
-            </tr>
-            <tr>
-              <td style="font-size:13px;line-height:1.6;color:#6b6864;word-break:break-all;padding-bottom:28px;">
-                <a href="${url}" style="color:#6b6864;">${url}</a>
-              </td>
-            </tr>
-            <tr>
-              <td style="font-size:13px;line-height:1.6;color:#9a9691;border-top:1px solid #ecebe8;padding-top:20px;">
-                If you didn't ask to sign in, you can safely ignore this email — nothing will happen.
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
-</html>`;
-
-  const text = [
-    'Welcome back to Era.',
-    '',
-    'Tap the link below to sign in. It expires shortly and can only be used once.',
-    '',
-    url,
-    '',
-    "If you didn't ask to sign in, you can safely ignore this email.",
-    '',
-    '— Era',
-  ].join('\n');
-
-  return { subject, html, text };
 }

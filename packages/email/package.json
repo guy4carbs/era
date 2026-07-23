@@ -12,7 +12,7 @@
     "dev": "email dev --dir src/templates --port 3020",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test src/tokens.test.ts src/render.test.ts",
+    "test": "node --import tsx --test src/tokens.test.ts src/render.test.ts src/EmailButton.test.ts",
     "send-test": "tsx scripts/send-test.ts"
   },
   "dependencies": {

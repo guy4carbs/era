@@ -28,14 +28,16 @@ function suppressionDb(rows: unknown[]): DbClient {
   return chain as unknown as DbClient;
 }
 
-test('renderWelcomeEmail: subject, html and text carry the welcome copy and the link', () => {
-  const { subject, html, text } = renderWelcomeEmail({ url: URL });
+test('renderWelcomeEmail: subject, html and text carry the welcome copy and the link', async () => {
+  const { subject, html, text } = await renderWelcomeEmail({ url: URL });
   assert.equal(subject, 'Welcome to Era');
-  assert.ok(html.includes("you're in"));
-  assert.ok(html.includes('Open Era'));
-  assert.ok(html.includes(URL));
-  assert.ok(text.includes("you're in"));
-  assert.ok(text.includes(URL));
+  // The serif headline lands first; react-email may entity-encode the apostrophe.
+  assert.ok(html.includes('Welcome to your era.'), 'html carries the serif headline');
+  assert.ok(html.includes("you're in") || html.includes('you&#x27;re in'), 'html carries the welcome body');
+  assert.ok(html.includes('Open Era'), 'html carries the CTA label');
+  assert.ok(html.includes(URL), 'html links the CTA at the app url');
+  assert.ok(text.includes("you're in"), 'text carries the welcome body');
+  assert.ok(text.includes(URL), 'text carries the app url');
 });
 
 test('sendWelcomeEmail: real key + not suppressed POSTs the welcome email to Resend', async () => {
